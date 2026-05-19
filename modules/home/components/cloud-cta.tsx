@@ -13,9 +13,7 @@ export function CloudCta() {
             Vetra Cloud keeps your workflows running — no servers to manage. Or run everything on
             your own infrastructure.
           </p>
-          <p className="text-foreground mb-6 font-semibold">
-            Your software. Your data. Your call.
-          </p>
+          <p className="text-foreground mb-6 font-semibold">Your software. Your data. Your call.</p>
           <Button asChild size="lg">
             <Link href="/cloud">Explore Vetra Cloud</Link>
           </Button>

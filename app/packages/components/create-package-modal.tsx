@@ -46,11 +46,13 @@ function CopyButton({ text }: { text: string }) {
 
   return (
     <button
-      onClick={() => void (async () => {
-        await navigator.clipboard.writeText(text)
-        setCopied(true)
-        setTimeout(() => setCopied(false), 2000)
-      })()}
+      onClick={() =>
+        void (async () => {
+          await navigator.clipboard.writeText(text)
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
+        })()
+      }
       className="text-muted-foreground hover:text-foreground shrink-0 transition-colors"
     >
       {copied ? <Check className="text-primary size-3.5" /> : <Copy className="size-3.5" />}

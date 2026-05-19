@@ -21,11 +21,11 @@ const chatMessages = [
   },
   {
     role: 'assistant',
-    text: "Done! Case tracker set up across your own nodes. Syncs peer-to-peer when connected. Want per-case access controls?",
+    text: 'Done! Case tracker set up across your own nodes. Syncs peer-to-peer when connected. Want per-case access controls?',
   },
   {
     role: 'user',
-    text: "Yes. Our team is spread across 14 countries.",
+    text: 'Yes. Our team is spread across 14 countries.',
   },
   {
     role: 'assistant',
@@ -49,8 +49,8 @@ export function Hero() {
           yours.
         </p>
         <p className="text-foreground-70 mx-auto mb-9 max-w-xl text-lg leading-relaxed">
-          Unlike other AI builders, the platform is fully open source and runs wherever
-          you choose — your cloud or ours. No lock-in, ever.
+          Unlike other AI builders, the platform is fully open source and runs wherever you choose —
+          your cloud or ours. No lock-in, ever.
         </p>
         <div className="mb-12 flex flex-wrap justify-center gap-3">
           <Link
@@ -128,7 +128,7 @@ export function Hero() {
             className={`overflow-hidden transition-all duration-300 ${devOpen ? 'mt-4 max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
           >
             <div className="border-border bg-accent/40 rounded-xl border p-5">
-              <p className="text-foreground-70 mb-3 text-center text-xs font-semibold uppercase tracking-wider">
+              <p className="text-foreground-70 mb-3 text-center text-xs font-semibold tracking-wider uppercase">
                 Under the hood
               </p>
               <div className="grid grid-cols-2 gap-x-8 gap-y-2">

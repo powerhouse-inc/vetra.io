@@ -1,11 +1,4 @@
-import {
-  Clock,
-  Database,
-  MessageSquare,
-  Shield,
-  TrendingUp,
-  Zap,
-} from 'lucide-react'
+import { Clock, Database, MessageSquare, Shield, TrendingUp, Zap } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 type Benefit = { title: string; description: string; icon: LucideIcon }
@@ -31,8 +24,7 @@ const benefits: Benefit[] = [
   },
   {
     title: 'Always available',
-    description:
-      'Works offline too. Changes sync automatically when you’re back online.',
+    description: 'Works offline too. Changes sync automatically when you’re back online.',
     icon: Clock,
   },
   {

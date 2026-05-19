@@ -104,7 +104,12 @@ export function SpaceCard({ team, space }: { team: FullTeam; space: FullTeamSpac
           {space.packages.map((p) => (
             <PackageRow key={p.id} team={team} pkg={p} />
           ))}
-          <Button variant="outline" size="sm" onClick={() => void doAddPackage()} disabled={isPending}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => void doAddPackage()}
+            disabled={isPending}
+          >
             <Plus className="mr-1.5 size-3.5" />
             Add package
           </Button>

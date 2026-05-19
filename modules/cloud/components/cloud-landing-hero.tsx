@@ -13,7 +13,8 @@ export function CloudLandingHero() {
           <span className="text-primary">for independent organizations</span>
         </h1>
         <p className="text-foreground-70 mx-auto mb-8 max-w-xl text-base leading-relaxed">
-          Combine the scalability and convenience of centralized cloud providers with the freedom to move your data anytime.
+          Combine the scalability and convenience of centralized cloud providers with the freedom to
+          move your data anytime.
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <CreatePackageModal />

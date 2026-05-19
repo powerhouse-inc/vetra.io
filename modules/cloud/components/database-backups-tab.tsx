@@ -195,7 +195,12 @@ export function DatabaseBackupsTab({
             </p>
           </div>
           {canEdit && (
-            <Button size="sm" variant="outline" onClick={() => void handleCreate()} disabled={isRequesting}>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => void handleCreate()}
+              disabled={isRequesting}
+            >
               <Plus className="mr-1.5 h-3.5 w-3.5" />
               {isRequesting ? 'Starting…' : 'Create dump'}
             </Button>

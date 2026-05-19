@@ -9,7 +9,7 @@ const differentiators = [
   {
     title: 'No hostage situations',
     description:
-      "With most AI builders, your data and logic live on their servers. Leave them and you start over. With Vetra, everything is portable — always.",
+      'With most AI builders, your data and logic live on their servers. Leave them and you start over. With Vetra, everything is portable — always.',
   },
   {
     title: 'A workspace, not a generator',
@@ -54,15 +54,11 @@ export function WhyVetra() {
         <table className="w-full">
           <thead>
             <tr className="bg-accent/50">
-              <th className="text-foreground px-6 py-4 text-left text-sm font-semibold">
-                Feature
-              </th>
+              <th className="text-foreground px-6 py-4 text-left text-sm font-semibold">Feature</th>
               <th className="text-foreground-70 px-6 py-4 text-center text-sm font-semibold">
                 Other AI builders
               </th>
-              <th className="text-foreground px-6 py-4 text-center text-sm font-semibold">
-                Vetra
-              </th>
+              <th className="text-foreground px-6 py-4 text-center text-sm font-semibold">Vetra</th>
             </tr>
           </thead>
           <tbody>

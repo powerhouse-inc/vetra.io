@@ -11,7 +11,7 @@ const faqs = [
   {
     question: 'What can I do with Vetra?',
     answer:
-      "Vetra lets you build software for your team using a simple chat interface — no coding required. Describe the workflow you need (a hiring tracker, a project board, a client portal) and Vetra sets it up. You can also browse ready-made templates from the community and customize them to fit your needs.",
+      'Vetra lets you build software for your team using a simple chat interface — no coding required. Describe the workflow you need (a hiring tracker, a project board, a client portal) and Vetra sets it up. You can also browse ready-made templates from the community and customize them to fit your needs.',
   },
   {
     question: 'How do I get started?',
