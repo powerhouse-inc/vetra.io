@@ -11,11 +11,13 @@ import {
   Info,
   Loader2,
   RefreshCw,
+  RotateCcw,
   Trash2,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { useRenown } from '@powerhousedao/reactor-browser'
 
 import { AsyncButton } from '@/modules/cloud/components/async-button'
 import { AutoUpdateCard } from '@/modules/cloud/components/auto-update-card'
@@ -23,6 +25,7 @@ import { CustomDomainSection } from '@/modules/cloud/components/custom-domain-se
 import { EventTimeline } from '@/modules/cloud/components/event-timeline'
 import { DRIVE_ID } from '@/modules/cloud/client'
 import { loadEnvironmentController } from '@/modules/cloud/controller'
+import { getAuthToken, resetEnvironment } from '@/modules/cloud/graphql'
 import { useAsyncAction } from '@/modules/cloud/hooks/use-async-action'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { useEnvironmentEvents } from '@/modules/cloud/hooks/use-environment-events'
@@ -207,6 +210,7 @@ export function EnvSettingsDrawer({
               <DangerZone
                 displayName={state.label || environment.name}
                 environment={environment}
+                tenantId={tenantId}
                 canTerminate={!!onTerminate && !TERMINAL_STATUSES.has(envStatus)}
                 onTerminate={onTerminate}
                 onClose={() => onOpenChange(false)}
@@ -372,22 +376,42 @@ function MetadataField({
   )
 }
 
+function mapResetError(message: string): string {
+  if (message.includes('RESET_NOT_CONFIGURED')) {
+    return "Reset isn't available for this environment."
+  }
+  if (message.includes('TRUNCATE_FAILED')) {
+    return 'Could not clear the database. Try again or contact support.'
+  }
+  if (message.includes('FORBIDDEN')) {
+    return 'Only the environment owner can reset.'
+  }
+  if (message.includes('ENV_NOT_FOUND')) {
+    return 'Environment not found.'
+  }
+  return message
+}
+
 function DangerZone({
   displayName,
   environment,
+  tenantId,
   canTerminate,
   onTerminate,
   onClose,
 }: {
   displayName: string
   environment: CloudEnvironment
+  tenantId: string | null
   canTerminate: boolean
   onTerminate?: () => Promise<void>
   onClose: () => void
 }) {
   const [expanded, setExpanded] = useState(false)
+  const [resetOpen, setResetOpen] = useState(false)
   const router = useRouter()
   const { signer } = useCanSign()
+  const renown = useRenown()
 
   const { run: runDelete, isPending: isDeleting } = useAsyncAction(async () => {
     if (!signer) {
@@ -403,6 +427,24 @@ function DangerZone({
     onClose()
     router.push('/cloud')
   })
+
+  const handleReset = async () => {
+    if (!tenantId) {
+      throw new Error('Environment is not provisioned yet')
+    }
+    const token = await getAuthToken(renown)
+    const result = await resetEnvironment(tenantId, token)
+    const msg = `Environment reset — ${result.tablesCleared} table${
+      result.tablesCleared === 1 ? '' : 's'
+    } cleared, ${result.deploymentsRestarted} service${
+      result.deploymentsRestarted === 1 ? '' : 's'
+    } restarting…`
+    toast.success(msg)
+    if (result.message?.includes('RESTART_PARTIAL')) {
+      toast.warning(result.message)
+    }
+    setResetOpen(false)
+  }
 
   return (
     <div className="border-destructive/30 mt-2 rounded-md border">
@@ -420,6 +462,54 @@ function DangerZone({
       </button>
       {expanded && (
         <div className="space-y-3 px-3 pb-3 text-sm">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex-1">
+              <p className="font-medium">Reset environment</p>
+              <p className="text-muted-foreground text-xs">
+                Wipe all database rows and restart every service. Packages, env vars, secrets, and
+                dump history are preserved.
+              </p>
+            </div>
+            <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
+              <AlertDialogTrigger asChild>
+                <Button variant="destructive" size="sm" disabled={!tenantId}>
+                  <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                  Reset
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Reset &ldquo;{displayName}&rdquo;?</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    All database rows will be deleted. This cannot be undone, but you can restore
+                    from a recent dump if one exists.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AsyncButton
+                    variant="destructive"
+                    size="sm"
+                    pendingLabel="Resetting…"
+                    onClickAsync={async (e) => {
+                      // Keep the dialog open if the mutation fails so the user
+                      // sees the toast against the confirm screen rather than
+                      // an empty drawer.
+                      e.preventDefault()
+                      try {
+                        await handleReset()
+                      } catch (err) {
+                        const raw = err instanceof Error ? err.message : String(err)
+                        toast.error(mapResetError(raw))
+                      }
+                    }}
+                  >
+                    Reset
+                  </AsyncButton>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+          </div>
           {canTerminate && (
             <div className="flex items-center justify-between gap-3">
               <div className="flex-1">
