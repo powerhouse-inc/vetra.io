@@ -838,3 +838,80 @@ export async function restoreEnvironmentDump(
   )
   return data.restoreEnvironmentDump
 }
+
+// ---------------------------------------------------------------------------
+// Environment reset + service restart (vetra-cloud-observability subgraph)
+// ---------------------------------------------------------------------------
+
+/**
+ * Owner-gated. TRUNCATE every user-schema base table in the tenant's Postgres,
+ * then patch every tenant app deployment with a rollout-restart annotation.
+ * Returns counts plus, when applicable, a `RESTART_PARTIAL: ...` message for
+ * the subset of deployments that failed to patch. Partial-success is still
+ * `ok=true` — callers should surface the message as a warning, not an error.
+ *
+ * Throws: UNAUTHENTICATED, FORBIDDEN, ENV_NOT_FOUND, TRUNCATE_FAILED,
+ * RESET_NOT_CONFIGURED.
+ */
+export async function resetEnvironment(
+  tenantId: string,
+  token?: string | null,
+): Promise<{
+  ok: boolean
+  tablesCleared: number
+  deploymentsRestarted: number
+  message: string | null
+}> {
+  const data = await gqlObservability<{
+    resetEnvironment: {
+      ok: boolean
+      tablesCleared: number
+      deploymentsRestarted: number
+      message: string | null
+    }
+  }>(
+    '',
+    `mutation ($tenantId: String!) {
+      resetEnvironment(tenantId: $tenantId) {
+        ok tablesCleared deploymentsRestarted message
+      }
+    }`,
+    { tenantId },
+    token,
+  )
+  return data.resetEnvironment
+}
+
+/**
+ * Owner-gated. Patch one deployment's pod template with the rollout-restart
+ * annotation. For CLINT services the `agentPrefix` argument disambiguates
+ * which clint deployment to restart (each agent prefix produces its own
+ * Deployment via the chart).
+ *
+ * Throws: UNAUTHENTICATED, FORBIDDEN, ENV_NOT_FOUND, DEPLOYMENT_NOT_FOUND,
+ * AMBIGUOUS_SERVICE, RESTART_NOT_CONFIGURED.
+ */
+export async function restartEnvironmentService(
+  tenantId: string,
+  service: 'CONNECT' | 'SWITCHBOARD' | 'CLINT' | 'FUSION',
+  agentPrefix: string | null,
+  token?: string | null,
+): Promise<{ ok: boolean; deploymentName: string; message: string | null }> {
+  const data = await gqlObservability<{
+    restartEnvironmentService: {
+      ok: boolean
+      deploymentName: string
+      message: string | null
+    }
+  }>(
+    '',
+    `mutation ($tenantId: String!, $service: TenantService!, $agentPrefix: String) {
+      restartEnvironmentService(tenantId: $tenantId, service: $service, agentPrefix: $agentPrefix) {
+        ok deploymentName message
+      }
+    }`,
+    { tenantId, service, agentPrefix },
+    token,
+  )
+  return data.restartEnvironmentService
+}
