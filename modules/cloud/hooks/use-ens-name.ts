@@ -36,19 +36,29 @@ async function resolveEns(address: string): Promise<string | null> {
 /**
  * React hook to resolve an ENS name for a given Ethereum address. Returns
  * `null` while resolving or when no ENS name is set on the address.
+ *
+ * `address` is treated as the state key — switching addresses resets the
+ * cached name. This pattern avoids a synchronous `setName(null)` inside the
+ * effect (which lints as a cascade-render hazard).
  */
 export function useEnsName(address: string | null | undefined): string | null {
-  const [name, setName] = useState<string | null>(null)
+  // Seed from the in-memory cache so we don't flash the unresolved address
+  // on every render when the lookup has already happened.
+  const cached = address ? (cache.get(address.toLowerCase()) ?? null) : null
+  const [name, setName] = useState<string | null>(cached)
 
   useEffect(() => {
-    if (!address) {
-      setName(null)
-      return
+    if (!address) return
+    let cancelled = false
+    void resolveEns(address).then((value) => {
+      if (!cancelled) setName(value)
+    })
+    return () => {
+      cancelled = true
     }
-    void resolveEns(address).then(setName)
   }, [address])
 
-  return name
+  return address ? name : null
 }
 
 /**

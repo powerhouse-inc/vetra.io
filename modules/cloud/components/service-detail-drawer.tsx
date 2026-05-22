@@ -6,6 +6,7 @@ import {
   Database,
   FileText,
   Globe,
+  Lock,
   RefreshCw,
   RotateCw,
   Server,
@@ -13,7 +14,7 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
-import { useRenown } from '@powerhousedao/reactor-browser'
+import { useRenown, useRenownAuth } from '@powerhousedao/reactor-browser'
 
 import { AsyncButton } from '@/modules/cloud/components/async-button'
 import { getAuthToken, restartEnvironmentService } from '@/modules/cloud/graphql'
@@ -56,6 +57,7 @@ import { DatabaseTabBody } from './database-tab-body'
 import { EventTimeline } from './event-timeline'
 import { LogViewer } from './log-viewer'
 import { MetricCard } from './metric-card'
+import { AuthTab } from './switchboard-auth/auth-tab'
 import { TimeRangePicker } from './time-range-picker'
 
 type ServiceKind = 'connect' | 'switchboard' | 'fusion'
@@ -162,6 +164,9 @@ export function ServiceDetailDrawer({
   // database cluster, so its drawer also surfaces DB backups. CONNECT and
   // FUSION never get a Database tab.
   const showDatabaseTab = kind === 'switchboard' && !!tenantId
+  // Auth tab targets the tenant switchboard's reactor-api permissions
+  // surface — only meaningful for the SWITCHBOARD service.
+  const showAuthTab = kind === 'switchboard'
   const clusterName = tenantId ? `${tenantId}-pg` : null
   const Icon = SERVICE_ICON[kind]
   const label = SERVICE_LABEL[kind]
@@ -169,6 +174,8 @@ export function ServiceDetailDrawer({
   const [range, setRange] = useState<MetricRange>('ONE_HOUR')
   const [restartOpen, setRestartOpen] = useState(false)
   const renown = useRenown()
+  const auth = useRenownAuth()
+  const viewerAddress = auth.status === 'authorized' ? (auth.address ?? null) : null
 
   const servicePods = useMemo(() => {
     if (!pods) return []
@@ -309,6 +316,11 @@ export function ServiceDetailDrawer({
                 <Database className="h-3.5 w-3.5" /> Database
               </TabsTrigger>
             )}
+            {showAuthTab && (
+              <TabsTrigger value="auth" className="gap-1.5">
+                <Lock className="h-3.5 w-3.5" /> Auth
+              </TabsTrigger>
+            )}
           </TabsList>
 
           <div className="flex-1 overflow-y-auto px-6 py-4">
@@ -418,6 +430,16 @@ export function ServiceDetailDrawer({
                   Detailed metrics, replication lag and connection counts live in the cluster-wide
                   Grafana dashboards.
                 </p>
+              </TabsContent>
+            )}
+
+            {showAuthTab && (
+              <TabsContent value="auth" className="mt-0">
+                <AuthTab
+                  switchboardUrl={service?.url ?? null}
+                  viewerAddress={viewerAddress}
+                  canEdit={canEdit}
+                />
               </TabsContent>
             )}
           </div>
