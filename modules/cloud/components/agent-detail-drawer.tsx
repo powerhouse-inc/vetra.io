@@ -1,8 +1,21 @@
 'use client'
 
-import { Bot, FileText, BarChart2, Activity, Settings2, RefreshCw, Info } from 'lucide-react'
+import {
+  Bot,
+  FileText,
+  BarChart2,
+  Activity,
+  Settings2,
+  RefreshCw,
+  Info,
+  RotateCw,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
+import { useRenown } from '@powerhousedao/reactor-browser'
 
+import { AsyncButton } from '@/modules/cloud/components/async-button'
+import { getAuthToken, restartEnvironmentService } from '@/modules/cloud/graphql'
 import { useEnvironmentEvents } from '@/modules/cloud/hooks/use-environment-events'
 import { useEnvironmentLogs } from '@/modules/cloud/hooks/use-environment-logs'
 import { useEnvironmentMetrics } from '@/modules/cloud/hooks/use-environment-metrics'
@@ -20,6 +33,16 @@ import type {
   Pod,
 } from '@/modules/cloud/types'
 import type { PackageManifest } from '@/modules/cloud/config/types'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/modules/shared/components/ui/alert-dialog'
 import { Badge } from '@/modules/shared/components/ui/badge'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
@@ -37,6 +60,27 @@ import { LiveStatusPill } from './live-status-pill'
 import { LogViewer } from './log-viewer'
 import { MetricCard } from './metric-card'
 import { TimeRangePicker } from './time-range-picker'
+
+// Mirrors `service-detail-drawer.tsx` — the agent restart path bubbles
+// the exact same error codes from the backend resolver, so the mapping
+// is identical. Duplicated rather than shared because the two drawers
+// already diverge on layout and we don't want to pull a tiny helper
+// into a separate file until a third caller appears.
+function mapRestartError(message: string): string {
+  if (message.includes('DEPLOYMENT_NOT_FOUND')) {
+    return 'Agent not deployed.'
+  }
+  if (message.includes('AMBIGUOUS_SERVICE')) {
+    return 'Could not identify the agent.'
+  }
+  if (message.includes('RESTART_NOT_CONFIGURED')) {
+    return "Restart isn't available for this environment."
+  }
+  if (message.includes('FORBIDDEN')) {
+    return 'Only the environment owner can restart.'
+  }
+  return message
+}
 
 type Props = {
   open: boolean
@@ -96,6 +140,8 @@ export function AgentDetailDrawer({
   onDisable,
 }: Props) {
   const [range, setRange] = useState<MetricRange>('ONE_HOUR')
+  const [restartOpen, setRestartOpen] = useState(false)
+  const renown = useRenown()
 
   const agentPods = useMemo(
     () => findClintAgentPods(pods ?? [], service.prefix),
@@ -175,7 +221,7 @@ export function AgentDetailDrawer({
         className="top-16 flex h-[calc(100vh-4rem)] w-full flex-col gap-0 p-0 sm:max-w-2xl lg:max-w-3xl"
       >
         <SheetHeader className="border-b px-6 py-4">
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 pr-8">
             <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-lg">
               {agentInfo?.image ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -208,6 +254,59 @@ export function AgentDetailDrawer({
                 )}
               </SheetDescription>
             </div>
+            {canEdit && tenantId && service.prefix && (
+              <AlertDialog open={restartOpen} onOpenChange={setRestartOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={isStopped}
+                    title={isStopped ? 'Restart available once the agent is running.' : undefined}
+                    className="shrink-0 gap-1.5"
+                  >
+                    <RotateCw className="h-3.5 w-3.5" />
+                    Restart
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Restart agent</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Restart <span className="font-mono">{service.prefix}</span>?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AsyncButton
+                      size="sm"
+                      pendingLabel="Restarting…"
+                      onClickAsync={async (e) => {
+                        // Keep the dialog open if the mutation fails so the
+                        // toast lands against the confirm screen rather than
+                        // disappearing into the drawer body.
+                        e.preventDefault()
+                        try {
+                          const token = await getAuthToken(renown)
+                          await restartEnvironmentService(
+                            tenantId,
+                            'CLINT',
+                            service.prefix ?? null,
+                            token,
+                          )
+                          toast.success(`${service.prefix} restarting…`)
+                          setRestartOpen(false)
+                        } catch (err) {
+                          const raw = err instanceof Error ? err.message : String(err)
+                          toast.error(mapRestartError(raw))
+                        }
+                      }}
+                    >
+                      Restart
+                    </AsyncButton>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
+            )}
           </div>
         </SheetHeader>
 
