@@ -14,9 +14,12 @@
  * `useAuthApi` and Vetra's `getAuthToken` helper.
  */
 
-type Renown = {
-  getBearerToken: (opts: { expiresIn: number }) => Promise<string | null>
-} | null | undefined
+type Renown =
+  | {
+      getBearerToken: (opts: { expiresIn: number }) => Promise<string | null>
+    }
+  | null
+  | undefined
 
 type GraphQLResponse<T> = {
   data?: T
