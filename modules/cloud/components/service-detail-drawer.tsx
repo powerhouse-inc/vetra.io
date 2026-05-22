@@ -7,11 +7,16 @@ import {
   FileText,
   Globe,
   RefreshCw,
+  RotateCw,
   Server,
   Zap,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
+import { useRenown } from '@powerhousedao/reactor-browser'
 
+import { AsyncButton } from '@/modules/cloud/components/async-button'
+import { getAuthToken, restartEnvironmentService } from '@/modules/cloud/graphql'
 import { useEnvironmentEvents } from '@/modules/cloud/hooks/use-environment-events'
 import { useEnvironmentLogs } from '@/modules/cloud/hooks/use-environment-logs'
 import { useEnvironmentMetrics } from '@/modules/cloud/hooks/use-environment-metrics'
@@ -27,6 +32,16 @@ import type {
   Pod,
   TenantService,
 } from '@/modules/cloud/types'
+import {
+  AlertDialog,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/modules/shared/components/ui/alert-dialog'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   Sheet,
@@ -110,6 +125,22 @@ type Props = {
   backupScheduleSupported?: boolean
 }
 
+function mapRestartError(message: string): string {
+  if (message.includes('DEPLOYMENT_NOT_FOUND')) {
+    return 'Service not deployed.'
+  }
+  if (message.includes('AMBIGUOUS_SERVICE')) {
+    return 'Could not identify the service.'
+  }
+  if (message.includes('RESTART_NOT_CONFIGURED')) {
+    return "Restart isn't available for this environment."
+  }
+  if (message.includes('FORBIDDEN')) {
+    return 'Only the environment owner can restart.'
+  }
+  return message
+}
+
 export function ServiceDetailDrawer({
   open,
   onClose,
@@ -136,6 +167,8 @@ export function ServiceDetailDrawer({
   const label = SERVICE_LABEL[kind]
   const tenantService = toTenantService(kind)
   const [range, setRange] = useState<MetricRange>('ONE_HOUR')
+  const [restartOpen, setRestartOpen] = useState(false)
+  const renown = useRenown()
 
   const servicePods = useMemo(() => {
     if (!pods) return []
@@ -184,17 +217,76 @@ export function ServiceDetailDrawer({
         className="top-16 flex h-[calc(100vh-4rem)] w-full flex-col gap-0 p-0 sm:max-w-2xl lg:max-w-3xl"
       >
         <SheetHeader className="border-b px-6 py-4">
-          <SheetTitle className="flex items-center gap-2">
-            <Icon className="h-4 w-4" />
-            {label}
-          </SheetTitle>
-          <SheetDescription>
-            {service?.version ? (
-              <span className="font-mono">{service.version}</span>
-            ) : (
-              <span className="italic">version not set</span>
+          <div className="flex items-start justify-between gap-3 pr-8">
+            <div className="flex flex-col gap-1.5">
+              <SheetTitle className="flex items-center gap-2">
+                <Icon className="h-4 w-4" />
+                {label}
+              </SheetTitle>
+              <SheetDescription>
+                {service?.version ? (
+                  <span className="font-mono">{service.version}</span>
+                ) : (
+                  <span className="italic">version not set</span>
+                )}
+              </SheetDescription>
+            </div>
+            {canEdit && service && tenantId && (
+              <AlertDialog open={restartOpen} onOpenChange={setRestartOpen}>
+                <AlertDialogTrigger asChild>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    disabled={isStopped}
+                    title={isStopped ? 'Restart available once the service is running.' : undefined}
+                    className="gap-1.5"
+                  >
+                    <RotateCw className="h-3.5 w-3.5" />
+                    Restart
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Restart service</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      Restart {service.type === 'CLINT' ? service.prefix : service.type}?
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                    <AsyncButton
+                      size="sm"
+                      pendingLabel="Restarting…"
+                      onClickAsync={async (e) => {
+                        // Keep the dialog open if the mutation fails so the
+                        // toast lands against the confirm screen rather than
+                        // disappearing into the drawer body.
+                        e.preventDefault()
+                        try {
+                          const token = await getAuthToken(renown)
+                          await restartEnvironmentService(
+                            tenantId,
+                            service.type,
+                            service.prefix ?? null,
+                            token,
+                          )
+                          const friendly =
+                            service.type === 'CLINT' ? service.prefix : service.type.toLowerCase()
+                          toast.success(`${friendly} restarting…`)
+                          setRestartOpen(false)
+                        } catch (err) {
+                          const raw = err instanceof Error ? err.message : String(err)
+                          toast.error(mapRestartError(raw))
+                        }
+                      }}
+                    >
+                      Restart
+                    </AsyncButton>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             )}
-          </SheetDescription>
+          </div>
         </SheetHeader>
 
         <Tabs
