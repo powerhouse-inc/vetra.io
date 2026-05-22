@@ -167,6 +167,15 @@ export function ServiceDetailDrawer({
   // Auth tab targets the tenant switchboard's reactor-api permissions
   // surface — only meaningful for the SWITCHBOARD service.
   const showAuthTab = kind === 'switchboard'
+  // Resolve the switchboard URL with a chart-shape fallback. The doc-model
+  // `service.url` is populated only after the SET_SERVICE_STATUS reconciler
+  // runs against a live ingress; while we wait for that (or on envs where
+  // the reconciler hasn't caught up), the chart's deterministic ingress
+  // host `switchboard.<subdomain>.vetra.io` is the right URL to call. The
+  // AuthTab still renders the "not yet running" placeholder when neither
+  // is available (truly unprovisioned envs without a subdomain).
+  const switchboardUrl =
+    service?.url ?? (subdomain ? `https://switchboard.${subdomain}.vetra.io` : null)
   const clusterName = tenantId ? `${tenantId}-pg` : null
   const Icon = SERVICE_ICON[kind]
   const label = SERVICE_LABEL[kind]
@@ -436,7 +445,7 @@ export function ServiceDetailDrawer({
             {showAuthTab && (
               <TabsContent value="auth" className="mt-0">
                 <AuthTab
-                  switchboardUrl={service?.url ?? null}
+                  switchboardUrl={switchboardUrl}
                   viewerAddress={viewerAddress}
                   canEdit={canEdit}
                 />
