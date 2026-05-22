@@ -35,6 +35,8 @@ function isOwnedDomain(domain: string | null | undefined): boolean {
 const SERVICE_LABELS: Record<TenantService, string> = {
   CONNECT: 'Powerhouse Connect',
   SWITCHBOARD: 'Powerhouse Switchboard',
+  CLINT: 'Clint',
+  FUSION: 'Fusion',
 }
 
 type Props = {

@@ -39,6 +39,8 @@ const CHANNEL_OPTIONS: { value: AutoUpdateChannel | 'OFF'; label: string; descri
 const SERVICE_LABELS: Record<TenantService, string> = {
   CONNECT: 'Connect',
   SWITCHBOARD: 'Switchboard',
+  CLINT: 'Clint',
+  FUSION: 'Fusion',
 }
 
 /** Human-readable relative time (e.g. "2m ago"). Keeps us off date-fns. */

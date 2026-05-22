@@ -893,7 +893,7 @@ export async function resetEnvironment(
  */
 export async function restartEnvironmentService(
   tenantId: string,
-  service: 'CONNECT' | 'SWITCHBOARD' | 'CLINT' | 'FUSION',
+  service: TenantService,
   agentPrefix: string | null,
   token?: string | null,
 ): Promise<{ ok: boolean; deploymentName: string; message: string | null }> {

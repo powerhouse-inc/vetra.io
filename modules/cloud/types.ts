@@ -164,7 +164,7 @@ export type ArgoSyncStatus = 'SYNCED' | 'OUT_OF_SYNC' | 'UNKNOWN'
 export type ArgoHealthStatus = 'HEALTHY' | 'DEGRADED' | 'PROGRESSING' | 'MISSING' | 'UNKNOWN'
 export type PodPhase = 'RUNNING' | 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'UNKNOWN'
 export type EventType = 'NORMAL' | 'WARNING'
-export type TenantService = 'CONNECT' | 'SWITCHBOARD'
+export type TenantService = 'CONNECT' | 'SWITCHBOARD' | 'CLINT' | 'FUSION'
 export type MetricRange =
   | 'ONE_MIN'
   | 'FIVE_MIN'
