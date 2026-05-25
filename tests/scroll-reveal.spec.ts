@@ -11,7 +11,9 @@ test.describe('Scroll reveal animations', () => {
     await expect(audienceSection).toBeVisible()
 
     // WhyVetra — stagger section
-    const whyVetraSection = page.locator('section').filter({ hasText: 'Yours to run. Yours to own.' })
+    const whyVetraSection = page
+      .locator('section')
+      .filter({ hasText: 'Yours to run. Yours to own.' })
     await whyVetraSection.scrollIntoViewIfNeeded()
     await expect(whyVetraSection).toBeVisible()
 
