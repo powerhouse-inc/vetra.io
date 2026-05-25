@@ -1,6 +1,8 @@
 import { Clock, Database, MessageSquare, Shield, TrendingUp, Zap } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
+import { ScrollReveal } from '@/modules/shared/components/ui/scroll-reveal'
+
 type Benefit = { title: string; description: string; icon: LucideIcon }
 
 const benefits: Benefit[] = [
@@ -42,7 +44,8 @@ const benefits: Benefit[] = [
 
 export function FeaturesTabs() {
   return (
-    <section className="mx-auto max-w-screen-xl px-[74px] pt-8 pb-20">
+    <ScrollReveal>
+      <section className="mx-auto max-w-screen-xl px-[74px] pt-8 pb-20">
       <div className="mb-12 text-center">
         <h2 className="text-foreground mb-2 text-3xl font-bold">The stack, not just the surface</h2>
         <p className="text-foreground-70 mt-2 text-2xl transition-all duration-500 ease-out">
@@ -62,5 +65,6 @@ export function FeaturesTabs() {
         ))}
       </div>
     </section>
+    </ScrollReveal>
   )
 }

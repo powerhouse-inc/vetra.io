@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/modules/shared/components/ui/accordion'
+import { ScrollReveal } from '@/modules/shared/components/ui/scroll-reveal'
 
 const faqs = [
   {
@@ -112,7 +113,8 @@ const rightColumn = faqs.slice(5, 10)
 
 export function FaqSection() {
   return (
-    <section className="mx-auto max-w-screen-xl px-6 py-20">
+    <ScrollReveal>
+      <section className="mx-auto max-w-screen-xl px-6 py-20">
       <h2 className="text-foreground mb-2 text-center text-3xl font-bold">
         Frequently Asked Questions
       </h2>
@@ -146,5 +148,6 @@ export function FaqSection() {
         </Accordion>
       </div>
     </section>
+    </ScrollReveal>
   )
 }

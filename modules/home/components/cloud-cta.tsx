@@ -2,10 +2,12 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 import { Button } from '@/modules/shared/components/ui/button'
+import { ScrollReveal } from '@/modules/shared/components/ui/scroll-reveal'
 
 export function CloudCta() {
   return (
-    <section className="mx-auto max-w-screen-xl px-6 py-20">
+    <ScrollReveal>
+      <section className="mx-auto max-w-screen-xl px-6 py-20">
       <div className="flex flex-col items-center gap-10 md:flex-row">
         <div className="flex-1">
           <h2 className="text-foreground mb-4 text-3xl font-bold">Launch your apps, your way</h2>
@@ -29,5 +31,6 @@ export function CloudCta() {
         </div>
       </div>
     </section>
+    </ScrollReveal>
   )
 }

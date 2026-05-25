@@ -1,10 +1,12 @@
 import { Button } from '@/modules/shared/components/ui/button'
 import { GridBackground } from '@/modules/shared/components/ui/grid-background'
 import { Input } from '@/modules/shared/components/ui/input'
+import { ScrollReveal } from '@/modules/shared/components/ui/scroll-reveal'
 
 export function WaitlistSignup() {
   return (
-    <section className="text-foreground relative">
+    <ScrollReveal>
+      <section className="text-foreground relative">
       {/* Grid background */}
       <div className="pointer-events-none absolute inset-0">
         <GridBackground
@@ -49,5 +51,6 @@ export function WaitlistSignup() {
         </form>
       </div>
     </section>
+    </ScrollReveal>
   )
 }

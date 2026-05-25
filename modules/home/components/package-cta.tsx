@@ -3,10 +3,12 @@ import Link from 'next/link'
 
 import { Button } from '@/modules/shared/components/ui/button'
 import { GridBackground } from '@/modules/shared/components/ui/grid-background'
+import { ScrollReveal } from '@/modules/shared/components/ui/scroll-reveal'
 
 export function PackageCta() {
   return (
-    <section className="mx-auto max-w-screen-xl px-6 py-20">
+    <ScrollReveal>
+      <section className="mx-auto max-w-screen-xl px-6 py-20">
       <div className="relative overflow-hidden rounded-xl p-10 text-center">
         {/* Grid background */}
         <div className="pointer-events-none absolute inset-0">
@@ -50,5 +52,6 @@ export function PackageCta() {
         </div>
       </div>
     </section>
+    </ScrollReveal>
   )
 }
