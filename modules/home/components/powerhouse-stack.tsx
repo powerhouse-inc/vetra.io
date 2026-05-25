@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 
 import { Button } from '@/modules/shared/components/ui/button'
-
+import { ScrollReveal, ScrollRevealItem } from '@/modules/shared/components/ui/scroll-reveal'
 
 const HOST_APPS = [
   {
@@ -83,9 +83,10 @@ function AchraCard({ className = '' }: { className?: string }) {
           className="hidden h-[50px] w-auto self-start dark:block"
         />
         <p className="text-sm leading-relaxed" style={{ color: '#6b7280' }}>
-          A decentralized services & operations platform. Start your organisation, hire operators, find builders and offer your local-first products, platforms and agents to the world.
+          A decentralized services & operations platform. Start your organisation, hire operators,
+          find builders and offer your local-first products, platforms and agents to the world.
         </p>
-        <span className="text-xs font-semibold uppercase tracking-wide text-purple-500">
+        <span className="text-xs font-semibold tracking-wide text-purple-500 uppercase">
           Services Platform
         </span>
         <div className="mt-auto">
@@ -119,9 +120,10 @@ function VetraCard({ className = '' }: { className?: string }) {
           className="hidden h-[50px] w-auto self-start dark:block"
         />
         <p className="text-sm leading-relaxed" style={{ color: '#6b7280' }}>
-          Builder tooling platform for the local-first infrastructure stack of Powerhouse. Packages, cloud environments and rapid application development.
+          Builder tooling platform for the local-first infrastructure stack of Powerhouse. Packages,
+          cloud environments and rapid application development.
         </p>
-        <span className="text-xs font-semibold uppercase tracking-wide text-green-600 dark:text-green-400">
+        <span className="text-xs font-semibold tracking-wide text-green-600 uppercase dark:text-green-400">
           Builder Tooling
         </span>
         <div className="mt-auto">
@@ -140,73 +142,81 @@ function VetraCard({ className = '' }: { className?: string }) {
 
 function LayoutA() {
   return (
-    <section>
-      <div className="mx-auto max-w-screen-xl px-6 py-20">
-        <SectionHeader />
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <AchraCard />
+    <ScrollReveal stagger>
+      <section>
+        <div className="mx-auto max-w-screen-xl px-6 py-20">
+          <SectionHeader />
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+            <ScrollRevealItem>
+              <AchraCard />
+            </ScrollRevealItem>
 
-          {/* Powerhouse centre card */}
-          <div className="relative flex flex-col overflow-hidden rounded-2xl border border-gray-700 bg-gray-900">
-            <div
-              className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
-              style={{ backgroundImage: 'url(/images/home/stack-powerhouse-bg.png)' }}
-            />
-            <div className="relative z-10 flex flex-col gap-6 p-6">
-              <div className="flex flex-col gap-3">
-                <Image
-                  src="/images/home/stack-logo-powerhouse.svg"
-                  alt="Powerhouse"
-                  width={216}
-                  height={25}
-                  className="h-6 w-auto"
+            <ScrollRevealItem>
+              {/* Powerhouse centre card */}
+              <div className="relative flex flex-col overflow-hidden rounded-2xl border border-gray-700 bg-gray-900">
+                <div
+                  className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
+                  style={{ backgroundImage: 'url(/images/home/stack-powerhouse-bg.png)' }}
                 />
-                <p className="text-sm leading-relaxed text-gray-400">
-                  Open-source infrastructure and tooling for distributed
-                  organisations and local first apps, platform & agents.
-                </p>
-              </div>
-
-              {/* Host app rows */}
-              <div className="flex flex-col gap-2">
-                <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
-                  Host Applications
-                </p>
-                {HOST_APPS.map((app) => (
-                  <div
-                    key={app.key}
-                    className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3"
-                  >
-                    <div className="min-w-0">
-                      <Image
-                        src={app.logo}
-                        alt={app.name}
-                        width={app.logoWidth}
-                        height={app.logoHeight}
-                        style={{ height: app.displayHeight, width: 'auto' }}
-                        className="w-auto"
-                      />
-                    </div>
-                    <span className="ml-auto shrink-0 text-xs text-gray-500">{app.role}</span>
+                <div className="relative z-10 flex flex-col gap-6 p-6">
+                  <div className="flex flex-col gap-3">
+                    <Image
+                      src="/images/home/stack-logo-powerhouse.svg"
+                      alt="Powerhouse"
+                      width={216}
+                      height={25}
+                      className="h-6 w-auto"
+                    />
+                    <p className="text-sm leading-relaxed text-gray-400">
+                      Open-source infrastructure and tooling for distributed organisations and local
+                      first apps, platform & agents.
+                    </p>
                   </div>
-                ))}
+
+                  {/* Host app rows */}
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs font-semibold tracking-wide text-gray-500 uppercase">
+                      Host Applications
+                    </p>
+                    {HOST_APPS.map((app) => (
+                      <div
+                        key={app.key}
+                        className="flex items-center gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3"
+                      >
+                        <div className="min-w-0">
+                          <Image
+                            src={app.logo}
+                            alt={app.name}
+                            width={app.logoWidth}
+                            height={app.logoHeight}
+                            style={{ height: app.displayHeight, width: 'auto' }}
+                            className="w-auto"
+                          />
+                        </div>
+                        <span className="ml-auto shrink-0 text-xs text-gray-500">{app.role}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <Button
+                    asChild
+                    variant="outline"
+                    size="sm"
+                    className="self-start border-white/20 bg-transparent text-white hover:bg-white/10"
+                  >
+                    <Link href="https://powerhouse.io">Visit Powerhouse ↗</Link>
+                  </Button>
+                </div>
               </div>
+            </ScrollRevealItem>
 
-              <Button
-                asChild
-                variant="outline"
-                size="sm"
-                className="self-start border-white/20 bg-transparent text-white hover:bg-white/10"
-              >
-                <Link href="https://powerhouse.io">Visit Powerhouse ↗</Link>
-              </Button>
-            </div>
+            <ScrollRevealItem>
+              <VetraCard />
+            </ScrollRevealItem>
           </div>
-
-          <VetraCard />
         </div>
-      </div>
-    </section>
+      </section>
+    </ScrollReveal>
   )
 }
 
