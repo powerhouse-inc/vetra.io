@@ -33,14 +33,16 @@ export function WhyVetra() {
   return (
     <ScrollReveal stagger>
       <section className="mx-auto max-w-screen-xl px-6 py-20">
-        <div className="mb-12 text-center">
-          <h2 className="text-foreground mb-4 text-3xl font-bold">Yours to run. Yours to own.</h2>
-          <p className="text-foreground-70 mt-2 text-2xl">
-            Most AI builders generate code and host it for you.
-            <br />
-            Vetra gives you the platform itself.
-          </p>
-        </div>
+        <ScrollRevealItem>
+          <div className="mb-12 text-center">
+            <h2 className="text-foreground mb-4 text-3xl font-bold">Yours to run. Yours to own.</h2>
+            <p className="text-foreground-70 mt-2 text-2xl">
+              Most AI builders generate code and host it for you.
+              <br />
+              Vetra gives you the platform itself.
+            </p>
+          </div>
+        </ScrollRevealItem>
 
         {/* Three differentiator cards */}
         <div className="mb-16 grid gap-6 lg:grid-cols-3">
@@ -55,44 +57,46 @@ export function WhyVetra() {
         </div>
 
         {/* Comparison table */}
-        <div className="border-border overflow-hidden rounded-xl border">
-          <table className="w-full">
-            <thead>
-              <tr className="bg-accent/50">
-                <th className="text-foreground px-6 py-4 text-left text-sm font-semibold">
-                  Feature
-                </th>
-                <th className="text-foreground-70 px-6 py-4 text-center text-sm font-semibold">
-                  Other AI builders
-                </th>
-                <th className="text-foreground px-6 py-4 text-center text-sm font-semibold">
-                  Vetra
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {comparison.map((row, i) => (
-                <tr key={row.feature} className={i % 2 === 0 ? 'bg-background' : 'bg-accent/20'}>
-                  <td className="text-foreground px-6 py-3.5 text-sm">{row.feature}</td>
-                  <td className="px-6 py-3.5 text-center">
-                    {row.others ? (
-                      <Check className="text-primary mx-auto h-4 w-4" />
-                    ) : (
-                      <X className="text-foreground-30 mx-auto h-4 w-4" />
-                    )}
-                  </td>
-                  <td className="px-6 py-3.5 text-center">
-                    {row.vetra ? (
-                      <Check className="text-primary mx-auto h-4 w-4" />
-                    ) : (
-                      <X className="text-foreground-30 mx-auto h-4 w-4" />
-                    )}
-                  </td>
+        <ScrollRevealItem>
+          <div className="border-border overflow-hidden rounded-xl border">
+            <table className="w-full">
+              <thead>
+                <tr className="bg-accent/50">
+                  <th className="text-foreground px-6 py-4 text-left text-sm font-semibold">
+                    Feature
+                  </th>
+                  <th className="text-foreground-70 px-6 py-4 text-center text-sm font-semibold">
+                    Other AI builders
+                  </th>
+                  <th className="text-foreground px-6 py-4 text-center text-sm font-semibold">
+                    Vetra
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {comparison.map((row, i) => (
+                  <tr key={row.feature} className={i % 2 === 0 ? 'bg-background' : 'bg-accent/20'}>
+                    <td className="text-foreground px-6 py-3.5 text-sm">{row.feature}</td>
+                    <td className="px-6 py-3.5 text-center">
+                      {row.others ? (
+                        <Check className="text-primary mx-auto h-4 w-4" />
+                      ) : (
+                        <X className="text-foreground-30 mx-auto h-4 w-4" />
+                      )}
+                    </td>
+                    <td className="px-6 py-3.5 text-center">
+                      {row.vetra ? (
+                        <Check className="text-primary mx-auto h-4 w-4" />
+                      ) : (
+                        <X className="text-foreground-30 mx-auto h-4 w-4" />
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </ScrollRevealItem>
       </section>
     </ScrollReveal>
   )

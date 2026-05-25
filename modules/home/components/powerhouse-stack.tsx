@@ -15,9 +15,6 @@ const HOST_APPS = [
     logoWidth: 267,
     logoHeight: 50,
     displayHeight: 16,
-    color: 'text-purple-500 dark:text-purple-400',
-    bg: 'bg-purple-50 dark:bg-purple-950/40',
-    border: 'border-purple-200 dark:border-purple-800',
   },
   {
     key: 'switchboard',
@@ -27,9 +24,6 @@ const HOST_APPS = [
     logoWidth: 355,
     logoHeight: 40,
     displayHeight: 13,
-    color: 'text-sky-500 dark:text-sky-400',
-    bg: 'bg-sky-50 dark:bg-sky-950/40',
-    border: 'border-sky-200 dark:border-sky-800',
   },
   {
     key: 'renown',
@@ -39,9 +33,6 @@ const HOST_APPS = [
     logoWidth: 219,
     logoHeight: 68,
     displayHeight: 22,
-    color: 'text-cyan-500 dark:text-cyan-400',
-    bg: 'bg-cyan-50 dark:bg-cyan-950/40',
-    border: 'border-cyan-200 dark:border-cyan-800',
   },
 ] as const
 
