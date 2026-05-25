@@ -46,25 +46,27 @@ export function FeaturesTabs() {
   return (
     <ScrollReveal>
       <section className="mx-auto max-w-screen-xl px-[74px] pt-8 pb-20">
-      <div className="mb-12 text-center">
-        <h2 className="text-foreground mb-2 text-3xl font-bold">The stack, not just the surface</h2>
-        <p className="text-foreground-70 mt-2 text-2xl transition-all duration-500 ease-out">
-          Powerful software that anyone on your team can use
-        </p>
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        {benefits.map((benefit) => (
-          <div
-            key={benefit.title}
-            className="border-border hover:bg-accent rounded-xl border p-6 transition-colors"
-          >
-            <benefit.icon className="text-primary mb-2 h-6 w-6" />
-            <h3 className="text-foreground mb-2 text-base font-bold">{benefit.title}</h3>
-            <p className="text-foreground-70 text-sm leading-relaxed">{benefit.description}</p>
-          </div>
-        ))}
-      </div>
-    </section>
+        <div className="mb-12 text-center">
+          <h2 className="text-foreground mb-2 text-3xl font-bold">
+            The stack, not just the surface
+          </h2>
+          <p className="text-foreground-70 mt-2 text-2xl transition-all duration-500 ease-out">
+            Powerful software that anyone on your team can use
+          </p>
+        </div>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {benefits.map((benefit) => (
+            <div
+              key={benefit.title}
+              className="border-border hover:bg-accent rounded-xl border p-6 transition-colors"
+            >
+              <benefit.icon className="text-primary mb-2 h-6 w-6" />
+              <h3 className="text-foreground mb-2 text-base font-bold">{benefit.title}</h3>
+              <p className="text-foreground-70 text-sm leading-relaxed">{benefit.description}</p>
+            </div>
+          ))}
+        </div>
+      </section>
     </ScrollReveal>
   )
 }
