@@ -1,6 +1,7 @@
 import Image from 'next/image'
 
 import { DotLottiePlayer } from '@/shared/components/ui/dotlottie-player'
+import { ScrollReveal, ScrollRevealItem } from '@/modules/shared/components/ui/scroll-reveal'
 
 const features = [
   {
@@ -37,39 +38,42 @@ const features = [
 
 export function FeatureShowcase() {
   return (
-    <section className="mx-auto max-w-screen-xl px-6 py-20">
-      <h2 className="text-foreground mb-16 text-center text-3xl font-bold">
-        See what your team can do
-      </h2>
+    <ScrollReveal stagger>
+      <section className="mx-auto max-w-screen-xl px-6 py-20">
+        <h2 className="text-foreground mb-16 text-center text-3xl font-bold">
+          See what your team can do
+        </h2>
 
-      <div className="space-y-20">
-        {features.map((feature, i) => (
-          <div
-            key={feature.title}
-            className={`flex flex-col items-center gap-10 md:flex-row ${
-              i % 2 === 0 ? 'md:flex-row-reverse' : ''
-            }`}
-          >
-            <div className="flex-1">
-              <h3 className="text-foreground mb-4 text-2xl font-bold">{feature.title}</h3>
-              <p className="text-foreground-70 leading-relaxed">{feature.description}</p>
-            </div>
-            <div className="flex-1 overflow-hidden rounded-xl">
-              {'lottie' in feature && feature.lottie ? (
-                <DotLottiePlayer src={feature.lottie} className="h-[400px] w-full" />
-              ) : feature.image ? (
-                <Image
-                  src={feature.image}
-                  alt={feature.title}
-                  width={600}
-                  height={400}
-                  className="h-auto w-full object-cover"
-                />
-              ) : null}
-            </div>
-          </div>
-        ))}
-      </div>
-    </section>
+        <div className="space-y-20">
+          {features.map((feature, i) => (
+            <ScrollRevealItem key={feature.title}>
+              <div
+                className={`flex flex-col items-center gap-10 md:flex-row ${
+                  i % 2 === 0 ? 'md:flex-row-reverse' : ''
+                }`}
+              >
+                <div className="flex-1">
+                  <h3 className="text-foreground mb-4 text-2xl font-bold">{feature.title}</h3>
+                  <p className="text-foreground-70 leading-relaxed">{feature.description}</p>
+                </div>
+                <div className="flex-1 overflow-hidden rounded-xl">
+                  {'lottie' in feature && feature.lottie ? (
+                    <DotLottiePlayer src={feature.lottie} className="h-[400px] w-full" />
+                  ) : feature.image ? (
+                    <Image
+                      src={feature.image}
+                      alt={feature.title}
+                      width={600}
+                      height={400}
+                      className="h-auto w-full object-cover"
+                    />
+                  ) : null}
+                </div>
+              </div>
+            </ScrollRevealItem>
+          ))}
+        </div>
+      </section>
+    </ScrollReveal>
   )
 }
