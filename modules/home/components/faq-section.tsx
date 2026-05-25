@@ -115,39 +115,39 @@ export function FaqSection() {
   return (
     <ScrollReveal>
       <section className="mx-auto max-w-screen-xl px-6 py-20">
-      <h2 className="text-foreground mb-2 text-center text-3xl font-bold">
-        Frequently Asked Questions
-      </h2>
-      <p className="text-foreground-70 mb-12 text-center">Everything you need to know.</p>
+        <h2 className="text-foreground mb-2 text-center text-3xl font-bold">
+          Frequently Asked Questions
+        </h2>
+        <p className="text-foreground-70 mb-12 text-center">Everything you need to know.</p>
 
-      <div className="grid gap-12 lg:grid-cols-2">
-        <Accordion type="multiple">
-          {leftColumn.map((faq, i) => (
-            <AccordionItem
-              key={i}
-              value={`left-${i}`}
-              className="border-border/30 border-b-[0.5px] py-2 last:border-b-0"
-            >
-              <AccordionTrigger className="py-6 text-base">{faq.question}</AccordionTrigger>
-              <AccordionContent className="pb-6">{faq.answer}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <div className="grid gap-12 lg:grid-cols-2">
+          <Accordion type="multiple">
+            {leftColumn.map((faq, i) => (
+              <AccordionItem
+                key={i}
+                value={`left-${i}`}
+                className="border-border/30 border-b-[0.5px] py-2 last:border-b-0"
+              >
+                <AccordionTrigger className="py-6 text-base">{faq.question}</AccordionTrigger>
+                <AccordionContent className="pb-6">{faq.answer}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
 
-        <Accordion type="multiple">
-          {rightColumn.map((faq, i) => (
-            <AccordionItem
-              key={i}
-              value={`right-${i}`}
-              className="border-border/30 border-b-[0.5px] py-2 last:border-b-0"
-            >
-              <AccordionTrigger className="py-6 text-base">{faq.question}</AccordionTrigger>
-              <AccordionContent className="pb-6">{faq.answer}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </div>
-    </section>
+          <Accordion type="multiple">
+            {rightColumn.map((faq, i) => (
+              <AccordionItem
+                key={i}
+                value={`right-${i}`}
+                className="border-border/30 border-b-[0.5px] py-2 last:border-b-0"
+              >
+                <AccordionTrigger className="py-6 text-base">{faq.question}</AccordionTrigger>
+                <AccordionContent className="pb-6">{faq.answer}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
     </ScrollReveal>
   )
 }

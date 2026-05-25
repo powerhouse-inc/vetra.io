@@ -11,15 +11,15 @@ Add on-scroll fade-up reveal animations to all sections of the Vetra landing pag
 
 Subtle & Professional — barely noticed but missed when removed.
 
-| Parameter | Value |
-|---|---|
-| Initial opacity | 0 |
-| Final opacity | 1 |
-| Y offset (initial) | 20px |
-| Duration | 400ms |
-| Easing | easeOut |
-| Stagger delay | 80ms between children |
-| Viewport trigger | `once: true`, `margin: -50px` |
+| Parameter          | Value                         |
+| ------------------ | ----------------------------- |
+| Initial opacity    | 0                             |
+| Final opacity      | 1                             |
+| Y offset (initial) | 20px                          |
+| Duration           | 400ms                         |
+| Easing             | easeOut                       |
+| Stagger delay      | 80ms between children         |
+| Viewport trigger   | `once: true`, `margin: -50px` |
 
 ## Shared Component
 
@@ -32,6 +32,7 @@ Two exports:
 Wraps any section element. Default behaviour: animates the whole block as one unit (fade-up). With the `stagger` prop: becomes a stagger container — triggers children to cascade in with 80ms delay between each. Must be a `'use client'` component; page sections remain server components.
 
 **Props:**
+
 - `children: React.ReactNode`
 - `className?: string`
 - `stagger?: boolean` — enables stagger container mode (default: false)
@@ -42,28 +43,30 @@ A `motion.div` that picks up stagger variants from a `<ScrollReveal stagger>` pa
 
 ## Section Treatment
 
-| Section | Treatment | Reason |
-|---|---|---|
-| TrustBar | `<ScrollReveal>` whole | Simple logo row |
-| FeaturesTabs | `<ScrollReveal>` whole | Tab UI, too interactive to stagger |
-| WhyVetra | `<ScrollReveal stagger>` | 3 differentiator cards in grid |
-| AudienceCards | `<ScrollReveal stagger>` | 3 audience cards in grid |
-| FeatureShowcase | `<ScrollReveal stagger>` | 5 feature items |
-| PackageCta | `<ScrollReveal>` whole | Single CTA block |
-| CloudCta | `<ScrollReveal>` whole | Single CTA block |
+| Section         | Treatment                | Reason                               |
+| --------------- | ------------------------ | ------------------------------------ |
+| TrustBar        | `<ScrollReveal>` whole   | Simple logo row                      |
+| FeaturesTabs    | `<ScrollReveal>` whole   | Tab UI, too interactive to stagger   |
+| WhyVetra        | `<ScrollReveal stagger>` | 3 differentiator cards in grid       |
+| AudienceCards   | `<ScrollReveal stagger>` | 3 audience cards in grid             |
+| FeatureShowcase | `<ScrollReveal stagger>` | 5 feature items                      |
+| PackageCta      | `<ScrollReveal>` whole   | Single CTA block                     |
+| CloudCta        | `<ScrollReveal>` whole   | Single CTA block                     |
 | PowerhouseStack | `<ScrollReveal stagger>` | 3 columns (Achra, Powerhouse, Vetra) |
-| SpecToScale | `<ScrollReveal>` whole | No repeated card pattern |
-| WaitlistSignup | `<ScrollReveal>` whole | Single form block |
-| FaqSection | `<ScrollReveal>` whole | Accordion, not cards |
+| SpecToScale     | `<ScrollReveal>` whole   | No repeated card pattern             |
+| WaitlistSignup  | `<ScrollReveal>` whole   | Single form block                    |
+| FaqSection      | `<ScrollReveal>` whole   | Accordion, not cards                 |
 
 Hero is excluded — it is above the fold and always visible on load.
 
 ## File Changes
 
 **New file (1):**
+
 - `modules/shared/components/ui/scroll-reveal.tsx`
 
 **Whole-section wrappers (7 files):**
+
 - `modules/home/components/trust-bar.tsx`
 - `modules/home/components/features-tabs.tsx`
 - `modules/home/components/package-cta.tsx`
@@ -73,6 +76,7 @@ Hero is excluded — it is above the fold and always visible on load.
 - `modules/home/components/faq-section.tsx`
 
 **Stagger wrappers (4 files):**
+
 - `modules/home/components/why-vetra.tsx` — wrap each item in `differentiators.map()`
 - `modules/home/components/audience-cards.tsx` — wrap each item in `audiences.map()`
 - `modules/home/components/feature-showcase.tsx` — wrap each item in `features.map()`

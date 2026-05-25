@@ -12,27 +12,28 @@
 
 ## File Map
 
-| File | Action | Purpose |
-|---|---|---|
-| `modules/shared/components/ui/scroll-reveal.tsx` | **Create** | `ScrollReveal` + `ScrollRevealItem` components |
-| `modules/home/components/trust-bar.tsx` | Modify | Wrap section in `<ScrollReveal>` |
-| `modules/home/components/features-tabs.tsx` | Modify | Wrap section in `<ScrollReveal>` |
-| `modules/home/components/package-cta.tsx` | Modify | Wrap section in `<ScrollReveal>` |
-| `modules/home/components/cloud-cta.tsx` | Modify | Wrap section in `<ScrollReveal>` |
-| `modules/home/components/spec-to-scale.tsx` | Modify | Wrap section in `<ScrollReveal>` |
-| `modules/home/components/waitlist-signup.tsx` | Modify | Wrap section in `<ScrollReveal>` |
-| `modules/home/components/faq-section.tsx` | Modify | Wrap section in `<ScrollReveal>` |
-| `modules/home/components/why-vetra.tsx` | Modify | Stagger wrapper + `ScrollRevealItem` on 3 cards |
-| `modules/home/components/audience-cards.tsx` | Modify | Stagger wrapper + `ScrollRevealItem` on 3 cards |
-| `modules/home/components/feature-showcase.tsx` | Modify | Stagger wrapper + `ScrollRevealItem` on 5 features |
-| `modules/home/components/powerhouse-stack.tsx` | Modify | Stagger wrapper + `ScrollRevealItem` on 3 columns |
-| `tests/scroll-reveal.spec.ts` | **Create** | Playwright smoke test — sections visible after scroll |
+| File                                             | Action     | Purpose                                               |
+| ------------------------------------------------ | ---------- | ----------------------------------------------------- |
+| `modules/shared/components/ui/scroll-reveal.tsx` | **Create** | `ScrollReveal` + `ScrollRevealItem` components        |
+| `modules/home/components/trust-bar.tsx`          | Modify     | Wrap section in `<ScrollReveal>`                      |
+| `modules/home/components/features-tabs.tsx`      | Modify     | Wrap section in `<ScrollReveal>`                      |
+| `modules/home/components/package-cta.tsx`        | Modify     | Wrap section in `<ScrollReveal>`                      |
+| `modules/home/components/cloud-cta.tsx`          | Modify     | Wrap section in `<ScrollReveal>`                      |
+| `modules/home/components/spec-to-scale.tsx`      | Modify     | Wrap section in `<ScrollReveal>`                      |
+| `modules/home/components/waitlist-signup.tsx`    | Modify     | Wrap section in `<ScrollReveal>`                      |
+| `modules/home/components/faq-section.tsx`        | Modify     | Wrap section in `<ScrollReveal>`                      |
+| `modules/home/components/why-vetra.tsx`          | Modify     | Stagger wrapper + `ScrollRevealItem` on 3 cards       |
+| `modules/home/components/audience-cards.tsx`     | Modify     | Stagger wrapper + `ScrollRevealItem` on 3 cards       |
+| `modules/home/components/feature-showcase.tsx`   | Modify     | Stagger wrapper + `ScrollRevealItem` on 5 features    |
+| `modules/home/components/powerhouse-stack.tsx`   | Modify     | Stagger wrapper + `ScrollRevealItem` on 3 columns     |
+| `tests/scroll-reveal.spec.ts`                    | **Create** | Playwright smoke test — sections visible after scroll |
 
 ---
 
 ## Task 1: Create the `ScrollReveal` component
 
 **Files:**
+
 - Create: `modules/shared/components/ui/scroll-reveal.tsx`
 
 - [ ] **Step 1: Create the file**
@@ -107,6 +108,7 @@ git commit -m "feat: add ScrollReveal and ScrollRevealItem components"
 ## Task 2: Apply whole-section wrapper to 7 simple sections
 
 **Files:**
+
 - Modify: `modules/home/components/trust-bar.tsx`
 - Modify: `modules/home/components/features-tabs.tsx`
 - Modify: `modules/home/components/package-cta.tsx`
@@ -205,9 +207,7 @@ import { ScrollReveal } from '@/modules/shared/components/ui/scroll-reveal'
 // inside WaitlistSignup():
 return (
   <ScrollReveal>
-    <section className="text-foreground relative">
-      {/* existing content unchanged */}
-    </section>
+    <section className="text-foreground relative">{/* existing content unchanged */}</section>
   </ScrollReveal>
 )
 ```
@@ -255,6 +255,7 @@ git commit -m "feat(animations): add scroll reveal to whole-section components"
 ## Task 3: Stagger — `WhyVetra` (3 differentiator cards)
 
 **Files:**
+
 - Modify: `modules/home/components/why-vetra.tsx`
 
 - [ ] **Step 1: Add imports**
@@ -296,9 +297,15 @@ export function WhyVetra() {
           <table className="w-full">
             <thead>
               <tr className="bg-accent/50">
-                <th className="text-foreground px-6 py-4 text-left text-sm font-semibold">Feature</th>
-                <th className="text-foreground-70 px-6 py-4 text-center text-sm font-semibold">Other AI builders</th>
-                <th className="text-foreground px-6 py-4 text-center text-sm font-semibold">Vetra</th>
+                <th className="text-foreground px-6 py-4 text-left text-sm font-semibold">
+                  Feature
+                </th>
+                <th className="text-foreground-70 px-6 py-4 text-center text-sm font-semibold">
+                  Other AI builders
+                </th>
+                <th className="text-foreground px-6 py-4 text-center text-sm font-semibold">
+                  Vetra
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -352,6 +359,7 @@ git commit -m "feat(animations): stagger scroll reveal on WhyVetra cards"
 ## Task 4: Stagger — `AudienceCards` (3 cards)
 
 **Files:**
+
 - Modify: `modules/home/components/audience-cards.tsx`
 
 - [ ] **Step 1: Add imports**
@@ -383,7 +391,9 @@ export function AudienceCards() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-0">
-                  <p className="text-foreground-70 text-sm leading-relaxed">{audience.description}</p>
+                  <p className="text-foreground-70 text-sm leading-relaxed">
+                    {audience.description}
+                  </p>
                 </CardContent>
               </Card>
             </ScrollRevealItem>
@@ -415,6 +425,7 @@ git commit -m "feat(animations): stagger scroll reveal on AudienceCards"
 ## Task 5: Stagger — `FeatureShowcase` (5 features)
 
 **Files:**
+
 - Modify: `modules/home/components/feature-showcase.tsx`
 
 - [ ] **Step 1: Add imports**
@@ -489,6 +500,7 @@ git commit -m "feat(animations): stagger scroll reveal on FeatureShowcase"
 ## Task 6: Stagger — `PowerhouseStack` (3 columns)
 
 **Files:**
+
 - Modify: `modules/home/components/powerhouse-stack.tsx`
 
 The three stagger items are `<AchraCard />`, the Powerhouse centre card `<div>`, and `<VetraCard />`. Wrap each in `<ScrollRevealItem>` inside the grid, and wrap the `<section>` in `<ScrollReveal stagger>`.
@@ -553,6 +565,7 @@ git commit -m "feat(animations): stagger scroll reveal on PowerhouseStack column
 ## Task 7: Playwright smoke test
 
 **Files:**
+
 - Create: `tests/scroll-reveal.spec.ts`
 
 - [ ] **Step 1: Start the dev server** (leave running in a separate terminal)
