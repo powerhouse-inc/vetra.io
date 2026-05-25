@@ -1,5 +1,6 @@
 import { AnimatedVetraLogo } from '@/modules/shared/components/ui/animated-vetra-logo'
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/shared/components/ui/card'
+import { ScrollReveal, ScrollRevealItem } from '@/modules/shared/components/ui/scroll-reveal'
 
 const audiences = [
   {
@@ -24,27 +25,33 @@ const audiences = [
 
 export function AudienceCards() {
   return (
-    <section className="mx-auto max-w-screen-xl px-6 py-20">
-      <h2 className="text-foreground mb-4 text-center text-3xl font-bold">Who it&apos;s for</h2>
-      <p className="text-foreground-70 mt-2 mb-8 text-center text-2xl transition-all duration-500 ease-out">
-        Vetra works for everyone — no technical background needed.
-      </p>
+    <ScrollReveal stagger>
+      <section className="mx-auto max-w-screen-xl px-6 py-20">
+        <h2 className="text-foreground mb-4 text-center text-3xl font-bold">Who it&apos;s for</h2>
+        <p className="text-foreground-70 mt-2 mb-8 text-center text-2xl transition-all duration-500 ease-out">
+          Vetra works for everyone — no technical background needed.
+        </p>
 
-      <div className="grid gap-6 lg:grid-cols-3">
-        {audiences.map((audience) => (
-          <Card key={audience.title}>
-            <CardHeader className="p-4">
-              <div className="flex items-center gap-3">
-                <AnimatedVetraLogo size={32} variant={audience.animation} className="h-8 w-8" />
-                <CardTitle>{audience.title}</CardTitle>
-              </div>
-            </CardHeader>
-            <CardContent className="p-4 pt-0">
-              <p className="text-foreground-70 text-sm leading-relaxed">{audience.description}</p>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </section>
+        <div className="grid gap-6 lg:grid-cols-3">
+          {audiences.map((audience) => (
+            <ScrollRevealItem key={audience.title}>
+              <Card>
+                <CardHeader className="p-4">
+                  <div className="flex items-center gap-3">
+                    <AnimatedVetraLogo size={32} variant={audience.animation} className="h-8 w-8" />
+                    <CardTitle>{audience.title}</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-4 pt-0">
+                  <p className="text-foreground-70 text-sm leading-relaxed">
+                    {audience.description}
+                  </p>
+                </CardContent>
+              </Card>
+            </ScrollRevealItem>
+          ))}
+        </div>
+      </section>
+    </ScrollReveal>
   )
 }
