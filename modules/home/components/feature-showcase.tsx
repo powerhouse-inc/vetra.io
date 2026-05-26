@@ -25,7 +25,7 @@ const features = [
   {
     title: 'Grows with your organization',
     description:
-      'Start small and scale to millions of users without switching platforms or rewriting anything. Vetra handles the hard parts automatically.',
+      'Start small and scale to millions of users without switching platforms or rewriting anything. Vetra Cloud handles the hard parts automatically.',
     image: '/images/home/feature-collaborative.svg',
   },
   {

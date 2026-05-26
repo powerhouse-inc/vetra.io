@@ -6,19 +6,19 @@ const audiences = [
   {
     title: 'Business teams',
     description:
-      'Get your processes running on software your team actually enjoys using. No technical setup required.',
+      'Get your processes running on custom software your team actually enjoys using. You want a feature? You add it. No technical setup required.',
     animation: 'scale' as const,
   },
   {
     title: 'Managed service providers',
     description:
-      'Deploy Vetra for your clients and offer ongoing support. Get paid for keeping their systems running smoothly.',
+      'Deploy sovereign instances of the infrastructure for your clients and offer ongoing support. Get paid for keeping their systems running smoothly.',
     animation: 'movement' as const,
   },
   {
     title: 'Data & AI teams',
     description:
-      'Connect your AI to live, structured data from across your organization. No messy integrations.',
+      'Bring your own AI models & keys to Vetra to work with structured, AI ready data from across your organization. No messy integrations.',
     animation: 'threeStep' as const,
   },
 ]

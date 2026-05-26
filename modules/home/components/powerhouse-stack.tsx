@@ -138,13 +138,13 @@ function LayoutA() {
         <div className="mx-auto max-w-screen-xl px-6 py-20">
           <SectionHeader />
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            <ScrollRevealItem>
-              <AchraCard />
+            <ScrollRevealItem className="h-full">
+              <AchraCard className="h-full" />
             </ScrollRevealItem>
 
-            <ScrollRevealItem>
+            <ScrollRevealItem className="h-full">
               {/* Powerhouse centre card */}
-              <div className="relative flex flex-col overflow-hidden rounded-2xl border border-gray-700 bg-gray-900">
+              <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-gray-700 bg-gray-900">
                 <div
                   className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-40"
                   style={{ backgroundImage: 'url(/images/home/stack-powerhouse-bg.png)' }}
@@ -201,8 +201,8 @@ function LayoutA() {
               </div>
             </ScrollRevealItem>
 
-            <ScrollRevealItem>
-              <VetraCard />
+            <ScrollRevealItem className="h-full">
+              <VetraCard className="h-full" />
             </ScrollRevealItem>
           </div>
         </div>

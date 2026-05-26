@@ -7,11 +7,11 @@ import { AnimatedVetraLogo } from '@/modules/shared/components/ui/animated-vetra
 
 const devFeatures = [
   ['100% open source (Copyleft)', 'Data instantly as GraphQL API'],
-  ['TypeScript + React SDK', 'Self-hostable'],
+  ['TypeScript + React SDK', 'Self-hostable, Cloud, or Hybrid'],
   ['Real-time event streaming', 'Offline-first sync'],
   ['Git-like version history', 'Docker + Kubernetes'],
-  ['Blockchain / Web3 support', 'Role-based permissions'],
-  ['REST + WebSocket support', 'Custom extensions'],
+  ['Blockchain & Web3 support', 'Role-based permissions'],
+  ['REST + WebSocket support', 'Specification Driven AI'],
 ]
 
 const chatMessages = [
@@ -129,7 +129,7 @@ export function Hero() {
           >
             <div className="border-border bg-accent/40 rounded-xl border p-5">
               <p className="text-foreground-70 mb-3 text-center text-xs font-semibold tracking-wider uppercase">
-                Under the hood
+                Vetra is built to scale.
               </p>
               <div className="grid grid-cols-2 gap-x-8 gap-y-2">
                 {devFeatures.map(([left, right], i) => (

@@ -40,7 +40,7 @@ const faqs = [
   {
     question: 'Is Vetra open source?',
     answer:
-      'Yes, Vetra is fully open source. That means you can inspect every line of code, modify it, and run it on your own servers. Unlike most AI tools, the platform itself is open — not just the apps it creates.',
+      'Yes, Vetra is fully open source under a copyleft license. Copyleft means that if you modify the code and distribute it, you must share those changes under the same open terms — keeping the ecosystem open for everyone. In practice this means you can inspect every line of code, modify it, and run it on your own servers freely. Unlike most AI tools, the platform itself is open — not just the apps it creates.',
   },
   {
     question: 'How can I get help?',
