@@ -4,6 +4,7 @@ import {
   Activity,
   BarChart2,
   Database,
+  FileJson2,
   FileText,
   Globe,
   Lock,
@@ -57,6 +58,7 @@ import { DatabaseTabBody } from './database-tab-body'
 import { EventTimeline } from './event-timeline'
 import { LogViewer } from './log-viewer'
 import { MetricCard } from './metric-card'
+import { RuntimeConfigDrawer } from './runtime-config-drawer'
 import { AuthTab } from './switchboard-auth/auth-tab'
 import { TimeRangePicker } from './time-range-picker'
 
@@ -182,6 +184,10 @@ export function ServiceDetailDrawer({
   const tenantService = toTenantService(kind)
   const [range, setRange] = useState<MetricRange>('ONE_HOUR')
   const [restartOpen, setRestartOpen] = useState(false)
+  const [runtimeConfigOpen, setRuntimeConfigOpen] = useState(false)
+  // Runtime-config editor is currently a CONNECT-only affordance — that's the
+  // service whose powerhouse.config.json this UI edits.
+  const showRuntimeConfig = kind === 'connect'
   const renown = useRenown()
   const auth = useRenownAuth()
   const viewerAddress = auth.status === 'authorized' ? (auth.address ?? null) : null
@@ -227,6 +233,7 @@ export function ServiceDetailDrawer({
   )
 
   return (
+    <>
     <Sheet open={open} onOpenChange={(o) => !o && onClose()}>
       <SheetContent
         side="right"
@@ -247,8 +254,21 @@ export function ServiceDetailDrawer({
                 )}
               </SheetDescription>
             </div>
-            {canEdit && service && tenantId && (
-              <AlertDialog open={restartOpen} onOpenChange={setRestartOpen}>
+            <div className="flex items-center gap-2">
+              {showRuntimeConfig && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setRuntimeConfigOpen(true)}
+                  className="gap-1.5"
+                  title="Edit the deployed Connect's powerhouse.config.json"
+                >
+                  <FileJson2 className="h-3.5 w-3.5" />
+                  Runtime config
+                </Button>
+              )}
+              {canEdit && service && tenantId && (
+                <AlertDialog open={restartOpen} onOpenChange={setRestartOpen}>
                 <AlertDialogTrigger asChild>
                   <Button
                     size="sm"
@@ -301,7 +321,8 @@ export function ServiceDetailDrawer({
                   </AlertDialogFooter>
                 </AlertDialogContent>
               </AlertDialog>
-            )}
+              )}
+            </div>
           </div>
         </SheetHeader>
 
@@ -455,5 +476,15 @@ export function ServiceDetailDrawer({
         </Tabs>
       </SheetContent>
     </Sheet>
+    {showRuntimeConfig && (
+      <RuntimeConfigDrawer
+        open={runtimeConfigOpen}
+        onOpenChange={setRuntimeConfigOpen}
+        tenantId={tenantId}
+        envLabel={subdomain}
+        readOnly={!canEdit}
+      />
+    )}
+    </>
   )
 }
