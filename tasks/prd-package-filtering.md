@@ -23,9 +23,11 @@ This feature introduces two complementary controls:
 ## User Stories
 
 ### US-001: Recommended badge on package cards
+
 **Description:** As a visitor, I want to see which packages are Powerhouse-recommended at a glance so I can trust the quality of what I'm installing.
 
 **Acceptance Criteria:**
+
 - [ ] Packages whose name appears in `PACKAGES_RECOMMENDED` show a "Powerhouse Recommended" badge on their card.
 - [ ] The badge is visually distinct (e.g., a small icon or label, consistent with the design system).
 - [ ] Packages not in the list show no badge and are otherwise unchanged.
@@ -34,9 +36,11 @@ This feature introduces two complementary controls:
 - [ ] Verify badge renders correctly in browser.
 
 ### US-002: Default "Recommended only" view on the packages page
+
 **Description:** As a visitor landing on the packages page, I want to see only high-quality packages by default so I'm not overwhelmed by incomplete or experimental entries.
 
 **Acceptance Criteria:**
+
 - [ ] On page load (no URL params set), only packages in `PACKAGES_RECOMMENDED` are shown.
 - [ ] A clearly labeled toggle (e.g., "Show all packages") is visible above the package grid.
 - [ ] Activating the toggle shows all packages in the registry, not just recommended ones.
@@ -47,9 +51,11 @@ This feature introduces two complementary controls:
 - [ ] Verify toggle behavior in browser.
 
 ### US-003: Environment variable to define the recommended list
+
 **Description:** As a Vetra team member, I want to control which packages are recommended via a server-side environment variable so I can update the curated list without a code change.
 
 **Acceptance Criteria:**
+
 - [ ] A new server-side env var `PACKAGES_RECOMMENDED` is introduced (comma-separated package names, e.g. `@scope/pkg-a,@scope/pkg-b`).
 - [ ] The var is documented in `.env.example` with an inline comment explaining its purpose and format.
 - [ ] When the var is unset or empty, all packages are shown and no badges appear (no regression).
