@@ -59,7 +59,7 @@ export default async function RootLayout({
       <body className={`${inter.variable} bg-background antialiased`}>
         <AmbientBackground />
         <NuqsAdapter>
-          <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
+          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
             <QueryClientProvider>
               <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
               <CloudAuthBridge />

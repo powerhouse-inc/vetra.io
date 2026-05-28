@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, Check, Copy, Key, MessageCircle, Terminal } from 'lucide-react'
+import { ArrowRight, BookOpen, Check, Copy, Key, Mail, MessageCircle, Terminal } from 'lucide-react'
 
 const VALID_CODE = 'LOCAL-FIRST'
 
@@ -96,120 +96,145 @@ export function EarlyAccessGate() {
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       </div>
 
-      <div className="relative z-10 mx-4 w-full max-w-[560px]">
+      <div className="relative z-10 mx-4 w-full max-w-[800px]">
         {step === 'gate' && (
-          <div className="bg-card border-border overflow-hidden rounded-2xl border shadow-2xl">
+          <div>
             {/* Header */}
-            <div className="flex items-start gap-3 px-6 pt-6">
-              <div className="bg-primary/15 mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full">
-                <Key className="text-primary h-4 w-4" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-foreground text-base font-semibold">Early Access Required</h2>
-                <p className="text-muted-foreground mt-0.5 text-sm">
-                  Vetra Studio is currently in limited preview. Pick one of the options below to get
-                  started.
-                </p>
-              </div>
+            <div className="mb-5 text-center">
+              <h2 className="text-white text-xl font-bold drop-shadow">Vetra Studio</h2>
+              <p className="text-white/70 mt-1 text-sm">
+                Early access — choose how you&apos;d like to get started.
+              </p>
             </div>
 
-            <div className="border-border mx-6 mt-5 border-t" />
-
-            {/* Options */}
-            <div className="px-6 py-5">
-              <div className="relative space-y-6">
-                <div className="border-border absolute top-5 bottom-5 left-4 w-px border-l border-dashed" />
-
-                {/* Option 1 — Invite code */}
-                <div className="flex gap-4">
-                  <div className="bg-card border-border relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border">
-                    <Key className="text-foreground-70 h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-foreground text-sm font-semibold">I have an invite code</p>
-                    <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
-                      Enter your code to get immediate access to Vetra Cloud environments.
-                    </p>
-                    <div className="mt-3 space-y-1.5">
-                      <div className="flex gap-2">
-                        <input
-                          value={code}
-                          onChange={(e) => {
-                            setCode(e.target.value)
-                            setError('')
-                          }}
-                          onKeyDown={(e) => e.key === 'Enter' && handleGetAccess()}
-                          placeholder="Enter your invite code"
-                          className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary/40 h-9 flex-1 rounded-lg border px-3 text-sm focus:ring-2 focus:outline-none"
-                        />
-                        <button
-                          onClick={handleGetAccess}
-                          className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-lg px-4 text-sm font-semibold transition-colors"
-                        >
-                          Get Access
-                        </button>
-                      </div>
-                      {error && <p className="text-destructive text-xs">{error}</p>}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              {/* Left column — have code / don't have code */}
+              <div className="flex flex-col gap-4">
+                {/* Card: I have a code */}
+                <div className="bg-card border-border flex flex-col gap-4 rounded-2xl border p-5 shadow-2xl">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-primary/15 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+                      <Key className="text-primary h-3.5 w-3.5" />
                     </div>
+                    <p className="text-foreground text-sm font-semibold">I have an invite code</p>
                   </div>
-                </div>
-
-                {/* Option 2 — Run locally */}
-                <div className="flex gap-4">
-                  <div className="bg-card border-border relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border">
-                    <Terminal className="text-foreground-70 h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-foreground text-sm font-semibold">Run it locally</p>
-                    <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
-                      No code needed. Run your own Vetra Cloud instance on your machine with a
-                      single command.
-                    </p>
-                    <div className="bg-muted mt-3 flex items-center gap-2 rounded-lg px-3 py-2">
-                      <span className="text-primary font-mono text-xs font-bold">$</span>
-                      <code className="text-foreground min-w-0 flex-1 truncate font-mono text-xs">
-                        {CURL_CMD}
-                      </code>
+                  <p className="text-muted-foreground -mt-2 text-xs leading-relaxed">
+                    Enter your code for immediate access to Vetra Cloud environments.
+                  </p>
+                  <div className="space-y-1.5">
+                    <div className="flex gap-2">
+                      <input
+                        value={code}
+                        onChange={(e) => {
+                          setCode(e.target.value)
+                          setError('')
+                        }}
+                        onKeyDown={(e) => e.key === 'Enter' && handleGetAccess()}
+                        placeholder="Enter invite code"
+                        className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary/40 h-9 flex-1 rounded-lg border px-3 text-sm focus:ring-2 focus:outline-none"
+                      />
                       <button
-                        onClick={handleCopy}
-                        className="text-muted-foreground hover:text-foreground ml-1 shrink-0 transition-colors"
-                        aria-label="Copy command"
+                        onClick={handleGetAccess}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-lg px-4 text-sm font-semibold transition-colors"
                       >
-                        {copied ? (
-                          <Check className="text-primary h-3.5 w-3.5" />
-                        ) : (
-                          <Copy className="h-3.5 w-3.5" />
-                        )}
+                        Get Access
                       </button>
                     </div>
+                    {error && <p className="text-destructive text-xs">{error}</p>}
                   </div>
                 </div>
 
-                {/* Option 3 — Discord */}
-                <div className="flex gap-4">
-                  <div className="bg-card border-border relative z-10 flex h-9 w-9 shrink-0 items-center justify-center rounded-full border">
-                    <MessageCircle className="text-foreground-70 h-3.5 w-3.5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="text-foreground text-sm font-semibold">
-                      I don&apos;t have a code
-                    </p>
-                    <p className="text-muted-foreground mt-0.5 text-xs leading-relaxed">
-                      Request access from the Powerhouse community. Drop a message in #vetra-cloud
-                      and we&apos;ll get you sorted.
-                    </p>
-                    <div className="mt-3">
-                      <Link
-                        href={DISCORD_URL}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="border-border hover:bg-accent inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
-                      >
-                        <MessageCircle className="h-4 w-4" />
-                        Open Powerhouse Discord
-                      </Link>
+                {/* Card: I don't have a code */}
+                <div className="bg-card border-border flex flex-col gap-4 rounded-2xl border p-5 shadow-2xl">
+                  <div className="flex items-center gap-2">
+                    <div className="bg-primary/15 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+                      <Mail className="text-primary h-3.5 w-3.5" />
                     </div>
+                    <p className="text-foreground text-sm font-semibold">I don&apos;t have a code</p>
                   </div>
+                  <p className="text-muted-foreground -mt-2 text-xs leading-relaxed">
+                    Join the waitlist to be first in line when we open up more spots.
+                  </p>
+                  <form
+                    action="https://gmail.us21.list-manage.com/subscribe/post?u=a65ca7e437961008f5f5c1bad&id=c8ea339c46&f_id=00fda7e6f0"
+                    method="post"
+                    target="_blank"
+                    className="flex gap-2"
+                  >
+                    <input
+                      type="email"
+                      name="EMAIL"
+                      required
+                      placeholder="you@example.com"
+                      className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary/40 h-9 flex-1 rounded-lg border px-3 text-sm focus:ring-2 focus:outline-none"
+                    />
+                    <button
+                      type="submit"
+                      className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-lg px-4 text-sm font-semibold transition-colors"
+                    >
+                      Subscribe
+                    </button>
+                  </form>
+                  <div className="flex items-center gap-3">
+                    <div className="border-border flex-1 border-t" />
+                    <span className="text-muted-foreground text-xs">or</span>
+                    <div className="border-border flex-1 border-t" />
+                  </div>
+                  <Link
+                    href={DISCORD_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="border-border hover:bg-accent inline-flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+                  >
+                    <MessageCircle className="h-4 w-4" />
+                    Request a code on Discord
+                  </Link>
+                </div>
+              </div>
+
+              {/* Right card — Run it locally */}
+              <div className="bg-card border-border flex flex-col gap-4 rounded-2xl border p-5 shadow-2xl">
+                <div className="flex items-center gap-2">
+                  <div className="bg-primary/15 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
+                    <Terminal className="text-primary h-3.5 w-3.5" />
+                  </div>
+                  <p className="text-foreground text-sm font-semibold">Run it locally</p>
+                </div>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  No code needed. Spin up your own Vetra Cloud instance on your machine in seconds
+                  with a single command.
+                </p>
+                <div className="bg-muted flex items-center gap-2 rounded-lg px-3 py-2.5">
+                  <span className="text-primary font-mono text-xs font-bold">$</span>
+                  <code className="text-foreground min-w-0 flex-1 truncate font-mono text-xs">
+                    {CURL_CMD}
+                  </code>
+                  <button
+                    onClick={handleCopy}
+                    className="text-muted-foreground hover:text-foreground ml-1 shrink-0 transition-colors"
+                    aria-label="Copy command"
+                  >
+                    {copied ? (
+                      <Check className="text-primary h-3.5 w-3.5" />
+                    ) : (
+                      <Copy className="h-3.5 w-3.5" />
+                    )}
+                  </button>
+                </div>
+                <p className="text-muted-foreground text-xs leading-relaxed">
+                  Runs fully on your infrastructure. Supports Docker and Kubernetes out of the box.
+                  Offline-first with peer-to-peer sync.
+                </p>
+                <div className="border-border border-t pt-4">
+                  <Link
+                    href="https://academy.vetra.io/academy/MasteryTrack/BuilderEnvironment/CreateAPackageWithVetra"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-xs transition-colors"
+                  >
+                    <BookOpen className="h-3.5 w-3.5 shrink-0" />
+                    Step-by-step tutorial in the Vetra Academy
+                  </Link>
                 </div>
               </div>
             </div>

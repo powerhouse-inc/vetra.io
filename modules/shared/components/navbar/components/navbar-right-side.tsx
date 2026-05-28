@@ -7,14 +7,16 @@ import {
   LogIn,
   LogOut,
   Loader2,
+  Moon,
   MoreVertical,
   Package,
+  Sun,
   User,
   Users,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
-import { ThemeToggle } from '../../theme-toggle'
+import { useEffect, useState } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,6 +38,12 @@ function shorten(addr: string | undefined): string {
 
 function RenownButton() {
   const auth = useRenownAuth()
+  const { resolvedTheme, setTheme } = useTheme()
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+
+  const toggleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
+  const isDark = mounted && resolvedTheme === 'dark'
 
   if (auth.status === 'loading' || auth.status === 'checking') {
     return (
@@ -96,6 +104,14 @@ function RenownButton() {
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-border/50" />
           <DropdownMenuItem
+            onClick={toggleTheme}
+            className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {isDark ? 'Light mode' : 'Dark mode'}
+          </DropdownMenuItem>
+          <DropdownMenuSeparator className="bg-border/50" />
+          <DropdownMenuItem
             onClick={auth.openProfile}
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
           >
@@ -124,22 +140,21 @@ function RenownButton() {
 }
 
 function NavbarRightSide() {
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
 
   const handleThemeToggle = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark')
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
   }
 
   return (
     <>
       <div className="hidden items-center gap-3 md:flex">
-        <ThemeToggle />
         <RenownButton />
         <Link
           href="/studio"
           className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all hover:-translate-y-px"
         >
-          Try Vetra Studio
+          Vetra Studio
         </Link>
       </div>
 
@@ -160,7 +175,7 @@ function NavbarRightSide() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
-              <ThemeIconLabel theme={theme} />
+              <ThemeIconLabel theme={resolvedTheme} />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
