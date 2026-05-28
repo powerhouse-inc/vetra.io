@@ -60,9 +60,7 @@ export default async function RootLayout({
       <body className={`${inter.variable} bg-background antialiased`}>
         <AmbientBackground />
         <OpenPanelProvider
-          clientId={
-            process.env.OPENPANEL_CLIENT_ID || process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID
-          }
+          clientId={process.env.OPENPANEL_CLIENT_ID || process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
           apiUrl={process.env.OPENPANEL_API_URL || process.env.NEXT_PUBLIC_OPENPANEL_API_URL}
           environment={process.env.OPENPANEL_ENV || process.env.NEXT_PUBLIC_OPENPANEL_ENV}
         />
