@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 import { headers } from 'next/headers'
 import { CloudAuthBridge } from '@/modules/cloud/components/cloud-auth-bridge'
+import { OpenPanelProvider } from '@/modules/shared/components/openpanel'
 import { RenownProvider } from '@/modules/shared/components/renown/renown-provider'
 import { AmbientBackground } from '@/modules/shared/components/ui/ambient-background'
 import { Toaster } from '@/modules/shared/components/ui/sonner'
@@ -58,6 +59,13 @@ export default async function RootLayout({
       </head>
       <body className={`${inter.variable} bg-background antialiased`}>
         <AmbientBackground />
+        <OpenPanelProvider
+          clientId={
+            process.env.OPENPANEL_CLIENT_ID || process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID
+          }
+          apiUrl={process.env.OPENPANEL_API_URL || process.env.NEXT_PUBLIC_OPENPANEL_API_URL}
+          environment={process.env.OPENPANEL_ENV || process.env.NEXT_PUBLIC_OPENPANEL_ENV}
+        />
         <NuqsAdapter>
           <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
             <QueryClientProvider>
