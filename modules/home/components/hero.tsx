@@ -54,10 +54,10 @@ export function Hero() {
         </p>
         <div className="mb-12 flex flex-wrap justify-center gap-3">
           <Link
-            href="/cloud"
+            href="/studio"
             className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center rounded-lg px-8 py-3.5 text-base font-semibold transition-colors"
           >
-            Get started
+            Try Vetra Studio
           </Link>
           <Link
             href="https://academy.vetra.io/"

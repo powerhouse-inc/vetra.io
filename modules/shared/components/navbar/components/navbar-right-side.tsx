@@ -3,6 +3,7 @@
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import {
   ExternalLink,
+  Layers,
   LogIn,
   LogOut,
   Loader2,
@@ -70,6 +71,15 @@ function RenownButton() {
             asChild
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
           >
+            <Link href="/products">
+              <Layers className="h-4 w-4" />
+              My products
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            asChild
+            className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
+          >
             <Link href="/profile?tab=teams">
               <Users className="h-4 w-4" />
               My profile
@@ -126,10 +136,10 @@ function NavbarRightSide() {
         <ThemeToggle />
         <RenownButton />
         <Link
-          href="/packages"
+          href="/studio"
           className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all hover:-translate-y-px"
         >
-          Try Our Beta
+          Try Vetra Studio
         </Link>
       </div>
 
