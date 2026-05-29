@@ -24,6 +24,7 @@ import { ServiceSizePopover } from '@/modules/cloud/components/service-size-popo
 import { useClintPackages } from '@/modules/cloud/hooks/use-clint-packages'
 import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtime-endpoints'
 import { partitionPackagesByManifestType } from '@/modules/cloud/lib/module-package-filter'
+import { toServiceImageTag } from '@/modules/cloud/registry/channels'
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
 import type {
   CloudEnvironment,
@@ -181,7 +182,7 @@ function ServiceRow({
 
   const handleSetVersion = async (version: string) => {
     if (!onSetVersion) return
-    const versionWithPrefix = version.startsWith('v') ? version : `v${version}`
+    const versionWithPrefix = toServiceImageTag(version)
     setShowVersionPicker(false) // close immediately; the version flips via useOptimistic
     try {
       await setVersionOptimistic(versionWithPrefix)
