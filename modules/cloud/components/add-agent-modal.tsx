@@ -219,7 +219,13 @@ export function AddAgentModal({
     // Pre-submit validation. Each failure throws so AsyncButton treats it as
     // a failed run — modal stays open, button re-enables, inline message
     // shows what to fix.
-    if (!validation?.ok || !selectedPackage || !prefix || prefixError || !selectedRessource) {
+    if (
+      !validation?.ok ||
+      !selectedPackage ||
+      !prefix ||
+      prefixError ||
+      (supportedSizes.length > 0 && !selectedRessource)
+    ) {
       const msg = 'Form is not ready to submit.'
       setSubmitError(msg)
       throw new Error(msg)
@@ -586,7 +592,12 @@ export function AddAgentModal({
           </Button>
           <AsyncButton
             onClickAsync={handleSubmit}
-            disabled={!validation?.ok || !!prefixError || !prefix || !selectedRessource}
+            disabled={
+              !validation?.ok ||
+              !!prefixError ||
+              !prefix ||
+              (supportedSizes.length > 0 && !selectedRessource)
+            }
             pendingLabel="Installing…"
           >
             Install agent
