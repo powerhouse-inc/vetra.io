@@ -20,14 +20,11 @@ import { toast } from 'sonner'
 import { PackagesSection } from '@/modules/cloud/components/packages-section'
 import { AgentsSection } from '@/modules/cloud/components/agents-section'
 import { AddAgentModal } from '@/modules/cloud/components/add-agent-modal'
-import { AvailableUpdatesCard } from '@/modules/cloud/components/available-updates-card'
 import { ServiceSizePopover } from '@/modules/cloud/components/service-size-popover'
 import { useClintPackages } from '@/modules/cloud/hooks/use-clint-packages'
 import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtime-endpoints'
 import { partitionPackagesByManifestType } from '@/modules/cloud/lib/module-package-filter'
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
-import { usePackageUpdates } from '@/modules/cloud/hooks/use-package-updates'
-import { useServiceUpdates } from '@/modules/cloud/hooks/use-service-updates'
 import type {
   CloudEnvironment,
   CloudEnvironmentServiceType,
@@ -568,7 +565,6 @@ export function OverviewTab({
   const [addAgentOpen, setAddAgentOpen] = useState(false)
 
   const state = environment.state
-  const { updates: serviceUpdates } = useServiceUpdates(state.services)
   const { clintPackages } = useClintPackages({
     registry: state.defaultPackageRegistry ?? null,
     packages: state.packages,
@@ -580,10 +576,6 @@ export function OverviewTab({
   const { modules: modulePackages } = useMemo(
     () => partitionPackagesByManifestType(state.packages, clintManifestsByName),
     [state.packages, clintManifestsByName],
-  )
-  const { updates: packageUpdates } = usePackageUpdates(
-    modulePackages,
-    state.defaultPackageRegistry ?? null,
   )
   const { byPrefix: clintRuntimeEndpointsByPrefix } = useClintRuntimeEndpoints(
     subdomain,
@@ -654,19 +646,7 @@ export function OverviewTab({
         </Card>
       )}
 
-      {/* b. Available Updates */}
-      {setServiceVersion && setPackageVersion && (
-        <AvailableUpdatesCard
-          serviceUpdates={serviceUpdates}
-          packageUpdates={packageUpdates}
-          onUpdateService={(type, version) =>
-            setServiceVersion(type as CloudEnvironmentServiceType, version)
-          }
-          onUpdatePackage={setPackageVersion}
-        />
-      )}
-
-      {/* c. Services — runtime hosts. Each enabled service can be opened in
+      {/* b. Services — runtime hosts. Each enabled service can be opened in
           a per-service drawer (Logs / Metrics / Activity). Below the rows
           we list the packages those services consume — reactor modules
           loaded into Switchboard, UI apps loaded into Connect. Packages
