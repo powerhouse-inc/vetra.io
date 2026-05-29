@@ -210,7 +210,7 @@ export function EarlyAccessGate() {
                     {CURL_CMD}
                   </code>
                   <button
-                    onClick={handleCopy}
+                    onClick={() => { void handleCopy() }}
                     className="text-muted-foreground hover:text-foreground ml-1 shrink-0 transition-colors"
                     aria-label="Copy command"
                   >

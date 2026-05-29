@@ -2,6 +2,7 @@
 
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import {
+  Cloud,
   ExternalLink,
   Layers,
   LogIn,
@@ -12,11 +13,10 @@ import {
   Package,
   Sun,
   User,
-  Users,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,8 +39,11 @@ function shorten(addr: string | undefined): string {
 function RenownButton() {
   const auth = useRenownAuth()
   const { resolvedTheme, setTheme } = useTheme()
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
 
   const toggleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
   const isDark = mounted && resolvedTheme === 'dark'
@@ -81,25 +84,25 @@ function RenownButton() {
           >
             <Link href="/products">
               <Layers className="h-4 w-4" />
-              My products
+              Products
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
             asChild
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
           >
-            <Link href="/profile?tab=teams">
-              <Users className="h-4 w-4" />
-              My profile
+            <Link href="/cloud">
+              <Cloud className="h-4 w-4" />
+              Environments
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
             asChild
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
           >
-            <Link href="/profile?tab=packages">
+            <Link href="/packages">
               <Package className="h-4 w-4" />
-              My packages
+              Packages
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-border/50" />

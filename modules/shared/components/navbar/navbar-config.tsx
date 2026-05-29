@@ -23,22 +23,19 @@ export const PUBLIC_NAV_ITEMS: NavItem[] = [
 
 export const PRIVATE_NAV_ITEMS: NavItem[] = [
   {
-    label: 'My packages',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    href: '/profile?tab=packages' as any,
-    isActive: (p) => p.includes('/profile'),
-  },
-  {
-    label: 'My products',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    href: '/products' as any,
+    label: 'Products',
+    href: '/products',
     isActive: (p) => p.includes('/products'),
   },
   {
-    label: 'My environments',
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    href: '/cloud' as any,
+    label: 'Environments',
+    href: '/cloud',
     isActive: (p) => p.includes('/cloud'),
+  },
+  {
+    label: 'Packages',
+    href: '/packages',
+    isActive: (p) => p.includes('/packages'),
   },
 ]
 
