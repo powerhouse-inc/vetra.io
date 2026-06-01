@@ -6,6 +6,7 @@ import { useEffect, useRef } from 'react'
 import { getOpenPanelApiUrl, getOpenPanelClientId } from './config'
 import { ANALYTICS_APP } from './events'
 import { buildTraits } from './openpanel-traits'
+import { clearProfileHint, writeProfileHint } from './profile-hint'
 
 /**
  * Identifies the logged-in Renown user with OpenPanel and clears the profile
@@ -29,7 +30,8 @@ import { buildTraits } from './openpanel-traits'
  * profiles. `buildTraits()` forwards only an allow-list of safe fields and never
  * the credential/JWT. A `prevProfileRef` distinguishes login from logout so we
  * only act on an actual transition; all SDK calls are wrapped so analytics can
- * never throw into the app.
+ * never throw into the app. The transition also writes/clears the `op_profile`
+ * cookie that seeds the next load's first pageview (see profile-hint.ts).
  */
 function IdentifyRenownUser(): null {
   const auth = useRenownAuth()
@@ -55,12 +57,14 @@ function IdentifyRenownUser(): null {
             profile: auth.user?.profile,
           }),
         })
+        writeProfileHint(profileId)
       } catch (err) {
         console.warn('[analytics] Failed to identify user:', err)
       }
     } else if (prev) {
       try {
         op.clear()
+        clearProfileHint()
       } catch (err) {
         console.warn('[analytics] Failed to clear user:', err)
       }
@@ -82,9 +86,17 @@ function IdentifyRenownUser(): null {
  * - Outgoing-link tracking (`trackOutgoingLinks`).
  * - Logged-in Renown users are identified via `<IdentifyRenownUser />`.
  *
+ * `initialProfileId` is the wallet from the `op_profile` cookie (read by the
+ * server layout); it seeds OpenPanel so a returning user's first pageview is
+ * attributed instead of anonymous.
+ *
  * Mounted as a side-effect-only sibling of `<RenownProvider />` in the root layout.
  */
-export function AnalyticsProvider(): React.ReactNode {
+export function AnalyticsProvider({
+  initialProfileId,
+}: {
+  initialProfileId?: string
+}): React.ReactNode {
   const clientId = getOpenPanelClientId()
   const apiUrl = getOpenPanelApiUrl()
 
@@ -95,6 +107,7 @@ export function AnalyticsProvider(): React.ReactNode {
       <OpenPanelComponent
         clientId={clientId}
         {...(apiUrl ? { apiUrl } : {})}
+        {...(initialProfileId ? { profileId: initialProfileId } : {})}
         trackScreenViews
         trackOutgoingLinks
         globalProperties={{ app: ANALYTICS_APP }}

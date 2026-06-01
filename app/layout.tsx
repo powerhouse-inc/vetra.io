@@ -1,7 +1,8 @@
 import { Inter } from 'next/font/google'
-import { headers } from 'next/headers'
+import { cookies, headers } from 'next/headers'
 import { CloudAuthBridge } from '@/modules/cloud/components/cloud-auth-bridge'
 import { AnalyticsProvider } from '@/modules/shared/analytics'
+import { OP_PROFILE_COOKIE } from '@/modules/shared/analytics/profile-hint'
 import { RenownProvider } from '@/modules/shared/components/renown/renown-provider'
 import { Toaster } from '@/modules/shared/components/ui/sonner'
 import { ThemeProvider } from '@/modules/shared/providers/theme-provider'
@@ -32,6 +33,9 @@ export default async function RootLayout({
   // Calling headers() opts this layout into dynamic rendering,
   // ensuring process.env is read at request time, not build time.
   await headers()
+
+  // Seed OpenPanel so a returning user's first pageview is attributed.
+  const initialProfileId = (await cookies()).get(OP_PROFILE_COOKIE)?.value
 
   return (
     <html lang="en" suppressHydrationWarning>
@@ -65,7 +69,7 @@ export default async function RootLayout({
             <QueryClientProvider>
               <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
               <CloudAuthBridge />
-              <AnalyticsProvider />
+              <AnalyticsProvider initialProfileId={initialProfileId} />
               <div className="items-right flex min-h-screen flex-col">
                 <Navbar />
                 <main className="flex-1">{children}</main>
