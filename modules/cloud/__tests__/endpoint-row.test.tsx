@@ -11,7 +11,7 @@ const baseProps = {
 describe('EndpointRow', () => {
   it('renders graphql with playground link', () => {
     render(<EndpointRow {...baseProps} endpoint={{ id: 'x', type: 'api-graphql', port: '1' }} />)
-    const link = screen.getByRole('link', { name: /playground/i }) as HTMLAnchorElement
+    const link = screen.getByRole('link', { name: /playground/i })
     expect(link.href).toContain('/graphql')
   })
 
@@ -26,7 +26,7 @@ describe('EndpointRow', () => {
       endpoint: { id: 'x', type: 'website' as const, port: '1' },
     }
     render(<EndpointRow {...props} />)
-    const link = screen.getByRole('link', { name: /visit/i }) as HTMLAnchorElement
+    const link = screen.getByRole('link', { name: /visit/i })
     expect(link.href).toBe('https://rupert.demo.vetra.io/x')
   })
 

@@ -136,9 +136,9 @@ export function AvailableUpdatesCard({
               <div>
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium">{update.packageName}</p>
-                  {'channel' in update && (update as PackageUpdate).channel !== 'latest' && (
+                  {'channel' in update && (update).channel !== 'latest' && (
                     <Badge variant="secondary" className="text-[10px]">
-                      {(update as PackageUpdate).channel}
+                      {(update).channel}
                     </Badge>
                   )}
                 </div>

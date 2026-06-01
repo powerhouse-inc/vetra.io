@@ -43,9 +43,9 @@ export function useEnvironmentController(
         if (cancelled) return
         controllerRef.current = ctrl
         setController(ctrl)
-        setState(ctrl.state.global as VetraCloudEnvironmentState)
+        setState(ctrl.state.global)
         unsubscribe = ctrl.onChange(() => {
-          setState(ctrl.state.global as VetraCloudEnvironmentState)
+          setState(ctrl.state.global)
         })
         setIsLoading(false)
       } catch (err) {

@@ -5,8 +5,8 @@ import { EnvVarsEditor } from '@/modules/cloud/components/env-vars-editor'
 describe('EnvVarsEditor', () => {
   it('renders existing env vars', () => {
     render(<EnvVarsEditor value={[{ name: 'FOO', value: 'bar' }]} onChange={() => {}} />)
-    expect((screen.getByLabelText('env-name-0') as HTMLInputElement).value).toBe('FOO')
-    expect((screen.getByLabelText('env-value-0') as HTMLInputElement).value).toBe('bar')
+    expect((screen.getByLabelText('env-name-0')).value).toBe('FOO')
+    expect((screen.getByLabelText('env-value-0')).value).toBe('bar')
   })
 
   it('adds a new empty row when "Add" clicked', () => {

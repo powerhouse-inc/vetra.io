@@ -158,9 +158,9 @@ describe('AddAgentModal', () => {
         defaultSelectedPackage="@x/foo-cli"
       />,
     )
-    expect((screen.getByLabelText(/prefix/i) as HTMLInputElement).value).toBe('foo')
+    expect((screen.getByLabelText(/prefix/i)).value).toBe('foo')
     expect(screen.queryByText('Medium')).not.toBeNull() // first supported size label from ResourceSizePicker
-    expect((screen.getByLabelText(/service command/i) as HTMLTextAreaElement).value).toBe(
+    expect((screen.getByLabelText(/service command/i)).value).toBe(
       'foo --run',
     )
   })
