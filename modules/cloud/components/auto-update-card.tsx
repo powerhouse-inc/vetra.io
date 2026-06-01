@@ -27,6 +27,7 @@ import { Button } from '@/modules/shared/components/ui/button'
 import { Card, CardContent, CardTitle } from '@/modules/shared/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/modules/shared/components/ui/radio-group'
 import { cn } from '@/shared/lib/utils'
+import { EVENTS, useAnalytics } from '@/shared/analytics'
 
 const CHANNEL_OPTIONS: { value: AutoUpdateChannel | 'OFF'; label: string; description: string }[] =
   [
@@ -67,6 +68,7 @@ export function AutoUpdateCard({
   onUpdateNow,
   onRollback,
 }: AutoUpdateCardProps) {
+  const { track } = useAnalytics()
   const state = environment.state
   const serverChannel: AutoUpdateChannel | null = state.autoUpdateChannel ?? null
 
@@ -163,6 +165,7 @@ export function AutoUpdateCard({
     try {
       const updated = await onUpdateNow()
       if (updated.length > 0) {
+        track(EVENTS.cloudDeploy, { environmentId: environment.id, services: updated })
         toast.success('Updating to latest — argo will roll the pod in a few seconds')
       } else {
         toast.info('Already on the latest tag')
@@ -179,7 +182,7 @@ export function AutoUpdateCard({
     } finally {
       setIsUpdating(false)
     }
-  }, [onUpdateNow])
+  }, [onUpdateNow, track, environment.id])
 
   const [isRollingBack, setIsRollingBack] = useState(false)
   const handleRollback = useCallback(async () => {

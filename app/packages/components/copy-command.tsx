@@ -2,12 +2,24 @@
 
 import { Check, Copy } from 'lucide-react'
 import { useState } from 'react'
+import { EVENTS, useAnalytics } from '@/shared/analytics'
 
-export function CopyCommand({ command }: { command: string }) {
+export function CopyCommand({
+  command,
+  packageName,
+}: {
+  command: string
+  /** When provided, copying tracks a `package.install_click` event. */
+  packageName?: string
+}) {
   const [copied, setCopied] = useState(false)
+  const { track } = useAnalytics()
 
   async function copy() {
     await navigator.clipboard.writeText(command)
+    if (packageName) {
+      track(EVENTS.packageInstallClick, { name: packageName, command })
+    }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }

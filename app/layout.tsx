@@ -1,6 +1,7 @@
 import { Inter } from 'next/font/google'
 import { headers } from 'next/headers'
 import { CloudAuthBridge } from '@/modules/cloud/components/cloud-auth-bridge'
+import { AnalyticsProvider } from '@/modules/shared/analytics'
 import { RenownProvider } from '@/modules/shared/components/renown/renown-provider'
 import { Toaster } from '@/modules/shared/components/ui/sonner'
 import { ThemeProvider } from '@/modules/shared/providers/theme-provider'
@@ -51,6 +52,9 @@ export default async function RootLayout({
                 process.env.CLOUD_DRIVE_ID || process.env.NEXT_PUBLIC_CLOUD_DRIVE_ID || '',
               NEXT_PUBLIC_RENOWN_URL:
                 process.env.RENOWN_URL || process.env.NEXT_PUBLIC_RENOWN_URL || '',
+              NEXT_PUBLIC_OPENPANEL_CLIENT_ID:
+                process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || '',
+              NEXT_PUBLIC_OPENPANEL_API_URL: process.env.NEXT_PUBLIC_OPENPANEL_API_URL || '',
             })}`,
           }}
         />
@@ -61,6 +65,7 @@ export default async function RootLayout({
             <QueryClientProvider>
               <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
               <CloudAuthBridge />
+              <AnalyticsProvider />
               <div className="items-right flex min-h-screen flex-col">
                 <Navbar />
                 <main className="flex-1">{children}</main>

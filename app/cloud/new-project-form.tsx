@@ -20,6 +20,7 @@ import {
   FormMessage,
 } from '@/modules/shared/components/ui/form'
 import { Input } from '@/modules/shared/components/ui/input'
+import { EVENTS, useAnalytics } from '@/shared/analytics'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -50,6 +51,7 @@ function NewEnvironmentFormInner({
 }: NewEnvironmentFormProps) {
   const { signer } = useCanSign()
   const createEnv = useCreateEnvironment()
+  const { track } = useAnalytics()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState(false)
@@ -87,6 +89,7 @@ function NewEnvironmentFormInner({
           defaultPackageRegistry: 'https://registry.dev.vetra.io',
           enabledServices: [{ type: 'CONNECT', prefix: 'connect' }],
         })
+        track(EVENTS.cloudProjectCreate, { documentId })
         onCreated?.(documentId)
       }
 

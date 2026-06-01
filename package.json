@@ -19,6 +19,7 @@
   "dependencies": {
     "@hookform/resolvers": "^5.2.1",
     "@lottiefiles/dotlottie-react": "^0.18.7",
+    "@openpanel/nextjs": "^1.5.1",
     "@powerhousedao/reactor": "6.0.0-dev.244",
     "@powerhousedao/reactor-browser": "6.0.0-dev.244",
     "@powerhousedao/shared": "6.0.0-dev.244",

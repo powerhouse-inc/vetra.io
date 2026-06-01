@@ -28,6 +28,7 @@ import { getCategoryStyle } from '../lib/category-colors'
 import { getPackageManifest, getPackageRegistryData } from '../lib/registry'
 import { CopyCommand } from '../components/copy-command'
 import { VersionList } from '../components/version-list'
+import { EVENTS, TrackView } from '@/shared/analytics'
 import { SourceViewer } from '../components/source-viewer'
 import { ModuleExplorer } from '../components/module-explorer'
 import { AddToCloud } from '../components/add-to-cloud'
@@ -195,6 +196,10 @@ export default async function PackageDetailPage({ params, searchParams }: Packag
 
   return (
     <main className="container mx-auto mt-20 max-w-screen-xl space-y-8 overflow-hidden px-6 py-8">
+      <TrackView
+        event={EVENTS.packageView}
+        properties={{ name: manifest.name, version: activeVersion }}
+      />
       {/* Breadcrumb */}
       <Breadcrumb>
         <BreadcrumbList>
@@ -390,6 +395,7 @@ export default async function PackageDetailPage({ params, searchParams }: Packag
               </h3>
               <CopyCommand
                 command={`ph install ${manifest.name}${showVersion ? `@${activeVersion}` : ''}`}
+                packageName={manifest.name}
               />
               <p className="text-muted-foreground text-[11px]">
                 Requires{' '}

@@ -1,0 +1,7 @@
+allowBuilds:
+  '@sentry/cli': true
+  '@tailwindcss/oxide': true
+  core-js-pure: true
+  esbuild: true
+  sharp: true
+  unrs-resolver: true
