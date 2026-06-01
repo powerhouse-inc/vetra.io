@@ -2829,7 +2829,7 @@ packages:
     resolution: {integrity: sha512-/nyrXDw3GOSFuu3ZRlZQMaPr2bud865/PLmOo5wI0D90lxfkbUDxj7LRGLbQzt61lDhc6l8ve1GyscycefeMtw==}
 
   '@powerhousedao/vetra-cloud-package@https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.3-dev.50.tgz':
-    resolution: {integrity: sha512-cIk3bs9FbcRlHTyn7T1bYFZGSyf/BiVKJeRnANmKnmXYOmRkrtaM+BkS6CjhQu2hlVD3n0KJM1cTKdiaoQWTBw==, tarball: https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.3-dev.50.tgz}
+    resolution: {tarball: https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.3-dev.50.tgz}
     version: 0.0.3-dev.50
     peerDependencies:
       react: ^19.2.0

@@ -1,11 +1,8 @@
 'use client'
 
-import dynamic from 'next/dynamic'
-import { useState, useEffect, useRef } from 'react'
-
-const Renown = dynamic(() => import('@powerhousedao/reactor-browser').then((mod) => mod.Renown), {
-  ssr: false,
-})
+import { addRenownEventHandler, login, setRenown } from '@powerhousedao/reactor-browser'
+import { RenownBuilder } from '@renown/sdk'
+import { useEffect, useRef } from 'react'
 
 /**
  * Captures the `?user` DID from the URL at module load time, before the
@@ -72,19 +69,38 @@ function RenownLoginGuard() {
   return null
 }
 
-export function RenownProvider({ appName, url }: { appName: string; url?: string }) {
-  const [mounted, setMounted] = useState(false)
+/**
+ * Runs the SDK init from an effect instead of rendering the package's `<Renown />`,
+ * whose dev.244 build inits during render — its synchronous `setRenown` updates
+ * `useSyncExternalStore` subscribers mid-render, triggering React's "update a
+ * component while rendering a different component" error. Fixed upstream in
+ * reactor-browser@6.1.0-dev.13.
+ */
+function useRenownInitEffect(appName: string, url?: string) {
+  const initRef = useRef(false)
 
   useEffect(() => {
-    setMounted(true)
+    // Ref guard keeps init to once per mount, surviving StrictMode remounts.
+    if (initRef.current) return
+    initRef.current = true
+
+    const init = async () => {
+      addRenownEventHandler()
+      setRenown(null)
+      const renown = await new RenownBuilder(appName, { baseUrl: url }).build()
+      setRenown(renown)
+      await login(undefined, renown)
+    }
+
+    init().catch((err) => {
+      console.error('[renown] Failed to initialize Renown SDK:', err)
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- read once on mount
   }, [])
+}
 
-  if (!mounted) return null
+export function RenownProvider({ appName, url }: { appName: string; url?: string }) {
+  useRenownInitEffect(appName, url)
 
-  return (
-    <>
-      <Renown appName={appName} url={url} />
-      <RenownLoginGuard />
-    </>
-  )
+  return <RenownLoginGuard />
 }
