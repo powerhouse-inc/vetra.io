@@ -1,5 +1,5 @@
 export { AnalyticsProvider } from './analytics-provider'
 export { getOpenPanelApiUrl, getOpenPanelClientId } from './config'
-export { EVENTS, type AnalyticsEvent } from './events'
+export { ANALYTICS_APP, EVENTS, type AnalyticsEvent } from './events'
 export { TrackView } from './track-view'
 export { useAnalytics } from './use-analytics'

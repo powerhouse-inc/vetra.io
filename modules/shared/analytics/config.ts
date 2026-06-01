@@ -3,6 +3,10 @@
  * `window.__ENV` (set by the inline script in `app/layout.tsx`) over the
  * build-time `process.env`. Mirrors the `readEnv` helpers in
  * `modules/cloud/client.ts` / `modules/cloud/graphql.ts`.
+ *
+ * Reading through `window.__ENV` keeps the OpenPanel client ID
+ * runtime-configurable: a single Docker image can target different OpenPanel
+ * projects per environment without a rebuild.
  */
 function readEnv(key: string): string {
   if (typeof window !== 'undefined') {

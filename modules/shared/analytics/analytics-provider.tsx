@@ -4,6 +4,7 @@ import { OpenPanelComponent, useOpenPanel } from '@openpanel/nextjs'
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import { useEffect, useRef } from 'react'
 import { getOpenPanelApiUrl, getOpenPanelClientId } from './config'
+import { ANALYTICS_APP } from './events'
 import { buildTraits } from './openpanel-traits'
 
 /**
@@ -19,7 +20,12 @@ function IdentifyRenownUser(): null {
   const op = useOpenPanel()
   const auth = useRenownAuth()
 
-  const profileId = auth.status === 'authorized' ? auth.profileId : undefined
+  // Use the wallet address as the OpenPanel profile ID. This is the same
+  // identifier Renown uses on its own domain, so the two apps stitch into a
+  // single cross-app user profile (vetra.io → renown auth handoff → back).
+  // `auth.profileId` (the Renown profile documentId) would NOT match Renown's
+  // own identify call and would split one user into two profiles.
+  const profileId = auth.status === 'authorized' ? auth.address : undefined
   const prevProfileRef = useRef<string | undefined>(undefined)
 
   useEffect(() => {
@@ -76,6 +82,7 @@ export function AnalyticsProvider(): React.ReactNode {
         {...(apiUrl ? { apiUrl } : {})}
         trackScreenViews
         trackOutgoingLinks
+        globalProperties={{ app: ANALYTICS_APP }}
       />
       <IdentifyRenownUser />
     </>
