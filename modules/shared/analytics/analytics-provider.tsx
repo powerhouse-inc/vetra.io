@@ -1,56 +1,126 @@
 'use client'
 
 import { OpenPanelComponent, useOpenPanel } from '@openpanel/nextjs'
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import { useEffect, useRef } from 'react'
 import { getOpenPanelApiUrl, getOpenPanelClientId } from './config'
 import { ANALYTICS_APP } from './events'
-import { buildTraits } from './openpanel-traits'
+import { buildTraits, type RenownTraitsSource } from './openpanel-traits'
+
+/**
+ * The slice of the Renown instance (`window.ph.renown`) we read. Typed
+ * structurally and loosely on purpose — the `@renown/sdk` user shape drifts
+ * between versions, and we only touch an explicit allow-list of fields.
+ */
+interface RenownUser {
+  address?: string | null
+  ens?: { name?: string | null; avatarUrl?: string | null } | null
+  profile?: RenownTraitsSource['profile']
+}
+interface RenownInstance {
+  status?: string
+  user?: RenownUser | null
+  on?: (event: 'user' | 'status', cb: () => void) => (() => void) | undefined
+}
+
+function getRenownInstance(): RenownInstance | null {
+  if (typeof window === 'undefined') return null
+  return (window as unknown as { ph?: { renown?: RenownInstance } }).ph?.renown ?? null
+}
+
+/**
+ * Flattens the raw Renown user into the trait source, mirroring how
+ * `useRenownAuth()` derives its fields — but without subscribing to any React
+ * store. The OpenPanel profile ID is the wallet **address**: the same
+ * identifier Renown uses on its own domain, so the two apps stitch into one
+ * cross-app user profile (vetra.io → renown handoff → back). The Renown profile
+ * documentId would NOT match Renown's own identify call and would split one
+ * user into two profiles.
+ */
+function readIdentity(renown: RenownInstance | null): {
+  profileId: string | undefined
+  source: RenownTraitsSource
+} {
+  const user = renown?.status === 'authorized' ? (renown.user ?? undefined) : undefined
+  const ensName = user?.ens?.name ?? undefined
+  return {
+    profileId: user?.address ?? undefined,
+    source: {
+      address: user?.address,
+      ensName,
+      avatarUrl: user?.profile?.userImage ?? user?.ens?.avatarUrl,
+      displayName: ensName ?? user?.profile?.username ?? undefined,
+      profile: user?.profile,
+    },
+  }
+}
 
 /**
  * Identifies the logged-in Renown user with OpenPanel and clears the profile
  * on logout.
  *
- * Mirrors Connect's transition detection (`apps/connect/src/components/openpanel.tsx`):
- * a `prevProfileRef` distinguishes login (`undefined → profileId`) from logout
- * (`profileId → undefined`). All SDK calls are wrapped so analytics can never
- * throw into the app.
+ * Why imperative (not `useRenownAuth()`): the Renown SDK mutates its global
+ * `window.ph` store **during render** (`<Renown>` → `useRenownInit` →
+ * `setRenown(null)`). Because that store is exposed through `useSyncExternalStore`,
+ * every React subscriber gets an update scheduled mid-render — React's
+ * "Cannot update a component while rendering a different component" warning.
+ * This component only performs side effects (identify/clear), so it has no
+ * reason to be a React subscriber: it listens to the Renown event emitter
+ * directly and calls `op.*` (never `setState`), sidestepping the warning
+ * entirely. A `prevProfileRef` distinguishes login from logout; all SDK calls
+ * are wrapped so analytics can never throw into the app.
  */
 function IdentifyRenownUser(): null {
   const op = useOpenPanel()
-  const auth = useRenownAuth()
-
-  // Use the wallet address as the OpenPanel profile ID. This is the same
-  // identifier Renown uses on its own domain, so the two apps stitch into a
-  // single cross-app user profile (vetra.io → renown auth handoff → back).
-  // `auth.profileId` (the Renown profile documentId) would NOT match Renown's
-  // own identify call and would split one user into two profiles.
-  const profileId = auth.status === 'authorized' ? auth.address : undefined
   const prevProfileRef = useRef<string | undefined>(undefined)
 
   useEffect(() => {
-    const prev = prevProfileRef.current
-    prevProfileRef.current = profileId
+    let boundRenown: RenownInstance | null = null
+    let offUser: (() => void) | undefined
+    let offStatus: (() => void) | undefined
 
-    if (!prev && profileId) {
-      // Login: undefined → profileId (or client mounted with user already in).
-      try {
-        op.identify({ profileId, properties: buildTraits(auth) })
-      } catch (err) {
-        console.warn('[analytics] Failed to identify user:', err)
+    const evaluate = () => {
+      const renown = getRenownInstance()
+
+      // Re-bind to the live instance whenever it is (re)created by the SDK.
+      if (renown !== boundRenown) {
+        offUser?.()
+        offStatus?.()
+        boundRenown = renown
+        offUser = renown?.on?.('user', evaluate)
+        offStatus = renown?.on?.('status', evaluate)
       }
-    } else if (prev && !profileId) {
-      // Logout: profileId → undefined.
-      try {
-        op.clear()
-      } catch (err) {
-        console.warn('[analytics] Failed to clear user:', err)
+
+      const { profileId, source } = readIdentity(renown)
+      const prev = prevProfileRef.current
+      if (profileId === prev) return
+      prevProfileRef.current = profileId
+
+      if (profileId) {
+        try {
+          op.identify({ profileId, properties: buildTraits(source) })
+        } catch (err) {
+          console.warn('[analytics] Failed to identify user:', err)
+        }
+      } else if (prev) {
+        try {
+          op.clear()
+        } catch (err) {
+          console.warn('[analytics] Failed to clear user:', err)
+        }
       }
     }
-    // `auth` is intentionally omitted: we only re-run on identity transitions,
-    // not on every auth-object reference change.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [profileId, op])
+
+    // The Renown instance is (re)assigned via a `ph:renownUpdated` window event;
+    // listen for that to (re)bind, and evaluate the current state immediately.
+    window.addEventListener('ph:renownUpdated', evaluate)
+    evaluate()
+
+    return () => {
+      window.removeEventListener('ph:renownUpdated', evaluate)
+      offUser?.()
+      offStatus?.()
+    }
+  }, [op])
 
   return null
 }

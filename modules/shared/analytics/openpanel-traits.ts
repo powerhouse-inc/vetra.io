@@ -1,12 +1,28 @@
-import type { RenownAuth } from '@powerhousedao/reactor-browser'
+/**
+ * The minimal, flattened shape `buildTraits` needs. Decoupled from the
+ * `@renown/sdk` `User` (whose shape drifts between versions) and from
+ * `RenownAuth` (whose React hooks subscribe to a store) so it can be built
+ * imperatively from the raw Renown instance — see `analytics-provider.tsx`.
+ */
+export interface RenownTraitsSource {
+  address?: string | null
+  ensName?: string | null
+  avatarUrl?: string | null
+  displayName?: string | null
+  profile?: {
+    username?: string | null
+    userImage?: string | null
+    documentId?: string | null
+    createdAt?: string | null
+  } | null
+}
 
 /**
  * Builds the OpenPanel identity traits from the Renown auth state.
  *
- * Inspired by Connect (`apps/connect/src/components/openpanel-traits.ts`), but
- * sourced from the flattened `useRenownAuth()` result rather than the raw
- * `@renown/sdk` `User`. Building from an explicit allow-list means the
- * `credential` (JWT) can never accidentally make it into the payload.
+ * Inspired by Connect (`apps/connect/src/components/openpanel-traits.ts`).
+ * Building from an explicit allow-list means the `credential` (JWT) can never
+ * accidentally make it into the payload.
  *
  * Rules:
  * - `profileId` is sent as the top-level `profileId` key in the `identify()`
@@ -14,16 +30,16 @@ import type { RenownAuth } from '@powerhousedao/reactor-browser'
  * - Optional fields are only included when non-nullish (guards against both
  *   `null` from `RenownProfile` fields and plain `undefined`).
  */
-export function buildTraits(auth: RenownAuth): Record<string, unknown> {
+export function buildTraits(source: RenownTraitsSource): Record<string, unknown> {
   const traits: Record<string, unknown> = {}
 
-  if (auth.address != null) traits.address = auth.address
-  if (auth.ensName != null) traits.ensName = auth.ensName
-  if (auth.avatarUrl != null) traits.avatarUrl = auth.avatarUrl
-  if (auth.displayName != null) traits.displayName = auth.displayName
+  if (source.address != null) traits.address = source.address
+  if (source.ensName != null) traits.ensName = source.ensName
+  if (source.avatarUrl != null) traits.avatarUrl = source.avatarUrl
+  if (source.displayName != null) traits.displayName = source.displayName
 
   // profile fields — optional on the Renown user; members can be null.
-  const profile = auth.user?.profile
+  const profile = source.profile
   if (profile?.username != null) traits.username = profile.username
   if (profile?.userImage != null) traits.userImage = profile.userImage
   if (profile?.documentId != null) traits.profileDocumentId = profile.documentId
