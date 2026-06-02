@@ -13,6 +13,7 @@ import {
   useRegistryVersions,
 } from '@/modules/cloud/hooks/use-registry-search'
 import { applyConfigChanges, computeConfigChanges } from '@/modules/cloud/config/apply'
+import { routeEnvVars } from '@/modules/cloud/config/route-env-vars'
 import { buildCollisionMap } from '@/modules/cloud/config/collisions'
 import { AsyncButton } from '@/modules/cloud/components/async-button'
 import {
@@ -202,7 +203,7 @@ export function AddAgentModal({
 
   const renown = useRenown()
   const [configState, setConfigState] = useState<ConfigFormState>({})
-  const { envVars, secrets } = useTenantConfig(open ? tenantId : null)
+  const { envVars, secrets, setSecret } = useTenantConfig(open ? tenantId : null)
   const existingVarValues = useMemo(
     () => Object.fromEntries(envVars.map((v) => [v.key, v.value])),
     [envVars],
@@ -263,6 +264,22 @@ export function AddAgentModal({
           await applyConfigChanges(tenantId, changes, renown)
         }
       }
+      // Split custom env vars into the encrypted path (tenant_secrets) vs
+      // the inline-on-the-document path. Secret VALUES must never enter
+      // clintConfig.env — the document only carries the env NAME + a marker
+      // that the value lives elsewhere (isSecret=true). The reducer enforces
+      // this defensively too.
+      const { secretsToPersist, envForDocument } = routeEnvVars(customEnvVars)
+      if (secretsToPersist.length > 0) {
+        if (!tenantId) {
+          const msg = 'Cannot store secret env vars: tenant is not yet provisioned.'
+          setSubmitError(msg)
+          throw new Error(msg)
+        }
+        for (const s of secretsToPersist) {
+          await setSecret(s.name, s.value)
+        }
+      }
       await onSubmit({
         packageName: selectedPackage,
         version: selectedVersion || undefined,
@@ -273,7 +290,7 @@ export function AddAgentModal({
             name: selectedPackage,
             version: selectedVersion ?? null,
           },
-          env: customEnvVars.filter((v) => v.name.trim()),
+          env: envForDocument,
           serviceCommand: serviceCommand.trim() || null,
           selectedRessource,
         },

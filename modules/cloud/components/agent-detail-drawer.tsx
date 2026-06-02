@@ -448,6 +448,7 @@ export function AgentDetailDrawer({
                 service={service}
                 env={env}
                 canEdit={canEdit}
+                tenantId={tenantId}
                 manifest={manifest}
                 runtimeEndpoints={runtimeEndpoints}
                 pods={pods}

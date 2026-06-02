@@ -734,6 +734,7 @@ export function OverviewTab({
             services={state.services}
             env={environment ?? null}
             canEdit={canSign}
+            tenantId={tenantId}
             onAddAgent={() => setAddAgentOpen(true)}
             manifests={clintManifestsByName}
             runtimeEndpointsByPrefix={clintRuntimeEndpointsByPrefix}
