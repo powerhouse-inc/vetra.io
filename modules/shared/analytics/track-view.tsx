@@ -2,7 +2,7 @@
 
 import { useEffect, useRef } from 'react'
 import type { AnalyticsEvent } from './events'
-import { useAnalytics } from './use-analytics'
+import { useOpenPanelAnalytics } from './use-open-panel-analytics'
 
 /**
  * Fires a single analytics event once on mount. Lets server components track a
@@ -19,7 +19,7 @@ export function TrackView({
   event: AnalyticsEvent
   properties?: Record<string, unknown>
 }): null {
-  const { track } = useAnalytics()
+  const { track } = useOpenPanelAnalytics()
   const tracked = useRef(false)
 
   useEffect(() => {

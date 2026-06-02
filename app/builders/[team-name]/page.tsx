@@ -6,7 +6,7 @@ import { BuilderSpaces } from '@/modules/builders/components/builder-spaces'
 import { TeamMembers } from '@/modules/builders/components/team-members'
 import { fetchBuilderTeamBySlug, type BuilderSpace } from '@/modules/builders/lib/server-data'
 import { Badge } from '@/modules/shared/components/ui/badge'
-import { EVENTS, TrackView } from '@/shared/analytics'
+import { ANALYTICS_EVENTS, TrackView } from '@/shared/analytics'
 
 // Force dynamic rendering to prevent build-time API requests
 export const dynamic = 'force-dynamic'
@@ -129,7 +129,7 @@ export default async function TeamPage({ params }: TeamPageProps) {
   return (
     <main className="container mx-auto mt-20 max-w-screen-xl px-6 py-12">
       <TrackView
-        event={EVENTS.builderProfileView}
+        event={ANALYTICS_EVENTS.builderProfileView}
         properties={{ teamSlug, teamName: teamData.profileName }}
       />
       {/* Profile Header */}

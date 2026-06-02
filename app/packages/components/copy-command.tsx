@@ -2,7 +2,7 @@
 
 import { Check, Copy } from 'lucide-react'
 import { useState } from 'react'
-import { EVENTS, useAnalytics } from '@/shared/analytics'
+import { ANALYTICS_EVENTS, useOpenPanelAnalytics } from '@/shared/analytics'
 
 export function CopyCommand({
   command,
@@ -13,12 +13,12 @@ export function CopyCommand({
   packageName?: string
 }) {
   const [copied, setCopied] = useState(false)
-  const { track } = useAnalytics()
+  const { track } = useOpenPanelAnalytics()
 
   async function copy() {
     await navigator.clipboard.writeText(command)
     if (packageName) {
-      track(EVENTS.packageInstallClick, { name: packageName, command })
+      track(ANALYTICS_EVENTS.packageInstallClick, { name: packageName, command })
     }
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)

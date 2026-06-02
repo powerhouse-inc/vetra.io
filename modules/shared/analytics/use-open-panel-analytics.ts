@@ -13,7 +13,7 @@ import type { AnalyticsEvent } from './events'
  *   initialized (empty client ID), OpenPanel's `track` is a no-op.
  * - Tracking never throws into the app — failures are swallowed to `console.warn`.
  */
-export function useAnalytics(): {
+export function useOpenPanelAnalytics(): {
   track: (event: AnalyticsEvent, properties?: Record<string, unknown>) => void
 } {
   const op = useOpenPanel()

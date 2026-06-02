@@ -16,7 +16,7 @@
  */
 export const ANALYTICS_APP = 'vetra'
 
-export const EVENTS = {
+export const ANALYTICS_EVENTS = {
   // Auth
   authLoginClick: 'auth.login.click',
   authLogoutClick: 'auth.logout.click',
@@ -36,4 +36,4 @@ export const EVENTS = {
   builderProfileView: 'builder.profile.view',
 } as const
 
-export type AnalyticsEvent = (typeof EVENTS)[keyof typeof EVENTS]
+export type AnalyticsEvent = (typeof ANALYTICS_EVENTS)[keyof typeof ANALYTICS_EVENTS]

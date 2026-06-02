@@ -1,7 +1,7 @@
 'use client'
 
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
-import { EVENTS, useAnalytics } from '@/shared/analytics'
+import { ANALYTICS_EVENTS, useOpenPanelAnalytics } from '@/shared/analytics'
 import {
   ExternalLink,
   LogIn,
@@ -36,7 +36,7 @@ function shorten(addr: string | undefined): string {
 
 function RenownButton() {
   const auth = useRenownAuth()
-  const { track } = useAnalytics()
+  const { track } = useOpenPanelAnalytics()
 
   if (auth.status === 'loading' || auth.status === 'checking') {
     return (
@@ -98,7 +98,7 @@ function RenownButton() {
           <DropdownMenuSeparator className="bg-border/50" />
           <DropdownMenuItem
             onClick={() => {
-              track(EVENTS.authLogoutClick)
+              track(ANALYTICS_EVENTS.authLogoutClick)
               void auth.logout()
             }}
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium text-red-500 focus:text-red-500"
@@ -114,7 +114,7 @@ function RenownButton() {
     <button
       type="button"
       onClick={() => {
-        track(EVENTS.authLoginClick)
+        track(ANALYTICS_EVENTS.authLoginClick)
         auth.login()
       }}
       className={btnSecondary}
@@ -127,7 +127,7 @@ function RenownButton() {
 
 function NavbarRightSide() {
   const { theme, setTheme } = useTheme()
-  const { track } = useAnalytics()
+  const { track } = useOpenPanelAnalytics()
 
   const handleThemeToggle = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark')
@@ -140,7 +140,7 @@ function NavbarRightSide() {
         <RenownButton />
         <Link
           href="/packages"
-          onClick={() => track(EVENTS.ctaTryBetaClick)}
+          onClick={() => track(ANALYTICS_EVENTS.ctaTryBetaClick)}
           className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all hover:-translate-y-px"
         >
           Try Our Beta
