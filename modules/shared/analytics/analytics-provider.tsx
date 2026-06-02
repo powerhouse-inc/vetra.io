@@ -5,7 +5,7 @@ import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import { useEffect, useRef } from 'react'
 import { getOpenPanelApiUrl, getOpenPanelClientId } from './config'
 import { ANALYTICS_APP } from './events'
-import { buildTraits } from './openpanel-traits'
+import { buildIdentifyPayload } from './openpanel-traits'
 import { clearProfileHint, writeProfileHint } from './profile-hint'
 
 /**
@@ -47,16 +47,18 @@ function IdentifyRenownUser(): null {
 
     if (profileId) {
       try {
-        op.identify({
-          profileId,
-          properties: buildTraits({
+        const user = auth.user
+        op.identify(
+          buildIdentifyPayload(profileId, {
             address: auth.address,
-            ensName: auth.ensName,
-            avatarUrl: auth.avatarUrl,
-            displayName: auth.displayName,
-            profile: auth.user?.profile,
+            did: user?.did,
+            networkId: user?.networkId,
+            chainId: user?.chainId,
+            ensName: user?.ens?.name,
+            ensAvatar: user?.ens?.avatarUrl,
+            profile: user?.profile,
           }),
-        })
+        )
         writeProfileHint(profileId)
       } catch (err) {
         console.warn('[analytics] Failed to identify user:', err)
