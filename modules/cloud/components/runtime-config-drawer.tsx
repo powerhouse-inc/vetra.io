@@ -11,7 +11,6 @@ import {
   RuntimeConfigJsonEditor,
   validateJsonString,
 } from '@/modules/cloud/components/runtime-config-json-editor'
-import { useRuntimeConfig } from '@/modules/cloud/hooks/use-runtime-config'
 import type { PHConnectRuntimeConfig } from '@/modules/cloud/runtime-config/types'
 import {
   AlertDialog,
@@ -33,13 +32,29 @@ import {
 } from '@/modules/shared/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/components/ui/tabs'
 
+type RuntimeConfigValue = {
+  connect?: Record<string, unknown>
+  packageRegistryUrl?: string
+} | null
+
 type Props = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  tenantId: string | null
+  /**
+   * The env document's persisted runtime config — the powerhouse.config.json
+   * partial `{ connect, packageRegistryUrl? }` from `state.runtimeConfig`. The
+   * UI edits only the `connect.*` subtree.
+   */
+  runtimeConfig?: RuntimeConfigValue
+  /**
+   * Persist the full runtime-config partial via the document controller
+   * (SET_RUNTIME_CONFIG). Resolves once the signed op is pushed; the env then
+   * sits in CHANGES_PENDING until the user Approves/Deploys from the action bar.
+   */
+  onSave: (config: Record<string, unknown> | null) => Promise<void>
   /**
    * Human-readable env label rendered in the drawer header. Optional — falls
-   * back to "Connect runtime configuration" when absent.
+   * back to "Runtime config" when absent.
    */
   envLabel?: string | null
   /** Hide Save / Reset / Edit controls when the viewer cannot mutate the env. */
@@ -50,46 +65,54 @@ type Props = {
 
 /**
  * Side drawer for editing the deployed Connect's `powerhouse.config.json`.
- * Two synchronised views (Form + JSON) over the same in-memory editing
- * state. Save dispatches `setRuntimeConfig` against the vetra-cloud-runtime-config
- * subgraph; the rollout to the deployed file happens asynchronously via the
- * secrets-controller → ConfigMap → Reloader pipeline.
+ * Two synchronised views (Form + JSON) over the same in-memory editing state.
+ *
+ * Save dispatches the `SET_RUNTIME_CONFIG` document-model operation through the
+ * env controller (via `onSave`). That marks the environment CHANGES_PENDING;
+ * the rollout happens when the owner Approves/Deploys from the action bar,
+ * which renders `connect.env.PH_CONNECT_CONFIG_JSON` into the tenant's
+ * values.yaml (gitops → ArgoCD → connect pod restart).
  */
 export function RuntimeConfigDrawer({
   open,
   onOpenChange,
-  tenantId,
+  runtimeConfig,
+  onSave,
   envLabel,
   readOnly,
   initialTab = 'form',
 }: Props) {
-  const { payload, isLoading, isSaving, error, setOverrides } = useRuntimeConfig(tenantId)
+  // The persisted connect.* overrides live on the env document at
+  // state.runtimeConfig.connect. The UI edits only that subtree; any
+  // packageRegistryUrl sibling is preserved on save.
+  const savedOverrides = useMemo<PHConnectRuntimeConfig>(
+    () => (runtimeConfig?.connect as PHConnectRuntimeConfig | undefined) ?? {},
+    [runtimeConfig],
+  )
 
-  const [draftOverrides, setDraftOverrides] = useState<PHConnectRuntimeConfig>(
-    payload.overrides,
-  )
-  const [draftJson, setDraftJson] = useState<string>(
-    JSON.stringify(payload.overrides, null, 2),
-  )
+  const [isSaving, setIsSaving] = useState(false)
+  const [draftOverrides, setDraftOverrides] = useState<PHConnectRuntimeConfig>(savedOverrides)
+  const [draftJson, setDraftJson] = useState<string>(JSON.stringify(savedOverrides, null, 2))
   const [activeTab, setActiveTab] = useState<'form' | 'json'>(initialTab)
   const [confirmDiscardOpen, setConfirmDiscardOpen] = useState(false)
 
-  // Track whether the JSON view's text is the authoritative draft (true
-  // after the user types in JSON) or a derived render of `draftOverrides`
-  // (true after the user types in Form). Used to prevent infinite ping-pong.
+  // Track whether the JSON view's text is the authoritative draft (true after
+  // the user types in JSON) or a derived render of `draftOverrides` (true after
+  // the user types in Form). Prevents infinite ping-pong between the views.
   const jsonIsAuthoritative = useRef(false)
 
-  // Re-sync drafts when payload changes (initial load or after a successful
-  // save). Compare by reference to avoid stomping in-progress edits.
-  const lastPayloadOverridesRef = useRef(payload.overrides)
+  // Re-sync drafts when the persisted overrides change (initial open or after a
+  // save round-trips through the controller state). Compare by reference to
+  // avoid stomping in-progress edits.
+  const lastSavedOverridesRef = useRef(savedOverrides)
   useEffect(() => {
-    if (lastPayloadOverridesRef.current !== payload.overrides) {
-      lastPayloadOverridesRef.current = payload.overrides
-      setDraftOverrides(payload.overrides)
-      setDraftJson(JSON.stringify(payload.overrides, null, 2))
+    if (lastSavedOverridesRef.current !== savedOverrides) {
+      lastSavedOverridesRef.current = savedOverrides
+      setDraftOverrides(savedOverrides)
+      setDraftJson(JSON.stringify(savedOverrides, null, 2))
       jsonIsAuthoritative.current = false
     }
-  }, [payload.overrides])
+  }, [savedOverrides])
 
   // ----- editing handlers -----
 
@@ -123,8 +146,8 @@ export function RuntimeConfigDrawer({
   )
 
   const hasUnsavedChanges = useMemo(
-    () => !isDeepEqual(draftOverrides, payload.overrides),
-    [draftOverrides, payload.overrides],
+    () => !isDeepEqual(draftOverrides, savedOverrides),
+    [draftOverrides, savedOverrides],
   )
 
   const jsonValid = useMemo(() => validateJsonString(draftJson).ok, [draftJson])
@@ -134,13 +157,27 @@ export function RuntimeConfigDrawer({
   // ----- actions -----
 
   const doSave = useCallback(async () => {
+    const hasConnect = Object.keys(draftOverrides).length > 0
+    const hasRegistry = !!runtimeConfig?.packageRegistryUrl
+    // Preserve any packageRegistryUrl sibling (managed elsewhere) — the UI only
+    // edits connect.*. Empty connect + no sibling → {} clears all overrides.
+    const config: Record<string, unknown> | null =
+      hasConnect || hasRegistry
+        ? {
+            ...(hasRegistry ? { packageRegistryUrl: runtimeConfig?.packageRegistryUrl } : {}),
+            ...(hasConnect ? { connect: draftOverrides } : {}),
+          }
+        : {}
+    setIsSaving(true)
     try {
-      await setOverrides(draftOverrides)
-      toast.success('Runtime config saved — Connect will restart shortly')
+      await onSave(config)
+      toast.success('Runtime config saved — Approve / Deploy to roll it out')
     } catch (err) {
       toast.error(err instanceof Error ? err.message : 'Failed to save')
+    } finally {
+      setIsSaving(false)
     }
-  }, [draftOverrides, setOverrides])
+  }, [draftOverrides, runtimeConfig, onSave])
 
   const doReset = useCallback(() => {
     setDraftOverrides({})
@@ -149,11 +186,11 @@ export function RuntimeConfigDrawer({
   }, [])
 
   const doDiscard = useCallback(() => {
-    setDraftOverrides(payload.overrides)
-    setDraftJson(JSON.stringify(payload.overrides, null, 2))
+    setDraftOverrides(savedOverrides)
+    setDraftJson(JSON.stringify(savedOverrides, null, 2))
     jsonIsAuthoritative.current = false
     setConfirmDiscardOpen(false)
-  }, [payload.overrides])
+  }, [savedOverrides])
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
@@ -188,7 +225,8 @@ export function RuntimeConfigDrawer({
               </SheetTitle>
               <SheetDescription>
                 Edit the Connect SPA&rsquo;s{' '}
-                <code className="font-mono text-xs">powerhouse.config.json</code>.
+                <code className="font-mono text-xs">powerhouse.config.json</code>. Saving stages a
+                pending change — Approve / Deploy from the action bar to roll it out.
               </SheetDescription>
             </div>
             {!readOnly && (
@@ -218,12 +256,6 @@ export function RuntimeConfigDrawer({
           </div>
         </SheetHeader>
 
-        {error && (
-          <div className="text-destructive border-destructive/30 bg-destructive/10 border-b px-6 py-2 text-xs">
-            {error.message}
-          </div>
-        )}
-
         <Tabs
           value={activeTab}
           onValueChange={handleTabChange}
@@ -252,15 +284,11 @@ export function RuntimeConfigDrawer({
 
           <div className="flex-1 overflow-y-auto px-6 py-4">
             <TabsContent value="form" className="mt-0">
-              {isLoading ? (
-                <LoadingPlaceholder />
-              ) : (
-                <RuntimeConfigForm
-                  overrides={draftOverrides}
-                  onChange={handleFormChange}
-                  disabled={readOnly || isSaving}
-                />
-              )}
+              <RuntimeConfigForm
+                overrides={draftOverrides}
+                onChange={handleFormChange}
+                disabled={readOnly || isSaving}
+              />
             </TabsContent>
             <TabsContent value="json" className="mt-0 h-full min-h-[420px]">
               <RuntimeConfigJsonEditor
@@ -296,14 +324,5 @@ export function RuntimeConfigDrawer({
         </AlertDialog>
       </SheetContent>
     </Sheet>
-  )
-}
-
-function LoadingPlaceholder() {
-  return (
-    <div className="text-muted-foreground flex h-32 items-center justify-center gap-2 text-sm">
-      <Loader2 className="h-4 w-4 animate-spin" />
-      Loading runtime config…
-    </div>
   )
 }

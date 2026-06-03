@@ -127,6 +127,14 @@ type Props = {
     retention: number
   }) => Promise<void>
   backupScheduleSupported?: boolean
+  /**
+   * Connect runtime config + write handler for the Runtime Config drawer,
+   * threaded from the page's useEnvironmentDetail (same pattern as
+   * backupSchedule). Only consumed when `kind === 'connect'`.
+   */
+  runtimeConfig?: { connect?: Record<string, unknown>; packageRegistryUrl?: string } | null
+  onSaveRuntimeConfig?: (config: Record<string, unknown> | null) => Promise<void>
+  runtimeConfigSupported?: boolean
 }
 
 function mapRestartError(message: string): string {
@@ -161,6 +169,9 @@ export function ServiceDetailDrawer({
   backupSchedule,
   onSaveBackupSchedule,
   backupScheduleSupported,
+  runtimeConfig,
+  onSaveRuntimeConfig,
+  runtimeConfigSupported,
 }: Props) {
   // The Switchboard service is the chart's gating service for the CNPG
   // database cluster, so its drawer also surfaces DB backups. CONNECT and
@@ -185,9 +196,12 @@ export function ServiceDetailDrawer({
   const [range, setRange] = useState<MetricRange>('ONE_HOUR')
   const [restartOpen, setRestartOpen] = useState(false)
   const [runtimeConfigOpen, setRuntimeConfigOpen] = useState(false)
-  // Runtime-config editor is currently a CONNECT-only affordance — that's the
-  // service whose powerhouse.config.json this UI edits.
-  const showRuntimeConfig = kind === 'connect'
+  // Runtime-config editor is a CONNECT-only affordance — that's the service
+  // whose powerhouse.config.json this UI edits. Gated on the controller
+  // exposing setRuntimeConfig (i.e. a logged-in viewer on a vetra-cloud-package
+  // build that ships SET_RUNTIME_CONFIG); mirrors backupScheduleSupported.
+  const showRuntimeConfig =
+    kind === 'connect' && !!runtimeConfigSupported && !!onSaveRuntimeConfig
   const renown = useRenown()
   const auth = useRenownAuth()
   const viewerAddress = auth.status === 'authorized' ? (auth.address ?? null) : null
@@ -476,11 +490,12 @@ export function ServiceDetailDrawer({
         </Tabs>
       </SheetContent>
     </Sheet>
-    {showRuntimeConfig && (
+    {showRuntimeConfig && onSaveRuntimeConfig && (
       <RuntimeConfigDrawer
         open={runtimeConfigOpen}
         onOpenChange={setRuntimeConfigOpen}
-        tenantId={tenantId}
+        runtimeConfig={runtimeConfig ?? null}
+        onSave={onSaveRuntimeConfig}
         envLabel={subdomain}
         readOnly={!canEdit}
       />

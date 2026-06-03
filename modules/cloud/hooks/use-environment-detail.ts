@@ -311,6 +311,34 @@ export function useEnvironmentDetail(documentId: string) {
   const backupScheduleSupported =
     typeof (controller as ControllerWithSchedule | null)?.setBackupSchedule === 'function'
 
+  // `setRuntimeConfig` ships in the vetra-cloud-package release that added the
+  // SET_RUNTIME_CONFIG operation. Older builds of the consumer package don't
+  // expose it, so we feature-test before dispatching (mirrors setBackupSchedule).
+  // `config` is the operator-editable powerhouse.config.json partial
+  // ({ connect: {...}, packageRegistryUrl? }); null/{} clears all overrides.
+  // The reducer flips a deployed env to CHANGES_PENDING — the user then
+  // Approves/Deploys (env-action-bar) to roll it out via gitops.
+  type ControllerWithRuntimeConfig = NonNullable<typeof controller> & {
+    setRuntimeConfig?: (input: { config: Record<string, unknown> | null }) => void
+  }
+
+  const setRuntimeConfig = useCallback(
+    (config: Record<string, unknown> | null) =>
+      mutate((c) => {
+        const fn = (c as ControllerWithRuntimeConfig).setRuntimeConfig
+        if (typeof fn !== 'function') {
+          throw new Error(
+            'setRuntimeConfig is not available in this controller version — update vetra-cloud-package.',
+          )
+        }
+        fn.call(c, { config })
+      }),
+    [mutate],
+  )
+
+  const runtimeConfigSupported =
+    typeof (controller as ControllerWithRuntimeConfig | null)?.setRuntimeConfig === 'function'
+
   /** Owner-triggered "update to latest" — pulls the env's subscribed
    *  channel's latest known tag and bumps all enabled services. */
   const updateToLatest = useCallback(async () => {
@@ -349,6 +377,8 @@ export function useEnvironmentDetail(documentId: string) {
     setAutoUpdateChannel,
     setBackupSchedule,
     backupScheduleSupported,
+    setRuntimeConfig,
+    runtimeConfigSupported,
     updateToLatest,
     rollbackRelease,
   }

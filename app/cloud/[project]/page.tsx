@@ -285,6 +285,9 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           backupSchedule={state.backupSchedule ?? null}
           onSaveBackupSchedule={detail.setBackupSchedule}
           backupScheduleSupported={detail.backupScheduleSupported}
+          runtimeConfig={state.runtimeConfig ?? null}
+          onSaveRuntimeConfig={detail.setRuntimeConfig}
+          runtimeConfigSupported={detail.runtimeConfigSupported}
         />
       )}
       {state && environment && drawer.scope?.kind === 'agent' && drawerAgent && (
