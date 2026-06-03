@@ -36,6 +36,8 @@ import { Label } from '@/modules/shared/components/ui/label'
 import { Separator } from '@/modules/shared/components/ui/separator'
 import { Textarea } from '@/modules/shared/components/ui/textarea'
 import { cn } from '@/shared/lib/utils'
+import { routeEnvVars } from '@/modules/cloud/config/route-env-vars'
+import { useTenantConfig } from '@/modules/cloud/hooks/use-tenant-config'
 import { EndpointRow } from './endpoint-row'
 import { EnvVarsEditor } from './env-vars-editor'
 import { LiveStatusPill } from './live-status-pill'
@@ -61,6 +63,14 @@ type Props = {
   service: CloudEnvironmentService
   env: CloudEnvironment | null
   canEdit: boolean
+  /**
+   * The cluster tenant id (subdomain + envId suffix) used to route any
+   * secret-typed custom env vars through `setTenantSecret` on save. Null
+   * before initialization — when null, secrets cannot be persisted; the
+   * save handler errors out if the user attempts to mark any new value
+   * as secret.
+   */
+  tenantId: string | null
   manifest?: PackageManifest | null
   /**
    * Endpoints announced by the agent at runtime (sourced from the
@@ -99,6 +109,7 @@ export function AgentCard({
   service,
   env,
   canEdit,
+  tenantId,
   manifest,
   runtimeEndpoints,
   pods,
@@ -142,6 +153,9 @@ export function AgentCard({
   const [disabling, setDisabling] = useState(false)
   const [confirmDisableOpen, setConfirmDisableOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  // Only the setSecret action is read here; the {envVars, secrets}
+  // payload isn't displayed anywhere in this card.
+  const { setSecret } = useTenantConfig(tenantId)
 
   // When the service's persisted config changes (e.g. after a save), resync
   // the form so a re-expand reflects current truth.
@@ -161,9 +175,15 @@ export function AgentCard({
     if ((serviceCommand || null) !== (cfg.serviceCommand || null)) return true
     if (selectedRessource !== cfg.selectedRessource) return true
     if (envVars.length !== cfg.env.length) return true
+    // null and '' both mean "no value" — comparing the raw fields directly
+    // would flag a freshly-loaded secret row (`value: null` from the
+    // document) as dirty the moment React's controlled input coerces it to
+    // ''. Normalize both sides.
+    const norm = (v: string | null | undefined) => v ?? ''
     for (let i = 0; i < envVars.length; i++) {
       if (envVars[i].name !== cfg.env[i]?.name) return true
-      if (envVars[i].value !== cfg.env[i]?.value) return true
+      if (norm(envVars[i].value) !== norm(cfg.env[i]?.value)) return true
+      if ((envVars[i].isSecret === true) !== (cfg.env[i]?.isSecret === true)) return true
     }
     return false
   }, [cfg, serviceCommand, selectedRessource, envVars])
@@ -173,9 +193,23 @@ export function AgentCard({
     setError(null)
     setSaving(true)
     try {
+      // Mirror of AddAgentModal: split secret-typed entries off the
+      // document path and persist them encrypted via setTenantSecret.
+      // See modules/cloud/config/route-env-vars.ts for the invariants.
+      const { secretsToPersist, envForDocument } = routeEnvVars(envVars)
+      if (secretsToPersist.length > 0) {
+        if (!tenantId) {
+          throw new Error(
+            'Cannot store secret env vars: tenant is not yet provisioned.',
+          )
+        }
+        for (const s of secretsToPersist) {
+          await setSecret(s.name, s.value)
+        }
+      }
       await onSave({
         package: cfg.package,
-        env: envVars.filter((v) => v.name.trim()),
+        env: envForDocument,
         serviceCommand: serviceCommand.trim() || null,
         selectedRessource,
       })

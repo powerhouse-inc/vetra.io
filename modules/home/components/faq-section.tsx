@@ -6,6 +6,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from '@/modules/shared/components/ui/accordion'
+import { ScrollReveal } from '@/modules/shared/components/ui/scroll-reveal'
 
 const faqs = [
   {
@@ -39,7 +40,7 @@ const faqs = [
   {
     question: 'Is Vetra open source?',
     answer:
-      'Yes, Vetra is fully open source. That means you can inspect every line of code, modify it, and run it on your own servers. Unlike most AI tools, the platform itself is open — not just the apps it creates.',
+      'Yes, Vetra is fully open source under a copyleft license. Copyleft means that if you modify the code and distribute it, you must share those changes under the same open terms — keeping the ecosystem open for everyone. In practice this means you can inspect every line of code, modify it, and run it on your own servers freely. Unlike most AI tools, the platform itself is open — not just the apps it creates.',
   },
   {
     question: 'How can I get help?',
@@ -112,39 +113,41 @@ const rightColumn = faqs.slice(5, 10)
 
 export function FaqSection() {
   return (
-    <section className="mx-auto max-w-screen-xl px-6 py-20">
-      <h2 className="text-foreground mb-2 text-center text-3xl font-bold">
-        Frequently Asked Questions
-      </h2>
-      <p className="text-foreground-70 mb-12 text-center">Everything you need to know.</p>
+    <ScrollReveal>
+      <section className="mx-auto max-w-screen-xl px-6 py-20">
+        <h2 className="text-foreground mb-2 text-center text-3xl font-bold">
+          Frequently Asked Questions
+        </h2>
+        <p className="text-foreground-70 mb-12 text-center">Everything you need to know.</p>
 
-      <div className="grid gap-12 lg:grid-cols-2">
-        <Accordion type="multiple">
-          {leftColumn.map((faq, i) => (
-            <AccordionItem
-              key={i}
-              value={`left-${i}`}
-              className="border-border/30 border-b-[0.5px] py-2 last:border-b-0"
-            >
-              <AccordionTrigger className="py-6 text-base">{faq.question}</AccordionTrigger>
-              <AccordionContent className="pb-6">{faq.answer}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
+        <div className="grid gap-12 lg:grid-cols-2">
+          <Accordion type="multiple">
+            {leftColumn.map((faq, i) => (
+              <AccordionItem
+                key={i}
+                value={`left-${i}`}
+                className="border-border/30 border-b-[0.5px] py-2 last:border-b-0"
+              >
+                <AccordionTrigger className="py-6 text-base">{faq.question}</AccordionTrigger>
+                <AccordionContent className="pb-6">{faq.answer}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
 
-        <Accordion type="multiple">
-          {rightColumn.map((faq, i) => (
-            <AccordionItem
-              key={i}
-              value={`right-${i}`}
-              className="border-border/30 border-b-[0.5px] py-2 last:border-b-0"
-            >
-              <AccordionTrigger className="py-6 text-base">{faq.question}</AccordionTrigger>
-              <AccordionContent className="pb-6">{faq.answer}</AccordionContent>
-            </AccordionItem>
-          ))}
-        </Accordion>
-      </div>
-    </section>
+          <Accordion type="multiple">
+            {rightColumn.map((faq, i) => (
+              <AccordionItem
+                key={i}
+                value={`right-${i}`}
+                className="border-border/30 border-b-[0.5px] py-2 last:border-b-0"
+              >
+                <AccordionTrigger className="py-6 text-base">{faq.question}</AccordionTrigger>
+                <AccordionContent className="pb-6">{faq.answer}</AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </section>
+    </ScrollReveal>
   )
 }

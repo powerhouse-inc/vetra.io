@@ -18,6 +18,13 @@ type Props = {
   services: CloudEnvironmentService[]
   env: CloudEnvironment | null
   canEdit: boolean
+  /**
+   * The cluster tenant id derived from the environment subdomain. Threaded
+   * into AgentCard so its save path can route secret env entries through
+   * setTenantSecret (encrypted at-rest) instead of through the document.
+   * Null before the environment has been initialized.
+   */
+  tenantId: string | null
   onAddAgent?: () => void
   manifests?: Record<string, PackageManifest>
   /** prefix → runtime-announced endpoints (from observability subgraph). */
@@ -38,6 +45,7 @@ export function AgentsSection({
   services,
   env,
   canEdit,
+  tenantId,
   onAddAgent,
   manifests,
   runtimeEndpointsByPrefix,
@@ -100,6 +108,7 @@ export function AgentsSection({
               service={s}
               env={env}
               canEdit={canEdit}
+              tenantId={tenantId}
               manifest={s.config ? (manifests?.[s.config.package.name] ?? null) : null}
               runtimeEndpoints={runtimeEndpointsByPrefix?.[s.prefix] ?? null}
               pods={pods}

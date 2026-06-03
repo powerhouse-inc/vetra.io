@@ -9,7 +9,18 @@ export type CloudResourceSize =
   | 'VETRA_AGENT_XL'
   | 'VETRA_AGENT_XXL'
 
-export type CloudServiceEnv = { name: string; value: string }
+/**
+ * Mirrors `VetraCloudServiceEnv` in the document model schema (vetra-cloud-
+ * package v1). `value` is optional and MUST be null/empty when isSecret is
+ * true — the actual secret value lives only in the encrypted tenant_secrets
+ * table (written via the vetra-cloud-secrets `setSecret` mutation). The
+ * document carries just the NAME for secret entries.
+ */
+export type CloudServiceEnv = {
+  name: string
+  value?: string | null
+  isSecret?: boolean | null
+}
 
 export type ClintEndpointType = 'api-graphql' | 'api-mcp' | 'website'
 

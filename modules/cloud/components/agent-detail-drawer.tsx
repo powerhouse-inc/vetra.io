@@ -166,24 +166,17 @@ export function AgentDetailDrawer({
       ? `${service.config.package.name}@${service.config.package.version ?? 'latest'}`
       : service.prefix)
 
-  // Logs — env-wide query for now; until the backend `agent:` arg ships,
-  // we filter client-side by matching the agent's prefix or pod-name
-  // anywhere in the log line. This is a best-effort substring match;
-  // false positives are possible if the prefix collides with another
-  // service's log text. The disclaimer below the viewer states this.
+  // Logs — scoped server-side to this agent's pods via the `agent` arg. The
+  // observability resolver resolves the prefix to pod names through the
+  // chart's `clint.vetra.io/agent` label and queries Loki for exactly those
+  // pods, so we no longer substring-match log bodies client-side (agent log
+  // lines don't contain the prefix/pod name). Returns an empty list until the
+  // env_pods cache knows this agent's pods (e.g. just after creation).
   const {
-    logs: rawLogs,
+    logs,
     isLoading: logsLoading,
     refresh: refreshLogs,
-  } = useEnvironmentLogs(subdomain, tenantId, null, range, false)
-  const logs = useMemo(() => {
-    if (rawLogs.length === 0) return rawLogs
-    const needles = [service.prefix, ...agentPods.map((p) => p.name)].filter(
-      (s): s is string => !!s && s.length > 0,
-    )
-    if (needles.length === 0) return rawLogs
-    return rawLogs.filter((entry) => needles.some((n) => entry.line.includes(n)))
-  }, [rawLogs, service.prefix, agentPods])
+  } = useEnvironmentLogs(subdomain, tenantId, null, range, false, service.prefix ?? null)
 
   // Metrics — fetched env-wide and filtered client-side by pod name.
   const { metrics, isLoading: metricsLoading } = useEnvironmentMetrics(
@@ -341,7 +334,7 @@ export function AgentDetailDrawer({
                   <div className="bg-muted/40 text-muted-foreground flex items-start gap-2 rounded-md border p-3 text-xs">
                     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                     <span>
-                      Showing log lines matching this agent (prefix{' '}
+                      Showing logs for this agent (prefix{' '}
                       <span className="font-mono">{service.prefix}</span>
                       {agentPods[0] && (
                         <>
@@ -349,8 +342,7 @@ export function AgentDetailDrawer({
                           / pod <span className="font-mono">{agentPods[0].name}</span>
                         </>
                       )}
-                      ). Substring match client-side until the backend ships an{' '}
-                      <span className="font-mono">agent:</span> filter.
+                      ), matched server-side by pod label.
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -448,6 +440,7 @@ export function AgentDetailDrawer({
                 service={service}
                 env={env}
                 canEdit={canEdit}
+                tenantId={tenantId}
                 manifest={manifest}
                 runtimeEndpoints={runtimeEndpoints}
                 pods={pods}
