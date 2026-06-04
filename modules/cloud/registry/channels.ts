@@ -48,6 +48,18 @@ function isNewer(a: Parsed, b: Parsed): boolean {
   return a.bump > b.bump
 }
 
+/**
+ * Normalize a user-picked tag into the image tag the service deployment
+ * expects. Semver versions arrive bare from the registry/npm (e.g. `1.2.3`)
+ * but deployments pin images by `v`-prefixed tag (`v1.2.3`), so bare semver
+ * gets a `v`. Floating Docker tags (`latest`, `dev`, `staging`) and
+ * already-`v`-prefixed semver are passed through untouched — prefixing those
+ * would point at a tag that doesn't exist (e.g. the `vlatest` bug).
+ */
+export function toServiceImageTag(version: string): string {
+  return /^\d/.test(version) ? `v${version}` : version
+}
+
 export function computeDistTags(tags: string[]): Record<string, string> {
   const buckets: Record<string, Parsed> = {}
   for (const tag of tags) {

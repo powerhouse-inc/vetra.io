@@ -645,6 +645,7 @@ export async function fetchLogs(
   limit: number,
   errorsOnly: boolean,
   token?: string | null,
+  agent?: string | null,
 ): Promise<LogEntry[]> {
   if (errorsOnly) {
     const data = await gqlObservability<{ errorLogs: LogEntry[] }>(
@@ -662,12 +663,12 @@ export async function fetchLogs(
 
   const data = await gqlObservability<{ logs: LogEntry[] }>(
     subdomain,
-    `query ($tenantId: String!, $service: TenantService, $since: MetricRange, $limit: Int) {
-      logs(tenantId: $tenantId, service: $service, since: $since, limit: $limit) {
+    `query ($tenantId: String!, $service: TenantService, $agent: String, $since: MetricRange, $limit: Int) {
+      logs(tenantId: $tenantId, service: $service, agent: $agent, since: $since, limit: $limit) {
         timestamp line
       }
     }`,
-    { tenantId, service, since, limit },
+    { tenantId, service, agent: agent ?? null, since, limit },
     token,
   )
   return data.logs
