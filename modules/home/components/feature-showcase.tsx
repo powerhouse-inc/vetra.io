@@ -5,34 +5,34 @@ import { ScrollReveal, ScrollRevealItem } from '@/modules/shared/components/ui/s
 
 const features = [
   {
-    title: 'Build anything, fast',
+    title: 'AI you choose, infrastructure you own',
     description:
-      'Describe your workflow and Vetra sets it up automatically. Use ready-made templates or create something from scratch — your team can be up and running in minutes.',
+      'Drop in your own API key or run a local model entirely on your hardware. Vetra orchestrates it — you keep full control over which AI touches which data.',
     image: '/images/home/rapid-application-development.png',
     priority: true,
   },
   {
-    title: 'Everyone stays in sync',
+    title: 'Local first. Syncs when you want it to.',
     description:
-      'Updates appear for your whole team the moment they happen. Like a live conversation, not a file waiting to be saved.',
+      "Every app and agent runs entirely on your machine — no cloud required. Changes sync in real time when you're connected, and merge cleanly when you're not. Offline isn't a fallback — it's the default.",
     lottie: 'https://cdn.lottielab.com/l/E6XFYWdFhnNvBH.json',
   },
   {
-    title: 'Work together, naturally',
+    title: 'Your data never leaves without permission',
     description:
-      'Leave comments, suggest changes, and review updates — just like editing a shared document. Everyone stays on the same page, effortlessly.',
+      'Every document, event, and agent output is stored in a format you own — JSON schemas you define, on infrastructure you control. Not a proprietary blob on our servers.',
     image: '/images/home/collaborative-infrastructure.png',
   },
   {
-    title: 'Grows with your organization',
+    title: 'Yours to run. Ours to help you with.',
     description:
-      'Start small and scale to millions of users without switching platforms or rewriting anything. Vetra Cloud handles the hard parts automatically.',
+      "Deploy on our cloud, your cloud, or a private node. The platform is 100% open source — inspect every line, fork it, modify it, move it. You're never dependent on our uptime or our roadmap.",
     image: '/images/home/feature-collaborative.svg',
   },
   {
-    title: 'Secure and verifiable',
+    title: 'Every action signed. Every change traceable.',
     description:
-      'Every action is recorded and tamper-proof. Know exactly who did what, and when — optionally backed by blockchain for extra trust.',
+      'Every operation — human or agent — is cryptographically signed and appended to an immutable log. Know exactly who did what, when, and why. Optionally anchor to a blockchain for external auditability.',
     image: '/images/home/web3-enabled.png',
   },
 ]
@@ -42,7 +42,7 @@ export function FeatureShowcase() {
     <ScrollReveal stagger>
       <section className="mx-auto max-w-screen-xl px-6 py-20">
         <h2 className="text-foreground mb-16 text-center text-3xl font-bold">
-          See what your team can do
+          What you own when you build on Vetra
         </h2>
 
         <div className="space-y-20">
