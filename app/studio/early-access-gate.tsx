@@ -1,11 +1,51 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ArrowRight, BookOpen, Check, Copy, Key, Mail, MessageCircle, Terminal } from 'lucide-react'
+import {
+  ArrowRight,
+  BookOpen,
+  Check,
+  Copy,
+  Key,
+  Loader2,
+  Mail,
+  MessageCircle,
+  Terminal,
+} from 'lucide-react'
+import { BEARER_TOKEN_TTL_SECONDS, PENDING_CODE_KEY } from '@/modules/invites/lib/constants'
 
-const VALID_CODE = 'LOCAL-FIRST'
+async function postJson(url: string, body: unknown): Promise<{ ok: boolean; body: unknown }> {
+  try {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    const json: unknown = await res.json().catch(() => ({}))
+    return { ok: res.ok, body: json }
+  } catch {
+    return { ok: false, body: {} }
+  }
+}
+
+/** The Renown bearer token (a DID-JWT), verified server-side to identify the user on redeem. */
+async function getRenownToken(): Promise<string | null> {
+  if (typeof window === 'undefined') return null
+  const renown = (
+    window as unknown as {
+      ph?: { renown?: { getBearerToken: (o: { expiresIn: number }) => Promise<string | null> } }
+    }
+  ).ph?.renown
+  if (!renown) return null
+  try {
+    return await renown.getBearerToken({ expiresIn: BEARER_TOKEN_TTL_SECONDS })
+  } catch {
+    return null
+  }
+}
 
 // Drop the two screenshots into public/images/studio/ with these exact filenames:
 //   vetra-studio-1.png — workout tracker session (shown first)
@@ -22,18 +62,88 @@ const BACKDROP = '/images/home/stack-connect-app.png'
 type Step = 'gate' | 'login' | 'granted'
 
 export function EarlyAccessGate() {
+  const auth = useRenownAuth()
   const [step, setStep] = useState<Step>('gate')
   const [slide, setSlide] = useState<1 | 2>(1)
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
+  const [working, setWorking] = useState(false)
 
-  const handleGetAccess = () => {
-    if (code.trim().toUpperCase() === VALID_CODE) {
-      setError('')
+  // After a Renown login completes (same tab, ?user=… redirect), finish the
+  // flow: redeem a pending code, or recognise a returning user who's already in.
+  useEffect(() => {
+    if (auth.status !== 'authorized' || step === 'granted') return
+    let cancelled = false
+
+    const finalize = async () => {
+      setWorking(true)
+      try {
+        const token = await getRenownToken()
+        if (!token) return
+
+        const pending = sessionStorage.getItem(PENDING_CODE_KEY)
+        if (pending) {
+          const redeemed = await postJson('/api/invite/redeem', { code: pending, token })
+          if (redeemed.ok && (redeemed.body as { ok?: boolean }).ok) {
+            sessionStorage.removeItem(PENDING_CODE_KEY)
+            if (!cancelled) setStep('granted')
+            return
+          }
+          // Redeem failed — keep the pending code so a reload can retry, and
+          // fall through to the status check.
+        }
+
+        // No pending code (or it failed) — maybe they're already a redeemed user.
+        const status = await postJson('/api/invite/status', { token })
+        if (!cancelled && status.ok && (status.body as { allowed?: boolean }).allowed) {
+          setStep('granted')
+        }
+      } finally {
+        if (!cancelled) setWorking(false)
+      }
+    }
+
+    void finalize()
+    return () => {
+      cancelled = true
+    }
+  }, [auth.status, step])
+
+  const handleGetAccess = async () => {
+    const entered = code.trim()
+    if (!entered || working) return
+    setWorking(true)
+    setError('')
+    try {
+      const res = await postJson('/api/invite/validate', { code: entered })
+      const valid = res.ok && (res.body as { valid?: boolean }).valid
+      if (!valid) {
+        setError('Invalid invite code. Please try again.')
+        return
+      }
+
+      // Already logged in → redeem now. Otherwise stash the code and send them
+      // through Renown login; the effect above redeems when they return.
+      if (auth.status === 'authorized') {
+        const token = await getRenownToken()
+        if (token) {
+          const redeemed = await postJson('/api/invite/redeem', { code: entered, token })
+          if (redeemed.ok && (redeemed.body as { ok?: boolean }).ok) {
+            setStep('granted')
+            return
+          }
+        }
+        setError('Could not grant access. Please try again.')
+        return
+      }
+
+      sessionStorage.setItem(PENDING_CODE_KEY, entered)
       setStep('login')
-    } else {
-      setError('Invalid invite code. Please try again.')
+    } catch {
+      setError('Something went wrong. Please try again.')
+    } finally {
+      setWorking(false)
     }
   }
 
@@ -66,7 +176,7 @@ export function EarlyAccessGate() {
 
         {slide === 1 && (
           <div className="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2">
-            <span className="bg-black/40 text-white/80 rounded-full px-4 py-2 text-xs backdrop-blur-sm">
+            <span className="rounded-full bg-black/40 px-4 py-2 text-xs text-white/80 backdrop-blur-sm">
               Click anywhere to continue
             </span>
           </div>
@@ -77,12 +187,30 @@ export function EarlyAccessGate() {
             <Link
               href="/"
               onClick={(e) => e.stopPropagation()}
-              className="bg-black/40 text-white/80 hover:text-white rounded-full px-4 py-2 text-xs backdrop-blur-sm transition-colors"
+              className="rounded-full bg-black/40 px-4 py-2 text-xs text-white/80 backdrop-blur-sm transition-colors hover:text-white"
             >
               ← Back to vetra.to
             </Link>
           </div>
         )}
+      </div>
+    )
+  }
+
+  // While the initial auth check runs, or while we finalize a redemption after
+  // login, show a splash instead of flashing the gate form.
+  const finalizing = auth.status === 'authorized' && working
+  if (auth.status === 'loading' || auth.status === 'checking' || finalizing) {
+    return (
+      <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden">
+        <div className="absolute inset-0">
+          <Image src={BACKDROP} alt="" fill className="object-contain object-top" priority />
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        </div>
+        <div className="relative z-10 flex items-center gap-3 text-sm text-white/90">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          Setting up your access…
+        </div>
       </div>
     )
   }
@@ -101,8 +229,8 @@ export function EarlyAccessGate() {
           <div>
             {/* Header */}
             <div className="mb-5 text-center">
-              <h2 className="text-white text-xl font-bold drop-shadow">Vetra Studio</h2>
-              <p className="text-white/70 mt-1 text-sm">
+              <h2 className="text-xl font-bold text-white drop-shadow">Vetra Studio</h2>
+              <p className="mt-1 text-sm text-white/70">
                 Early access — choose how you&apos;d like to get started.
               </p>
             </div>
@@ -129,15 +257,19 @@ export function EarlyAccessGate() {
                           setCode(e.target.value)
                           setError('')
                         }}
-                        onKeyDown={(e) => e.key === 'Enter' && handleGetAccess()}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter') void handleGetAccess()
+                        }}
+                        disabled={working}
                         placeholder="Enter invite code"
-                        className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary/40 h-9 flex-1 rounded-lg border px-3 text-sm focus:ring-2 focus:outline-none"
+                        className="border-border bg-background text-foreground placeholder:text-muted-foreground focus:ring-primary/40 h-9 flex-1 rounded-lg border px-3 text-sm focus:ring-2 focus:outline-none disabled:opacity-60"
                       />
                       <button
-                        onClick={handleGetAccess}
-                        className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-lg px-4 text-sm font-semibold transition-colors"
+                        onClick={() => void handleGetAccess()}
+                        disabled={working}
+                        className="bg-primary text-primary-foreground hover:bg-primary/90 h-9 rounded-lg px-4 text-sm font-semibold transition-colors disabled:opacity-60"
                       >
-                        Get Access
+                        {working ? 'Checking…' : 'Get Access'}
                       </button>
                     </div>
                     {error && <p className="text-destructive text-xs">{error}</p>}
@@ -150,7 +282,9 @@ export function EarlyAccessGate() {
                     <div className="bg-primary/15 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
                       <Mail className="text-primary h-3.5 w-3.5" />
                     </div>
-                    <p className="text-foreground text-sm font-semibold">I don&apos;t have a code</p>
+                    <p className="text-foreground text-sm font-semibold">
+                      I don&apos;t have a code
+                    </p>
                   </div>
                   <p className="text-muted-foreground -mt-2 text-xs leading-relaxed">
                     Join the waitlist to be first in line when we open up more spots.
@@ -210,7 +344,9 @@ export function EarlyAccessGate() {
                     {CURL_CMD}
                   </code>
                   <button
-                    onClick={() => { void handleCopy() }}
+                    onClick={() => {
+                      void handleCopy()
+                    }}
                     className="text-muted-foreground hover:text-foreground ml-1 shrink-0 transition-colors"
                     aria-label="Copy command"
                   >
@@ -255,8 +391,9 @@ export function EarlyAccessGate() {
               <div className="border-border my-6 border-t" />
 
               <button
-                onClick={() => setStep('granted')}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold transition-colors"
+                onClick={() => void auth.login()}
+                disabled={working}
+                className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold transition-colors disabled:opacity-60"
               >
                 <Image
                   src="/logos/vetra-icon.svg"
@@ -265,7 +402,7 @@ export function EarlyAccessGate() {
                   height={16}
                   className="opacity-90"
                 />
-                Continue with Renown
+                {working ? 'Signing you in…' : 'Continue with Renown'}
                 <ArrowRight className="h-4 w-4" />
               </button>
 
