@@ -3695,7 +3695,7 @@ packages:
       react: '>=19.0.0'
 
   '@powerhousedao/vetra-builder-package@https://registry.dev.vetra.io/@powerhousedao/vetra-builder-package/-/vetra-builder-package-5.2.0-dev.66.tgz':
-    resolution: {tarball: https://registry.dev.vetra.io/@powerhousedao/vetra-builder-package/-/vetra-builder-package-5.2.0-dev.66.tgz}
+    resolution: {integrity: sha512-8yfR512Wu0dYjotmH/Mtb5am2gnYDPFPfSkEvIBTy2LtkOXMEWJ6P/WMeyT5Dj7UI5OHl3oSLmdUs9Mpd5TFlw==, tarball: https://registry.dev.vetra.io/@powerhousedao/vetra-builder-package/-/vetra-builder-package-5.2.0-dev.66.tgz}
     version: 5.2.0-dev.66
     peerDependencies:
       react: ^19.2.0
