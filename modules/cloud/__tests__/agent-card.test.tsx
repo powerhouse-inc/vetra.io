@@ -33,7 +33,8 @@ describe('AgentCard collapsed', () => {
       <AgentCard
         service={service}
         env={null}
-        canEdit={false} tenantId={null}
+        canEdit={false}
+        tenantId={null}
         manifest={{
           name: 'ph-rupert',
           type: 'clint-project',

@@ -24,7 +24,7 @@ const MOCK_PRODUCTS: Product[] = [
     name: 'Concord',
     tagline: 'Share the burden. Keep the savings.',
     description:
-      'Concord coordinates procurement and shared services for any group that runs things together — households, condo buildings, campuses, elder-living complexes, office parks. By pooling demand and dividing operational work across members, it turns the everyday cost of shared life into measurable savings of money and time. Local-first by design, so a group\'s dues, decisions, and supplier relationships stay with the group.',
+      "Concord coordinates procurement and shared services for any group that runs things together — households, condo buildings, campuses, elder-living complexes, office parks. By pooling demand and dividing operational work across members, it turns the everyday cost of shared life into measurable savings of money and time. Local-first by design, so a group's dues, decisions, and supplier relationships stay with the group.",
     environmentCount: 3,
     initials: 'C',
     color: 'bg-slate-700',
@@ -67,17 +67,26 @@ function ProductCard({ product }: { product: Product }) {
         </Link>
         <div className="flex items-center gap-3">
           {product.links.github && (
-            <Link href={product.links.github} className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href={product.links.github}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               <Github className="h-4 w-4" />
             </Link>
           )}
           {product.links.website && (
-            <Link href={product.links.website} className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href={product.links.website}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               <Globe className="h-4 w-4" />
             </Link>
           )}
           {product.links.twitter && (
-            <Link href={product.links.twitter} className="text-muted-foreground hover:text-foreground transition-colors">
+            <Link
+              href={product.links.twitter}
+              className="text-muted-foreground hover:text-foreground transition-colors"
+            >
               <Twitter className="h-4 w-4" />
             </Link>
           )}
