@@ -12,6 +12,7 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "codegen": "graphql-codegen --config codegen.ts",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
     "invite-codes": "node --env-file-if-exists=.env.local scripts/invite-codes.mts",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
