@@ -199,9 +199,7 @@ export function AgentCard({
       const { secretsToPersist, envForDocument } = routeEnvVars(envVars)
       if (secretsToPersist.length > 0) {
         if (!tenantId) {
-          throw new Error(
-            'Cannot store secret env vars: tenant is not yet provisioned.',
-          )
+          throw new Error('Cannot store secret env vars: tenant is not yet provisioned.')
         }
         for (const s of secretsToPersist) {
           await setSecret(s.name, s.value)

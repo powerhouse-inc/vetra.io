@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { LogEntry } from '@/modules/cloud/types'
 
 function formatLogTimestamp(ts: number): string {
@@ -133,6 +133,24 @@ type LogViewerProps = {
 export function LogViewer({ logs, isLoading, levelFilter }: LogViewerProps) {
   const [showRaw, setShowRaw] = useState(false)
 
+  // Logs render oldest→newest (newest at the bottom), like a terminal tail.
+  // Keep the view pinned to the bottom so the newest line is visible, but only
+  // while the user is already at the bottom — if they've scrolled up to read
+  // history, incoming logs (10s poll) won't yank them back down.
+  const scrollRef = useRef<HTMLDivElement>(null)
+  const stickToBottomRef = useRef(true)
+
+  const handleScroll = () => {
+    const el = scrollRef.current
+    if (!el) return
+    stickToBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < 40
+  }
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (el && stickToBottomRef.current) el.scrollTop = el.scrollHeight
+  }, [logs, showRaw, levelFilter, isLoading])
+
   const filteredLogs = levelFilter
     ? logs.filter((entry) => {
         try {
@@ -160,7 +178,7 @@ export function LogViewer({ logs, isLoading, levelFilter }: LogViewerProps) {
           {showRaw ? 'Formatted' : 'Raw'}
         </button>
       </div>
-      <div className="max-h-[500px] overflow-auto p-4">
+      <div ref={scrollRef} onScroll={handleScroll} className="max-h-[500px] overflow-auto p-4">
         {isLoading ? (
           <div className="animate-pulse space-y-2">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -177,7 +195,7 @@ export function LogViewer({ logs, isLoading, levelFilter }: LogViewerProps) {
           <p className="py-8 text-center text-gray-500">No logs in this time range</p>
         ) : (
           <div className="space-y-0.5">
-            {[...filteredLogs].reverse().map((entry, i) => (
+            {filteredLogs.map((entry, i) => (
               <LogLine key={i} entry={entry} showRaw={showRaw} />
             ))}
           </div>

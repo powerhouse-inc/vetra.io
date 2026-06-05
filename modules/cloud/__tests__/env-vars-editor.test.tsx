@@ -54,9 +54,7 @@ describe('EnvVarsEditor', () => {
     // The value is preserved on the toggle event itself; routeEnvVars
     // (called on submit by the parent) is what splits it into the
     // tenant_secrets write + clearing value=null in the document.
-    expect(onChange).toHaveBeenCalledWith([
-      { name: 'API_KEY', value: 'plain', isSecret: true },
-    ])
+    expect(onChange).toHaveBeenCalledWith([{ name: 'API_KEY', value: 'plain', isSecret: true }])
   })
 
   it('masks the value input when isSecret is true', () => {
@@ -93,10 +91,7 @@ describe('EnvVarsEditor', () => {
 
   it('renders lock icon button for secret rows', () => {
     render(
-      <EnvVarsEditor
-        value={[{ name: 'SECRET', value: '', isSecret: true }]}
-        onChange={() => {}}
-      />,
+      <EnvVarsEditor value={[{ name: 'SECRET', value: '', isSecret: true }]} onChange={() => {}} />,
     )
     expect(screen.getByRole('button', { name: 'unmark-secret-0' })).not.toBeNull()
   })
