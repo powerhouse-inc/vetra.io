@@ -83,9 +83,7 @@ export const DEFAULT_CONNECT_CONFIG: DefaultConnectConfig = {
  *  - Primitives replace
  *  - undefined is "no opinion" — leave the default in place
  */
-export function mergeWithDefaults(
-  overrides: PHConnectRuntimeConfig,
-): PHConnectRuntimeConfig {
+export function mergeWithDefaults(overrides: PHConnectRuntimeConfig): PHConnectRuntimeConfig {
   return deepMerge(DEFAULT_CONNECT_CONFIG, overrides) as PHConnectRuntimeConfig
 }
 

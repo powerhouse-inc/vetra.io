@@ -224,7 +224,7 @@ function DrivesSection({ form, overrides }: SectionProps) {
       />
 
       <div className="space-y-2">
-        <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+        <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
           Sections
         </div>
         <div className="grid gap-2 sm:grid-cols-2">
@@ -247,7 +247,7 @@ function DrivesSection({ form, overrides }: SectionProps) {
 
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <div className="text-muted-foreground text-xs font-medium uppercase tracking-wide">
+          <div className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
             Default drives
           </div>
           <Button
@@ -265,10 +265,7 @@ function DrivesSection({ form, overrides }: SectionProps) {
         ) : (
           <div className="space-y-2">
             {fields.map((f, i) => (
-              <div
-                key={f.id}
-                className="bg-muted/30 flex items-start gap-2 rounded-md border p-2"
-              >
+              <div key={f.id} className="bg-muted/30 flex items-start gap-2 rounded-md border p-2">
                 <div className="flex-1 space-y-1">
                   <Input
                     placeholder="https://drive-url"
@@ -591,9 +588,7 @@ function SelectField({
                     ? NULL_TOKEN
                     : ''
               }
-              onValueChange={(v) =>
-                field.onChange(nullable && v === NULL_TOKEN ? undefined : v)
-              }
+              onValueChange={(v) => field.onChange(nullable && v === NULL_TOKEN ? undefined : v)}
               disabled={form.formState.disabled}
             >
               <SelectTrigger className="text-sm">
@@ -624,9 +619,7 @@ function SelectField({
  * `effective` (defaults + overrides) so every field has a value; we keep
  * the raw `overrides` separately to compute the "default vs override" cue.
  */
-function buildFormValues(
-  overrides: PHConnectRuntimeConfig,
-): ConnectRuntimeConfigFormValues {
+function buildFormValues(overrides: PHConnectRuntimeConfig): ConnectRuntimeConfigFormValues {
   return {
     branding: {
       appName: overrides.branding?.appName ?? DEFAULT_CONNECT_CONFIG.branding.appName,
@@ -637,14 +630,11 @@ function buildFormValues(
     },
     packages: {
       externalEnabled:
-        overrides.packages?.externalEnabled ??
-        DEFAULT_CONNECT_CONFIG.packages.externalEnabled,
+        overrides.packages?.externalEnabled ?? DEFAULT_CONNECT_CONFIG.packages.externalEnabled,
     },
     drives: {
-      allowAddDrive:
-        overrides.drives?.allowAddDrive ?? DEFAULT_CONNECT_CONFIG.drives.allowAddDrive,
-      defaultDrives:
-        overrides.drives?.defaultDrives ?? DEFAULT_CONNECT_CONFIG.drives.defaultDrives,
+      allowAddDrive: overrides.drives?.allowAddDrive ?? DEFAULT_CONNECT_CONFIG.drives.allowAddDrive,
+      defaultDrives: overrides.drives?.defaultDrives ?? DEFAULT_CONNECT_CONFIG.drives.defaultDrives,
       preserveStrategy: overrides.drives?.preserveStrategy,
       sections: {
         remote: {
@@ -683,9 +673,7 @@ function buildFormValues(
  * Convert RHF form values back to a sparse `overrides` object — fields that
  * equal the default are stripped so we don't write trivial overrides.
  */
-function pruneToOverrides(
-  values: ConnectRuntimeConfigFormValues,
-): PHConnectRuntimeConfig {
+function pruneToOverrides(values: ConnectRuntimeConfigFormValues): PHConnectRuntimeConfig {
   const out: PHConnectRuntimeConfig = {}
 
   const branding: PHConnectRuntimeConfig['branding'] = {}
@@ -715,8 +703,7 @@ function pruneToOverrides(
   const packages: PHConnectRuntimeConfig['packages'] = {}
   if (
     values.packages?.externalEnabled !== undefined &&
-    values.packages.externalEnabled !==
-      DEFAULT_CONNECT_CONFIG.packages.externalEnabled
+    values.packages.externalEnabled !== DEFAULT_CONNECT_CONFIG.packages.externalEnabled
   ) {
     packages.externalEnabled = values.packages.externalEnabled
   }
@@ -754,10 +741,7 @@ function pruneToOverrides(
   if (Object.keys(drives).length > 0) out.drives = drives
 
   const renown: PHConnectRuntimeConfig['renown'] = {}
-  if (
-    values.renown?.url !== undefined &&
-    values.renown.url !== DEFAULT_CONNECT_CONFIG.renown.url
-  ) {
+  if (values.renown?.url !== undefined && values.renown.url !== DEFAULT_CONNECT_CONFIG.renown.url) {
     renown.url = values.renown.url
   }
   if (

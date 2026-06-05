@@ -51,8 +51,7 @@ function errorToIssue(e: ErrorObject) {
   const where = e.instancePath || '/'
   const extra =
     e.keyword === 'additionalProperties'
-      ? ` (unknown property: ${(e.params as { additionalProperty?: string })
-          .additionalProperty})`
+      ? ` (unknown property: ${(e.params as { additionalProperty?: string }).additionalProperty})`
       : ''
   return { path: where, message: `${e.message ?? 'invalid'}${extra}` }
 }
@@ -72,12 +71,7 @@ type Props = {
  * The parent drawer keeps the canonical "current edits" state as JSON
  * string; this component only handles editing + linting, not save.
  */
-export function RuntimeConfigJsonEditor({
-  value,
-  onChange,
-  readOnly,
-  className,
-}: Props) {
+export function RuntimeConfigJsonEditor({ value, onChange, readOnly, className }: Props) {
   const extensions = useMemo(() => {
     // Cast to `LintSource` to bridge the readonly-vs-mutable nominal-array
     // mismatch — the function semantically returns `readonly Diagnostic[]`
@@ -158,9 +152,7 @@ function ValidationSummary({ result }: { result: JsonValidationResult }) {
           </li>
         ))}
         {result.issues.length > 8 && (
-          <li className="text-muted-foreground">
-            …and {result.issues.length - 8} more
-          </li>
+          <li className="text-muted-foreground">…and {result.issues.length - 8} more</li>
         )}
       </ul>
     </div>

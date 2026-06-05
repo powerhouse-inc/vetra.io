@@ -17,10 +17,7 @@ import { z } from 'zod'
 
 export const logLevelSchema = z.enum(['debug', 'info', 'warn', 'error'])
 
-export const preserveStrategySchema = z.enum([
-  'preserve-all',
-  'preserve-by-url-and-detach',
-])
+export const preserveStrategySchema = z.enum(['preserve-all', 'preserve-by-url-and-detach'])
 
 export const driveSectionSchema = z
   .object({
@@ -99,9 +96,7 @@ export const connectRuntimeConfigSchema = z
   })
   .strict()
 
-export type ConnectRuntimeConfigFormValues = z.infer<
-  typeof connectRuntimeConfigSchema
->
+export type ConnectRuntimeConfigFormValues = z.infer<typeof connectRuntimeConfigSchema>
 
 /**
  * Ajv-compatible JSON Schema for the JSON-view linter. Kept inline to avoid
