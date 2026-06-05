@@ -64,7 +64,7 @@ describe('EnvVarsEditor', () => {
         onChange={() => {}}
       />,
     )
-    const input = screen.getByLabelText('env-value-0')
+    const input = screen.getByLabelText('env-value-0') as HTMLInputElement
     expect(input.type).toBe('password')
   })
 
@@ -75,7 +75,7 @@ describe('EnvVarsEditor', () => {
         onChange={() => {}}
       />,
     )
-    const input = screen.getByLabelText('env-value-0')
+    const input = screen.getByLabelText('env-value-0') as HTMLInputElement
     expect(input.placeholder).toContain('encrypted')
   })
 
