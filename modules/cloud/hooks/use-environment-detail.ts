@@ -342,6 +342,23 @@ export function useEnvironmentDetail(documentId: string) {
   const runtimeConfigSupported =
     typeof (controller as ControllerWithRuntimeConfig | null)?.setRuntimeConfig === 'function'
 
+  // The runtime-config panel silently hides when unsupported (by design — it
+  // must never break the page), but log WHY so operators can diagnose a
+  // missing panel from the console instead of guessing.
+  useEffect(() => {
+    if (!canSign || ctrlLoading || runtimeConfigSupported) return
+    if (ctrlError) {
+      console.warn(
+        '[runtime-config] panel hidden: environment controller failed to load —',
+        ctrlError,
+      )
+    } else if (controller) {
+      console.warn(
+        '[runtime-config] panel hidden: setRuntimeConfig is not available in this vetra-cloud-package build — update the package to enable runtime-config editing.',
+      )
+    }
+  }, [canSign, ctrlLoading, ctrlError, controller, runtimeConfigSupported])
+
   /** Owner-triggered "update to latest" — pulls the env's subscribed
    *  channel's latest known tag and bumps all enabled services. */
   const updateToLatest = useCallback(async () => {

@@ -173,6 +173,9 @@ export function RuntimeConfigDrawer({
       await onSave(config)
       toast.success('Runtime config saved — Approve / Deploy to roll it out')
     } catch (err) {
+      // Surface the full error in the console (the toast only carries the
+      // message) so failed pushes to the subgraph can be diagnosed.
+      console.error('[runtime-config] failed to save runtime config:', err)
       toast.error(err instanceof Error ? err.message : 'Failed to save')
     } finally {
       setIsSaving(false)
