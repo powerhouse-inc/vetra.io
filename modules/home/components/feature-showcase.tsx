@@ -5,6 +5,7 @@ import { ScrollReveal, ScrollRevealItem } from '@/modules/shared/components/ui/s
 
 const features = [
   {
+    label: 'AI Control',
     title: 'AI you choose, infrastructure you own',
     description:
       'Drop in your own API key or run a local model entirely on your hardware. Vetra orchestrates your AI-ready platform: structured data, custom apps, real-time sync, history, user roles, and signatures. Everything is embedded from day one.',
@@ -12,24 +13,28 @@ const features = [
     priority: true,
   },
   {
+    label: 'Local First',
     title: 'Local first. Syncs when you want it to.',
     description:
       "Every app and agent can run entirely on your machine. Changes sync in real time when you're connected, and merge cleanly when you're not. Offline isn't a fallback, it's the default to take your team and your data anywhere.",
     lottie: 'https://cdn.lottielab.com/l/E6XFYWdFhnNvBH.json',
   },
   {
+    label: 'Sovereignty',
     title: 'Build your niche. Keep it yours.',
     description:
       'The best platforms are specific, community-owned, and impossible to extract value from. Vetra gives you the infrastructure for that — open schemas, data sovereignty, no proprietary middleman between you and your users.',
     image: '/images/home/collaborative-infrastructure.svg',
   },
   {
-    title: 'Self-hosted or we\'ll host it for you.',
+    label: 'Open Source',
+    title: "Self-hosted or we'll host it for you.",
     description:
       "Deploy on our cloud, your cloud, or a private node. The platform is 100% open source — inspect every line, fork it, modify it, contribute it back to the community. You're never dependent on our uptime or our roadmap.",
     image: '/images/home/feature-collaborative.svg',
   },
   {
+    label: 'Auditability',
     title: 'Every action signed. Every change traceable.',
     description:
       'Every operation — human or agent — is cryptographically signed and appended to an immutable log. Know exactly who did what, when, and why. Optionally anchor to a blockchain for external auditability.',
@@ -54,6 +59,9 @@ export function FeatureShowcase() {
                 }`}
               >
                 <div className="flex-1">
+                  <div className="bg-primary-30 text-primary mb-6 inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold">
+                    {feature.label}
+                  </div>
                   <h3 className="text-foreground mb-4 text-2xl font-bold">{feature.title}</h3>
                   <p className="text-foreground-70 leading-relaxed">{feature.description}</p>
                 </div>
