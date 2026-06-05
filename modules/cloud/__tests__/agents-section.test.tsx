@@ -36,7 +36,14 @@ describe('AgentsSection', () => {
   })
 
   it('renders one card per CLINT service, sorted by prefix', () => {
-    render(<AgentsSection services={[clint('zeta'), clint('alpha')]} env={null} canEdit={false} tenantId={null} />)
+    render(
+      <AgentsSection
+        services={[clint('zeta'), clint('alpha')]}
+        env={null}
+        canEdit={false}
+        tenantId={null}
+      />,
+    )
     const headings = screen.getAllByText(/^ph-/)
     expect(headings).toHaveLength(2)
     expect(headings[0].textContent).toContain('alpha')

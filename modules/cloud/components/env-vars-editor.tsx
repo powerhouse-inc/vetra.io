@@ -47,9 +47,7 @@ export function EnvVarsEditor({ value, onChange, disabled }: Props) {
             <Input
               aria-label={`env-value-${idx}`}
               placeholder={
-                isSecret && valueStr === ''
-                  ? '•••• (encrypted — type to replace)'
-                  : 'value'
+                isSecret && valueStr === '' ? '•••• (encrypted — type to replace)' : 'value'
               }
               value={valueStr}
               onChange={(e) => update(idx, { value: e.target.value })}

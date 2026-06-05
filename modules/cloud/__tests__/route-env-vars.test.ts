@@ -3,23 +3,15 @@ import { routeEnvVars } from '@/modules/cloud/config/route-env-vars'
 
 describe('routeEnvVars', () => {
   it('routes secret rows with a value to tenant_secrets, document gets the name+isSecret only', () => {
-    const result = routeEnvVars([
-      { name: 'API_KEY', value: 'sk-live-123', isSecret: true },
-    ])
+    const result = routeEnvVars([{ name: 'API_KEY', value: 'sk-live-123', isSecret: true }])
     expect(result.secretsToPersist).toEqual([{ name: 'API_KEY', value: 'sk-live-123' }])
-    expect(result.envForDocument).toEqual([
-      { name: 'API_KEY', value: null, isSecret: true },
-    ])
+    expect(result.envForDocument).toEqual([{ name: 'API_KEY', value: null, isSecret: true }])
   })
 
   it('routes plain rows inline; document carries the value', () => {
-    const result = routeEnvVars([
-      { name: 'LOG_LEVEL', value: 'debug', isSecret: false },
-    ])
+    const result = routeEnvVars([{ name: 'LOG_LEVEL', value: 'debug', isSecret: false }])
     expect(result.secretsToPersist).toEqual([])
-    expect(result.envForDocument).toEqual([
-      { name: 'LOG_LEVEL', value: 'debug', isSecret: false },
-    ])
+    expect(result.envForDocument).toEqual([{ name: 'LOG_LEVEL', value: 'debug', isSecret: false }])
   })
 
   it('treats undefined/null isSecret as plain', () => {
@@ -60,9 +52,7 @@ describe('routeEnvVars', () => {
       { name: 'TIMEOUT_MS', value: '5000' },
       { name: 'OLD_SECRET', value: null, isSecret: true },
     ])
-    expect(result.secretsToPersist).toEqual([
-      { name: 'DB_PASSWORD', value: 'topsecret' },
-    ])
+    expect(result.secretsToPersist).toEqual([{ name: 'DB_PASSWORD', value: 'topsecret' }])
     expect(result.envForDocument).toEqual([
       { name: 'PUBLIC_VAR', value: 'visible', isSecret: false },
       { name: 'DB_PASSWORD', value: null, isSecret: true },
@@ -72,12 +62,8 @@ describe('routeEnvVars', () => {
   })
 
   it('trims the name and value of secret rows before persisting', () => {
-    const result = routeEnvVars([
-      { name: '  PADDED  ', value: '  trim-me  ', isSecret: true },
-    ])
+    const result = routeEnvVars([{ name: '  PADDED  ', value: '  trim-me  ', isSecret: true }])
     expect(result.secretsToPersist).toEqual([{ name: 'PADDED', value: 'trim-me' }])
-    expect(result.envForDocument).toEqual([
-      { name: 'PADDED', value: null, isSecret: true },
-    ])
+    expect(result.envForDocument).toEqual([{ name: 'PADDED', value: null, isSecret: true }])
   })
 })

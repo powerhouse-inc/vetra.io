@@ -27,7 +27,16 @@ export function useEnvironmentLogs(
     if (!subdomain || !tenantId) return
     try {
       const token = await getAuthToken(renownRef.current)
-      const data = await fetchLogs(subdomain, tenantId, service, range, 500, errorsOnly, token, agent)
+      const data = await fetchLogs(
+        subdomain,
+        tenantId,
+        service,
+        range,
+        500,
+        errorsOnly,
+        token,
+        agent,
+      )
       if (JSON.stringify(data) !== JSON.stringify(logsRef.current)) {
         setLogs(data)
       }
