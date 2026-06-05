@@ -37,6 +37,23 @@ import { InlineEditableTitle, OverviewTab } from './tabs/overview'
 // `useDetailDrawer` for URL state). This was previously a tab orchestrator.
 // ---------------------------------------------------------------------------
 
+/**
+ * state.runtimeConfig is a JSON string (the doc-model field is a String
+ * scalar). Parse it into the object shape the RuntimeConfigDrawer edits;
+ * tolerate null / corrupt JSON by returning null.
+ */
+function parseRuntimeConfig(
+  raw: string | null | undefined,
+): { connect?: Record<string, unknown>; packageRegistryUrl?: string } | null {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : null
+  } catch {
+    return null
+  }
+}
+
 function EnvironmentDetail({ documentId }: { documentId: string }) {
   const searchParams = useSearchParams()
 
@@ -285,7 +302,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           backupSchedule={state.backupSchedule ?? null}
           onSaveBackupSchedule={detail.setBackupSchedule}
           backupScheduleSupported={detail.backupScheduleSupported}
-          runtimeConfig={state.runtimeConfig ?? null}
+          runtimeConfig={parseRuntimeConfig(state.runtimeConfig)}
           onSaveRuntimeConfig={detail.setRuntimeConfig}
           runtimeConfigSupported={detail.runtimeConfigSupported}
         />

@@ -4,6 +4,10 @@ settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
 
+overrides:
+  '@codemirror/state': 6.5.2
+  '@codemirror/view': 6.36.7
+
 importers:
 
   .:
@@ -3694,8 +3698,8 @@ packages:
   '@powerhousedao/shared@6.0.0-dev.244':
     resolution: {integrity: sha512-/nyrXDw3GOSFuu3ZRlZQMaPr2bud865/PLmOo5wI0D90lxfkbUDxj7LRGLbQzt61lDhc6l8ve1GyscycefeMtw==}
 
-  '@powerhousedao/shared@6.1.0-staging.0':
-    resolution: {integrity: sha512-M+tWkbo/VnnEBGGdOp+j24TOjVbpFjIIpq4XSMC8wDDd1hu8LsPqaoQE6hRG+dwWYj+m9NmCZ1KXPq+mG7CoZQ==}
+  '@powerhousedao/shared@6.1.0-dev.21':
+    resolution: {integrity: sha512-ZmGJ9geqCNWE7r1CxvqJ+VA0kOD2334BFKa6n2LExeE05u+CEmF4dCx8OS8uI9Zj6z+N+euJvgylAfqHFi6m7Q==}
     peerDependencies:
       '@sentry/node-core': ^10.52.0
       rolldown: 1.0.0-rc.8
@@ -4398,8 +4402,8 @@ packages:
   '@renown/sdk@6.0.0-dev.244':
     resolution: {integrity: sha512-2W4Q6lXAEGIOFAxUTZurEOC4JpTeGJ2lhvEtQ2eyM4XqX3dDxtcGSuUw2E+vb0lVFubrKjTDEVXwLOKyYdqhUw==}
 
-  '@renown/sdk@6.1.0-staging.0':
-    resolution: {integrity: sha512-fJ7pv3kIjP8JiX8j517daHUQfN5922C0jFz5Ax+d8Vjw3zq1IUi/E8lfNcEUMNTgXgntUEJxXM5Z8ChvLDLs6Q==}
+  '@renown/sdk@6.1.0-dev.21':
+    resolution: {integrity: sha512-quRqAKOL8uNQTr0jmiOqMtd79xgxGKKbgtTX3t2ZqvMR2yxzP7OSwj1bh1mnIqKrjW4MxD0FsG2aLSuRa0uysw==}
 
   '@repeaterjs/repeater@3.0.6':
     resolution: {integrity: sha512-Javneu5lsuhwNCryN+pXH93VPQ8g0dBX7wItHFgYiwQmzE1sVdg5tWHiOgHywzL2W21XQopa7IwIEnNbmeUJYA==}
@@ -6098,16 +6102,16 @@ packages:
       '@codemirror/language': '>=6.0.0'
       '@codemirror/lint': '>=6.0.0'
       '@codemirror/search': '>=6.0.0'
-      '@codemirror/state': '>=6.0.0'
-      '@codemirror/view': '>=6.0.0'
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.7
 
   '@uiw/react-codemirror@4.25.9':
     resolution: {integrity: sha512-HftqCBUYShAOH0pGi1CHP8vfm5L8fQ3+0j0VI6lQD6QpK+UBu3J7nxfEN5O/BXMilMNf9ZyFJRvRcuMMOLHMng==}
     peerDependencies:
       '@babel/runtime': '>=7.11.0'
-      '@codemirror/state': '>=6.0.0'
+      '@codemirror/state': 6.5.2
       '@codemirror/theme-one-dark': '>=6.0.0'
-      '@codemirror/view': '>=6.0.0'
+      '@codemirror/view': 6.36.7
       codemirror: '>=6.0.0'
       react: '>=17.0.0'
       react-dom: '>=17.0.0'
@@ -7139,8 +7143,8 @@ packages:
       '@codemirror/autocomplete': ^6.0.0
       '@codemirror/language': ^6.0.0
       '@codemirror/lint': ^6.0.0
-      '@codemirror/state': ^6.0.0
-      '@codemirror/view': ^6.0.0
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.7
       '@lezer/highlight': ^1.0.0
       graphql: ^15.5.0 || ^16.0.0 || ^17.0.0
 
@@ -10732,6 +10736,14 @@ packages:
       typescript:
         optional: true
 
+  ox@0.14.22:
+    resolution: {integrity: sha512-nb5msL8qWbPglhIfZbGJAfw3cqiJjFMiWmACt7kgyWtLib12tcctbHufMT9Hb0Lr6Pt4k9I3dbpueTpbhvbqvA==}
+    peerDependencies:
+      typescript: '>=5.4.0'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   ox@0.9.6:
     resolution: {integrity: sha512-8SuCbHPvv2eZLYXrNmC0EC12rdzXQLdhnOMlHDW2wiCPLxBrOOJwX5L5E61by+UjTPOryqQiRSnjIKCI+GykKg==}
     peerDependencies:
@@ -12542,8 +12554,8 @@ packages:
     resolution: {integrity: sha512-d5i6FVvWWPkwrm4cHLI3t9AT1OrkAt7Ig8dtdYSofgF7C/eiyNuq6zQzSTusWTde3jpW9WLvA9J/fzNKMUsd0w==}
     peerDependencies:
       '@codemirror/language': ^6.0.0
-      '@codemirror/state': ^6.0.0
-      '@codemirror/view': ^6.0.0
+      '@codemirror/state': 6.5.2
+      '@codemirror/view': 6.36.7
 
   thread-stream@4.1.0:
     resolution: {integrity: sha512-Bw6h2iBDt16v6iHLChBIoVYU8CBo9GPsW8TG7h1hRVhqKhIkH6N8qkxNSmiOZTKsCLPbtWG4ViWLkU6KeKXpig==}
@@ -13061,6 +13073,14 @@ packages:
       typescript:
         optional: true
 
+  viem@2.50.4:
+    resolution: {integrity: sha512-rf98F4s3Vlb+uJZEKfay3IbBw3CNCbVtx5Y3UIljlO2tSX420g/J0WQSYsjzBSasUFgxgsXabji14O9kGbiqgg==}
+    peerDependencies:
+      typescript: '>=5.0.4'
+    peerDependenciesMeta:
+      typescript:
+        optional: true
+
   vite-node@3.2.4:
     resolution: {integrity: sha512-EbKSKh+bh1E1IFxeO0pg1n4dvoOTt0UDiXMd/qn++r98+jPO1xtJilvXldeuQ8giIB5IkpjCgMleHMNEsGH6pg==}
     engines: {node: ^18.0.0 || ^20.0.0 || >=22.0.0}
@@ -13356,6 +13376,18 @@ packages:
 
   ws@8.20.0:
     resolution: {integrity: sha512-sAt8BhgNbzCtgGbt2OxmpuryO63ZoDk/sqaB/znQm94T4fCEsy/yV+7CdC1kJhOU9lboAEU7R3kquuycDoibVA==}
+    engines: {node: '>=10.0.0'}
+    peerDependencies:
+      bufferutil: ^4.0.1
+      utf-8-validate: '>=5.0.2'
+    peerDependenciesMeta:
+      bufferutil:
+        optional: true
+      utf-8-validate:
+        optional: true
+
+  ws@8.20.1:
+    resolution: {integrity: sha512-It4dO0K5v//JtTXuPkfEOaI3uUN87iYPnqo/ZzqCoG3g8uhA66QUMs/SrM0YK7/NAu+r4LMh/9dq2A7k+rHs+w==}
     engines: {node: '>=10.0.0'}
     peerDependencies:
       bufferutil: ^4.0.1
@@ -19046,7 +19078,7 @@ snapshots:
       - '@opentelemetry/semantic-conventions'
       - supports-color
 
-  '@powerhousedao/shared@6.1.0-staging.0(@sentry/node-core@10.53.1(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1))(rolldown@1.0.0-rc.8(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))':
+  '@powerhousedao/shared@6.1.0-dev.21(@sentry/node-core@10.53.1(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1))(rolldown@1.0.0-rc.8(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))':
     dependencies:
       '@sindresorhus/fnv1a': 3.1.0
       chalk: 5.6.2
@@ -19167,7 +19199,7 @@ snapshots:
       '@powerhousedao/design-system': 6.0.0-dev.244(@babel/runtime@7.29.2)(@electric-sql/pglite@0.3.15)(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1)(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       '@powerhousedao/document-engineering': 1.40.3(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.1.0(react@19.1.0))(react@19.1.0)(typescript@6.0.2)
       '@powerhousedao/shared': 6.0.0-dev.244(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1)
-      '@renown/sdk': 6.1.0-staging.0(@sentry/node-core@10.53.1(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1))(rolldown@1.0.0-rc.8(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))
+      '@renown/sdk': 6.1.0-dev.21(@sentry/node-core@10.53.1(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1))(rolldown@1.0.0-rc.8(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))(typescript@6.0.2)(zod@4.3.6)
       cmd-ts: 0.15.0
       document-model: 6.0.0-dev.244(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2)(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1)
       graphql: 16.14.0
@@ -20897,18 +20929,23 @@ snapshots:
       - '@opentelemetry/semantic-conventions'
       - supports-color
 
-  '@renown/sdk@6.1.0-staging.0(@sentry/node-core@10.53.1(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1))(rolldown@1.0.0-rc.8(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))':
+  '@renown/sdk@6.1.0-dev.21(@sentry/node-core@10.53.1(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1))(rolldown@1.0.0-rc.8(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))(typescript@6.0.2)(zod@4.3.6)':
     dependencies:
       '@didtools/key-webcrypto': 0.2.0
-      '@powerhousedao/shared': 6.1.0-staging.0(@sentry/node-core@10.53.1(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1))(rolldown@1.0.0-rc.8(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))
+      '@powerhousedao/shared': 6.1.0-dev.21(@sentry/node-core@10.53.1(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.7.1(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@opentelemetry/semantic-conventions@1.41.1))(rolldown@1.0.0-rc.8(@emnapi/core@1.9.2)(@emnapi/runtime@1.9.2))
       did-jwt-vc: 4.0.16
       did-resolver: 4.1.0
       key-did-resolver: 4.0.0
       uint8arrays: 5.1.0
+      viem: 2.50.4(typescript@6.0.2)(zod@4.3.6)
     transitivePeerDependencies:
       - '@sentry/node-core'
+      - bufferutil
       - rolldown
       - supports-color
+      - typescript
+      - utf-8-validate
+      - zod
 
   '@repeaterjs/repeater@3.0.6': {}
 
@@ -26696,6 +26733,10 @@ snapshots:
     dependencies:
       ws: 8.20.0
 
+  isows@1.0.7(ws@8.20.1):
+    dependencies:
+      ws: 8.20.1
+
   issue-parser@6.0.0:
     dependencies:
       lodash.capitalize: 4.2.1
@@ -28107,6 +28148,21 @@ snapshots:
       safe-push-apply: 1.0.0
 
   ox@0.14.15(typescript@6.0.2)(zod@4.3.6):
+    dependencies:
+      '@adraffy/ens-normalize': 1.11.1
+      '@noble/ciphers': 1.3.0
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@6.0.2)(zod@4.3.6)
+      eventemitter3: 5.0.1
+    optionalDependencies:
+      typescript: 6.0.2
+    transitivePeerDependencies:
+      - zod
+
+  ox@0.14.22(typescript@6.0.2)(zod@4.3.6):
     dependencies:
       '@adraffy/ens-normalize': 1.11.1
       '@noble/ciphers': 1.3.0
@@ -30993,6 +31049,23 @@ snapshots:
       - utf-8-validate
       - zod
 
+  viem@2.50.4(typescript@6.0.2)(zod@4.3.6):
+    dependencies:
+      '@noble/curves': 1.9.1
+      '@noble/hashes': 1.8.0
+      '@scure/bip32': 1.7.0
+      '@scure/bip39': 1.6.0
+      abitype: 1.2.3(typescript@6.0.2)(zod@4.3.6)
+      isows: 1.0.7(ws@8.20.1)
+      ox: 0.14.22(typescript@6.0.2)(zod@4.3.6)
+      ws: 8.20.1
+    optionalDependencies:
+      typescript: 6.0.2
+    transitivePeerDependencies:
+      - bufferutil
+      - utf-8-validate
+      - zod
+
   vite-node@3.2.4(@types/node@24.12.0)(jiti@2.6.1)(lightningcss@1.32.0)(terser@5.44.0)(yaml@2.8.1):
     dependencies:
       cac: 6.7.14
@@ -31332,6 +31405,8 @@ snapshots:
   ws@8.18.3: {}
 
   ws@8.20.0: {}
+
+  ws@8.20.1: {}
 
   xml-naming@0.1.0: {}
 

@@ -318,8 +318,11 @@ export function useEnvironmentDetail(documentId: string) {
   // ({ connect: {...}, packageRegistryUrl? }); null/{} clears all overrides.
   // The reducer flips a deployed env to CHANGES_PENDING — the user then
   // Approves/Deploys (env-action-bar) to roll it out via gitops.
+  // The doc-model field is a String scalar (federation-composable), so the
+  // SET_RUNTIME_CONFIG operation takes the config as a JSON string. Callers
+  // pass the object ({ connect, packageRegistryUrl }); we stringify here.
   type ControllerWithRuntimeConfig = NonNullable<typeof controller> & {
-    setRuntimeConfig?: (input: { config: Record<string, unknown> | null }) => void
+    setRuntimeConfig?: (input: { config: string | null }) => void
   }
 
   const setRuntimeConfig = useCallback(
@@ -331,7 +334,7 @@ export function useEnvironmentDetail(documentId: string) {
             'setRuntimeConfig is not available in this controller version — update vetra-cloud-package.',
           )
         }
-        fn.call(c, { config })
+        fn.call(c, { config: config === null ? null : JSON.stringify(config) })
       }),
     [mutate],
   )
