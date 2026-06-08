@@ -15,7 +15,7 @@
 //   enable  <code>                turn a code back on (active=true)
 import { Kysely, PostgresDialect, sql } from 'kysely'
 import pg from 'pg'
-import type { Database } from '../modules/invites/lib/schema.ts'
+import type { DB } from '../modules/invites/lib/schema.ts'
 
 const USAGE = `invite-codes — manage invite codes
 
@@ -74,7 +74,7 @@ async function main(): Promise<void> {
     fail('DATABASE_URL is not set. Run via `pnpm invite-codes …` (loads .env.local) or export it.')
   }
 
-  const db = new Kysely<Database>({
+  const db = new Kysely<DB>({
     dialect: new PostgresDialect({
       pool: new pg.Pool({ connectionString: process.env.DATABASE_URL }),
     }),

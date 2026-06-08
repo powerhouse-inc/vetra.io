@@ -19,13 +19,30 @@ everything server-side, so it can't be spoofed.
 canonical DID `did:pkh:<networkId>:<chainId>:<address>` from its signed subject — so the address
 comes from the token, never the client.
 
-## Data model (`migrations/0001_invite_codes.sql`)
+## Data model (`migrations/0001_invite_codes.mts`)
 
 - `invite_codes` — `code` (PK), `label`, `active`, `expires_at`, `max_uses`, `created_at`.
 - `invite_redemptions` — `(code, user_did)` PK, `redeemed_at`, `access_expires`.
 
 A user is "in" if they have a redemption whose `access_expires` is null or in the future; their
 cohort is the `code` they redeemed. `max_uses` exists but isn't enforced in v1.
+
+Queries run through [Kysely](https://kysely.dev) (`lib/db.ts`, `lib/codes.ts`). Schema changes are
+TypeScript Kysely migrations in `migrations/` (`up`/`down`), applied with the runner:
+
+```
+pnpm migrate            # migrate to latest (default)
+pnpm migrate up         # apply the next pending migration only
+pnpm migrate down       # revert the most recent migration
+```
+
+The migrations are the single source of truth. `lib/schema.ts` is **generated** from a migrated DB
+by `kysely-codegen` — don't edit it by hand. After adding/changing a migration, apply it then
+regenerate the types:
+
+```
+pnpm migrate latest && pnpm codegen:invites   # rewrites lib/schema.ts from the live DB
+```
 
 ## Endpoints (`app/api/invite/`)
 
@@ -55,5 +72,6 @@ Local dev:
 ```
 docker run --name vetra-pg -e POSTGRES_PASSWORD=dev -p 5432:5432 -d postgres:16
 # DATABASE_URL=postgres://postgres:dev@localhost:5432/postgres in .env.local
-psql "$DATABASE_URL" -f migrations/0001_invite_codes.sql
+pnpm migrate            # apply migrations/ to the DB
+# pnpm codegen:invites  # only needed after you change a migration
 ```

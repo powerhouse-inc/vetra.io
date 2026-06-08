@@ -12,7 +12,7 @@ import {
 import { getDb } from '@/modules/invites/lib/db'
 import { getAccessStatus, isCodeUsable, redeemCode } from '@/modules/invites/lib/codes'
 import { ACCESS_DAYS } from '@/modules/invites/lib/constants'
-import type { Database } from '@/modules/invites/lib/schema'
+import type { DB } from '@/modules/invites/lib/schema'
 
 vi.mock('@/modules/invites/lib/db', () => ({ getDb: vi.fn() }))
 
@@ -23,7 +23,7 @@ vi.mock('@/modules/invites/lib/db', () => ({ getDb: vi.fn() }))
 type Captured = { sql: string; parameters: readonly unknown[] }
 
 function fakeDb(results: Array<QueryResult<unknown>>): {
-  db: Kysely<Database>
+  db: Kysely<DB>
   captured: Captured[]
 } {
   const captured: Captured[] = []
@@ -53,7 +53,7 @@ function fakeDb(results: Array<QueryResult<unknown>>): {
     destroy: noop,
   }
 
-  const db = new Kysely<Database>({
+  const db = new Kysely<DB>({
     dialect: {
       createAdapter: () => new PostgresAdapter(),
       createDriver: () => driver,
