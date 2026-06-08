@@ -17,9 +17,7 @@ export async function isCodeUsable(code: string): Promise<boolean> {
     .select('code')
     .where('code', '=', normalizeCode(code))
     .where('active', '=', true)
-    .where((eb) =>
-      eb.or([eb('expires_at', 'is', null), eb('expires_at', '>', sql<Date>`now()`)]),
-    )
+    .where((eb) => eb.or([eb('expires_at', 'is', null), eb('expires_at', '>', sql<Date>`now()`)]))
     .executeTakeFirst()
   return row !== undefined
 }
