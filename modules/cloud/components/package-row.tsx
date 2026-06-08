@@ -8,7 +8,7 @@ import {
   MoreHorizontal,
   Package as PackageIcon,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import { applyConfigChanges, type ConfigChange } from '@/modules/cloud/config/apply'
@@ -347,13 +347,16 @@ function UninstallDialog({
     [pkg.name, manifests],
   )
 
-  // Pre-check exclusive keys whenever the declared list changes.
-  useMemo(() => {
+  // Pre-check exclusive keys whenever the declared list changes. `declaredEntries`
+  // is a fresh array each render, so we key the effect on a stable string of its
+  // names (and the exclusive set) rather than the array identity.
+  const declaredKeyNames = declaredEntries.map((e) => e.name).join(',')
+  useEffect(() => {
     const initial: Record<string, boolean> = {}
     for (const e of declaredEntries) initial[e.name] = exclusive.has(e.name)
     setSelectedKeys(initial)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [declaredEntries.map((e) => e.name).join(','), exclusive.size])
+  }, [declaredKeyNames, exclusive])
 
   const { run: runRemove, isPending: isRemoving } = useAsyncAction(async () => {
     if (tenantId) {

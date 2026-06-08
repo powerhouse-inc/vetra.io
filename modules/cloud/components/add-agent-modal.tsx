@@ -311,17 +311,17 @@ export function AddAgentModal({
   )
   const { manifests: installedManifests } = useRegistryManifests(registryUrl, installedForFetch)
 
-  const collisions = useMemo(() => {
-    const fromInstalled = installedManifests.map((m) => ({
-      packageName: m.packageName,
-      manifest: m.manifest,
-    }))
-    const candidate =
-      selectedPackage && validation?.ok
-        ? [{ packageName: selectedPackage, manifest: validation.manifest }]
-        : []
-    return buildCollisionMap([...fromInstalled, ...candidate])
-  }, [installedManifests, validation, selectedPackage])
+  // Recomputed each render: buildCollisionMap is a cheap double-loop, and every
+  // consumer reads `collisions` lazily (submit handler, effect) or spreads it into
+  // a fresh object — so the old useMemo bought no referential stability.
+  const collisionEntries = installedManifests.map((m) => ({
+    packageName: m.packageName,
+    manifest: m.manifest,
+  }))
+  if (selectedPackage && validation?.ok) {
+    collisionEntries.push({ packageName: selectedPackage, manifest: validation.manifest })
+  }
+  const collisions = buildCollisionMap(collisionEntries)
 
   useEffect(() => {
     if (!validation?.ok || !selectedPackage) {
