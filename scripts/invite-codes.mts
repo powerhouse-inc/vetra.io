@@ -13,7 +13,9 @@
 //   redemptions [code]            who redeemed (optionally filtered to one code)
 //   disable <code>                turn a code off (active=false)
 //   enable  <code>                turn a code back on (active=true)
+import { Kysely, PostgresDialect, sql } from 'kysely'
 import pg from 'pg'
+import type { Database } from '../modules/invites/lib/schema.ts'
 
 const USAGE = `invite-codes — manage invite codes
 
@@ -22,22 +24,6 @@ const USAGE = `invite-codes — manage invite codes
   redemptions [code]
   disable <code>
   enable  <code>`
-
-interface CodeRow {
-  code: string
-  label: string | null
-  active: boolean
-  expires_at: Date | null
-  max_uses: number | null
-  redemptions: number
-}
-
-interface RedemptionRow {
-  code: string
-  user_did: string
-  redeemed_at: Date
-  access_expires: Date | null
-}
 
 type Flags = Record<string, string | boolean>
 
@@ -88,7 +74,11 @@ async function main(): Promise<void> {
     fail('DATABASE_URL is not set. Run via `pnpm invite-codes …` (loads .env.local) or export it.')
   }
 
-  const pool = new pg.Pool({ connectionString: process.env.DATABASE_URL })
+  const db = new Kysely<Database>({
+    dialect: new PostgresDialect({
+      pool: new pg.Pool({ connectionString: process.env.DATABASE_URL }),
+    }),
+  })
   try {
     const { flags, positionals } = parseFlags(rest)
 
@@ -103,13 +93,12 @@ async function main(): Promise<void> {
           fail('--max-uses must be a positive integer')
         }
 
-        const { rowCount } = await pool.query(
-          `insert into invite_codes (code, label, expires_at, max_uses)
-             values ($1, $2, $3, $4)
-             on conflict (code) do nothing`,
-          [code, label, expiresAt, maxUses],
-        )
-        if (rowCount === 0) {
+        const inserted = await db
+          .insertInto('invite_codes')
+          .values({ code, label, expires_at: expiresAt, max_uses: maxUses })
+          .onConflict((oc) => oc.column('code').doNothing())
+          .executeTakeFirst()
+        if (Number(inserted.numInsertedOrUpdatedRows ?? 0) === 0) {
           fail(
             `Code "${code}" already exists. Use disable/enable to change it, or pick a new code.`,
           )
@@ -122,14 +111,20 @@ async function main(): Promise<void> {
       }
 
       case 'list': {
-        const { rows } = await pool.query<CodeRow>(
-          `select c.code, c.label, c.active, c.expires_at, c.max_uses,
-                  count(r.user_did)::int as redemptions
-             from invite_codes c
-             left join invite_redemptions r on r.code = c.code
-             group by c.code
-             order by c.created_at`,
-        )
+        const rows = await db
+          .selectFrom('invite_codes as c')
+          .leftJoin('invite_redemptions as r', 'r.code', 'c.code')
+          .select((eb) => [
+            'c.code',
+            'c.label',
+            'c.active',
+            'c.expires_at',
+            'c.max_uses',
+            sql<number>`count(${eb.ref('r.user_did')})::int`.as('redemptions'),
+          ])
+          .groupBy('c.code')
+          .orderBy('c.created_at')
+          .execute()
         if (rows.length === 0) {
           console.log('No codes yet. Add one with: pnpm invite-codes add <code>')
           break
@@ -149,13 +144,12 @@ async function main(): Promise<void> {
 
       case 'redemptions': {
         const code = positionals[0] ? normalizeCode(positionals[0]) : undefined
-        const { rows } = await pool.query<RedemptionRow>(
-          `select code, user_did, redeemed_at, access_expires
-             from invite_redemptions
-             ${code ? 'where code = $1' : ''}
-             order by redeemed_at desc`,
-          code ? [code] : [],
-        )
+        let query = db
+          .selectFrom('invite_redemptions')
+          .select(['code', 'user_did', 'redeemed_at', 'access_expires'])
+          .orderBy('redeemed_at', 'desc')
+        if (code) query = query.where('code', '=', code)
+        const rows = await query.execute()
         if (rows.length === 0) {
           console.log(code ? `No redemptions for "${code}".` : 'No redemptions yet.')
           break
@@ -176,11 +170,12 @@ async function main(): Promise<void> {
         const code = positionals[0] ? normalizeCode(positionals[0]) : undefined
         if (!code) fail(`Usage: ${command} <code>`)
         const active = command === 'enable'
-        const { rowCount } = await pool.query(
-          `update invite_codes set active = $2 where code = $1`,
-          [code, active],
-        )
-        if (rowCount === 0) fail(`No code named "${code}".`)
+        const updated = await db
+          .updateTable('invite_codes')
+          .set({ active })
+          .where('code', '=', code)
+          .executeTakeFirst()
+        if (Number(updated.numUpdatedRows) === 0) fail(`No code named "${code}".`)
         console.log(`✓ ${active ? 'Enabled' : 'Disabled'} code "${code}"`)
         break
       }
@@ -189,7 +184,7 @@ async function main(): Promise<void> {
         fail(`Unknown command "${command}".\n\n${USAGE}`)
     }
   } finally {
-    await pool.end()
+    await db.destroy()
   }
 }
 
