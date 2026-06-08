@@ -1,4 +1,5 @@
-import { getPool } from './db'
+import { sql } from 'kysely'
+import { getDb } from './db'
 import { ACCESS_DAYS } from './constants'
 
 /** Codes are case-insensitive; we canonicalise to trimmed lowercase. */
@@ -11,13 +12,16 @@ function normalizeCode(code: string): string {
  * window or one still in the future. Validate-only — never mutates.
  */
 export async function isCodeUsable(code: string): Promise<boolean> {
-  const { rowCount } = await getPool().query(
-    `select 1 from invite_codes
-       where code = $1 and active = true
-         and (expires_at is null or expires_at > now())`,
-    [normalizeCode(code)],
-  )
-  return (rowCount ?? 0) > 0
+  const row = await getDb()
+    .selectFrom('invite_codes')
+    .select('code')
+    .where('code', '=', normalizeCode(code))
+    .where('active', '=', true)
+    .where((eb) =>
+      eb.or([eb('expires_at', 'is', null), eb('expires_at', '>', sql<Date>`now()`)]),
+    )
+    .executeTakeFirst()
+  return row !== undefined
 }
 
 export interface RedeemResult {
@@ -32,37 +36,33 @@ export interface RedeemResult {
  */
 export async function redeemCode(code: string, did: string): Promise<RedeemResult> {
   const normalized = normalizeCode(code)
-  const client = await getPool().connect()
-  try {
-    await client.query('begin')
+  return getDb()
+    .transaction()
+    .execute<RedeemResult>(async (trx) => {
+      const usable = await trx
+        .selectFrom('invite_codes')
+        .select('code')
+        .where('code', '=', normalized)
+        .where('active', '=', true)
+        .where((eb) =>
+          eb.or([eb('expires_at', 'is', null), eb('expires_at', '>', sql<Date>`now()`)]),
+        )
+        .forUpdate()
+        .executeTakeFirst()
+      if (!usable) return { ok: false, reason: 'invalid_code' }
 
-    const usable = await client.query(
-      `select 1 from invite_codes
-         where code = $1 and active = true
-           and (expires_at is null or expires_at > now())
-         for update`,
-      [normalized],
-    )
-    if ((usable.rowCount ?? 0) === 0) {
-      await client.query('rollback')
-      return { ok: false, reason: 'invalid_code' }
-    }
+      await trx
+        .insertInto('invite_redemptions')
+        .values({
+          code: normalized,
+          user_did: did,
+          access_expires: sql<Date>`now() + make_interval(days => ${ACCESS_DAYS})`,
+        })
+        .onConflict((oc) => oc.columns(['code', 'user_did']).doNothing())
+        .execute()
 
-    await client.query(
-      `insert into invite_redemptions (code, user_did, access_expires)
-         values ($1, $2, now() + make_interval(days => $3))
-         on conflict (code, user_did) do nothing`,
-      [normalized, did, ACCESS_DAYS],
-    )
-
-    await client.query('commit')
-    return { ok: true }
-  } catch (err) {
-    await client.query('rollback')
-    throw err
-  } finally {
-    client.release()
-  }
+      return { ok: true }
+    })
 }
 
 export interface AccessStatus {
@@ -78,23 +78,19 @@ export interface AccessStatus {
  * Returns the most recent still-valid redemption.
  */
 export async function getAccessStatus(did: string): Promise<AccessStatus> {
-  const { rows } = await getPool().query<{
-    code: string
-    label: string | null
-    access_expires: Date | null
-  }>(
-    `select r.code, c.label, r.access_expires
-       from invite_redemptions r
-       join invite_codes c on c.code = r.code
-       where r.user_did = $1
-         and (r.access_expires is null or r.access_expires > now())
-       order by r.redeemed_at desc
-       limit 1`,
-    [did],
-  )
+  const row = await getDb()
+    .selectFrom('invite_redemptions as r')
+    .innerJoin('invite_codes as c', 'c.code', 'r.code')
+    .select(['r.code', 'c.label', 'r.access_expires'])
+    .where('r.user_did', '=', did)
+    .where((eb) =>
+      eb.or([eb('r.access_expires', 'is', null), eb('r.access_expires', '>', sql<Date>`now()`)]),
+    )
+    .orderBy('r.redeemed_at', 'desc')
+    .limit(1)
+    .executeTakeFirst()
 
-  if (rows.length === 0) return { allowed: false }
-  const row = rows[0]
+  if (!row) return { allowed: false }
   return {
     allowed: true,
     code: row.code,
