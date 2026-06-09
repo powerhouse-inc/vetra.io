@@ -34,7 +34,11 @@ describe('buildStudioEmbedUrl', () => {
   })
   it('falls back to vetra.io base when missing', () => {
     expect(
-      buildStudioEmbedUrl({ prefix: 'vetra-agent', genericSubdomain: 'sub', genericBaseDomain: null }),
+      buildStudioEmbedUrl({
+        prefix: 'vetra-agent',
+        genericSubdomain: 'sub',
+        genericBaseDomain: null,
+      }),
     ).toBe('https://vetra-agent.sub.vetra.io/')
   })
 })
@@ -54,7 +58,9 @@ describe('hasStudioWebsiteEndpoint', () => {
     expect(hasStudioWebsiteEndpoint(group([{ type: 'website', status: 'enabled' }]))).toBe(true)
   })
   it('false when only api endpoints exist', () => {
-    expect(hasStudioWebsiteEndpoint(group([{ type: 'api-graphql', status: 'enabled' }]))).toBe(false)
+    expect(hasStudioWebsiteEndpoint(group([{ type: 'api-graphql', status: 'enabled' }]))).toBe(
+      false,
+    )
   })
   it('false for undefined group', () => {
     expect(hasStudioWebsiteEndpoint(undefined)).toBe(false)

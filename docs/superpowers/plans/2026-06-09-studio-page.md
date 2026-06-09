@@ -16,6 +16,7 @@
 ### Task 1: Studio constants
 
 **Files:**
+
 - Create: `modules/cloud/studio/constants.ts`
 
 - [ ] **Step 1: Write constants**
@@ -53,6 +54,7 @@ export const STUDIO_ANTHROPIC_SECRET_NAMES = [
 ### Task 2: Allowlist helper
 
 **Files:**
+
 - Create: `modules/cloud/studio/allowlist.ts`
 - Test: `modules/cloud/__tests__/studio-allowlist.test.ts`
 
@@ -128,6 +130,7 @@ export function isStudioAllowed(address: string | null | undefined, allowlist: s
 ### Task 3: Detection helper
 
 **Files:**
+
 - Create: `modules/cloud/studio/find-studio-agent.ts`
 - Test: `modules/cloud/__tests__/find-studio-agent.test.ts`
 
@@ -140,18 +143,41 @@ import type { CloudEnvironment, CloudEnvironmentService } from '@/modules/cloud/
 
 function svc(partial: Partial<CloudEnvironmentService>): CloudEnvironmentService {
   return {
-    type: 'CLINT', prefix: 'vetra-agent', enabled: true, url: null,
-    status: 'ACTIVE', version: null, selectedRessource: 'VETRA_AGENT_XL',
-    config: { package: { registry: 'r', name: 'vetra-cli', version: null }, env: [], serviceCommand: null, selectedRessource: 'VETRA_AGENT_XL' },
+    type: 'CLINT',
+    prefix: 'vetra-agent',
+    enabled: true,
+    url: null,
+    status: 'ACTIVE',
+    version: null,
+    selectedRessource: 'VETRA_AGENT_XL',
+    config: {
+      package: { registry: 'r', name: 'vetra-cli', version: null },
+      env: [],
+      serviceCommand: null,
+      selectedRessource: 'VETRA_AGENT_XL',
+    },
     ...partial,
   }
 }
 function env(services: CloudEnvironmentService[], id = 'e1'): CloudEnvironment {
   return {
-    id, name: 'Vetra Studio', documentType: 'powerhouse/vetra-cloud-environment',
-    createdAtUtcIso: '', lastModifiedAtUtcIso: '', revision: 1,
-    state: { owner: null, label: 'Vetra Studio', genericSubdomain: 'sub', genericBaseDomain: 'vetra.io',
-      customDomain: null, defaultPackageRegistry: null, services, packages: [], status: 'READY' },
+    id,
+    name: 'Vetra Studio',
+    documentType: 'powerhouse/vetra-cloud-environment',
+    createdAtUtcIso: '',
+    lastModifiedAtUtcIso: '',
+    revision: 1,
+    state: {
+      owner: null,
+      label: 'Vetra Studio',
+      genericSubdomain: 'sub',
+      genericBaseDomain: 'vetra.io',
+      customDomain: null,
+      defaultPackageRegistry: null,
+      services,
+      packages: [],
+      status: 'READY',
+    },
   }
 }
 
@@ -166,7 +192,20 @@ describe('findStudioAgent', () => {
     expect(findStudioAgent([env([svc({ enabled: false })])])).toBeNull()
   })
   it('ignores non-vetra-cli CLINT agents', () => {
-    expect(findStudioAgent([env([svc({ config: { package: { registry: 'r', name: 'ph-pirate-cli', version: null }, env: [], serviceCommand: null, selectedRessource: 'VETRA_AGENT_S' } })])])).toBeNull()
+    expect(
+      findStudioAgent([
+        env([
+          svc({
+            config: {
+              package: { registry: 'r', name: 'ph-pirate-cli', version: null },
+              env: [],
+              serviceCommand: null,
+              selectedRessource: 'VETRA_AGENT_S',
+            },
+          }),
+        ]),
+      ]),
+    ).toBeNull()
   })
   it('ignores non-CLINT services', () => {
     expect(findStudioAgent([env([svc({ type: 'CONNECT', config: null })])])).toBeNull()
@@ -198,10 +237,7 @@ export type StudioAgentMatch = {
 export function findStudioAgent(envs: CloudEnvironment[]): StudioAgentMatch | null {
   for (const env of envs) {
     const service = env.state.services.find(
-      (s) =>
-        s.type === 'CLINT' &&
-        s.enabled &&
-        s.config?.package?.name === STUDIO_AGENT_PACKAGE,
+      (s) => s.type === 'CLINT' && s.enabled && s.config?.package?.name === STUDIO_AGENT_PACKAGE,
     )
     if (service) return { env, service }
   }
@@ -217,6 +253,7 @@ export function findStudioAgent(envs: CloudEnvironment[]): StudioAgentMatch | nu
 ### Task 4: Tenant id + embed URL + readiness helpers
 
 **Files:**
+
 - Create: `modules/cloud/studio/studio-tenant.ts`
 - Create: `modules/cloud/studio/studio-embed-url.ts`
 - Create: `modules/cloud/studio/studio-readiness.ts`
@@ -233,35 +270,61 @@ import type { ClintRuntimeEndpointsForPrefix } from '@/modules/cloud/types'
 
 describe('deriveTenantId', () => {
   it('joins subdomain with the first 8 hex chars of the doc id', () => {
-    expect(deriveTenantId('warm-newt-75', 'aa726a95-1234-5678-9abc-def012345678')).toBe('warm-newt-75-aa726a95')
+    expect(deriveTenantId('warm-newt-75', 'aa726a95-1234-5678-9abc-def012345678')).toBe(
+      'warm-newt-75-aa726a95',
+    )
   })
 })
 
 describe('buildStudioEmbedUrl', () => {
   it('builds the agent root url', () => {
-    expect(buildStudioEmbedUrl({ prefix: 'vetra-agent', genericSubdomain: 'warm-newt-75', genericBaseDomain: 'vetra.io' }))
-      .toBe('https://vetra-agent.warm-newt-75.vetra.io/')
+    expect(
+      buildStudioEmbedUrl({
+        prefix: 'vetra-agent',
+        genericSubdomain: 'warm-newt-75',
+        genericBaseDomain: 'vetra.io',
+      }),
+    ).toBe('https://vetra-agent.warm-newt-75.vetra.io/')
   })
   it('appends ?user when a did is given', () => {
-    expect(buildStudioEmbedUrl({ prefix: 'vetra-agent', genericSubdomain: 'sub', genericBaseDomain: 'vetra.io', userDid: 'did:ethr:0xabc' }))
-      .toBe('https://vetra-agent.sub.vetra.io/?user=did%3Aethr%3A0xabc')
+    expect(
+      buildStudioEmbedUrl({
+        prefix: 'vetra-agent',
+        genericSubdomain: 'sub',
+        genericBaseDomain: 'vetra.io',
+        userDid: 'did:ethr:0xabc',
+      }),
+    ).toBe('https://vetra-agent.sub.vetra.io/?user=did%3Aethr%3A0xabc')
   })
   it('falls back to vetra.io base when missing', () => {
-    expect(buildStudioEmbedUrl({ prefix: 'vetra-agent', genericSubdomain: 'sub', genericBaseDomain: null }))
-      .toBe('https://vetra-agent.sub.vetra.io/')
+    expect(
+      buildStudioEmbedUrl({
+        prefix: 'vetra-agent',
+        genericSubdomain: 'sub',
+        genericBaseDomain: null,
+      }),
+    ).toBe('https://vetra-agent.sub.vetra.io/')
   })
 })
 
 describe('hasStudioWebsiteEndpoint', () => {
   const group = (eps: { type: string; status: string }[]): ClintRuntimeEndpointsForPrefix => ({
     prefix: 'vetra-agent',
-    endpoints: eps.map((e, i) => ({ id: `/${i}`, type: e.type as never, port: '1', status: e.status as never, lastSeen: '' })),
+    endpoints: eps.map((e, i) => ({
+      id: `/${i}`,
+      type: e.type as never,
+      port: '1',
+      status: e.status as never,
+      lastSeen: '',
+    })),
   })
   it('true when an enabled website endpoint exists', () => {
     expect(hasStudioWebsiteEndpoint(group([{ type: 'website', status: 'enabled' }]))).toBe(true)
   })
   it('false when only api endpoints exist', () => {
-    expect(hasStudioWebsiteEndpoint(group([{ type: 'api-graphql', status: 'enabled' }]))).toBe(false)
+    expect(hasStudioWebsiteEndpoint(group([{ type: 'api-graphql', status: 'enabled' }]))).toBe(
+      false,
+    )
   })
   it('false for undefined group', () => {
     expect(hasStudioWebsiteEndpoint(undefined)).toBe(false)
@@ -274,6 +337,7 @@ describe('hasStudioWebsiteEndpoint', () => {
 - [ ] **Step 3: Implement the three files**
 
 `studio-tenant.ts`:
+
 ```ts
 /** Mirrors the gitops processor: `<subdomain>-<first 8 hex of doc id>`. */
 export function deriveTenantId(subdomain: string, documentId: string): string {
@@ -283,6 +347,7 @@ export function deriveTenantId(subdomain: string, documentId: string): string {
 ```
 
 `studio-embed-url.ts`:
+
 ```ts
 import { STUDIO_BASE_DOMAIN } from './constants'
 
@@ -300,6 +365,7 @@ export function buildStudioEmbedUrl(input: {
 ```
 
 `studio-readiness.ts`:
+
 ```ts
 import type { ClintRuntimeEndpointsForPrefix } from '@/modules/cloud/types'
 
@@ -320,6 +386,7 @@ export function hasStudioWebsiteEndpoint(
 ### Task 5: Create-studio-environment hook
 
 **Files:**
+
 - Create: `modules/cloud/studio/use-create-studio-environment.ts`
 - Test: `modules/cloud/__tests__/use-create-studio-environment.test.tsx`
 
@@ -331,7 +398,9 @@ import { renderHook, act } from '@testing-library/react'
 
 vi.mock('@/modules/cloud/hooks/use-can-sign', () => ({ useCanSign: vi.fn() }))
 vi.mock('@/modules/cloud/controller', () => ({ createNewEnvironmentController: vi.fn() }))
-vi.mock('@/modules/cloud/config/apply', () => ({ applyConfigChanges: vi.fn().mockResolvedValue(undefined) }))
+vi.mock('@/modules/cloud/config/apply', () => ({
+  applyConfigChanges: vi.fn().mockResolvedValue(undefined),
+}))
 vi.mock('@powerhousedao/reactor-browser', () => ({ useRenown: vi.fn(() => ({})) }))
 vi.mock('@/modules/cloud/subdomain', () => ({ generateSubdomain: vi.fn(() => 'warm-newt-75') }))
 
@@ -350,19 +419,28 @@ describe('useCreateStudioEnvironment', () => {
   })
 
   it('creates env, writes 3 secrets, approves, returns ids', async () => {
-    const setOwner = vi.fn(), setLabel = vi.fn(), initialize = vi.fn(), addPackage = vi.fn(),
-      enableService = vi.fn(), approveChanges = vi.fn()
-    const push = vi.fn().mockResolvedValue({ remoteDocument: { id: 'aa726a95-1111-2222-3333-444455556666' } })
+    const setOwner = vi.fn(),
+      setLabel = vi.fn(),
+      initialize = vi.fn(),
+      addPackage = vi.fn(),
+      enableService = vi.fn(),
+      approveChanges = vi.fn()
+    const push = vi
+      .fn()
+      .mockResolvedValue({ remoteDocument: { id: 'aa726a95-1111-2222-3333-444455556666' } })
     const ctrl = { setOwner, setLabel, initialize, addPackage, enableService, approveChanges, push }
     vi.mocked(createNewEnvironmentController).mockReturnValue(ctrl as never)
     vi.mocked(useCanSign).mockReturnValue({
-      canSign: true, loading: false,
+      canSign: true,
+      loading: false,
       signer: { user: { address: '0xMe' } } as never,
     })
 
     const { result } = renderHook(() => useCreateStudioEnvironment())
     let res: { documentId: string; subdomain: string; tenantId: string } | undefined
-    await act(async () => { res = await result.current({ anthropicApiKey: 'sk-test' }) })
+    await act(async () => {
+      res = await result.current({ anthropicApiKey: 'sk-test' })
+    })
 
     expect(setOwner).toHaveBeenCalledWith({ address: '0xMe' })
     expect(addPackage).toHaveBeenCalledWith({ packageName: 'vetra-cli', version: undefined })
@@ -479,6 +557,7 @@ export function useCreateStudioEnvironment() {
 ### Task 6: State hook `useStudioEnvironment`
 
 **Files:**
+
 - Create: `modules/cloud/studio/use-studio-environment.ts`
 
 (No standalone unit test — it composes other hooks and async fetches; behavior is covered by the tested pure helpers and by manual verification. The hook stays thin and delegates all logic to the tested helpers.)
@@ -573,7 +652,10 @@ export function useStudioEnvironment(): StudioEnvironmentState {
   }, [user, summaryIds])
 
   // Runtime endpoints for the located studio drive the booting → ready flip.
-  const { byPrefix } = useClintRuntimeEndpoints(located?.subdomain ?? null, located?.documentId ?? '')
+  const { byPrefix } = useClintRuntimeEndpoints(
+    located?.subdomain ?? null,
+    located?.documentId ?? '',
+  )
   const ready = located ? hasStudioWebsiteEndpoint(byPrefix[located.prefix]) : false
 
   const handleCreate = useCallback(
@@ -583,7 +665,11 @@ export function useStudioEnvironment(): StudioEnvironmentState {
       try {
         const res = await create({ anthropicApiKey })
         // Jump straight to booting on the new env, before the list refreshes.
-        setLocated({ documentId: res.documentId, subdomain: res.subdomain, prefix: STUDIO_AGENT_PREFIX })
+        setLocated({
+          documentId: res.documentId,
+          subdomain: res.subdomain,
+          prefix: STUDIO_AGENT_PREFIX,
+        })
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to create studio')
       } finally {
@@ -609,11 +695,18 @@ export function useStudioEnvironment(): StudioEnvironmentState {
   else if (error) status = 'error'
   else if (creating) status = 'creating'
   else if (located) status = ready ? 'ready' : 'booting'
-  else if (!isStudioAllowed(address, getStudioAllowlist())) status = address ? 'not-allowed' : 'loading'
+  else if (!isStudioAllowed(address, getStudioAllowlist()))
+    status = address ? 'not-allowed' : 'loading'
   else if (!scanned) status = 'loading'
   else status = 'none'
 
-  return { status, embedUrl: status === 'ready' ? embedUrl : null, error, create: handleCreate, retry }
+  return {
+    status,
+    embedUrl: status === 'ready' ? embedUrl : null,
+    error,
+    create: handleCreate,
+    retry,
+  }
 }
 ```
 
@@ -625,6 +718,7 @@ export function useStudioEnvironment(): StudioEnvironmentState {
 ### Task 7: UI components
 
 **Files:**
+
 - Create: `modules/cloud/studio/components/studio-create-form.tsx`
 - Create: `modules/cloud/studio/components/studio-boot-screen.tsx`
 - Create: `modules/cloud/studio/components/studio-frame.tsx`
@@ -654,6 +748,7 @@ describe('StudioFrame', () => {
 - [ ] **Step 3: Implement components**
 
 `studio-frame.tsx`:
+
 ```tsx
 'use client'
 
@@ -684,6 +779,7 @@ export function StudioFrame({ embedUrl }: { embedUrl: string }) {
 ```
 
 `studio-boot-screen.tsx`:
+
 ```tsx
 'use client'
 
@@ -701,6 +797,7 @@ export function StudioBootScreen({ title, detail }: { title: string; detail?: st
 ```
 
 `studio-create-form.tsx`:
+
 ```tsx
 'use client'
 
@@ -760,12 +857,14 @@ export function StudioCreateForm({
 ### Task 8: Client switcher + route
 
 **Files:**
+
 - Create: `modules/cloud/studio/studio-client.tsx`
 - Create: `app/studio/page.tsx`
 
 - [ ] **Step 1: Implement client switcher**
 
 `studio-client.tsx`:
+
 ```tsx
 'use client'
 
@@ -810,7 +909,12 @@ export function StudioClient() {
         </div>
       )
     case 'creating':
-      return <StudioBootScreen title="Creating your studio…" detail="Provisioning the environment and agent." />
+      return (
+        <StudioBootScreen
+          title="Creating your studio…"
+          detail="Provisioning the environment and agent."
+        />
+      )
     case 'booting':
       return (
         <StudioBootScreen
@@ -819,7 +923,11 @@ export function StudioClient() {
         />
       )
     case 'ready':
-      return embedUrl ? <StudioFrame embedUrl={embedUrl} /> : <StudioBootScreen title="Opening studio…" />
+      return embedUrl ? (
+        <StudioFrame embedUrl={embedUrl} />
+      ) : (
+        <StudioBootScreen title="Opening studio…" />
+      )
     case 'error':
       return (
         <div className="mx-auto mt-16 max-w-md space-y-3 text-center">
@@ -834,6 +942,7 @@ export function StudioClient() {
 ```
 
 `app/studio/page.tsx`:
+
 ```tsx
 import { StudioClient } from '@/modules/cloud/studio/studio-client'
 
