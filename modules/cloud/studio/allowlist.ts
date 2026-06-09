@@ -19,10 +19,7 @@ export function getStudioAllowlist(): string[] {
   return fromEnv.length > 0 ? fromEnv : DEFAULT_ALLOWLIST
 }
 
-export function isStudioAllowed(
-  address: string | null | undefined,
-  allowlist: string[],
-): boolean {
+export function isStudioAllowed(address: string | null | undefined, allowlist: string[]): boolean {
   if (!address) return false
   if (allowlist.length === 0) return false
   return allowlist.includes(address.toLowerCase())

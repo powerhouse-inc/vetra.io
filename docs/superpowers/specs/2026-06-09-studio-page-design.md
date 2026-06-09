@@ -49,7 +49,7 @@ CLINT agent, shows a live boot spinner, and embeds the studio once it is ready.
    `https://vetra-agent.<subdomain>.vetra.io/?user=<did>`, with an
    always-present **"Open in new tab"** fallback.
 6. **v1 scope**: one studio per user. The longer-term product direction is one
-   environment per *product* (a user creates products, each gets its own
+   environment per _product_ (a user creates products, each gets its own
    instance); the data model and helpers should not preclude that, but v1
    ships a single per-user studio.
 
@@ -60,16 +60,16 @@ CLINT agent, shows a live boot spinner, and embeds the studio once it is ready.
 A single hook `useStudioEnvironment()` resolves the page to exactly one state;
 `studio-client.tsx` renders per state.
 
-| State | Condition | UI |
-|---|---|---|
-| `unauthenticated` | no Renown session | Login / connect prompt |
-| `not-allowed` | logged in, not on allowlist | "Studio is in limited preview" |
-| `none` | allowlisted, no `vetra-cli` env | "Create your studio" CTA |
-| `collecting-key` | user clicked create | Anthropic key form |
-| `creating` | provisioning (push + approveChanges) | Spinner: "Setting up…" |
-| `booting` | env exists, agent not ready / no website endpoint yet | Spinner with live status/phase |
-| `ready` | agent pod ready **and** website runtime endpoint present | iframe + new-tab link |
-| `error` | create failed / boot timeout / CrashLoop | Error + retry + link to env detail / logs |
+| State             | Condition                                                | UI                                        |
+| ----------------- | -------------------------------------------------------- | ----------------------------------------- |
+| `unauthenticated` | no Renown session                                        | Login / connect prompt                    |
+| `not-allowed`     | logged in, not on allowlist                              | "Studio is in limited preview"            |
+| `none`            | allowlisted, no `vetra-cli` env                          | "Create your studio" CTA                  |
+| `collecting-key`  | user clicked create                                      | Anthropic key form                        |
+| `creating`        | provisioning (push + approveChanges)                     | Spinner: "Setting up…"                    |
+| `booting`         | env exists, agent not ready / no website endpoint yet    | Spinner with live status/phase            |
+| `ready`           | agent pod ready **and** website runtime endpoint present | iframe + new-tab link                     |
+| `error`           | create failed / boot timeout / CrashLoop                 | Error + retry + link to env detail / logs |
 
 **"Ready to embed"** = the agent pod is ready **AND** a `clintRuntimeEndpoints`
 website entry (the `/` route) exists. Reuses `useClintRuntimeEndpoints` and
@@ -90,9 +90,9 @@ New route under `app/studio/`; supporting logic under `modules/cloud/studio/`.
 - `modules/cloud/studio/create-studio-environment.ts` — orchestrates the
   document-model controller:
   `setOwner → setLabel("Vetra Studio") → initialize →
-  addPackage(vetra-cli@latest) →
-  enableService(CLINT, "vetra-agent", clintConfig{ size: XL, env: key }) →
-  push → approveChanges`.
+addPackage(vetra-cli@latest) →
+enableService(CLINT, "vetra-agent", clintConfig{ size: XL, env: key }) →
+push → approveChanges`.
   Reuses the existing controller and the agent-config (`clintConfig`) builder
   shared with `add-agent-modal`.
 - `modules/cloud/studio/studio-embed-url.ts` — builds

@@ -55,7 +55,11 @@ export function StudioClient() {
         />
       )
     case 'ready':
-      return embedUrl ? <StudioFrame embedUrl={embedUrl} /> : <StudioBootScreen title="Opening studio…" />
+      return embedUrl ? (
+        <StudioFrame embedUrl={embedUrl} />
+      ) : (
+        <StudioBootScreen title="Opening studio…" />
+      )
     case 'error':
       return (
         <div className="mx-auto mt-16 max-w-md space-y-3 text-center">
