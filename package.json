@@ -161,11 +161,5 @@
     "typescript": "6.0.2",
     "typescript-eslint": "8.58.0",
     "vitest": "^3.2.4"
-  },
-  "pnpm": {
-    "overrides": {
-      "@codemirror/state": "6.5.2",
-      "@codemirror/view": "6.36.7"
-    }
   }
 }
