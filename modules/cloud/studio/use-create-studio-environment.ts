@@ -12,6 +12,7 @@ import {
   STUDIO_AGENT_PACKAGE,
   STUDIO_AGENT_PREFIX,
   STUDIO_AGENT_SIZE,
+  STUDIO_AGENT_VERSION,
   STUDIO_ANTHROPIC_SECRET_NAMES,
   STUDIO_BASE_DOMAIN,
   STUDIO_ENV_LABEL,
@@ -44,12 +45,16 @@ export function useCreateStudioEnvironment() {
         genericBaseDomain: STUDIO_BASE_DOMAIN,
         defaultPackageRegistry: STUDIO_REGISTRY,
       })
-      controller.addPackage({ packageName: STUDIO_AGENT_PACKAGE, version: undefined })
+      controller.addPackage({ packageName: STUDIO_AGENT_PACKAGE, version: STUDIO_AGENT_VERSION })
       controller.enableService({
         type: 'CLINT',
         prefix: STUDIO_AGENT_PREFIX,
         clintConfig: {
-          package: { registry: STUDIO_REGISTRY, name: STUDIO_AGENT_PACKAGE, version: null },
+          package: {
+            registry: STUDIO_REGISTRY,
+            name: STUDIO_AGENT_PACKAGE,
+            version: STUDIO_AGENT_VERSION,
+          },
           env: [],
           serviceCommand: STUDIO_SERVICE_COMMAND,
           selectedRessource: STUDIO_AGENT_SIZE,
