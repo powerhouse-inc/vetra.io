@@ -77,4 +77,18 @@ describe('findStudioAgent', () => {
     const match = findStudioAgent([env([], 'e0'), env([svc({})], 'e1')])
     expect(match?.env.id).toBe('e1')
   })
+
+  it('matches via env packages when service config is omitted (detail fragment lacks config)', () => {
+    const e = env([svc({ config: null })])
+    e.state.packages = [{ registry: 'r', name: 'vetra-cli', version: '0.0.1-dev.9' }]
+    const match = findStudioAgent([e])
+    expect(match?.env.id).toBe('e1')
+    expect(match?.service.prefix).toBe('vetra-agent')
+  })
+
+  it('does not match a config-less CLINT agent when the env lacks the studio package', () => {
+    const e = env([svc({ config: null })])
+    e.state.packages = [{ registry: 'r', name: 'ph-pirate-cli', version: '1' }]
+    expect(findStudioAgent([e])).toBeNull()
+  })
 })
