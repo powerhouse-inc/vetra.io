@@ -1,9 +1,7 @@
 import { type NextRequest, NextResponse } from 'next/server'
 import { redeemCode } from '@/modules/invites/lib/codes'
 import { verifyRenownIdentity } from '@/modules/invites/lib/verify-identity'
-import { clientIp, rateLimit } from '@/modules/invites/lib/rate-limit'
 import { redeemBodySchema } from '@/modules/invites/lib/schemas'
-import { REDEEM_RATE_LIMIT, RATE_LIMIT_WINDOW_MS } from '@/modules/invites/lib/constants'
 
 export const dynamic = 'force-dynamic'
 
@@ -14,14 +12,6 @@ export const dynamic = 'force-dynamic'
  */
 export async function POST(request: NextRequest) {
   try {
-    const rl = rateLimit(`redeem:${clientIp(request)}`, REDEEM_RATE_LIMIT, RATE_LIMIT_WINDOW_MS)
-    if (!rl.allowed) {
-      return NextResponse.json(
-        { ok: false, error: 'Too many requests' },
-        { status: 429, headers: { 'Retry-After': String(rl.retryAfterSec) } },
-      )
-    }
-
     const parsed = redeemBodySchema.safeParse(await request.json())
     if (!parsed.success) {
       return NextResponse.json({ ok: false, error: 'Invalid request' }, { status: 400 })

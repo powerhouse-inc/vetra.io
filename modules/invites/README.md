@@ -46,11 +46,13 @@ pnpm migrate latest && pnpm codegen:invites   # rewrites lib/schema.ts from the 
 
 ## Endpoints (`app/api/invite/`)
 
-| Route            | Does                                                                            |
-| ---------------- | ------------------------------------------------------------------------------- |
-| `POST /validate` | `{ code }` → `{ valid }`. Never consumes. Rate-limited 15/min/IP.               |
-| `POST /redeem`   | `{ code, token }` → verify identity, record redemption. Rate-limited 10/min/IP. |
-| `POST /status`   | `{ token }` → `{ allowed, code?, label?, accessExpires? }`.                     |
+| Route            | Does                                                        |
+| ---------------- | ----------------------------------------------------------- |
+| `POST /validate` | `{ code }` → `{ valid }`. Never consumes.                   |
+| `POST /redeem`   | `{ code, token }` → verify identity, record redemption.     |
+| `POST /status`   | `{ token }` → `{ allowed, code?, label?, accessExpires? }`. |
+
+Rate limiting is enforced at the reverse proxy (k8s ingress), not in this app.
 
 ## Managing codes
 
