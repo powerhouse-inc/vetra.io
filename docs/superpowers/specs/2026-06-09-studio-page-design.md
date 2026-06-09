@@ -40,8 +40,11 @@ CLINT agent, shows a live boot spinner, and embeds the studio once it is ready.
 3. **Provisioning**: if none exists, create a **dedicated** environment with a
    single `vetra-cli` CLINT agent — prefix `vetra-agent` (the manifest's
    `agent.id`), size **XL**, restricted to an **allowlist**.
-4. **API key**: prompt the user for their Anthropic API key before
-   provisioning; store it as the agent's required secrets.
+4. **API key**: prompt the user for a single Anthropic API key before
+   provisioning. The manifest declares three required secrets
+   (`ANTHROPIC_API_KEY`, `VETRA_ANTHROPIC_API_KEY`, `VETRA_CLI_ANTHROPIC_API_KEY`);
+   the one collected value is written to all three so the agent boots
+   regardless of which name it reads.
 5. **Embed**: cross-origin **iframe** of
    `https://vetra-agent.<subdomain>.vetra.io/?user=<did>`, with an
    always-present **"Open in new tab"** fallback.
