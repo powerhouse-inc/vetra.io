@@ -311,6 +311,7 @@ export function AddAgentModal({
   )
   const { manifests: installedManifests } = useRegistryManifests(registryUrl, installedForFetch)
 
+  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const collisions = useMemo(() => {
     const fromInstalled = installedManifests.map((m) => ({
       packageName: m.packageName,
