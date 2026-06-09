@@ -12,7 +12,10 @@ WORKDIR /app
 # mount preserves the pnpm store across builds (and across GHA runs when the
 # cache backend supports it), so only new/changed packages get refetched when
 # the lockfile changes — the common case in our CI.
-COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* .npmrc* ./
+# pnpm-workspace.yaml carries the `overrides` config; without it the lockfile's
+# recorded overrides won't match and `pnpm i --frozen-lockfile` fails with
+# ERR_PNPM_LOCKFILE_CONFIG_MISMATCH.
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* pnpm-workspace.yaml* .npmrc* ./
 RUN corepack enable pnpm && corepack install --global pnpm@11.4.0
 RUN --mount=type=cache,target=/root/.local/share/pnpm/store,sharing=locked \
     pnpm i --frozen-lockfile
