@@ -43,6 +43,14 @@ export function useStudioEnvironment(): StudioEnvironmentState {
   const address = viewer?.address ?? null
   const environments = useEnvironments('MINE', address)
 
+  // Stable identity key for the scan effect. `useUser()` returns the live
+  // renown.user OBJECT, whose reference churns on every renown "user" event
+  // (login retries, status ticks). Depending on the object would re-run the
+  // scan — and re-fetch every env detail — on each churn, an effective infinite
+  // loop. Depend on the address string instead.
+  const isAuthed = !!user
+  const userAddress = user?.address ?? null
+
   const [located, setLocated] = useState<Located>(null)
   const [scanned, setScanned] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -56,7 +64,7 @@ export function useStudioEnvironment(): StudioEnvironmentState {
   useEffect(() => {
     let cancelled = false
     void (async () => {
-      if (!user) return
+      if (!isAuthed) return
       try {
         const token = await getAuthToken(renownRef.current)
         const details: CloudEnvironment[] = []
@@ -83,7 +91,7 @@ export function useStudioEnvironment(): StudioEnvironmentState {
       cancelled = true
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, summaryIds])
+  }, [isAuthed, userAddress, summaryIds])
 
   // Runtime endpoints for the located studio drive the booting → ready flip.
   const { byPrefix } = useClintRuntimeEndpoints(
