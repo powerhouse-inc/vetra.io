@@ -1,26 +1,12 @@
 'use client'
 
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import { usePathname } from 'next/navigation'
 import { useMemo } from 'react'
 import { NavbarBrand } from './components/navbar-brand'
 import NavbarItemMobile from './components/navbar-item-mobile'
 import NavbarItemsDesk from './components/navbar-items-desk'
 import NavbarRightSide from './components/navbar-right-side'
-import { getNavbarConfig, PRIVATE_NAV_ITEMS, PUBLIC_NAV_ITEMS } from './navbar-config'
-
-function AuthAwareNavItems({ pathname }: { pathname: string }) {
-  const auth = useRenownAuth()
-  const isPublicRoute = pathname === '/'
-  const navItems =
-    !isPublicRoute && auth.status === 'authorized' ? PRIVATE_NAV_ITEMS : PUBLIC_NAV_ITEMS
-  return (
-    <>
-      <NavbarItemsDesk navItems={navItems} pathname={pathname} />
-      <NavbarItemMobile navItems={navItems} pathname={pathname} />
-    </>
-  )
-}
+import { getNavbarConfig } from './navbar-config'
 
 function Navbar() {
   const pathname = usePathname()
@@ -30,6 +16,7 @@ function Navbar() {
     logotype: Logotype,
     logotypeClassName,
     logoHref,
+    navItems,
   } = useMemo(() => getNavbarConfig(pathname), [pathname])
 
   return (
@@ -43,7 +30,8 @@ function Navbar() {
             logotypeClassName={logotypeClassName}
             logoHref={logoHref}
           />
-          <AuthAwareNavItems pathname={pathname} />
+          <NavbarItemsDesk navItems={navItems} pathname={pathname} />
+          <NavbarItemMobile navItems={navItems} pathname={pathname} />
         </div>
         <NavbarRightSide />
       </div>
