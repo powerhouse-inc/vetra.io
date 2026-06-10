@@ -25,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar'
 import ThemeIconLabel from './toogle-theme-label'
 
 const btnSecondary =
@@ -61,7 +62,12 @@ function RenownButton() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button type="button" className={btnSecondary}>
-            <User className="h-4 w-4" />
+            <Avatar className="h-5 w-5">
+              <AvatarImage src={auth.avatarUrl} alt={auth.displayName ?? 'Account'} />
+              <AvatarFallback className="bg-transparent p-0">
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
             {auth.displayName ?? auth.displayAddress ?? 'Account'}
           </button>
         </DropdownMenuTrigger>
@@ -70,11 +76,21 @@ function RenownButton() {
           className="bg-accent border-border/50 z-170 w-56 rounded-lg p-1.5"
         >
           <DropdownMenuLabel className="px-3 py-2">
-            <div className="text-sm leading-tight font-semibold">
-              {auth.displayName ?? 'Account'}
-            </div>
-            <div className="text-muted-foreground font-mono text-xs">
-              {shorten(auth.address ?? auth.displayAddress)}
+            <div className="flex items-center gap-2.5">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={auth.avatarUrl} alt={auth.displayName ?? 'Account'} />
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="text-sm leading-tight font-semibold">
+                  {auth.displayName ?? 'Account'}
+                </div>
+                <div className="text-muted-foreground font-mono text-xs">
+                  {shorten(auth.address ?? auth.displayAddress)}
+                </div>
+              </div>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-border/50" />
