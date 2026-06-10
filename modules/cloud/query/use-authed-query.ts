@@ -21,6 +21,7 @@ export function useAuthedQuery<T>(
 ): UseQueryResult<T, Error> {
   const renown = useRenown()
   const renownRef = useRef(renown)
+  // eslint-disable-next-line react-hooks/refs
   renownRef.current = renown
 
   return useQuery<T, Error, T, readonly unknown[]>({

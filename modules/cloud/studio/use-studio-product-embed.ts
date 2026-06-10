@@ -91,11 +91,7 @@ export function useStudioProductEmbed(envId: string): {
     {
       enabled: !!subdomain && !!prefix,
       refetchInterval: (query) =>
-        hasStudioWebsiteEndpoint(
-          query.state.data?.find((g) => g.prefix === prefix),
-        )
-          ? false
-          : 5000,
+        hasStudioWebsiteEndpoint(query.state.data?.find((g) => g.prefix === prefix)) ? false : 5000,
     },
   )
   const websiteReady = hasStudioWebsiteEndpoint(groups?.find((g) => g.prefix === prefix))

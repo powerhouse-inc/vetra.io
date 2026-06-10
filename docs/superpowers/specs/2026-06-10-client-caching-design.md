@@ -33,9 +33,9 @@ hot-path read hooks, then mutations, then cleanup.
 - **Per-user isolation (security):** every user-scoped query key includes the
   viewer DID, so user B never reads user A's cache entries (different keys =
   cache miss = fresh fetch). On DID change we additionally `queryClient.clear()`
-  + drop the persisted client. `dehydrateOptions.shouldDehydrateQuery` refuses
-  to persist sensitive queries (tenant secrets/env vars). API keys are
-  write-only and never enter the cache.
+  - drop the persisted client. `dehydrateOptions.shouldDehydrateQuery` refuses
+    to persist sensitive queries (tenant secrets/env vars). API keys are
+    write-only and never enter the cache.
 - SSR-safe: persister storage guarded by `typeof window`.
 
 ### 2. Query keys + token-aware fetchers

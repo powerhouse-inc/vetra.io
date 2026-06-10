@@ -39,7 +39,9 @@ describe('useOptimisticMutation', () => {
     result.current.mutate({ id: 'b', name: 'B' })
 
     // Optimistic write is visible synchronously after onMutate runs.
-    await waitFor(() => expect((qc.getQueryData(KEY) as Item[]).map((i) => i.id)).toEqual(['a', 'b']))
+    await waitFor(() =>
+      expect((qc.getQueryData(KEY) as Item[]).map((i) => i.id)).toEqual(['a', 'b']),
+    )
 
     release()
     await waitFor(() => expect(result.current.isSuccess).toBe(true))
@@ -96,20 +98,18 @@ describe('useOptimisticMutation', () => {
 
     // Both lists drop 'b' optimistically...
     await waitFor(() =>
-      expect((qc.getQueryData(['environments', 'MINE']) as { id: string }[]).map((e) => e.id)).toEqual(
-        ['a'],
-      ),
+      expect(
+        (qc.getQueryData(['environments', 'MINE']) as { id: string }[]).map((e) => e.id),
+      ).toEqual(['a']),
     )
     // ...then both are restored on failure.
     reject(new Error('nope'))
     await waitFor(() => expect(result.current.isError).toBe(true))
-    expect((qc.getQueryData(['environments', 'MINE']) as { id: string }[]).map((e) => e.id)).toEqual(
-      ['a', 'b'],
+    expect(
+      (qc.getQueryData(['environments', 'MINE']) as { id: string }[]).map((e) => e.id),
+    ).toEqual(['a', 'b'])
+    expect((qc.getQueryData(['environments', 'ALL']) as { id: string }[]).map((e) => e.id)).toEqual(
+      ['a', 'b', 'c'],
     )
-    expect((qc.getQueryData(['environments', 'ALL']) as { id: string }[]).map((e) => e.id)).toEqual([
-      'a',
-      'b',
-      'c',
-    ])
   })
 })
