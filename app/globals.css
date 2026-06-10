@@ -190,3 +190,13 @@
   --font-size-4xl: clamp(1.875rem, 3.5vw, 2.25rem);
   --font-size-5xl: clamp(2.25rem, 5vw, 3rem);
 }
+
+/* Indeterminate sweep for the global background-refresh indicator. */
+@keyframes refresh-slide {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
