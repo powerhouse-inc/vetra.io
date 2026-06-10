@@ -8,12 +8,8 @@ import { toast } from 'sonner'
 import { DRIVE_ID } from '@/modules/cloud/client'
 import { loadEnvironmentController } from '@/modules/cloud/controller'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
-import {
-  useEnvironments,
-  useRefreshEnvironments,
-  useViewer,
-  type ViewScope,
-} from '@/modules/cloud/hooks/use-environment'
+import { useEnvironments, useViewer, type ViewScope } from '@/modules/cloud/hooks/use-environment'
+import { useOptimisticMutation } from '@/modules/cloud/query/use-optimistic-mutation'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -56,9 +52,7 @@ function StatusDot({ status }: { status: string }) {
 
 function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
   const { signer, canSign } = useCanSign()
-  const [isDeleting, setIsDeleting] = useState(false)
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
-  const refreshEnvironments = useRefreshEnvironments()
   const displayName = env.state.label || env.name || 'Unnamed'
   const packageCount = env.state.packages.length
 
@@ -72,28 +66,39 @@ function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
       ? `https://${connectService.prefix}.${subdomain}.${baseDomain}`
       : null
 
-  const handleDelete = async () => {
-    if (!signer) {
-      toast.error('You must be logged in with Renown to delete an environment')
-      return
-    }
-    try {
-      setIsDeleting(true)
+  // Optimistic delete: the card vanishes from every cached env list (and the
+  // studio products grid) the instant the user confirms; on failure the
+  // snapshot is restored and a toast surfaces the error.
+  const deleteEnv = useOptimisticMutation<void, void>({
+    mutationFn: async () => {
+      if (!signer) throw new Error('You must be logged in with Renown to delete an environment')
       const ctrl = await loadEnvironmentController({
         documentId: env.id,
         parentIdentifier: DRIVE_ID,
         signer,
       })
       await ctrl.delete()
-      toast.success('Environment deleted successfully')
-      refreshEnvironments()
-      setShowDeleteDialog(false)
-    } catch (error) {
+    },
+    affectedKeys: () => [['environments'], ['studio-products']],
+    optimisticUpdate: (qc) => {
+      qc.setQueriesData<{ id: string }[]>({ queryKey: ['environments'] }, (old) =>
+        Array.isArray(old) ? old.filter((e) => e?.id !== env.id) : old,
+      )
+      qc.setQueriesData<{ envId: string }[]>({ queryKey: ['studio-products'] }, (old) =>
+        Array.isArray(old) ? old.filter((p) => p?.envId !== env.id) : old,
+      )
+    },
+    onSuccess: () => toast.success('Environment deleted successfully'),
+    onError: (error) => {
       console.error('Failed to delete environment:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to delete environment')
-    } finally {
-      setIsDeleting(false)
-    }
+      toast.error(error.message || 'Failed to delete environment')
+    },
+  })
+  const isDeleting = deleteEnv.isPending
+
+  const handleDelete = () => {
+    setShowDeleteDialog(false)
+    deleteEnv.mutate()
   }
 
   const enabledServices = env.state.services.filter((s) => s.enabled)
@@ -159,7 +164,7 @@ function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
               <AlertDialogFooter>
                 <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
                 <AlertDialogAction
-                  onClick={() => void handleDelete()}
+                  onClick={handleDelete}
                   disabled={isDeleting}
                   className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                 >
