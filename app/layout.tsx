@@ -53,6 +53,7 @@ export default async function RootLayout({
                 process.env.CLOUD_DRIVE_ID || process.env.NEXT_PUBLIC_CLOUD_DRIVE_ID || '',
               NEXT_PUBLIC_RENOWN_URL:
                 process.env.RENOWN_URL || process.env.NEXT_PUBLIC_RENOWN_URL || '',
+              NEXT_PUBLIC_STUDIO_ALLOWLIST: process.env.NEXT_PUBLIC_STUDIO_ALLOWLIST || '',
             })}`,
           }}
         />
