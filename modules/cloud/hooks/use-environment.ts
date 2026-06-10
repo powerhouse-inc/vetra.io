@@ -2,7 +2,7 @@
 
 import { useDid } from '@powerhousedao/reactor-browser'
 import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useMemo } from 'react'
+import { useMemo } from 'react'
 import { fetchMyEnvironments, fetchViewer } from '../graphql'
 import type { EnvironmentSummary, ListScope, Viewer } from '../graphql'
 import { queryKeys } from '../query/keys'
@@ -131,14 +131,6 @@ export function useEnvironments(
     if (isError || !data) return []
     return filterByScope(data, viewScope, viewerAddress).map(summaryToCloudEnvironment)
   }, [data, isError, viewScope, viewerAddress])
-}
-
-/** Hook to refresh the environments list (e.g. after a delete). */
-export function useRefreshEnvironments(): () => void {
-  const queryClient = useQueryClient()
-  return useCallback(() => {
-    void queryClient.invalidateQueries({ queryKey: ['environments'] })
-  }, [queryClient])
 }
 
 /** Hook to get a single environment by ID, looked up in the user's MINE list. */
