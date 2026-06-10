@@ -32,21 +32,22 @@
 ### Task 1: `findStudioAgents` (all matches)
 
 **Files:**
+
 - Modify: `modules/cloud/studio/find-studio-agent.ts`
 - Test: `modules/cloud/__tests__/find-studio-agent.test.ts` (add cases)
 
 - [ ] **Step 1: Add failing tests** (append inside the existing `describe`)
 
 ```ts
-  it('findStudioAgents returns all matching envs', () => {
-    const a = env([svc({})], 'a')
-    const b = env([svc({})], 'b')
-    const none = env([], 'c')
-    expect(findStudioAgents([a, none, b]).map((m) => m.env.id)).toEqual(['a', 'b'])
-  })
-  it('findStudioAgents returns [] when none match', () => {
-    expect(findStudioAgents([env([], 'c')])).toEqual([])
-  })
+it('findStudioAgents returns all matching envs', () => {
+  const a = env([svc({})], 'a')
+  const b = env([svc({})], 'b')
+  const none = env([], 'c')
+  expect(findStudioAgents([a, none, b]).map((m) => m.env.id)).toEqual(['a', 'b'])
+})
+it('findStudioAgents returns [] when none match', () => {
+  expect(findStudioAgents([env([], 'c')])).toEqual([])
+})
 ```
 
 Add the import: `import { findStudioAgent, findStudioAgents } from '@/modules/cloud/studio/find-studio-agent'`
@@ -89,6 +90,7 @@ export function findStudioAgent(envs: CloudEnvironment[]): StudioAgentMatch | nu
 ### Task 2: BrandSheet fetch + parser
 
 **Files:**
+
 - Create: `modules/cloud/studio/fetch-product-brand.ts`
 - Test: `modules/cloud/__tests__/fetch-product-brand.test.ts`
 
@@ -103,7 +105,17 @@ const ok = {
     BrandSheet: {
       documents: {
         items: [
-          { id: '1', name: 'doc', state: { global: { name: 'Concord', maxim: 'Share the burden.', concept: 'Concord coordinates procurement…' } } },
+          {
+            id: '1',
+            name: 'doc',
+            state: {
+              global: {
+                name: 'Concord',
+                maxim: 'Share the burden.',
+                concept: 'Concord coordinates procurement…',
+              },
+            },
+          },
         ],
       },
     },
@@ -127,7 +139,9 @@ describe('parseBrandSheet', () => {
     expect(parseBrandSheet({ data: {} })).toBeNull()
   })
   it('tolerates missing maxim/concept (null), keeps title', () => {
-    const r = parseBrandSheet({ data: { BrandSheet: { documents: { items: [{ state: { global: { name: 'X' } } }] } } } })
+    const r = parseBrandSheet({
+      data: { BrandSheet: { documents: { items: [{ state: { global: { name: 'X' } } }] } } },
+    })
     expect(r).toEqual<ProductBrand>({ title: 'X', tagline: null, description: null })
   })
 })
@@ -206,6 +220,7 @@ export async function fetchProductBrand(input: {
 ### Task 3: `deriveProductStatus`
 
 **Files:**
+
 - Modify: `modules/cloud/studio/studio-readiness.ts`
 - Test: `modules/cloud/__tests__/studio-helpers.test.ts` (add cases)
 
@@ -217,7 +232,13 @@ import { deriveProductStatus } from '@/modules/cloud/studio/studio-readiness'
 describe('deriveProductStatus', () => {
   const group = (eps: { type: string; status: string }[]): ClintRuntimeEndpointsForPrefix => ({
     prefix: 'vetra-agent',
-    endpoints: eps.map((e, i) => ({ id: `/${i}`, type: e.type as never, port: '1', status: e.status as never, lastSeen: '' })),
+    endpoints: eps.map((e, i) => ({
+      id: `/${i}`,
+      type: e.type as never,
+      port: '1',
+      status: e.status as never,
+      lastSeen: '',
+    })),
   })
   it('ready when a website endpoint is enabled', () => {
     expect(deriveProductStatus(group([{ type: 'website', status: 'enabled' }]))).toBe('ready')
@@ -252,6 +273,7 @@ export function deriveProductStatus(
 ### Task 4: Products list hook `useStudioProducts`
 
 **Files:**
+
 - Create: `modules/cloud/studio/use-studio-products.ts`
 
 (No standalone unit test — composes tested helpers + async fetches; verified via component tests + tsc. Keep it thin.)
@@ -263,7 +285,11 @@ export function deriveProductStatus(
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useDid, useRenown, useUser } from '@powerhousedao/reactor-browser'
-import { fetchClintRuntimeEndpointsByEnv, fetchEnvironment, getAuthToken } from '@/modules/cloud/graphql'
+import {
+  fetchClintRuntimeEndpointsByEnv,
+  fetchEnvironment,
+  getAuthToken,
+} from '@/modules/cloud/graphql'
 import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environment'
 import type { CloudEnvironment } from '@/modules/cloud/types'
 import { findStudioAgents } from './find-studio-agent'
@@ -377,7 +403,8 @@ export function useStudioProducts(): StudioProductsState {
 
   let gate: StudioGate
   if (!user) gate = 'unauthenticated'
-  else if (!isStudioAllowed(address, getStudioAllowlist())) gate = address ? 'not-allowed' : 'loading'
+  else if (!isStudioAllowed(address, getStudioAllowlist()))
+    gate = address ? 'not-allowed' : 'loading'
   else gate = 'ready'
 
   return { gate, products, isScanning, creating, createError, createProduct, did }
@@ -392,6 +419,7 @@ export function useStudioProducts(): StudioProductsState {
 ### Task 5: Product card
 
 **Files:**
+
 - Create: `modules/cloud/studio/components/studio-product-card.tsx`
 - Test: `modules/cloud/__tests__/studio-product-card.test.tsx`
 
@@ -402,26 +430,39 @@ import { describe, expect, it, vi } from 'vitest'
 import { render } from '@testing-library/react'
 
 vi.mock('next/link', () => ({
-  default: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
+  default: ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
 }))
 
 import { StudioProductCard } from '@/modules/cloud/studio/components/studio-product-card'
 import type { StudioProduct } from '@/modules/cloud/studio/use-studio-products'
 
 const base: StudioProduct = {
-  envId: 'env1', subdomain: 'sub', prefix: 'vetra-agent', label: 'Vetra Studio',
-  brand: { title: 'Concord', tagline: 'Share the burden.', description: 'Coordinates procurement.' },
+  envId: 'env1',
+  subdomain: 'sub',
+  prefix: 'vetra-agent',
+  label: 'Vetra Studio',
+  brand: {
+    title: 'Concord',
+    tagline: 'Share the burden.',
+    description: 'Coordinates procurement.',
+  },
   status: 'ready',
 }
 
 describe('StudioProductCard', () => {
   it('shows brand title/tagline/description and links to the env', () => {
     const { container, getByText } = render(<StudioProductCard product={base} />)
-    getByText('Concord'); getByText('Share the burden.'); getByText('Coordinates procurement.')
+    getByText('Concord')
+    getByText('Share the burden.')
+    getByText('Coordinates procurement.')
     expect(container.querySelector('a')?.getAttribute('href')).toBe('/studio/env1')
   })
   it('falls back to the env label when no brand, and shows Starting for booting', () => {
-    const { getByText } = render(<StudioProductCard product={{ ...base, brand: null, status: 'booting' }} />)
+    const { getByText } = render(
+      <StudioProductCard product={{ ...base, brand: null, status: 'booting' }} />,
+    )
     getByText('Vetra Studio')
     getByText(/starting/i)
   })
@@ -487,6 +528,7 @@ export function StudioProductCard({ product }: { product: StudioProduct }) {
 ### Task 6: New-product card (+ create form)
 
 **Files:**
+
 - Create: `modules/cloud/studio/components/new-product-card.tsx`
 
 (No standalone test — exercised via the grid test in Task 7. It wires the existing tested `StudioCreateForm`.)
@@ -543,6 +585,7 @@ export function NewProductCard({
 ### Task 7: Products grid + route
 
 **Files:**
+
 - Create: `modules/cloud/studio/components/studio-products-grid.tsx`
 - Modify: `app/studio/page.tsx`
 - Test: `modules/cloud/__tests__/studio-products-grid.test.tsx`
@@ -554,14 +597,23 @@ import { describe, expect, it, vi } from 'vitest'
 import { render } from '@testing-library/react'
 
 vi.mock('next/link', () => ({
-  default: ({ href, children }: { href: string; children: React.ReactNode }) => <a href={href}>{children}</a>,
+  default: ({ href, children }: { href: string; children: React.ReactNode }) => (
+    <a href={href}>{children}</a>
+  ),
 }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 
 const state = {
   gate: 'ready' as const,
   products: [
-    { envId: 'e1', subdomain: 's', prefix: 'vetra-agent', label: 'L', brand: { title: 'Concord', tagline: null, description: null }, status: 'ready' as const },
+    {
+      envId: 'e1',
+      subdomain: 's',
+      prefix: 'vetra-agent',
+      label: 'L',
+      brand: { title: 'Concord', tagline: null, description: null },
+      status: 'ready' as const,
+    },
   ],
   isScanning: false,
   creating: false,
@@ -652,6 +704,7 @@ export default function StudioPage() {
 ### Task 8: Embed route `/studio/[envId]`
 
 **Files:**
+
 - Create: `modules/cloud/studio/use-studio-product-embed.ts`
 - Create: `modules/cloud/studio/studio-embed-client.tsx`
 - Create: `app/studio/[envId]/page.tsx`
@@ -737,7 +790,8 @@ export function useStudioProductEmbed(envId: string): {
 
   let status: EmbedStatus
   if (!user) status = 'unauthenticated'
-  else if (!isStudioAllowed(address, getStudioAllowlist())) status = address ? 'not-allowed' : 'loading'
+  else if (!isStudioAllowed(address, getStudioAllowlist()))
+    status = address ? 'not-allowed' : 'loading'
   else if (located) status = ready ? 'ready' : 'booting'
   else if (!scanned) status = 'loading'
   else status = 'not-found'
@@ -827,6 +881,7 @@ export default async function StudioProductPage({
 ### Task 9: Remove superseded single-studio files + verify
 
 **Files:**
+
 - Delete: `modules/cloud/studio/studio-client.tsx`
 - Delete: `modules/cloud/studio/use-studio-environment.ts`
 
@@ -849,6 +904,7 @@ git rm modules/cloud/studio/studio-client.tsx modules/cloud/studio/use-studio-en
 ./node_modules/.bin/prettier --check "modules/cloud/studio/**/*.{ts,tsx}" "app/studio/**/*.tsx"
 npx vitest run --config vitest.unit.config.ts
 ```
+
 Expected: tsc 0 errors; eslint 0 errors; prettier clean; new studio tests pass (only the known pre-existing `agent-card` / `use-create-environment` failures remain).
 
 - [ ] **Step 4: Commit** — `refactor(studio): drop single-studio client/hook superseded by products grid`
