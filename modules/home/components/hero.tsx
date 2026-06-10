@@ -45,12 +45,12 @@ export function Hero() {
           Own what gets built.
         </h1>
         <p className="text-muted-foreground mx-auto mb-4 max-w-2xl text-[clamp(20px,2.5vw,28px)] leading-[1.3] font-semibold">
-          AI that builds software your team uses every day — on infrastructure that&apos;s always
+          Build software for your team + AI on a unified data layer, run it on infrastructure that&apos;s always
           yours.
         </p>
         <p className="text-foreground-70 mx-auto mb-9 max-w-xl text-lg leading-relaxed">
-          Unlike other AI builders, the platform is fully open source and runs wherever you choose —
-          your cloud or ours. No lock-in, ever.
+          Unlike other AI builders, the platform is fully open source and runs wherever you choose.
+          Your cloud or ours. No lock-in, ever.
         </p>
         <div className="mb-12 flex flex-wrap justify-center gap-3">
           <Link
