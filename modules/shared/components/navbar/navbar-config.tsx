@@ -13,8 +13,7 @@ export const NAVBAR_CONFIGS: Record<string, NavbarConfig> = {
       {
         label: 'Products',
         href: '/user',
-        isActive: (currentPath) =>
-          currentPath.includes('/user') || currentPath.includes('/studio'),
+        isActive: (currentPath) => currentPath.includes('/user') || currentPath.includes('/studio'),
       },
       {
         label: 'Packages',
