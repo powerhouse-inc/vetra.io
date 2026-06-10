@@ -45,6 +45,10 @@ export function EarlyAccessGate() {
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
   const [working, setWorking] = useState(false)
+  // Distinct from `working` (the Get Access button): this drives the full-screen
+  // splash and is only set by the post-login finalize effect below — so
+  // validating a code on the gate form never flashes the splash.
+  const [finalizing, setFinalizing] = useState(false)
 
   // After a Renown login completes (same tab, ?user=… redirect), finish the
   // flow: redeem a pending code, or recognise a returning user who's already in.
@@ -53,7 +57,7 @@ export function EarlyAccessGate() {
     let cancelled = false
 
     const finalize = async () => {
-      setWorking(true)
+      setFinalizing(true)
       try {
         const token = await getRenownToken()
         if (!token) return
@@ -76,7 +80,7 @@ export function EarlyAccessGate() {
           setStep('granted')
         }
       } finally {
-        if (!cancelled) setWorking(false)
+        if (!cancelled) setFinalizing(false)
       }
     }
 
@@ -174,7 +178,6 @@ export function EarlyAccessGate() {
 
   // While the initial auth check runs, or while we finalize a redemption after
   // login, show a splash instead of flashing the gate form.
-  const finalizing = auth.status === 'authorized' && working
   if (auth.status === 'loading' || auth.status === 'checking' || finalizing) {
     return (
       <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden">
