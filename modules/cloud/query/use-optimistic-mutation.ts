@@ -10,9 +10,11 @@ import {
 export type OptimisticMutationOptions<TVars, TData> = {
   mutationFn: (vars: TVars) => Promise<TData>
   /**
-   * Exact query keys this mutation affects. Each is cancelled + snapshotted
-   * before the optimistic write, rolled back on error, and invalidated once
-   * the mutation settles (so server truth reconciles the optimistic guess).
+   * Query keys this mutation affects, matched by prefix. Every query matching
+   * each key is cancelled + snapshotted before the optimistic write, rolled
+   * back on error, and invalidated once the mutation settles (so server truth
+   * reconciles the optimistic guess). Prefix matching means a single
+   * `['environments']` key covers every scope/identity variant of the list.
    */
   affectedKeys: (vars: TVars) => readonly (readonly unknown[])[]
   /**
@@ -43,7 +45,10 @@ export function useOptimisticMutation<TVars, TData>(
       const snapshots: [readonly unknown[], unknown][] = []
       for (const key of keys) {
         await queryClient.cancelQueries({ queryKey: key })
-        snapshots.push([key, queryClient.getQueryData(key)])
+        // Snapshot every query matching the prefix, so rollback restores them all.
+        for (const [fullKey, data] of queryClient.getQueriesData({ queryKey: key })) {
+          snapshots.push([fullKey, data])
+        }
       }
       opts.optimisticUpdate?.(queryClient, vars)
       return { snapshots }

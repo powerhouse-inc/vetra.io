@@ -67,4 +67,49 @@ describe('useOptimisticMutation', () => {
     // Snapshot restored — the optimistic 'b' is gone.
     expect((qc.getQueryData(KEY) as Item[]).map((i) => i.id)).toEqual(['a'])
   })
+
+  it('updates and rolls back every query matching a prefix key', async () => {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    qc.setQueryData(['environments', 'MINE'], [{ id: 'a' }, { id: 'b' }])
+    qc.setQueryData(['environments', 'ALL'], [{ id: 'a' }, { id: 'b' }, { id: 'c' }])
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    )
+
+    let reject: (e: Error) => void = () => {}
+    const gate = new Promise<void>((_, rej) => (reject = rej))
+
+    const { result } = renderHook(
+      () =>
+        useOptimisticMutation<string, void>({
+          mutationFn: () => gate,
+          affectedKeys: () => [['environments']],
+          optimisticUpdate: (client, id) =>
+            client.setQueriesData<{ id: string }[]>({ queryKey: ['environments'] }, (old) =>
+              Array.isArray(old) ? old.filter((e) => e.id !== id) : old,
+            ),
+        }),
+      { wrapper },
+    )
+
+    result.current.mutate('b')
+
+    // Both lists drop 'b' optimistically...
+    await waitFor(() =>
+      expect((qc.getQueryData(['environments', 'MINE']) as { id: string }[]).map((e) => e.id)).toEqual(
+        ['a'],
+      ),
+    )
+    // ...then both are restored on failure.
+    reject(new Error('nope'))
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect((qc.getQueryData(['environments', 'MINE']) as { id: string }[]).map((e) => e.id)).toEqual(
+      ['a', 'b'],
+    )
+    expect((qc.getQueryData(['environments', 'ALL']) as { id: string }[]).map((e) => e.id)).toEqual([
+      'a',
+      'b',
+      'c',
+    ])
+  })
 })
