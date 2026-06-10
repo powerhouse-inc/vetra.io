@@ -11,6 +11,12 @@ export const NAVBAR_CONFIGS: Record<string, NavbarConfig> = {
     logoHref: '/',
     navItems: [
       {
+        label: 'Products',
+        href: '/user',
+        isActive: (currentPath) =>
+          currentPath.includes('/user') || currentPath.includes('/studio'),
+      },
+      {
         label: 'Packages',
         href: '/packages',
         isActive: (currentPath) => currentPath.includes('/packages'),
