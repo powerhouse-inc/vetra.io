@@ -1,11 +1,17 @@
 'use client'
 
-import { useRenown } from '@powerhousedao/reactor-browser'
-import { useState, useEffect, useMemo, useCallback, useRef } from 'react'
-import { fetchMyEnvironments, fetchViewer, getAuthToken } from '../graphql'
+import { useDid } from '@powerhousedao/reactor-browser'
+import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useMemo } from 'react'
+import { fetchMyEnvironments, fetchViewer } from '../graphql'
 import type { EnvironmentSummary, ListScope, Viewer } from '../graphql'
+import { queryKeys } from '../query/keys'
+import { useAuthedQuery } from '../query/use-authed-query'
 import { useDocumentListSubscription } from './use-document-subscription'
 import type { CloudEnvironment } from '../types'
+
+/** Background revalidation cadence — SWR + the WS subscription cover freshness. */
+const ENV_REFETCH_INTERVAL = 20_000
 
 /**
  * UI scope for the env list toggle. Maps to backend `ListScope` + client-side
@@ -102,76 +108,38 @@ export function useEnvironments(
   viewScope: ViewScope = 'MINE',
   viewerAddress: string | null = null,
 ): CloudEnvironment[] {
-  const renown = useRenown()
-  const renownRef = useRef(renown)
-  renownRef.current = renown
+  const did = useDid()
+  const queryClient = useQueryClient()
   const backendScope: ListScope = viewScope === 'ALL' ? 'ALL' : 'MINE'
-  const [summaries, setSummaries] = useState<EnvironmentSummary[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
 
-  const summariesRef = useRef(summaries)
-  summariesRef.current = summaries
+  // SWR read: paints from the persisted/last-known list instantly, then
+  // revalidates in the background. `MINE` and `UNCLAIMED` share the same
+  // backend query (filtered in-memory below), so they dedupe to one fetch.
+  const { data, isLoading, isError } = useAuthedQuery<EnvironmentSummary[]>(
+    queryKeys.environments(backendScope, did),
+    (token) => fetchMyEnvironments(backendScope, token),
+    { refetchInterval: ENV_REFETCH_INTERVAL, placeholderData: keepPreviousData },
+  )
 
-  const refetch = useCallback(async () => {
-    try {
-      if (!summariesRef.current.length) setIsLoading(true)
-      setError(null)
-      const token = await getAuthToken(renownRef.current)
-      const data = await fetchMyEnvironments(backendScope, token)
-      const prev = JSON.stringify(summariesRef.current)
-      if (JSON.stringify(data) !== prev) {
-        setSummaries(data)
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('Failed to fetch environments'))
-      console.error('Failed to fetch environments:', err)
-    } finally {
-      setIsLoading(false)
-    }
-  }, [backendScope])
-
-  // Initial load + refetch when backend scope changes or auth becomes available.
-  // `renown` transitions from undefined → instance once the SDK initialises,
-  // ensuring we re-fetch with a valid bearer token instead of waiting for the
-  // 10-second polling fallback.
-  useEffect(() => {
-    void refetch()
-  }, [refetch, renown])
-
-  // Subscribe to all document changes via WebSocket — triggers refetch on any update
+  // Any document change invalidates every env-list query, triggering a quiet
+  // background revalidation (replaces the old manual refetch + 10s polling).
   useDocumentListSubscription(() => {
-    void refetch()
+    void queryClient.invalidateQueries({ queryKey: ['environments'] })
   })
 
-  // Fallback: poll every 10s in case WebSocket is disconnected
-  useEffect(() => {
-    const interval = setInterval(() => {
-      void refetch()
-    }, 10_000)
-    return () => clearInterval(interval)
-  }, [refetch])
-
-  // Listen for manual refresh events (e.g. after deletion)
-  useEffect(() => {
-    const handleRefresh = () => {
-      void refetch()
-    }
-    window.addEventListener('refresh-environments', handleRefresh)
-    return () => window.removeEventListener('refresh-environments', handleRefresh)
-  }, [refetch])
-
   return useMemo(() => {
-    if (isLoading || error) return []
-    return filterByScope(summaries, viewScope, viewerAddress).map(summaryToCloudEnvironment)
-  }, [isLoading, error, summaries, viewScope, viewerAddress])
+    if (isError || !data) return []
+    return filterByScope(data, viewScope, viewerAddress).map(summaryToCloudEnvironment)
+    // isLoading kept in deps so the first non-loading render recomputes.
+  }, [data, isError, isLoading, viewScope, viewerAddress])
 }
 
 /** Hook to refresh the environments list (e.g. after a delete). */
 export function useRefreshEnvironments(): () => void {
-  return () => {
-    window.dispatchEvent(new CustomEvent('refresh-environments'))
-  }
+  const queryClient = useQueryClient()
+  return useCallback(() => {
+    void queryClient.invalidateQueries({ queryKey: ['environments'] })
+  }, [queryClient])
 }
 
 /** Hook to get a single environment by ID, looked up in the user's MINE list. */
@@ -187,32 +155,15 @@ export function useEnvironment(id: string): CloudEnvironment | undefined {
  * Used by the `/cloud` page to show the "Mine | All" toggle only for admins.
  */
 export function useViewer(): { viewer: Viewer | null; isLoading: boolean } {
-  const renown = useRenown()
-  const renownRef = useRef(renown)
-  renownRef.current = renown
-  const [viewer, setViewer] = useState<Viewer | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const did = useDid()
+  const { data, isLoading, isError } = useAuthedQuery<Viewer>(
+    queryKeys.viewer(did),
+    (token) => fetchViewer(token),
+    { staleTime: 5 * 60 * 1000 },
+  )
 
-  useEffect(() => {
-    let cancelled = false
-    void (async () => {
-      try {
-        const token = await getAuthToken(renownRef.current)
-        const v = await fetchViewer(token)
-        if (!cancelled) setViewer(v)
-      } catch (err) {
-        if (!cancelled) {
-          console.warn('Failed to fetch viewer:', err)
-          setViewer({ address: null, isAdmin: false })
-        }
-      } finally {
-        if (!cancelled) setIsLoading(false)
-      }
-    })()
-    return () => {
-      cancelled = true
-    }
-  }, [renown])
-
-  return { viewer, isLoading }
+  // On failure, fall back to the anonymous viewer (matches prior behavior so
+  // the admin toggle stays hidden rather than the page hanging on null).
+  const viewer = data ?? (isError ? { address: null, isAdmin: false } : null)
+  return { viewer, isLoading: isLoading && !data }
 }
