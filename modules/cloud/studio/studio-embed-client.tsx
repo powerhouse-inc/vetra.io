@@ -25,7 +25,7 @@ export function StudioEmbedClient({ envId }: { envId: string }) {
       return (
         <div className="mx-auto mt-24 max-w-md space-y-3 text-center">
           <h1 className="text-lg font-semibold">Product not found</h1>
-          <Link href="/studio" className="text-primary text-sm underline-offset-2 hover:underline">
+          <Link href="/user" className="text-primary text-sm underline-offset-2 hover:underline">
             Back to products
           </Link>
         </div>

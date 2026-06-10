@@ -1,5 +1,6 @@
-import { StudioProductsGrid } from '@/modules/cloud/studio/components/studio-products-grid'
+import { redirect } from 'next/navigation'
 
+// Products grid now lives at /user; /studio/[envId] is the embedded studio.
 export default function StudioPage() {
-  return <StudioProductsGrid />
+  redirect('/user')
 }
