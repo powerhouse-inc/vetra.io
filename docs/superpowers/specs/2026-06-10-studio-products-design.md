@@ -25,7 +25,23 @@ new product** (provision a fresh studio environment).
   plus logos/colors/typography/voice/imagery.
   Query shape:
   ```graphql
-  { BrandSheet { documents { items { id name state { global { name maxim concept } } } } } }
+  {
+    BrandSheet {
+      documents {
+        items {
+          id
+          name
+          state {
+            global {
+              name
+              maxim
+              concept
+            }
+          }
+        }
+      }
+    }
+  }
   ```
 - Document reads are **auth-gated**: an unauthenticated query to the agent
   switchboard returns an empty drive (`childIds: []`), while the owner sees the
