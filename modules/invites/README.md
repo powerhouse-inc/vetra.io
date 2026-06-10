@@ -1,79 +1,44 @@
-# Invite codes
+# Early-access gate (invite codes)
 
-Gates `/studio` behind a **named, multi-use code** (e.g. `local-first`, `cohort-1`) entered
-before login. Redeeming records which account came in through which code (cohort tracking) and
-grants 30 days of access. Codes are handed out by hand; there's no admin UI.
+Gates `/studio` behind a **named, multi-use code** (e.g. `local-first`, `cohort-1`) entered before
+login. Redeeming records which account came in through which code (cohort tracking) and grants 30
+days of access.
+
+Storage and logic live in the **`access-codes` subgraph** on the cloud Switchboard
+(`@powerhousedao/vetra-cloud-package`), not in this app. vetra.to is a pure client: this module is
+just the gate UI plus a thin GraphQL client. There is no database, no API route, and no
+`DATABASE_URL` here. See `docs/access-codes-subgraph.md` for the full design and the subgraph
+implementation.
 
 ## Flow
 
-1. User enters a code → `POST /api/invite/validate` (checks only, never consumes).
+1. User enters a code → `inviteCodeValid(code)` query (checks only, never consumes).
 2. User logs in with Renown (redirect out and back, **same browser tab**).
-3. On return → `POST /api/invite/redeem`, which verifies the Renown bearer token and records the
-   redemption against the user's DID.
+3. On return → `redeemInviteCode(code)` mutation, carrying the Renown bearer token. The gateway
+   verifies the token and the subgraph records the redemption against the caller's DID.
 
-The code is held in `sessionStorage` across the redirect, but that's only UX — redeem re-verifies
-everything server-side, so it can't be spoofed.
+The code is held in `sessionStorage` across the redirect, but that's only UX — the DID is derived
+from the verified token at the gateway, never from the client, so it can't be spoofed.
 
-**Identity check:** the bearer token (`getBearerToken()`) is a DID-JWT. We verify it locally with
-`verifyAuthBearerToken` from `@renown/sdk` (signature + expiry, no network call) and derive the
-canonical DID `did:pkh:<networkId>:<chainId>:<address>` from its signed subject — so the address
-comes from the token, never the client.
+## Files
 
-## Data model (`migrations/0001_invite_codes.mts`)
+- `lib/client.ts` — browser GraphQL client for the `access-codes` subgraph (validate, redeem,
+  status) plus Renown bearer-token minting. Targets the cloud Switchboard
+  (`NEXT_PUBLIC_CLOUD_SWITCHBOARD_URL`, falling back to `NEXT_PUBLIC_SWITCHBOARD_URL`).
+- `lib/constants.ts` — `PENDING_CODE_KEY`, `BEARER_TOKEN_TTL_SECONDS`.
+- `../../app/studio/early-access-gate.tsx` — the gate component (`gate → login → granted`).
 
-- `invite_codes` — `code` (PK), `label`, `active`, `expires_at`, `max_uses`, `created_at`.
-- `invite_redemptions` — `(code, user_did)` PK, `redeemed_at`, `access_expires`.
+## GraphQL surface (namespaced under `accessCodes`)
 
-A user is "in" if they have a redemption whose `access_expires` is null or in the future; their
-cohort is the `code` they redeemed. `max_uses` exists but isn't enforced in v1.
-
-Queries run through [Kysely](https://kysely.dev) (`lib/db.ts`, `lib/codes.ts`). Schema changes are
-TypeScript Kysely migrations in `migrations/` (`up`/`down`), applied with the runner:
-
-```
-pnpm migrate            # migrate to latest (default)
-pnpm migrate up         # apply the next pending migration only
-pnpm migrate down       # revert the most recent migration
-```
-
-The migrations are the single source of truth. `lib/schema.ts` is **generated** from a migrated DB
-by `kysely-codegen` — don't edit it by hand. After adding/changing a migration, apply it then
-regenerate the types:
-
-```
-pnpm migrate latest && pnpm codegen:invites   # rewrites lib/schema.ts from the live DB
-```
-
-## Endpoints (`app/api/invite/`)
-
-| Route            | Does                                                        |
-| ---------------- | ----------------------------------------------------------- |
-| `POST /validate` | `{ code }` → `{ valid }`. Never consumes.                   |
-| `POST /redeem`   | `{ code, token }` → verify identity, record redemption.     |
-| `POST /status`   | `{ token }` → `{ allowed, code?, label?, accessExpires? }`. |
-
-Rate limiting is enforced at the reverse proxy (k8s ingress), not in this app.
+| Operation                        | Auth        | Purpose                                  |
+| -------------------------------- | ----------- | ---------------------------------------- |
+| `inviteCodeValid(code)`          | public      | Is the code usable? Never consumes.      |
+| `redeemInviteCode(code)`         | caller      | Redeem for the authenticated DID.        |
+| `myAccessStatus`                 | caller      | Current access status for the caller.    |
+| `inviteCodes` / `createInviteCode` / `setInviteCodeActive` | admin | Manage codes (admin allowlist). |
+| `redemptions(code)`              | admin       | Which wallet redeemed which code (cohort reporting). |
 
 ## Managing codes
 
-```
-pnpm invite-codes add cohort-2 --label="Cohort 2" --expires=30d [--max-uses=200]
-pnpm invite-codes list                 # codes + redemption counts
-pnpm invite-codes redemptions [code]   # who redeemed (cohort reporting)
-pnpm invite-codes disable <code>       # / enable <code>
-```
-
-(Raw SQL `insert`/`update` on the two tables works too.)
-
-## Setup
-
-Set `DATABASE_URL` (the only env var this needs — identity verification is local crypto).
-
-Local dev:
-
-```
-docker run --name vetra-pg -e POSTGRES_PASSWORD=dev -p 5432:5432 -d postgres:16
-# DATABASE_URL=postgres://postgres:dev@localhost:5432/postgres in .env.local
-pnpm migrate            # apply migrations/ to the DB
-# pnpm codegen:invites  # only needed after you change a migration
-```
+Codes are managed via the subgraph's admin-gated mutations (an admin Renown token whose address is
+in the Switchboard `ADMINS` allowlist), not from this app. See `docs/access-codes-subgraph.md` §6.

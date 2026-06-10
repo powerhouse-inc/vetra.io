@@ -1,11 +1,5 @@
-// Shared constants for the invite-code feature. Pure literals only (no imports),
-// so this is safe to import from both server and client code.
-
-/** Per-user access window granted on redemption (decision B in the brief). */
-export const ACCESS_DAYS = 30
-
-/** Max length accepted for a submitted invite code. */
-export const CODE_MAX_LENGTH = 100
+// Shared constants for the early-access gate. Pure literals only (no imports),
+// safe to import from client code.
 
 /** sessionStorage key holding a validated code across the Renown redirect. */
 export const PENDING_CODE_KEY = 'vetra_invite_code'

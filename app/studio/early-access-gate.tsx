@@ -15,37 +15,13 @@ import {
   MessageCircle,
   Terminal,
 } from 'lucide-react'
-import { BEARER_TOKEN_TTL_SECONDS, PENDING_CODE_KEY } from '@/modules/invites/lib/constants'
-
-async function postJson(url: string, body: unknown): Promise<{ ok: boolean; body: unknown }> {
-  try {
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    const json: unknown = await res.json().catch(() => ({}))
-    return { ok: res.ok, body: json }
-  } catch {
-    return { ok: false, body: {} }
-  }
-}
-
-/** The Renown bearer token (a DID-JWT), verified server-side to identify the user on redeem. */
-async function getRenownToken(): Promise<string | null> {
-  if (typeof window === 'undefined') return null
-  const renown = (
-    window as unknown as {
-      ph?: { renown?: { getBearerToken: (o: { expiresIn: number }) => Promise<string | null> } }
-    }
-  ).ph?.renown
-  if (!renown) return null
-  try {
-    return await renown.getBearerToken({ expiresIn: BEARER_TOKEN_TTL_SECONDS })
-  } catch {
-    return null
-  }
-}
+import { PENDING_CODE_KEY } from '@/modules/invites/lib/constants'
+import {
+  getRenownToken,
+  inviteCodeValid,
+  myAccessStatus,
+  redeemInviteCode,
+} from '@/modules/invites/lib/client'
 
 // Drop the two screenshots into public/images/studio/ with these exact filenames:
 //   vetra-studio-1.png — workout tracker session (shown first)
@@ -84,8 +60,8 @@ export function EarlyAccessGate() {
 
         const pending = sessionStorage.getItem(PENDING_CODE_KEY)
         if (pending) {
-          const redeemed = await postJson('/api/invite/redeem', { code: pending, token })
-          if (redeemed.ok && (redeemed.body as { ok?: boolean }).ok) {
+          const redeemed = await redeemInviteCode(pending, token)
+          if (redeemed?.allowed) {
             sessionStorage.removeItem(PENDING_CODE_KEY)
             if (!cancelled) setStep('granted')
             return
@@ -95,8 +71,8 @@ export function EarlyAccessGate() {
         }
 
         // No pending code (or it failed) — maybe they're already a redeemed user.
-        const status = await postJson('/api/invite/status', { token })
-        if (!cancelled && status.ok && (status.body as { allowed?: boolean }).allowed) {
+        const status = await myAccessStatus(token)
+        if (!cancelled && status?.allowed) {
           setStep('granted')
         }
       } finally {
@@ -116,8 +92,7 @@ export function EarlyAccessGate() {
     setWorking(true)
     setError('')
     try {
-      const res = await postJson('/api/invite/validate', { code: entered })
-      const valid = res.ok && (res.body as { valid?: boolean }).valid
+      const valid = await inviteCodeValid(entered)
       if (!valid) {
         setError('Invalid invite code. Please try again.')
         return
@@ -128,8 +103,8 @@ export function EarlyAccessGate() {
       if (auth.status === 'authorized') {
         const token = await getRenownToken()
         if (token) {
-          const redeemed = await postJson('/api/invite/redeem', { code: entered, token })
-          if (redeemed.ok && (redeemed.body as { ok?: boolean }).ok) {
+          const redeemed = await redeemInviteCode(entered, token)
+          if (redeemed?.allowed) {
             setStep('granted')
             return
           }
