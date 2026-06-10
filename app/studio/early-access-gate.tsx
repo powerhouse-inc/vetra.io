@@ -66,7 +66,7 @@ export function EarlyAccessGate() {
 
         {slide === 1 && (
           <div className="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2">
-            <span className="bg-black/40 text-white/80 rounded-full px-4 py-2 text-xs backdrop-blur-sm">
+            <span className="rounded-full bg-black/40 px-4 py-2 text-xs text-white/80 backdrop-blur-sm">
               Click anywhere to continue
             </span>
           </div>
@@ -77,7 +77,7 @@ export function EarlyAccessGate() {
             <Link
               href="/"
               onClick={(e) => e.stopPropagation()}
-              className="bg-black/40 text-white/80 hover:text-white rounded-full px-4 py-2 text-xs backdrop-blur-sm transition-colors"
+              className="rounded-full bg-black/40 px-4 py-2 text-xs text-white/80 backdrop-blur-sm transition-colors hover:text-white"
             >
               ← Back to vetra.to
             </Link>
@@ -101,8 +101,8 @@ export function EarlyAccessGate() {
           <div>
             {/* Header */}
             <div className="mb-5 text-center">
-              <h2 className="text-white text-xl font-bold drop-shadow">Vetra Studio</h2>
-              <p className="text-white/70 mt-1 text-sm">
+              <h2 className="text-xl font-bold text-white drop-shadow">Vetra Studio</h2>
+              <p className="mt-1 text-sm text-white/70">
                 Early access — choose how you&apos;d like to get started.
               </p>
             </div>
@@ -150,7 +150,9 @@ export function EarlyAccessGate() {
                     <div className="bg-primary/15 flex h-8 w-8 shrink-0 items-center justify-center rounded-full">
                       <Mail className="text-primary h-3.5 w-3.5" />
                     </div>
-                    <p className="text-foreground text-sm font-semibold">I don&apos;t have a code</p>
+                    <p className="text-foreground text-sm font-semibold">
+                      I don&apos;t have a code
+                    </p>
                   </div>
                   <p className="text-muted-foreground -mt-2 text-xs leading-relaxed">
                     Join the waitlist to be first in line when we open up more spots.
@@ -210,7 +212,9 @@ export function EarlyAccessGate() {
                     {CURL_CMD}
                   </code>
                   <button
-                    onClick={() => { void handleCopy() }}
+                    onClick={() => {
+                      void handleCopy()
+                    }}
                     className="text-muted-foreground hover:text-foreground ml-1 shrink-0 transition-colors"
                     aria-label="Copy command"
                   >

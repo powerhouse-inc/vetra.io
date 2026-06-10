@@ -66,7 +66,12 @@ export default async function RootLayout({
           environment={process.env.OPENPANEL_ENV || process.env.NEXT_PUBLIC_OPENPANEL_ENV}
         />
         <NuqsAdapter>
-          <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <QueryClientProvider>
               <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
               <CloudAuthBridge />
