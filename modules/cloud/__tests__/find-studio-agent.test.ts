@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { findStudioAgent } from '@/modules/cloud/studio/find-studio-agent'
+import { findStudioAgent, findStudioAgents } from '@/modules/cloud/studio/find-studio-agent'
 import type { CloudEnvironment, CloudEnvironmentService } from '@/modules/cloud/types'
 
 function svc(partial: Partial<CloudEnvironmentService>): CloudEnvironmentService {
@@ -90,5 +90,16 @@ describe('findStudioAgent', () => {
     const e = env([svc({ config: null })])
     e.state.packages = [{ registry: 'r', name: 'ph-pirate-cli', version: '1' }]
     expect(findStudioAgent([e])).toBeNull()
+  })
+
+  it('findStudioAgents returns all matching envs', () => {
+    const a = env([svc({})], 'a')
+    const b = env([svc({})], 'b')
+    const none = env([], 'c')
+    expect(findStudioAgents([a, none, b]).map((m) => m.env.id)).toEqual(['a', 'b'])
+  })
+
+  it('findStudioAgents returns [] when none match', () => {
+    expect(findStudioAgents([env([], 'c')])).toEqual([])
   })
 })
