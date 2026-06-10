@@ -1,7 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { deriveTenantId } from '@/modules/cloud/studio/studio-tenant'
 import { buildStudioEmbedUrl } from '@/modules/cloud/studio/studio-embed-url'
-import { hasStudioWebsiteEndpoint } from '@/modules/cloud/studio/studio-readiness'
+import {
+  hasStudioWebsiteEndpoint,
+  deriveProductStatus,
+} from '@/modules/cloud/studio/studio-readiness'
 import type { ClintRuntimeEndpointsForPrefix } from '@/modules/cloud/types'
 
 describe('deriveTenantId', () => {
@@ -64,5 +67,25 @@ describe('hasStudioWebsiteEndpoint', () => {
   })
   it('false for undefined group', () => {
     expect(hasStudioWebsiteEndpoint(undefined)).toBe(false)
+  })
+})
+
+describe('deriveProductStatus', () => {
+  const group = (eps: { type: string; status: string }[]): ClintRuntimeEndpointsForPrefix => ({
+    prefix: 'vetra-agent',
+    endpoints: eps.map((e, i) => ({
+      id: `/${i}`,
+      type: e.type as never,
+      port: '1',
+      status: e.status as never,
+      lastSeen: '',
+    })),
+  })
+  it('ready when a website endpoint is enabled', () => {
+    expect(deriveProductStatus(group([{ type: 'website', status: 'enabled' }]))).toBe('ready')
+  })
+  it('booting otherwise', () => {
+    expect(deriveProductStatus(undefined)).toBe('booting')
+    expect(deriveProductStatus(group([{ type: 'api-graphql', status: 'enabled' }]))).toBe('booting')
   })
 })
