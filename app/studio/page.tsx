@@ -1,5 +1,5 @@
-import { StudioClient } from '@/modules/cloud/studio/studio-client'
+import { StudioProductsGrid } from '@/modules/cloud/studio/components/studio-products-grid'
 
 export default function StudioPage() {
-  return <StudioClient />
+  return <StudioProductsGrid />
 }
