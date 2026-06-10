@@ -84,8 +84,13 @@ new product** (provision a fresh studio environment).
 - New components under `modules/cloud/studio/`:
   - `studio-products-grid.tsx` — gate (unauth/not-allowed) → grid of
     `StudioProductCard` + a "New product" card.
-  - `studio-product-card.tsx` — title, description, status badge, "Open" (links
-    to `/studio/[envId]`).
+  - `studio-product-card.tsx` — card layout per the approved mockup: brand icon
+    (default glyph for v1; BrandSheet `logos` is image-refs, deferred),
+    **title** (BrandSheet `name`), **tagline** (`maxim`), **description**
+    (`concept`, clamped), and a footer row. The whole card links to
+    `/studio/[envId]`. Footer for v1 shows a **status badge** (Ready / Starting…);
+    the mockup's "N environments" count and social links (github/web/twitter)
+    have no BrandSheet source yet and are deferred (Phase 3+ / product doc model).
   - `fetch-product-brand.ts` — switchboard query + parser (pure parser unit-tested).
   - `use-studio-products.ts` — list state hook.
 - Reuse: `StudioFrame`, `StudioBootScreen`, `StudioCreateForm` (key-only),
