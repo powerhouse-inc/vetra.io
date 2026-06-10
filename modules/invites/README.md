@@ -1,8 +1,9 @@
 # Early-access gate (invite codes)
 
-Gates `/studio` behind a **named, multi-use code** (e.g. `local-first`, `cohort-1`) entered before
-login. Redeeming records which account came in through which code (cohort tracking) and grants 30
-days of access.
+Gates the studio products page (`/user`) behind a **named, multi-use code** (e.g. `local-first`,
+`cohort-1`) entered before login. Redeeming records which account came in through which code (cohort
+tracking) and grants 30 days of access. The gate wraps the studio page rather than owning its own
+route — once granted it renders the wrapped page.
 
 Storage and logic live in the **`vetra-access-codes` subgraph** on the cloud Switchboard
 (`@powerhousedao/vetra-cloud-package`), not in this app. vetra.to is a pure client: this module is
@@ -26,7 +27,8 @@ from the verified token at the gateway, never from the client, so it can't be sp
   status) plus Renown bearer-token minting. Targets the cloud Switchboard
   (`NEXT_PUBLIC_CLOUD_SWITCHBOARD_URL`, falling back to `NEXT_PUBLIC_SWITCHBOARD_URL`).
 - `lib/constants.ts` — `PENDING_CODE_KEY`, `BEARER_TOKEN_TTL_SECONDS`.
-- `../../app/studio/early-access-gate.tsx` — the gate component (`gate → login → granted`).
+- `early-access-gate.tsx` — the gate component (`gate → login → granted`); wraps the studio page
+  and reveals it on grant. Applied in `app/user/page.tsx`.
 
 ## GraphQL surface (namespaced under `VetraAccessCodes`)
 

@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -23,24 +23,23 @@ import {
   redeemInviteCode,
 } from '@/modules/invites/lib/client'
 
-// Drop the two screenshots into public/images/studio/ with these exact filenames:
-//   vetra-studio-1.png — workout tracker session (shown first)
-//   vetra-studio-2.png — sessions list (shown after click)
-const SLIDE_1 = '/images/studio/Vetra-studio-1.png'
-const SLIDE_2 = '/images/studio/Vetra-studio-2.png'
-
 const DISCORD_URL = 'https://discord.gg/Py28EMafEr'
 const CURL_CMD = 'curl -fsSL https://get.vetra.io | sh'
 
-// Replace with public/images/studio/vetra-studio-session.png once committed
 const BACKDROP = '/images/home/stack-connect-app.png'
 
 type Step = 'gate' | 'login' | 'granted'
 
-export function EarlyAccessGate() {
+/**
+ * Gates its children behind an early-access invite code. Renders the gate
+ * (enter code → Renown login → redeem) until the caller has redeemed a code;
+ * once granted — or for a returning user who already has access — it renders
+ * `children` (the studio page). It does not own a route; wrap whatever studio
+ * page is in use with it.
+ */
+export function EarlyAccessGate({ children }: { children: ReactNode }) {
   const auth = useRenownAuth()
   const [step, setStep] = useState<Step>('gate')
-  const [slide, setSlide] = useState<1 | 2>(1)
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
   const [copied, setCopied] = useState(false)
@@ -132,48 +131,9 @@ export function EarlyAccessGate() {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Granted — full-screen slide reveal, no backdrop
+  // Granted — reveal the wrapped studio page.
   if (step === 'granted') {
-    return (
-      <div
-        className={`relative h-screen w-screen overflow-hidden bg-white ${slide === 1 ? 'cursor-pointer' : ''}`}
-        onClick={slide === 1 ? () => setSlide(2) : undefined}
-      >
-        <Image
-          src={SLIDE_1}
-          alt="Vetra Studio — session view"
-          fill
-          className={`object-contain object-top transition-opacity duration-500 ${slide === 1 ? 'opacity-100' : 'opacity-0'}`}
-          priority
-        />
-        <Image
-          src={SLIDE_2}
-          alt="Vetra Studio — sessions list"
-          fill
-          className={`object-contain object-top transition-opacity duration-500 ${slide === 2 ? 'opacity-100' : 'opacity-0'}`}
-        />
-
-        {slide === 1 && (
-          <div className="pointer-events-none absolute bottom-8 left-1/2 -translate-x-1/2">
-            <span className="rounded-full bg-black/40 px-4 py-2 text-xs text-white/80 backdrop-blur-sm">
-              Click anywhere to continue
-            </span>
-          </div>
-        )}
-
-        {slide === 2 && (
-          <div className="absolute bottom-8 left-1/2 -translate-x-1/2">
-            <Link
-              href="/"
-              onClick={(e) => e.stopPropagation()}
-              className="rounded-full bg-black/40 px-4 py-2 text-xs text-white/80 backdrop-blur-sm transition-colors hover:text-white"
-            >
-              ← Back to vetra.to
-            </Link>
-          </div>
-        )}
-      </div>
-    )
+    return <>{children}</>
   }
 
   // While the initial auth check runs, or while we finalize a redemption after
