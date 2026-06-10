@@ -1,46 +1,76 @@
 'use client'
 
-import {
-  isServer,
-  QueryClient,
-  QueryClientProvider as TanstackQueryClientProvider,
-} from '@tanstack/react-query'
+import { useEffect, useRef } from 'react'
+import { useDid } from '@powerhousedao/reactor-browser'
+import { useQueryClient } from '@tanstack/react-query'
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
+import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import type { ReactNode } from 'react'
+import {
+  CACHE_BUSTER,
+  CACHE_MAX_AGE,
+  PERSIST_KEY,
+  getQueryClient,
+  shouldPersistQuery,
+} from './query-client'
 
-function makeQueryClient() {
-  return new QueryClient({
-    defaultOptions: {
-      queries: {
-        // With SSR, we usually want to set some default staleTime
-        // above 0 to avoid refetching immediately on the client
-        staleTime: 60 * 1000,
-      },
-    },
-  })
-}
+/**
+ * localStorage-backed persister. Guarded for SSR — `createSyncStoragePersister`
+ * touches the storage object eagerly, so we hand it `undefined` on the server
+ * (the persister no-ops) and the real store in the browser.
+ */
+const persister = createSyncStoragePersister({
+  storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+  key: PERSIST_KEY,
+})
 
-let browserQueryClient: QueryClient | undefined = undefined
+/**
+ * Clears the cache (memory + persisted) whenever the signed-in identity
+ * changes. Per-user query keys already include the DID, so a different user
+ * can't *read* the previous user's entries — this additionally evicts them so
+ * stale data never lingers in storage. Skips the very first resolution
+ * (undefined → did) so we don't wipe a freshly-hydrated cache on load.
+ */
+function CacheIdentityGuard() {
+  const did = useDid()
+  const queryClient = useQueryClient()
+  const prevDid = useRef<string | undefined>(undefined)
+  const seeded = useRef(false)
 
-function getQueryClient() {
-  if (isServer) {
-    // Server: always make a new query client
-    return makeQueryClient()
-  } else {
-    // Browser: make a new query client if we don't already have one
-    // This is very important, so we don't re-make a new client if React
-    // suspends during the initial render. This may not be needed if we
-    // have a suspense boundary BELOW the creation of the query client
-    if (!browserQueryClient) browserQueryClient = makeQueryClient()
-    return browserQueryClient
-  }
+  useEffect(() => {
+    if (!seeded.current) {
+      seeded.current = true
+      prevDid.current = did
+      return
+    }
+    if (did !== prevDid.current) {
+      prevDid.current = did
+      queryClient.clear()
+      void persister.removeClient()
+    }
+  }, [did, queryClient])
+
+  return null
 }
 
 export default function QueryClientProvider({ children }: { children: ReactNode }) {
-  // NOTE: Avoid useState when initializing the query client if you don't
-  //       have a suspense boundary between this and the code that may
-  //       suspend because React will throw away the client on the initial
-  //       render if it suspends and there is no boundary
   const queryClient = getQueryClient()
 
-  return <TanstackQueryClientProvider client={queryClient}>{children}</TanstackQueryClientProvider>
+  return (
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{
+        persister,
+        maxAge: CACHE_MAX_AGE,
+        buster: CACHE_BUSTER,
+        dehydrateOptions: {
+          shouldDehydrateQuery: (query) =>
+            query.state.status === 'success' && shouldPersistQuery(query.queryKey),
+        },
+      }}
+    >
+      <CacheIdentityGuard />
+      {children}
+    </PersistQueryClientProvider>
+  )
 }
