@@ -115,7 +115,7 @@ export function useEnvironments(
   // SWR read: paints from the persisted/last-known list instantly, then
   // revalidates in the background. `MINE` and `UNCLAIMED` share the same
   // backend query (filtered in-memory below), so they dedupe to one fetch.
-  const { data, isLoading, isError } = useAuthedQuery<EnvironmentSummary[]>(
+  const { data, isError } = useAuthedQuery<EnvironmentSummary[]>(
     queryKeys.environments(backendScope, did),
     (token) => fetchMyEnvironments(backendScope, token),
     { refetchInterval: ENV_REFETCH_INTERVAL, placeholderData: keepPreviousData },
@@ -130,8 +130,7 @@ export function useEnvironments(
   return useMemo(() => {
     if (isError || !data) return []
     return filterByScope(data, viewScope, viewerAddress).map(summaryToCloudEnvironment)
-    // isLoading kept in deps so the first non-loading render recomputes.
-  }, [data, isError, isLoading, viewScope, viewerAddress])
+  }, [data, isError, viewScope, viewerAddress])
 }
 
 /** Hook to refresh the environments list (e.g. after a delete). */
