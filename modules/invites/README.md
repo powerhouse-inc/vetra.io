@@ -4,10 +4,10 @@ Gates `/studio` behind a **named, multi-use code** (e.g. `local-first`, `cohort-
 login. Redeeming records which account came in through which code (cohort tracking) and grants 30
 days of access.
 
-Storage and logic live in the **`access-codes` subgraph** on the cloud Switchboard
+Storage and logic live in the **`vetra-access-codes` subgraph** on the cloud Switchboard
 (`@powerhousedao/vetra-cloud-package`), not in this app. vetra.to is a pure client: this module is
 just the gate UI plus a thin GraphQL client. There is no database, no API route, and no
-`DATABASE_URL` here. See `docs/access-codes-subgraph.md` for the full design and the subgraph
+`DATABASE_URL` here. See `docs/vetra-access-codes-subgraph.md` for the full design and the subgraph
 implementation.
 
 ## Flow
@@ -22,13 +22,13 @@ from the verified token at the gateway, never from the client, so it can't be sp
 
 ## Files
 
-- `lib/client.ts` — browser GraphQL client for the `access-codes` subgraph (validate, redeem,
+- `lib/client.ts` — browser GraphQL client for the `vetra-access-codes` subgraph (validate, redeem,
   status) plus Renown bearer-token minting. Targets the cloud Switchboard
   (`NEXT_PUBLIC_CLOUD_SWITCHBOARD_URL`, falling back to `NEXT_PUBLIC_SWITCHBOARD_URL`).
 - `lib/constants.ts` — `PENDING_CODE_KEY`, `BEARER_TOKEN_TTL_SECONDS`.
 - `../../app/studio/early-access-gate.tsx` — the gate component (`gate → login → granted`).
 
-## GraphQL surface (namespaced under `accessCodes`)
+## GraphQL surface (namespaced under `VetraAccessCodes`)
 
 | Operation                        | Auth        | Purpose                                  |
 | -------------------------------- | ----------- | ---------------------------------------- |
@@ -36,9 +36,10 @@ from the verified token at the gateway, never from the client, so it can't be sp
 | `redeemInviteCode(code)`         | caller      | Redeem for the authenticated DID.        |
 | `myAccessStatus`                 | caller      | Current access status for the caller.    |
 | `inviteCodes` / `createInviteCode` / `setInviteCodeActive` | admin | Manage codes (admin allowlist). |
-| `redemptions(code)`              | admin       | Which wallet redeemed which code (cohort reporting). |
+| `redemptions(code, address)`     | admin       | Which wallet redeemed which code; filter by code and/or wallet address. |
+| `revokeAccess(address)`          | admin       | Expire a wallet's grants (returns count revoked). |
 
 ## Managing codes
 
 Codes are managed via the subgraph's admin-gated mutations (an admin Renown token whose address is
-in the Switchboard `ADMINS` allowlist), not from this app. See `docs/access-codes-subgraph.md` §6.
+in the Switchboard `ADMINS` allowlist), not from this app. See `docs/vetra-access-codes-subgraph.md` §6.

@@ -117,7 +117,7 @@ import type { Kysely } from "kysely";
 import { schema } from "./schema.js";
 import { createResolvers } from "./resolvers.js";
 import { up } from "./db/migrations.js";
-import type { AccessCodesDB } from "./db/schema.js";
+import type { VetraAccessCodesDB } from "./db/schema.js";
 
 export class VetraAccessCodesSubgraph extends BaseSubgraph {
   name = "vetra-access-codes";
@@ -128,7 +128,7 @@ export class VetraAccessCodesSubgraph extends BaseSubgraph {
   async onSetup() {
     const db = (await this.relationalDb.createNamespace(
       "vetra-access-codes",
-    )) as unknown as Kysely<AccessCodesDB>;
+    )) as unknown as Kysely<VetraAccessCodesDB>;
 
     await up(db as Kysely<any>);
     this.resolvers = createResolvers(db);
@@ -161,7 +161,7 @@ export interface InviteRedemptions {
   access_expires: string | null;
 }
 
-export interface AccessCodesDB {
+export interface VetraAccessCodesDB {
   invite_codes: InviteCodes;
   invite_redemptions: InviteRedemptions;
 }
@@ -227,7 +227,7 @@ server-side for the same reason; here the gateway does it.
 
 ```typescript
 import type { Kysely } from "kysely";
-import type { AccessCodesDB } from "./db/schema.js";
+import type { VetraAccessCodesDB } from "./db/schema.js";
 import { isCodeUsable, redeemCode, getAccessStatus } from "./db/codes.js";
 
 // Shape injected by reactor-api into every resolver's context (see §5).
@@ -247,7 +247,7 @@ function requireAdmin(ctx: AuthContext): void {
   if (!addr || !(ctx.isAdmin?.(addr) ?? false)) throw new Error("FORBIDDEN");
 }
 
-export function createResolvers(db: Kysely<AccessCodesDB>): Record<string, any> {
+export function createResolvers(db: Kysely<VetraAccessCodesDB>): Record<string, any> {
   return {
     Query: {
       inviteCodeValid: (_p, { code }) => isCodeUsable(db, code),
@@ -360,7 +360,7 @@ headers:
 
 Operational caveat — **when `AUTH_ENABLED` is not `true`, `isAdmin()`
 returns `true` for everyone and `context.user` is `undefined`.** So the
-access-codes subgraph is only actually protected on an instance running
+vetra-access-codes subgraph is only actually protected on an instance running
 with `AUTH_ENABLED=true` and a populated `ADMINS` list. That must be set on
 the vetra.io-backing Switchboard deployment for the management mutations to
 be safe. (`SKIP_CREDENTIAL_VERIFICATION` likewise weakens verification and
@@ -397,9 +397,22 @@ Listing and auditing:
 
 - `query inviteCodes` (admin-gated) returns codes with redemption counts —
   the equivalent of the CLI's `list`.
-- `query redemptions(code)` (admin-gated) returns which wallet (DID) redeemed
-  which code and when — the equivalent of the CLI's `redemptions` view. Omit
-  `code` for all redemptions (audit), or pass one to filter.
+- `query redemptions(code, address)` (admin-gated) returns which wallet (DID)
+  redeemed which code and when — the equivalent of the CLI's `redemptions`
+  view. Filter by `code`, by wallet `address` (to see whether a given address
+  has ever used a code, on any chain), or omit both for the full audit.
+
+Revoking access:
+
+- `mutation revokeAccess(address)` (admin-gated) expires a wallet's
+  currently-valid redemptions (sets `access_expires` to now) and returns how
+  many grants were revoked. The audit rows are kept. Note this is not a hard
+  ban: re-redeeming the *same* code is a no-op (stays revoked), but a
+  *different* still-active code would grant fresh access — disable the
+  relevant codes (`setInviteCodeActive(code, false)`) for a full lockout.
+- `setInviteCodeActive(code, false)` only blocks *future* redemptions of that
+  code; it does not touch access already granted to addresses that redeemed
+  it. Use `revokeAccess` to remove an address's current access.
 
 Prerequisite: the admin's wallet address is in the Switchboard `ADMINS`
 list and they hold a valid Renown session to mint the bearer token.

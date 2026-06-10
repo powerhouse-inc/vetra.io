@@ -1,6 +1,6 @@
-// Browser client for the `access-codes` subgraph on the cloud Switchboard
+// Browser client for the `vetra-access-codes` subgraph on the cloud Switchboard
 // (served by @powerhousedao/vetra-cloud-package). Queries are namespaced under
-// `accessCodes`; redeem/status carry the caller's Renown bearer token so the
+// `VetraAccessCodes`; redeem/status carry the caller's Renown bearer token so the
 // gateway can identify the user — the subgraph derives the DID from the
 // verified token, the client never asserts it.
 
@@ -78,11 +78,11 @@ export async function getRenownToken(): Promise<string | null> {
 
 /** Validate-only: is the code currently usable? Never consumes it. Public. */
 export async function inviteCodeValid(code: string): Promise<boolean> {
-  const data = await gql<{ accessCodes: { inviteCodeValid: boolean } }>(
-    `query ($code: String!) { accessCodes { inviteCodeValid(code: $code) } }`,
+  const data = await gql<{ VetraAccessCodes: { inviteCodeValid: boolean } }>(
+    `query ($code: String!) { VetraAccessCodes { inviteCodeValid(code: $code) } }`,
     { code },
   )
-  return data?.accessCodes.inviteCodeValid ?? false
+  return data?.VetraAccessCodes?.inviteCodeValid ?? false
 }
 
 /** Redeem a code for the authenticated caller. Returns null on failure. */
@@ -90,22 +90,22 @@ export async function redeemInviteCode(
   code: string,
   token: string,
 ): Promise<AccessStatus | null> {
-  const data = await gql<{ accessCodes: { redeemInviteCode: AccessStatus } }>(
+  const data = await gql<{ VetraAccessCodes: { redeemInviteCode: AccessStatus } }>(
     `mutation ($code: String!) {
-      accessCodes { redeemInviteCode(code: $code) { allowed code label accessExpires } }
+      VetraAccessCodes { redeemInviteCode(code: $code) { allowed code label accessExpires } }
     }`,
     { code },
     token,
   )
-  return data?.accessCodes.redeemInviteCode ?? null
+  return data?.VetraAccessCodes?.redeemInviteCode ?? null
 }
 
 /** Access status for the authenticated caller. Returns null on failure. */
 export async function myAccessStatus(token: string): Promise<AccessStatus | null> {
-  const data = await gql<{ accessCodes: { myAccessStatus: AccessStatus } }>(
-    `query { accessCodes { myAccessStatus { allowed code label accessExpires } } }`,
+  const data = await gql<{ VetraAccessCodes: { myAccessStatus: AccessStatus } }>(
+    `query { VetraAccessCodes { myAccessStatus { allowed code label accessExpires } } }`,
     {},
     token,
   )
-  return data?.accessCodes.myAccessStatus ?? null
+  return data?.VetraAccessCodes?.myAccessStatus ?? null
 }
