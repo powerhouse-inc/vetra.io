@@ -4,6 +4,7 @@ import { CloudAuthBridge } from '@/modules/cloud/components/cloud-auth-bridge'
 import { OpenPanelProvider } from '@/modules/shared/components/openpanel'
 import { RenownProvider } from '@/modules/shared/components/renown/renown-provider'
 import { AmbientBackground } from '@/modules/shared/components/ui/ambient-background'
+import { GlobalRefreshIndicator } from '@/modules/shared/components/ui/global-refresh-indicator'
 import { Toaster } from '@/modules/shared/components/ui/sonner'
 import { ThemeProvider } from '@/modules/shared/providers/theme-provider'
 import { Footer } from '@/shared/components/footer/footer'
@@ -68,6 +69,7 @@ export default async function RootLayout({
         <NuqsAdapter>
           <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
             <QueryClientProvider>
+              <GlobalRefreshIndicator />
               <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
               <CloudAuthBridge />
               <div className="items-right flex min-h-screen flex-col">
