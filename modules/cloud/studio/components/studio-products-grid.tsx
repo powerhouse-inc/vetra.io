@@ -12,13 +12,6 @@ export function StudioProductsGrid() {
   const { gate, products, isScanning, creating, createError, createProduct } = useStudioProducts()
 
   if (gate === 'unauthenticated') return <CloudLanding />
-  if (gate === 'not-allowed')
-    return (
-      <StudioBootScreen
-        title="Vetra Studio is in limited preview"
-        detail="Your account doesn't have access yet. Reach out to the team to be added to the preview."
-      />
-    )
   if (gate === 'loading') return <StudioBootScreen title="Loading…" />
 
   const handleCreate = async (apiKey: string) => {

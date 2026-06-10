@@ -1,9 +1,11 @@
 # Early-access gate (invite codes)
 
-Gates the studio products page (`/user`) behind a **named, multi-use code** (e.g. `local-first`,
-`cohort-1`) entered before login. Redeeming records which account came in through which code (cohort
-tracking) and grants 30 days of access. The gate wraps the studio page rather than owning its own
-route — once granted it renders the wrapped page.
+Gates the studio behind a **named, multi-use code** (e.g. `local-first`, `cohort-1`) entered before
+login. Redeeming records which account came in through which code (cohort tracking) and grants 30
+days of access. The gate wraps the studio pages rather than owning its own route — once granted it
+renders the wrapped page. It is applied to both the products grid (`/user`) and the embed
+(`/studio/[envId]`), and **replaces** the former hardcoded client-side studio allowlist as the
+access control.
 
 Storage and logic live in the **`vetra-access-codes` subgraph** on the cloud Switchboard
 (`@powerhousedao/vetra-cloud-package`), not in this app. vetra.to is a pure client: this module is
@@ -32,14 +34,14 @@ from the verified token at the gateway, never from the client, so it can't be sp
 
 ## GraphQL surface (namespaced under `VetraAccessCodes`)
 
-| Operation                        | Auth        | Purpose                                  |
-| -------------------------------- | ----------- | ---------------------------------------- |
-| `inviteCodeValid(code)`          | public      | Is the code usable? Never consumes.      |
-| `redeemInviteCode(code)`         | caller      | Redeem for the authenticated DID.        |
-| `myAccessStatus`                 | caller      | Current access status for the caller.    |
-| `inviteCodes` / `createInviteCode` / `setInviteCodeActive` | admin | Manage codes (admin allowlist). |
-| `redemptions(code, address)`     | admin       | Which wallet redeemed which code; filter by code and/or wallet address. |
-| `revokeAccess(address)`          | admin       | Expire a wallet's grants (returns count revoked). |
+| Operation                                                  | Auth   | Purpose                                                                 |
+| ---------------------------------------------------------- | ------ | ----------------------------------------------------------------------- |
+| `inviteCodeValid(code)`                                    | public | Is the code usable? Never consumes.                                     |
+| `redeemInviteCode(code)`                                   | caller | Redeem for the authenticated DID.                                       |
+| `myAccessStatus`                                           | caller | Current access status for the caller.                                   |
+| `inviteCodes` / `createInviteCode` / `setInviteCodeActive` | admin  | Manage codes (admin allowlist).                                         |
+| `redemptions(code, address)`                               | admin  | Which wallet redeemed which code; filter by code and/or wallet address. |
+| `revokeAccess(address)`                                    | admin  | Expire a wallet's grants (returns count revoked).                       |
 
 ## Managing codes
 

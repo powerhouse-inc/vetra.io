@@ -86,10 +86,7 @@ export async function inviteCodeValid(code: string): Promise<boolean> {
 }
 
 /** Redeem a code for the authenticated caller. Returns null on failure. */
-export async function redeemInviteCode(
-  code: string,
-  token: string,
-): Promise<AccessStatus | null> {
+export async function redeemInviteCode(code: string, token: string): Promise<AccessStatus | null> {
   const data = await gql<{ VetraAccessCodes: { redeemInviteCode: AccessStatus } }>(
     `mutation ($code: String!) {
       VetraAccessCodes { redeemInviteCode(code: $code) { allowed code label accessExpires } }

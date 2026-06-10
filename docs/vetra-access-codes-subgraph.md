@@ -83,7 +83,7 @@ into the supergraph.
 
 One difference matters for us. The recipe's example is **processor-driven**:
 a `RelationalDbProcessor` watches documents flowing through the reactor and
-maintains a *denormalized read model* of them. That shape assumes the source
+maintains a _denormalized read model_ of them. That shape assumes the source
 of truth is a document model. We deliberately **don't** want a document
 model for codes (see §6), so we follow the recipe's relational/Kysely/GraphQL
 structure but make the subgraph the **owner** of its tables (it writes them
@@ -111,27 +111,27 @@ vetra-cloud-package/subgraphs/vetra-access-codes/
 ### 3.1 Subgraph class — `index.ts`
 
 ```typescript
-import { BaseSubgraph } from "@powerhousedao/reactor-api";
-import type { DocumentNode } from "graphql";
-import type { Kysely } from "kysely";
-import { schema } from "./schema.js";
-import { createResolvers } from "./resolvers.js";
-import { up } from "./db/migrations.js";
-import type { VetraAccessCodesDB } from "./db/schema.js";
+import { BaseSubgraph } from '@powerhousedao/reactor-api'
+import type { DocumentNode } from 'graphql'
+import type { Kysely } from 'kysely'
+import { schema } from './schema.js'
+import { createResolvers } from './resolvers.js'
+import { up } from './db/migrations.js'
+import type { VetraAccessCodesDB } from './db/schema.js'
 
 export class VetraAccessCodesSubgraph extends BaseSubgraph {
-  name = "vetra-access-codes";
-  typeDefs: DocumentNode = schema;
-  resolvers: Record<string, unknown> = {};
-  additionalContextFields = {};
+  name = 'vetra-access-codes'
+  typeDefs: DocumentNode = schema
+  resolvers: Record<string, unknown> = {}
+  additionalContextFields = {}
 
   async onSetup() {
     const db = (await this.relationalDb.createNamespace(
-      "vetra-access-codes",
-    )) as unknown as Kysely<VetraAccessCodesDB>;
+      'vetra-access-codes',
+    )) as unknown as Kysely<VetraAccessCodesDB>
 
-    await up(db as Kysely<any>);
-    this.resolvers = createResolvers(db);
+    await up(db as Kysely<any>)
+    this.resolvers = createResolvers(db)
   }
 }
 ```
@@ -146,24 +146,24 @@ Same shape the branch already settled on:
 
 ```typescript
 export interface InviteCodes {
-  code: string;            // PK, normalized lowercase
-  label: string | null;
-  active: boolean;
-  expires_at: string | null;
-  max_uses: number | null;
-  created_at: string;
+  code: string // PK, normalized lowercase
+  label: string | null
+  active: boolean
+  expires_at: string | null
+  max_uses: number | null
+  created_at: string
 }
 
 export interface InviteRedemptions {
-  code: string;            // FK -> invite_codes.code
-  user_did: string;        // did:pkh:...
-  redeemed_at: string;
-  access_expires: string | null;
+  code: string // FK -> invite_codes.code
+  user_did: string // did:pkh:...
+  redeemed_at: string
+  access_expires: string | null
 }
 
 export interface VetraAccessCodesDB {
-  invite_codes: InviteCodes;
-  invite_redemptions: InviteRedemptions;
+  invite_codes: InviteCodes
+  invite_redemptions: InviteRedemptions
 }
 ```
 
@@ -226,25 +226,25 @@ server-side for the same reason; here the gateway does it.
 ### 3.6 Resolvers — `resolvers.ts` (the auth-gated part)
 
 ```typescript
-import type { Kysely } from "kysely";
-import type { VetraAccessCodesDB } from "./db/schema.js";
-import { isCodeUsable, redeemCode, getAccessStatus } from "./db/codes.js";
+import type { Kysely } from 'kysely'
+import type { VetraAccessCodesDB } from './db/schema.js'
+import { isCodeUsable, redeemCode, getAccessStatus } from './db/codes.js'
 
 // Shape injected by reactor-api into every resolver's context (see §5).
 type AuthContext = {
-  user?: { address: string; chainId: number; networkId: string };
-  isAdmin?: (address: string) => boolean;
-};
+  user?: { address: string; chainId: number; networkId: string }
+  isAdmin?: (address: string) => boolean
+}
 
 function callerDid(ctx: AuthContext): string | null {
-  const u = ctx.user;
-  if (!u) return null;
-  return `did:pkh:${u.networkId}:${u.chainId}:${u.address.toLowerCase()}`;
+  const u = ctx.user
+  if (!u) return null
+  return `did:pkh:${u.networkId}:${u.chainId}:${u.address.toLowerCase()}`
 }
 
 function requireAdmin(ctx: AuthContext): void {
-  const addr = ctx.user?.address?.toLowerCase();
-  if (!addr || !(ctx.isAdmin?.(addr) ?? false)) throw new Error("FORBIDDEN");
+  const addr = ctx.user?.address?.toLowerCase()
+  if (!addr || !(ctx.isAdmin?.(addr) ?? false)) throw new Error('FORBIDDEN')
 }
 
 export function createResolvers(db: Kysely<VetraAccessCodesDB>): Record<string, any> {
@@ -253,38 +253,38 @@ export function createResolvers(db: Kysely<VetraAccessCodesDB>): Record<string, 
       inviteCodeValid: (_p, { code }) => isCodeUsable(db, code),
 
       myAccessStatus: (_p, _a, ctx: AuthContext) => {
-        const did = callerDid(ctx);
-        if (!did) throw new Error("UNAUTHENTICATED");
-        return getAccessStatus(db, did);
+        const did = callerDid(ctx)
+        if (!did) throw new Error('UNAUTHENTICATED')
+        return getAccessStatus(db, did)
       },
 
       inviteCodes: async (_p, _a, ctx: AuthContext) => {
-        requireAdmin(ctx);
+        requireAdmin(ctx)
         // join codes -> redemption counts (port the CLI `list` query)
-        return listCodesWithCounts(db);
+        return listCodesWithCounts(db)
       },
     },
 
     Mutation: {
       redeemInviteCode: async (_p, { code }, ctx: AuthContext) => {
-        const did = callerDid(ctx);
-        if (!did) throw new Error("UNAUTHENTICATED");
-        const result = await redeemCode(db, code, did);
-        if (!result.ok) throw new Error("INVALID_CODE");
-        return getAccessStatus(db, did);
+        const did = callerDid(ctx)
+        if (!did) throw new Error('UNAUTHENTICATED')
+        const result = await redeemCode(db, code, did)
+        if (!result.ok) throw new Error('INVALID_CODE')
+        return getAccessStatus(db, did)
       },
 
       createInviteCode: async (_p, args, ctx: AuthContext) => {
-        requireAdmin(ctx);
-        return insertCode(db, args); // normalize + onConflict doNothing
+        requireAdmin(ctx)
+        return insertCode(db, args) // normalize + onConflict doNothing
       },
 
       setInviteCodeActive: async (_p, { code, active }, ctx: AuthContext) => {
-        requireAdmin(ctx);
-        return setActive(db, code, active);
+        requireAdmin(ctx)
+        return setActive(db, code, active)
       },
     },
-  };
+  }
 }
 ```
 
@@ -318,11 +318,11 @@ calls change from Next.js routes to Switchboard GraphQL, with the Renown
 bearer token sent as the standard `Authorization: Bearer <token>` header
 (the gateway verifies it instead of each route doing so):
 
-| Branch route (deleted)      | Replaced by GraphQL                          |
-| --------------------------- | -------------------------------------------- |
-| `POST /api/invite/validate` | `query inviteCodeValid(code)`                |
-| `POST /api/invite/redeem`   | `mutation redeemInviteCode(code)` + Bearer   |
-| `POST /api/invite/status`   | `query myAccessStatus` + Bearer              |
+| Branch route (deleted)      | Replaced by GraphQL                        |
+| --------------------------- | ------------------------------------------ |
+| `POST /api/invite/validate` | `query inviteCodeValid(code)`              |
+| `POST /api/invite/redeem`   | `mutation redeemInviteCode(code)` + Bearer |
+| `POST /api/invite/status`   | `query myAccessStatus` + Bearer            |
 
 Removed from vetra.to: `modules/invites/lib/{db,schema,verify-identity}.ts`,
 `migrations/`, `scripts/{migrate,invite-codes}.mts`, the `pg`/`kysely`/
@@ -336,7 +336,7 @@ Kept: the gate component, the `sessionStorage` redirect bridge, the
 `code → login → redeem` ordering, the 30-day window, and Renown login.
 
 A subtlety worth carrying over: today vetra.to can `validate` a code before
-the user authenticates (the gate checks the code, *then* asks for login).
+the user authenticates (the gate checks the code, _then_ asks for login).
 `inviteCodeValid` is therefore intentionally **public** (no auth) so the
 same pre-login UX works; only redemption and admin actions require a token.
 
@@ -407,10 +407,10 @@ Revoking access:
 - `mutation revokeAccess(address)` (admin-gated) expires a wallet's
   currently-valid redemptions (sets `access_expires` to now) and returns how
   many grants were revoked. The audit rows are kept. Note this is not a hard
-  ban: re-redeeming the *same* code is a no-op (stays revoked), but a
-  *different* still-active code would grant fresh access — disable the
+  ban: re-redeeming the _same_ code is a no-op (stays revoked), but a
+  _different_ still-active code would grant fresh access — disable the
   relevant codes (`setInviteCodeActive(code, false)`) for a full lockout.
-- `setInviteCodeActive(code, false)` only blocks *future* redemptions of that
+- `setInviteCodeActive(code, false)` only blocks _future_ redemptions of that
   code; it does not touch access already granted to addresses that redeemed
   it. Use `revokeAccess` to remove an address's current access.
 
@@ -428,7 +428,7 @@ later step, modeling codes as a Powerhouse **document model** would add:
 - **Auditability / history.** Document models are event-sourced, so every
   create/disable/redeem becomes a replayable operation with provenance,
   rather than a mutable row. The relational tables would then be a
-  *processor-derived read model* (the recipe's original shape) instead of
+  _processor-derived read model_ (the recipe's original shape) instead of
   the source of truth.
 - **Reuse of document-level permissions.** Switchboard exposes a
   `documentPermissionService`; codes-as-documents could lean on that
