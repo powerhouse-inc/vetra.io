@@ -8,7 +8,7 @@ import {
   MoreHorizontal,
   Package as PackageIcon,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import { applyConfigChanges, type ConfigChange } from '@/modules/cloud/config/apply'
@@ -347,8 +347,10 @@ function UninstallDialog({
     [pkg.name, manifests],
   )
 
-  // Pre-check exclusive keys whenever the declared list changes.
-  useMemo(() => {
+  // Pre-check exclusive keys whenever the declared list changes. This is a
+  // side effect (setState), so it belongs in useEffect — running it in a
+  // useMemo updates state during render and risks a render loop.
+  useEffect(() => {
     const initial: Record<string, boolean> = {}
     for (const e of declaredEntries) initial[e.name] = exclusive.has(e.name)
     setSelectedKeys(initial)

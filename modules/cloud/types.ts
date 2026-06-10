@@ -9,7 +9,18 @@ export type CloudResourceSize =
   | 'VETRA_AGENT_XL'
   | 'VETRA_AGENT_XXL'
 
-export type CloudServiceEnv = { name: string; value: string }
+/**
+ * Mirrors `VetraCloudServiceEnv` in the document model schema (vetra-cloud-
+ * package v1). `value` is optional and MUST be null/empty when isSecret is
+ * true — the actual secret value lives only in the encrypted tenant_secrets
+ * table (written via the vetra-cloud-secrets `setSecret` mutation). The
+ * document carries just the NAME for secret entries.
+ */
+export type CloudServiceEnv = {
+  name: string
+  value?: string | null
+  isSecret?: boolean | null
+}
 
 export type ClintEndpointType = 'api-graphql' | 'api-mcp' | 'website'
 
@@ -101,6 +112,15 @@ export type CloudEnvironmentState = {
    * = scheduled backups disabled (or feature not yet rolled out on this env).
    */
   backupSchedule?: BackupSchedule | null
+  /**
+   * Connect runtime config — the operator-editable powerhouse.config.json
+   * partial (`{ connect: {...}, packageRegistryUrl? }`), stored as a JSON
+   * **string** (the doc-model field is a String scalar so it composes in the
+   * federated supergraph). Written via SET_RUNTIME_CONFIG; the gitops processor
+   * renders it onto the connect pod's PH_CONNECT_CONFIG_JSON env on approve.
+   * `null`/`undefined` = no overrides (or feature not yet rolled out).
+   */
+  runtimeConfig?: string | null
 }
 
 export type AutoUpdateChannel = 'DEV' | 'STAGING' | 'LATEST'

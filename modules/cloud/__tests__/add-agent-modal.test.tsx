@@ -309,6 +309,42 @@ describe('AddAgentModal', () => {
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })
 
+  it('allows install for an agent that declares no supportedResources', async () => {
+    vi.mocked(useRegistryManifest).mockReturnValue({
+      manifest: {
+        name: '@x/foo-cli',
+        type: 'clint-project',
+        features: { agent: { id: 'foo', name: 'Foo' } },
+        // no supportedResources — picker is hidden, size stays null
+      },
+      isLoading: false,
+      error: null,
+    })
+    vi.mocked(useRegistryPackages).mockReturnValue({
+      packages: [{ name: '@x/foo-cli', version: '1.0.0', description: null }],
+      isLoading: false,
+    })
+    const onSubmit = vi.fn<(payload: AddAgentSubmitPayload) => Promise<void>>(async () => {})
+    render(
+      <AddAgentModal
+        open
+        onOpenChange={() => {}}
+        env={fakeEnv}
+        registryUrl="https://registry.dev.vetra.io"
+        tenantId={null}
+        installedPackages={[]}
+        onSubmit={onSubmit}
+        defaultSelectedPackage="@x/foo-cli"
+      />,
+    )
+    const installButton = screen.getByRole('button', { name: /install agent/i })
+    expect((installButton as HTMLButtonElement).disabled).toBe(false)
+    fireEvent.click(installButton)
+    await new Promise((r) => setTimeout(r, 10))
+    expect(onSubmit).toHaveBeenCalledOnce()
+    expect(onSubmit.mock.calls[0][0].clintConfig.selectedRessource).toBeNull()
+  })
+
   it('shows an error and stays open when onSubmit throws', async () => {
     vi.mocked(useRegistryManifest).mockReturnValue({
       manifest: {

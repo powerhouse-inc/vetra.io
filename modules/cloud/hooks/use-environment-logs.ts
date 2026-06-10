@@ -11,6 +11,7 @@ export function useEnvironmentLogs(
   service: TenantService | null,
   range: MetricRange,
   errorsOnly: boolean,
+  agent: string | null = null,
 ) {
   const renown = useRenown()
   const renownRef = useRef(renown)
@@ -26,7 +27,16 @@ export function useEnvironmentLogs(
     if (!subdomain || !tenantId) return
     try {
       const token = await getAuthToken(renownRef.current)
-      const data = await fetchLogs(subdomain, tenantId, service, range, 500, errorsOnly, token)
+      const data = await fetchLogs(
+        subdomain,
+        tenantId,
+        service,
+        range,
+        500,
+        errorsOnly,
+        token,
+        agent,
+      )
       if (JSON.stringify(data) !== JSON.stringify(logsRef.current)) {
         setLogs(data)
       }
@@ -36,7 +46,7 @@ export function useEnvironmentLogs(
     } finally {
       setIsLoading(false)
     }
-  }, [subdomain, tenantId, service, range, errorsOnly])
+  }, [subdomain, tenantId, service, range, errorsOnly, agent])
 
   useEffect(() => {
     void refresh()

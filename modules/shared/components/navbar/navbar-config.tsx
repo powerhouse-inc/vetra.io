@@ -46,7 +46,25 @@ export const NAVBAR_CONFIGS: Record<string, NavbarConfig> = {
     // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment
     logotype: VetraLogoWithText,
     logoHref: '/',
-    navItems: PUBLIC_NAV_ITEMS,
+    navItems: [
+      {
+        label: 'Products',
+        href: '/user',
+        isActive: (currentPath) => currentPath.includes('/user') || currentPath.includes('/studio'),
+      },
+      {
+        label: 'Packages',
+        href: '/packages',
+        isActive: (currentPath) => currentPath.includes('/packages'),
+      },
+      {
+        label: 'Builders',
+        href: '/builders',
+        isActive: (currentPath) => currentPath.includes('/builders'),
+      },
+      { label: 'Academy', href: 'https://academy.vetra.io/', isExternal: true },
+      { label: 'Cloud', href: '/cloud', isActive: (currentPath) => currentPath.includes('/cloud') },
+    ],
     authComponent: 'loginButton',
   },
 }

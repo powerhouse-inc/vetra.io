@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest'
 
-import { computeDistTags, sortTagsNewestFirst } from '@/modules/cloud/registry/channels'
+import {
+  computeDistTags,
+  sortTagsNewestFirst,
+  toServiceImageTag,
+} from '@/modules/cloud/registry/channels'
 
 describe('computeDistTags', () => {
   it('returns empty object for empty input', () => {
@@ -91,5 +95,22 @@ describe('sortTagsNewestFirst', () => {
       'v6.0.0-dev.10',
       'v5.0.0',
     ])
+  })
+})
+
+describe('toServiceImageTag', () => {
+  it('prefixes bare semver with v', () => {
+    expect(toServiceImageTag('1.2.3')).toBe('v1.2.3')
+    expect(toServiceImageTag('6.0.0-dev.240')).toBe('v6.0.0-dev.240')
+  })
+
+  it('leaves already-prefixed semver untouched', () => {
+    expect(toServiceImageTag('v1.2.3')).toBe('v1.2.3')
+  })
+
+  it('does not prefix floating Docker tags', () => {
+    expect(toServiceImageTag('latest')).toBe('latest')
+    expect(toServiceImageTag('dev')).toBe('dev')
+    expect(toServiceImageTag('staging')).toBe('staging')
   })
 })

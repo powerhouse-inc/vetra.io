@@ -25,6 +25,7 @@ export default defineConfig(
   },
   globalIgnores([
     'eslint.config.mjs',
+    '.storybook/ensure-next-config-shim.cjs',
     'playwright.config.ts',
     'postcss.config.mjs',
     'tailwind.config.js',
@@ -36,11 +37,18 @@ export default defineConfig(
   ]),
   prettier,
   {
+    // eslint-config-next only registers the react-hooks plugin for these
+    // extensions (no .cjs), so scope its rules to the same set
+    files: ['**/*.{js,jsx,mjs,ts,tsx,mts,cts}'],
     rules: {
-      'prefer-const': 'warn',
       'react-hooks/purity': 'warn',
       'react-hooks/set-state-in-effect': 'warn',
       'react-hooks/refs': 'warn',
+    },
+  },
+  {
+    rules: {
+      'prefer-const': 'warn',
       '@typescript-eslint/require-await': 'warn',
       '@typescript-eslint/await-thenable': 'warn',
       '@typescript-eslint/no-misused-promises': 'warn',

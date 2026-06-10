@@ -311,6 +311,54 @@ export function useEnvironmentDetail(documentId: string) {
   const backupScheduleSupported =
     typeof (controller as ControllerWithSchedule | null)?.setBackupSchedule === 'function'
 
+  // `setRuntimeConfig` ships in the vetra-cloud-package release that added the
+  // SET_RUNTIME_CONFIG operation. Older builds of the consumer package don't
+  // expose it, so we feature-test before dispatching (mirrors setBackupSchedule).
+  // `config` is the operator-editable powerhouse.config.json partial
+  // ({ connect: {...}, packageRegistryUrl? }); null/{} clears all overrides.
+  // The reducer flips a deployed env to CHANGES_PENDING — the user then
+  // Approves/Deploys (env-action-bar) to roll it out via gitops.
+  // The doc-model field is a String scalar (federation-composable), so the
+  // SET_RUNTIME_CONFIG operation takes the config as a JSON string. Callers
+  // pass the object ({ connect, packageRegistryUrl }); we stringify here.
+  type ControllerWithRuntimeConfig = NonNullable<typeof controller> & {
+    setRuntimeConfig?: (input: { config: string | null }) => void
+  }
+
+  const setRuntimeConfig = useCallback(
+    (config: Record<string, unknown> | null) =>
+      mutate((c) => {
+        const fn = (c as ControllerWithRuntimeConfig).setRuntimeConfig
+        if (typeof fn !== 'function') {
+          throw new Error(
+            'setRuntimeConfig is not available in this controller version — update vetra-cloud-package.',
+          )
+        }
+        fn.call(c, { config: config === null ? null : JSON.stringify(config) })
+      }),
+    [mutate],
+  )
+
+  const runtimeConfigSupported =
+    typeof (controller as ControllerWithRuntimeConfig | null)?.setRuntimeConfig === 'function'
+
+  // The runtime-config panel silently hides when unsupported (by design — it
+  // must never break the page), but log WHY so operators can diagnose a
+  // missing panel from the console instead of guessing.
+  useEffect(() => {
+    if (!canSign || ctrlLoading || runtimeConfigSupported) return
+    if (ctrlError) {
+      console.warn(
+        '[runtime-config] panel hidden: environment controller failed to load —',
+        ctrlError,
+      )
+    } else if (controller) {
+      console.warn(
+        '[runtime-config] panel hidden: setRuntimeConfig is not available in this vetra-cloud-package build — update the package to enable runtime-config editing.',
+      )
+    }
+  }, [canSign, ctrlLoading, ctrlError, controller, runtimeConfigSupported])
+
   /** Owner-triggered "update to latest" — pulls the env's subscribed
    *  channel's latest known tag and bumps all enabled services. */
   const updateToLatest = useCallback(async () => {
@@ -349,6 +397,8 @@ export function useEnvironmentDetail(documentId: string) {
     setAutoUpdateChannel,
     setBackupSchedule,
     backupScheduleSupported,
+    setRuntimeConfig,
+    runtimeConfigSupported,
     updateToLatest,
     rollbackRelease,
   }

@@ -37,6 +37,64 @@ import { InlineEditableTitle, OverviewTab } from './tabs/overview'
 // `useDetailDrawer` for URL state). This was previously a tab orchestrator.
 // ---------------------------------------------------------------------------
 
+/**
+ * state.runtimeConfig is a JSON string (the doc-model field is a String
+ * scalar). Parse it into the object shape the RuntimeConfigDrawer edits;
+ * tolerate null / corrupt JSON by returning null. Malformed payloads must
+ * never break the page — they degrade to "no overrides" with a console
+ * warning explaining why (logged once per distinct payload, since this
+ * runs on every render).
+ */
+const warnedRuntimeConfigPayloads = new Set<string>()
+function warnRuntimeConfigOnce(raw: string, message: string, detail?: unknown) {
+  if (warnedRuntimeConfigPayloads.has(raw)) return
+  warnedRuntimeConfigPayloads.add(raw)
+  console.warn(`[runtime-config] ${message}`, detail ?? '')
+}
+
+function parseRuntimeConfig(
+  raw: string | null | undefined,
+): { connect?: Record<string, unknown>; packageRegistryUrl?: string } | null {
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as Record<string, unknown>
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      warnRuntimeConfigOnce(
+        raw,
+        'state.runtimeConfig is not a JSON object — ignoring stored overrides',
+        parsed,
+      )
+      return null
+    }
+    // Validate the sub-shapes the drawer consumes; drop (and warn about)
+    // anything malformed rather than letting it reach the form and crash.
+    const result: { connect?: Record<string, unknown>; packageRegistryUrl?: string } = {}
+    const { connect, packageRegistryUrl } = parsed
+    if (connect !== undefined && connect !== null) {
+      if (typeof connect === 'object' && !Array.isArray(connect)) {
+        result.connect = connect as Record<string, unknown>
+      } else {
+        warnRuntimeConfigOnce(
+          raw,
+          'state.runtimeConfig.connect is not an object — ignoring stored connect overrides',
+          connect,
+        )
+      }
+    }
+    if (typeof packageRegistryUrl === 'string') {
+      result.packageRegistryUrl = packageRegistryUrl
+    }
+    return result
+  } catch (err) {
+    warnRuntimeConfigOnce(
+      raw,
+      'failed to parse state.runtimeConfig — ignoring stored overrides',
+      err,
+    )
+    return null
+  }
+}
+
 function EnvironmentDetail({ documentId }: { documentId: string }) {
   const searchParams = useSearchParams()
 
@@ -285,6 +343,9 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           backupSchedule={state.backupSchedule ?? null}
           onSaveBackupSchedule={detail.setBackupSchedule}
           backupScheduleSupported={detail.backupScheduleSupported}
+          runtimeConfig={parseRuntimeConfig(state.runtimeConfig)}
+          onSaveRuntimeConfig={detail.setRuntimeConfig}
+          runtimeConfigSupported={detail.runtimeConfigSupported}
         />
       )}
       {state && environment && drawer.scope?.kind === 'agent' && drawerAgent && (

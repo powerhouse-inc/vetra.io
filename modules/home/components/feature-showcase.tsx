@@ -5,35 +5,40 @@ import { ScrollReveal, ScrollRevealItem } from '@/modules/shared/components/ui/s
 
 const features = [
   {
-    title: 'Build anything, fast',
+    label: 'AI Control',
+    title: 'AI you choose, infrastructure you own',
     description:
-      'Describe your workflow and Vetra sets it up automatically. Use ready-made templates or create something from scratch — your team can be up and running in minutes.',
-    image: '/images/home/rapid-application-development.png',
+      'Drop in your own API key or run a local model entirely on your hardware. Vetra orchestrates your AI-ready platform: structured data, custom apps, real-time sync, history, user roles, and signatures. Everything is embedded from day one.',
+    image: '/images/home/rapid-application-development.svg',
     priority: true,
   },
   {
-    title: 'Everyone stays in sync',
+    label: 'Local First',
+    title: 'Local first. Syncs when you want it to.',
     description:
-      'Updates appear for your whole team the moment they happen. Like a live conversation, not a file waiting to be saved.',
+      "Every app and agent can run entirely on your machine. Changes sync in real time when you're connected, and merge cleanly when you're not. Offline isn't a fallback, it's the default to take your team and your data anywhere.",
     lottie: 'https://cdn.lottielab.com/l/E6XFYWdFhnNvBH.json',
   },
   {
-    title: 'Work together, naturally',
+    label: 'Sovereignty',
+    title: 'Build your niche. Keep it yours.',
     description:
-      'Leave comments, suggest changes, and review updates — just like editing a shared document. Everyone stays on the same page, effortlessly.',
-    image: '/images/home/collaborative-infrastructure.png',
+      'The best platforms are specific, community-owned, and impossible to extract value from. Vetra gives you the infrastructure for that — open schemas, data sovereignty, no proprietary middleman between you and your users.',
+    image: '/images/home/collaborative-infrastructure.svg',
   },
   {
-    title: 'Grows with your organization',
+    label: 'Open Source',
+    title: "Self-hosted or we'll host it for you.",
     description:
-      'Start small and scale to millions of users without switching platforms or rewriting anything. Vetra Cloud handles the hard parts automatically.',
+      "Deploy on our cloud, your cloud, or a private node. The platform is 100% open source — inspect every line, fork it, modify it, contribute it back to the community. You're never dependent on our uptime or our roadmap.",
     image: '/images/home/feature-collaborative.svg',
   },
   {
-    title: 'Secure and verifiable',
+    label: 'Auditability',
+    title: 'Every action signed. Every change traceable.',
     description:
-      'Every action is recorded and tamper-proof. Know exactly who did what, and when — optionally backed by blockchain for extra trust.',
-    image: '/images/home/web3-enabled.png',
+      'Every operation — human or agent — is cryptographically signed and appended to an immutable log. Know exactly who did what, when, and why. Optionally anchor to a blockchain for external auditability.',
+    image: '/images/home/web3-enabled.svg',
   },
 ]
 
@@ -41,8 +46,8 @@ export function FeatureShowcase() {
   return (
     <ScrollReveal stagger>
       <section className="mx-auto max-w-screen-xl px-6 py-20">
-        <h2 className="text-foreground mb-16 text-center text-3xl font-bold">
-          See what your team can do
+        <h2 className="text-foreground mb-16 text-center text-4xl font-bold">
+          Built to stay yours
         </h2>
 
         <div className="space-y-20">
@@ -54,6 +59,9 @@ export function FeatureShowcase() {
                 }`}
               >
                 <div className="flex-1">
+                  <div className="bg-primary-30 text-primary mb-6 inline-flex items-center rounded-full px-4 py-1.5 text-sm font-semibold">
+                    {feature.label}
+                  </div>
                   <h3 className="text-foreground mb-4 text-2xl font-bold">{feature.title}</h3>
                   <p className="text-foreground-70 leading-relaxed">{feature.description}</p>
                 </div>
@@ -68,7 +76,7 @@ export function FeatureShowcase() {
                       height={400}
                       sizes="(min-width: 768px) 50vw, 100vw"
                       priority={'priority' in feature && feature.priority}
-                      className="h-auto w-full object-cover"
+                      className="h-auto w-full object-contain"
                     />
                   ) : null}
                 </div>
