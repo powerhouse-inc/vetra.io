@@ -62,11 +62,7 @@ async function scanProducts(
       // endpoints after it has itself reached the agent over that same public
       // host, so a 'ready' status guarantees the host already resolves —
       // making this the safe moment for the browser to hit it.
-      const groups = await fetchClintRuntimeEndpointsByEnv(
-        subdomain,
-        env.id,
-        token,
-      ).catch(() => [])
+      const groups = await fetchClintRuntimeEndpointsByEnv(subdomain, env.id, token).catch(() => [])
       const group = groups.find((g) => g.prefix === service.prefix)
       const status = deriveProductStatus(group)
       const brand =
