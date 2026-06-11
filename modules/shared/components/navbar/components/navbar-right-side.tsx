@@ -98,7 +98,7 @@ function RenownButton() {
             asChild
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
           >
-            <Link href="/products">
+            <Link href="/user">
               <Layers className="h-4 w-4" />
               Products
             </Link>
