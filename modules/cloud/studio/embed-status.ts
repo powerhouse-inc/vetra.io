@@ -1,18 +1,8 @@
-export type EmbedStatus =
-  | 'loading'
-  | 'unauthenticated'
-  | 'not-allowed'
-  | 'not-found'
-  | 'booting'
-  | 'ready'
+export type EmbedStatus = 'loading' | 'unauthenticated' | 'not-found' | 'booting' | 'ready'
 
 export type EmbedStatusInputs = {
   /** Renown session present. */
   authed: boolean
-  /** Viewer address (null while still resolving). */
-  address: string | null
-  /** Whether the address is on the studio allowlist. */
-  allowed: boolean
   /** Direct lookup of the target env by id. */
   resolution: 'pending' | 'not-found' | 'found'
   /** First runtime-endpoints fetch has completed (distinguishes "not checked" from "not ready"). */
@@ -31,7 +21,6 @@ export type EmbedStatusInputs = {
  */
 export function deriveEmbedStatus(i: EmbedStatusInputs): EmbedStatus {
   if (!i.authed) return 'unauthenticated'
-  if (!i.allowed) return i.address ? 'not-allowed' : 'loading'
   if (i.resolution === 'pending') return 'loading'
   if (i.resolution === 'not-found') return 'not-found'
   if (i.websiteReady && i.reachable) return 'ready'

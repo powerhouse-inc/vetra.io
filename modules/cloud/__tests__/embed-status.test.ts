@@ -3,8 +3,6 @@ import { deriveEmbedStatus, type EmbedStatusInputs } from '@/modules/cloud/studi
 
 const base: EmbedStatusInputs = {
   authed: true,
-  address: '0xme',
-  allowed: true,
   resolution: 'found',
   endpointsChecked: true,
   websiteReady: true,
@@ -14,12 +12,6 @@ const base: EmbedStatusInputs = {
 describe('deriveEmbedStatus', () => {
   it('unauthenticated when not authed', () => {
     expect(deriveEmbedStatus({ ...base, authed: false })).toBe('unauthenticated')
-  })
-  it('loading (not not-allowed) while the viewer address is still resolving', () => {
-    expect(deriveEmbedStatus({ ...base, allowed: false, address: null })).toBe('loading')
-  })
-  it('not-allowed once an address is known but not on the allowlist', () => {
-    expect(deriveEmbedStatus({ ...base, allowed: false, address: '0xme' })).toBe('not-allowed')
   })
   it('loading while the env is still being resolved (never not-found)', () => {
     expect(deriveEmbedStatus({ ...base, resolution: 'pending' })).toBe('loading')

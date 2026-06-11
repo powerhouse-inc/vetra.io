@@ -10,10 +10,9 @@ import type { CloudEnvironment } from '@/modules/cloud/types'
 import { findStudioAgents } from './find-studio-agent'
 import { fetchProductBrand, type ProductBrand } from './fetch-product-brand'
 import { deriveProductStatus, type ProductStatus } from './studio-readiness'
-import { getStudioAllowlist, isStudioAllowed } from './allowlist'
 import { useCreateStudioEnvironment } from './use-create-studio-environment'
 
-export type StudioGate = 'loading' | 'unauthenticated' | 'not-allowed' | 'ready'
+export type StudioGate = 'loading' | 'unauthenticated' | 'ready'
 
 export type StudioProduct = {
   envId: string
@@ -49,18 +48,33 @@ async function scanProducts(
   return Promise.all(
     matches.map(async ({ env, service }): Promise<StudioProduct> => {
       const subdomain = env.state.genericSubdomain ?? ''
-      const [brand, groups] = await Promise.all([
-        fetchProductBrand({ subdomain, prefix: service.prefix, token }),
-        fetchClintRuntimeEndpointsByEnv(subdomain, env.id, token).catch(() => []),
-      ])
+      // Ask switchboard for readiness FIRST, and only touch the per-tenant
+      // host (for the brand) once it reports a live website endpoint.
+      //
+      // Why: fetchProductBrand does a browser fetch to
+      // https://<prefix>.<subdomain>.vetra.io. For a just-created product the
+      // DNS record doesn't exist yet (external-dns creates it after the
+      // ingress is admitted), so the browser's lookup returns NXDOMAIN and the
+      // resolver NEGATIVE-CACHES it for the vetra.io zone's SOA minimum (1h).
+      // That poisoned cache then breaks the user's actual navigation to the
+      // studio for up to an hour. switchboard's pull-worker only reports
+      // endpoints after it has itself reached the agent over that same public
+      // host, so a 'ready' status guarantees the host already resolves —
+      // making this the safe moment for the browser to hit it.
+      const groups = await fetchClintRuntimeEndpointsByEnv(subdomain, env.id, token).catch(() => [])
       const group = groups.find((g) => g.prefix === service.prefix)
+      const status = deriveProductStatus(group)
+      const brand =
+        status === 'ready'
+          ? await fetchProductBrand({ subdomain, prefix: service.prefix, token })
+          : null
       return {
         envId: env.id,
         subdomain,
         prefix: service.prefix,
         label: env.state.label ?? env.name,
         brand,
-        status: deriveProductStatus(group),
+        status,
       }
     }),
   )
@@ -74,7 +88,6 @@ export function useStudioProducts(): StudioProductsState {
   const environments = useEnvironments('MINE', address)
 
   const isAuthed = !!user
-  const allowed = isStudioAllowed(address, getStudioAllowlist())
 
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -86,7 +99,7 @@ export function useStudioProducts(): StudioProductsState {
   const { data, isLoading } = useAuthedQuery<StudioProduct[]>(
     [...queryKeys.studioProducts(did), summaryIds],
     (token) => scanProducts(environments, token),
-    { enabled: isAuthed && allowed, refetchInterval: 30_000 },
+    { enabled: isAuthed, refetchInterval: 30_000 },
   )
   const products = data ?? []
   const isScanning = isLoading && !data
@@ -110,7 +123,6 @@ export function useStudioProducts(): StudioProductsState {
 
   let gate: StudioGate
   if (!user) gate = 'unauthenticated'
-  else if (!allowed) gate = address ? 'not-allowed' : 'loading'
   else gate = 'ready'
 
   return { gate, products, isScanning, creating, createError, createProduct, did }

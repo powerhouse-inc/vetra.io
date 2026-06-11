@@ -37,6 +37,12 @@ export default defineConfig(
   ]),
   prettier,
   {
+    // Kysely migrations are schema-version-agnostic and take `Kysely<any>` by
+    // design (the typed `DB` describes only the current schema).
+    files: ['migrations/**'],
+    rules: { '@typescript-eslint/no-explicit-any': 'off' },
+  },
+  {
     // eslint-config-next only registers the react-hooks plugin for these
     // extensions (no .cjs), so scope its rules to the same set
     files: ['**/*.{js,jsx,mjs,ts,tsx,mts,cts}'],

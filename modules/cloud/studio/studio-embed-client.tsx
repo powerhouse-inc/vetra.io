@@ -12,13 +12,6 @@ export function StudioEmbedClient({ envId }: { envId: string }) {
   switch (status) {
     case 'unauthenticated':
       return <CloudLanding />
-    case 'not-allowed':
-      return (
-        <StudioBootScreen
-          title="Vetra Studio is in limited preview"
-          detail="Your account doesn't have access yet."
-        />
-      )
     case 'loading':
       return <StudioBootScreen title="Loading product…" />
     case 'not-found':

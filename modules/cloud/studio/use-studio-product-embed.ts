@@ -3,14 +3,12 @@
 import { useEffect, useState } from 'react'
 import { useDid, useUser } from '@powerhousedao/reactor-browser'
 import { fetchClintRuntimeEndpointsByEnv, fetchEnvironment } from '@/modules/cloud/graphql'
-import { useViewer } from '@/modules/cloud/hooks/use-environment'
 import { queryKeys } from '@/modules/cloud/query/keys'
 import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
 import type { ClintRuntimeEndpointsForPrefix } from '@/modules/cloud/types'
 import { findStudioAgents } from './find-studio-agent'
 import { buildStudioEmbedUrl } from './studio-embed-url'
 import { hasStudioWebsiteEndpoint } from './studio-readiness'
-import { getStudioAllowlist, isStudioAllowed } from './allowlist'
 import { deriveEmbedStatus, type EmbedStatus } from './embed-status'
 
 export type { EmbedStatus }
@@ -53,8 +51,6 @@ export function useStudioProductEmbed(envId: string): {
 } {
   const user = useUser()
   const did = useDid()
-  const { viewer } = useViewer()
-  const address = viewer?.address ?? null
 
   const isAuthed = !!user
 
@@ -109,8 +105,6 @@ export function useStudioProductEmbed(envId: string): {
 
   const status = deriveEmbedStatus({
     authed: isAuthed,
-    address,
-    allowed: isStudioAllowed(address, getStudioAllowlist()),
     resolution,
     endpointsChecked,
     websiteReady,
