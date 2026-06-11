@@ -45,7 +45,7 @@ export function Hero() {
           Own what gets built.
         </h1>
         <p className="text-muted-foreground mx-auto mb-4 max-w-2xl text-[clamp(20px,2.5vw,28px)] leading-[1.3] font-semibold">
-          Build software for your team + AI on a unified data layer, run it on infrastructure that&apos;s always
+          Build AI ready software for your team on a data layer & infrastructure that&apos;s always
           yours.
         </p>
         <p className="text-foreground-70 mx-auto mb-9 max-w-xl text-lg leading-relaxed">
