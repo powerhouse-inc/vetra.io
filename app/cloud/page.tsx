@@ -1,24 +1,10 @@
-'use client'
-
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
-import { useRouter } from 'next/navigation'
-import { useEffect } from 'react'
 import { CloudLanding } from '@/modules/cloud/components/cloud-landing'
 
 /**
- * Public Vetra Cloud landing page. Signed-in users are forwarded to their
- * environments at `/user/environments`; everyone else (and visitors while auth
- * is still resolving) sees the marketing landing. Redirect fires only on a
- * *definitive* authorized status, so this and `/user/environments` never loop.
+ * Public Vetra Cloud landing page. Always renders the marketing landing —
+ * including for signed-in users — so `/cloud` is a stable, shareable page.
+ * (Signed-in users reach their environments via the nav at `/user/environments`.)
  */
 export default function CloudLandingPage() {
-  const { status } = useRenownAuth()
-  const router = useRouter()
-
-  useEffect(() => {
-    if (status === 'authorized') router.replace('/user/environments')
-  }, [status, router])
-
-  if (status === 'authorized') return null
   return <CloudLanding />
 }
