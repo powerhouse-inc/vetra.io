@@ -2,18 +2,21 @@
 
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import {
+  Cloud,
   ExternalLink,
+  Layers,
   LogIn,
   LogOut,
   Loader2,
+  Moon,
   MoreVertical,
   Package,
+  Sun,
   User,
-  Users,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
-import { ThemeToggle } from '../../theme-toggle'
+import { useSyncExternalStore } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -22,6 +25,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu'
+import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar'
 import ThemeIconLabel from './toogle-theme-label'
 
 const btnSecondary =
@@ -35,6 +39,15 @@ function shorten(addr: string | undefined): string {
 
 function RenownButton() {
   const auth = useRenownAuth()
+  const { resolvedTheme, setTheme } = useTheme()
+  const mounted = useSyncExternalStore(
+    () => () => {},
+    () => true,
+    () => false,
+  )
+
+  const toggleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
+  const isDark = mounted && resolvedTheme === 'dark'
 
   if (auth.status === 'loading' || auth.status === 'checking') {
     return (
@@ -49,7 +62,12 @@ function RenownButton() {
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <button type="button" className={btnSecondary}>
-            <User className="h-4 w-4" />
+            <Avatar className="h-5 w-5">
+              <AvatarImage src={auth.avatarUrl} alt={auth.displayName ?? 'Account'} />
+              <AvatarFallback className="bg-transparent p-0">
+                <User className="h-4 w-4" />
+              </AvatarFallback>
+            </Avatar>
             {auth.displayName ?? auth.displayAddress ?? 'Account'}
           </button>
         </DropdownMenuTrigger>
@@ -58,11 +76,21 @@ function RenownButton() {
           className="bg-accent border-border/50 z-170 w-56 rounded-lg p-1.5"
         >
           <DropdownMenuLabel className="px-3 py-2">
-            <div className="text-sm leading-tight font-semibold">
-              {auth.displayName ?? 'Account'}
-            </div>
-            <div className="text-muted-foreground font-mono text-xs">
-              {shorten(auth.address ?? auth.displayAddress)}
+            <div className="flex items-center gap-2.5">
+              <Avatar className="h-8 w-8">
+                <AvatarImage src={auth.avatarUrl} alt={auth.displayName ?? 'Account'} />
+                <AvatarFallback>
+                  <User className="h-4 w-4" />
+                </AvatarFallback>
+              </Avatar>
+              <div>
+                <div className="text-sm leading-tight font-semibold">
+                  {auth.displayName ?? 'Account'}
+                </div>
+                <div className="text-muted-foreground font-mono text-xs">
+                  {shorten(auth.address ?? auth.displayAddress)}
+                </div>
+              </div>
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-border/50" />
@@ -70,19 +98,36 @@ function RenownButton() {
             asChild
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
           >
-            <Link href="/profile?tab=teams">
-              <Users className="h-4 w-4" />
-              My profile
+            <Link href="/products">
+              <Layers className="h-4 w-4" />
+              Products
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
             asChild
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
           >
-            <Link href="/profile?tab=packages">
-              <Package className="h-4 w-4" />
-              My packages
+            <Link href="/cloud">
+              <Cloud className="h-4 w-4" />
+              Environments
             </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            asChild
+            className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
+          >
+            <Link href="/packages">
+              <Package className="h-4 w-4" />
+              Packages
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator className="bg-border/50" />
+          <DropdownMenuItem
+            onClick={toggleTheme}
+            className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
+          >
+            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {isDark ? 'Light mode' : 'Dark mode'}
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-border/50" />
           <DropdownMenuItem
@@ -114,22 +159,21 @@ function RenownButton() {
 }
 
 function NavbarRightSide() {
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
 
   const handleThemeToggle = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark')
+    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
   }
 
   return (
     <>
       <div className="hidden items-center gap-3 md:flex">
-        <ThemeToggle />
         <RenownButton />
         <Link
-          href="/packages"
+          href="/studio"
           className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all hover:-translate-y-px"
         >
-          Try Our Beta
+          Vetra Studio
         </Link>
       </div>
 
@@ -150,7 +194,7 @@ function NavbarRightSide() {
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
-              <ThemeIconLabel theme={theme} />
+              <ThemeIconLabel theme={resolvedTheme} />
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
