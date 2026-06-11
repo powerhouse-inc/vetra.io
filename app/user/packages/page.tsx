@@ -6,17 +6,13 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { useEnsureUserDrive } from '@/modules/profile/lib/use-ensure-user-drive'
 import { Button } from '@/modules/shared/components/ui/button'
-import { LoginPrompt } from './components/login-prompt'
-import { ProfileTabs } from './components/profile-tabs'
+import { LoginPrompt } from '@/app/profile/components/login-prompt'
+import { ProfileTabs } from '@/app/profile/components/profile-tabs'
 
-function ProfilePageInner() {
+function UserPackagesPageInner() {
   const auth = useRenownAuth()
   const params = useSearchParams()
   const showCreateButton = (params.get('tab') ?? 'packages') === 'teams'
-  // Best-effort: lazily create the caller's `user:<eth>` drive + seed a
-  // BuilderAccount doc on first authenticated render. The page doesn't
-  // wait on this — bootstrap runs in the background while /profile
-  // renders immediately.
   useEnsureUserDrive()
 
   if (auth.status === 'loading' || auth.status === 'checking') {
@@ -41,7 +37,7 @@ function ProfilePageInner() {
         <div>
           <h1 className="text-2xl font-bold tracking-tight">My profile</h1>
           <p className="text-muted-foreground mt-1 text-sm">
-            Teams you&apos;re a member of, packages you&apos;ve published, and account settings.
+            Packages you&apos;ve published, teams you&apos;re a member of, and account settings.
           </p>
         </div>
         {showCreateButton && (
@@ -53,13 +49,12 @@ function ProfilePageInner() {
           </Button>
         )}
       </div>
-      <ProfileTabs address={auth.address} />
+      <ProfileTabs address={auth.address} basePath="/user/packages" />
     </div>
   )
 }
 
-export default function ProfilePage() {
-  // Suspense boundary for useSearchParams (Next.js 15+ requirement).
+export default function UserPackagesPage() {
   return (
     <Suspense
       fallback={
@@ -68,7 +63,7 @@ export default function ProfilePage() {
         </div>
       }
     >
-      <ProfilePageInner />
+      <UserPackagesPageInner />
     </Suspense>
   )
 }

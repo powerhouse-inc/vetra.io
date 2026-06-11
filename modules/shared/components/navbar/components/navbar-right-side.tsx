@@ -2,7 +2,9 @@
 
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import {
+  Check,
   Cloud,
+  Copy,
   ExternalLink,
   Layers,
   LogIn,
@@ -16,7 +18,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
-import { useSyncExternalStore } from 'react'
+import { useSyncExternalStore, useState } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -35,6 +37,29 @@ function shorten(addr: string | undefined): string {
   if (!addr) return ''
   if (addr.length < 12) return addr
   return `${addr.slice(0, 6)}…${addr.slice(-4)}`
+}
+
+function CopyAddressButton({ address }: { address: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    void navigator.clipboard.writeText(address).then(() => {
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    })
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="text-muted-foreground hover:text-foreground ml-1 cursor-pointer transition-colors"
+      aria-label="Copy address"
+    >
+      {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}
+    </button>
+  )
 }
 
 function RenownButton() {
@@ -87,8 +112,13 @@ function RenownButton() {
                 <div className="text-sm leading-tight font-semibold">
                   {auth.displayName ?? 'Account'}
                 </div>
-                <div className="text-muted-foreground font-mono text-xs">
-                  {shorten(auth.address ?? auth.displayAddress)}
+                <div className="flex items-center">
+                  <span className="text-muted-foreground font-mono text-xs">
+                    {shorten(auth.address ?? auth.displayAddress)}
+                  </span>
+                  {(auth.address ?? auth.displayAddress) && (
+                    <CopyAddressButton address={auth.address ?? auth.displayAddress ?? ''} />
+                  )}
                 </div>
               </div>
             </div>
@@ -98,7 +128,7 @@ function RenownButton() {
             asChild
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
           >
-            <Link href="/user">
+            <Link href="/user/products">
               <Layers className="h-4 w-4" />
               Products
             </Link>
@@ -116,7 +146,7 @@ function RenownButton() {
             asChild
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
           >
-            <Link href="/packages">
+            <Link href="/user/packages">
               <Package className="h-4 w-4" />
               Packages
             </Link>

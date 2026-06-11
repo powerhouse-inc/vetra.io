@@ -45,8 +45,9 @@ export function Hero() {
           Own what gets built.
         </h1>
         <p className="text-muted-foreground mx-auto mb-4 max-w-2xl text-[clamp(20px,2.5vw,28px)] leading-[1.3] font-semibold">
-          Build AI ready software for your team on a data layer & infrastructure that&apos;s always
-          yours.
+          Build AI ready software for your team
+          <br />
+          on a data layer & infrastructure that&apos;s always yours.
         </p>
         <p className="text-foreground-70 mx-auto mb-9 max-w-xl text-lg leading-relaxed">
           Unlike other AI builders, the platform is fully open source and runs wherever you choose.
