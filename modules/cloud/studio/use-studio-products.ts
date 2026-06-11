@@ -10,10 +10,9 @@ import type { CloudEnvironment } from '@/modules/cloud/types'
 import { findStudioAgents } from './find-studio-agent'
 import { fetchProductBrand, type ProductBrand } from './fetch-product-brand'
 import { deriveProductStatus, type ProductStatus } from './studio-readiness'
-import { getStudioAllowlist, isStudioAllowed } from './allowlist'
 import { useCreateStudioEnvironment } from './use-create-studio-environment'
 
-export type StudioGate = 'loading' | 'unauthenticated' | 'not-allowed' | 'ready'
+export type StudioGate = 'loading' | 'unauthenticated' | 'ready'
 
 export type StudioProduct = {
   envId: string
@@ -89,7 +88,6 @@ export function useStudioProducts(): StudioProductsState {
   const environments = useEnvironments('MINE', address)
 
   const isAuthed = !!user
-  const allowed = isStudioAllowed(address, getStudioAllowlist())
 
   const [creating, setCreating] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
@@ -101,7 +99,7 @@ export function useStudioProducts(): StudioProductsState {
   const { data, isLoading } = useAuthedQuery<StudioProduct[]>(
     [...queryKeys.studioProducts(did), summaryIds],
     (token) => scanProducts(environments, token),
-    { enabled: isAuthed && allowed, refetchInterval: 30_000 },
+    { enabled: isAuthed, refetchInterval: 30_000 },
   )
   const products = data ?? []
   const isScanning = isLoading && !data
@@ -125,7 +123,6 @@ export function useStudioProducts(): StudioProductsState {
 
   let gate: StudioGate
   if (!user) gate = 'unauthenticated'
-  else if (!allowed) gate = address ? 'not-allowed' : 'loading'
   else gate = 'ready'
 
   return { gate, products, isScanning, creating, createError, createProduct, did }

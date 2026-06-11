@@ -347,15 +347,16 @@ function UninstallDialog({
     [pkg.name, manifests],
   )
 
-  // Pre-check exclusive keys whenever the declared list changes. This is a
-  // side effect (setState), so it belongs in useEffect — running it in a
-  // useMemo updates state during render and risks a render loop.
+  // Pre-check exclusive keys whenever the declared list changes. `declaredEntries`
+  // is a fresh array each render, so we key the effect on a stable string of its
+  // names (and the exclusive set) rather than the array identity.
+  const declaredKeyNames = declaredEntries.map((e) => e.name).join(',')
   useEffect(() => {
     const initial: Record<string, boolean> = {}
     for (const e of declaredEntries) initial[e.name] = exclusive.has(e.name)
     setSelectedKeys(initial)
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [declaredEntries.map((e) => e.name).join(','), exclusive.size])
+  }, [declaredKeyNames, exclusive])
 
   const { run: runRemove, isPending: isRemoving } = useAsyncAction(async () => {
     if (tenantId) {

@@ -54,7 +54,6 @@ export default async function RootLayout({
                 process.env.CLOUD_DRIVE_ID || process.env.NEXT_PUBLIC_CLOUD_DRIVE_ID || '',
               NEXT_PUBLIC_RENOWN_URL:
                 process.env.RENOWN_URL || process.env.NEXT_PUBLIC_RENOWN_URL || '',
-              NEXT_PUBLIC_STUDIO_ALLOWLIST: process.env.NEXT_PUBLIC_STUDIO_ALLOWLIST || '',
             })}`,
           }}
         />
@@ -67,7 +66,12 @@ export default async function RootLayout({
           environment={process.env.OPENPANEL_ENV || process.env.NEXT_PUBLIC_OPENPANEL_ENV}
         />
         <NuqsAdapter>
-          <ThemeProvider attribute="class" defaultTheme="light" disableTransitionOnChange>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
             <QueryClientProvider>
               <GlobalRefreshIndicator />
               <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
