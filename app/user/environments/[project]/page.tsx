@@ -213,7 +213,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           to Cloud" link sits outside the card as a breadcrumb. */}
       <div className="space-y-4">
         <Link
-          href="/cloud"
+          href="/user/environments"
           className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />

@@ -143,7 +143,7 @@ export function useEnvironment(id: string): CloudEnvironment | undefined {
 
 /**
  * Hook returning the caller's identity + admin status from switchboard.
- * Used by the `/cloud` page to show the "Mine | All" toggle only for admins.
+ * Used by the `/user/environments` page to show the "Mine | All" toggle only for admins.
  */
 export function useViewer(): { viewer: Viewer | null; isLoading: boolean } {
   const did = useDid()

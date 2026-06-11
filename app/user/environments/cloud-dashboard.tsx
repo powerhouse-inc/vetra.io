@@ -28,7 +28,7 @@ export function CloudDashboard() {
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>
-                <BreadcrumbLink href="/cloud">Cloud</BreadcrumbLink>
+                <BreadcrumbLink href="/user/environments">Cloud</BreadcrumbLink>
               </BreadcrumbItem>
               <BreadcrumbSeparator />
               <BreadcrumbItem>
@@ -38,7 +38,7 @@ export function CloudDashboard() {
           </Breadcrumb>
         </div>
         <Button asChild>
-          <Link href="/cloud/new">
+          <Link href="/user/environments/new">
             <Plus className="mr-2 h-4 w-4" />
             Create Environment
           </Link>

@@ -29,8 +29,8 @@ export const PRIVATE_NAV_ITEMS: NavItem[] = [
   },
   {
     label: 'Environments',
-    href: '/cloud',
-    isActive: (p) => p.includes('/cloud'),
+    href: '/user/environments',
+    isActive: (p) => p.includes('/user/environments'),
   },
   {
     label: 'Packages',
