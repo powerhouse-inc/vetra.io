@@ -57,7 +57,7 @@ function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
   const packageCount = env.state.packages.length
 
   // Visit link to the live env (CONNECT URL). Mirror the field accessors
-  // used by app/cloud/[project]/page.tsx so listing + detail stay in sync.
+  // used by app/user/environments/[project]/page.tsx so listing + detail stay in sync.
   const connectService = env.state.services.find((s) => s.type === 'CONNECT' && s.enabled)
   const subdomain = env.state.genericSubdomain ?? null
   const baseDomain = env.state.genericBaseDomain ?? 'vetra.io'
@@ -127,7 +127,7 @@ function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
 
         <div className="flex gap-2">
           <Button variant="default" size="sm" asChild className="flex-1">
-            <Link href={`/cloud/${env.id}`}>Manage</Link>
+            <Link href={`/user/environments/${env.id}`}>Manage</Link>
           </Button>
           {visitUrl && (
             <Button variant="outline" size="sm" asChild className="shrink-0">

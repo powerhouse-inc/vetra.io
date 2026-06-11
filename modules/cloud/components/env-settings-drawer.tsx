@@ -425,7 +425,7 @@ function DangerZone({
     await ctrl.delete()
     toast.success('Environment deleted')
     onClose()
-    router.push('/cloud')
+    router.push('/user/environments')
   })
 
   const handleReset = async () => {

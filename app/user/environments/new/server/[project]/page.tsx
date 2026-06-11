@@ -68,7 +68,7 @@ export default function AddPackagePage({ params }: PageProps) {
       setIsSubmitting(true)
       await addPackage(values.packageName, values.version || undefined)
       toast.success('Package added successfully')
-      router.push(`/cloud/${project}`)
+      router.push(`/user/environments/${project}`)
     } catch (error) {
       console.error('Failed to add package:', error)
       toast.error(error instanceof Error ? error.message : 'Failed to add package')
@@ -95,11 +95,11 @@ export default function AddPackagePage({ params }: PageProps) {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem>
-              <BreadcrumbLink href="/cloud">Cloud</BreadcrumbLink>
+              <BreadcrumbLink href="/user/environments">Cloud</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
-              <BreadcrumbLink href={`/cloud/${project}`}>{displayName}</BreadcrumbLink>
+              <BreadcrumbLink href={`/user/environments/${project}`}>{displayName}</BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator />
             <BreadcrumbItem>
@@ -156,7 +156,7 @@ export default function AddPackagePage({ params }: PageProps) {
                     <Button
                       type="button"
                       variant="outline"
-                      onClick={() => router.push(`/cloud/${project}`)}
+                      onClick={() => router.push(`/user/environments/${project}`)}
                     >
                       Cancel
                     </Button>

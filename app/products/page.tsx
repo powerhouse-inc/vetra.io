@@ -60,7 +60,7 @@ function ProductCard({ product }: { product: Product }) {
       {/* Footer */}
       <div className="border-border flex items-center justify-between border-t pt-3">
         <Link
-          href="/cloud"
+          href="/user/environments"
           className="text-primary hover:text-primary/80 text-sm font-medium transition-colors"
         >
           {product.environmentCount} environment{product.environmentCount !== 1 ? 's' : ''} &rsaquo;

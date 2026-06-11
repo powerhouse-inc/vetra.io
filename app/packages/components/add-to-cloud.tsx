@@ -51,7 +51,7 @@ export function AddToCloud({ packageName, version }: AddToCloudProps) {
           Deploy this package to a Vetra Cloud environment.
         </p>
         <Button size="sm" asChild className="w-full">
-          <Link href="/cloud/new">
+          <Link href="/user/environments/new">
             <Plus className="size-4" />
             Create Environment
           </Link>
@@ -87,7 +87,7 @@ export function AddToCloud({ packageName, version }: AddToCloudProps) {
                   </div>
                 ) : (
                   <Link
-                    href={`/cloud/${env.id}?${addParams.toString()}`}
+                    href={`/user/environments/${env.id}?${addParams.toString()}`}
                     className="flex items-center gap-2"
                   >
                     <Cloud className="text-muted-foreground size-4" />
