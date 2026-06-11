@@ -8,7 +8,7 @@ import type { DefaultDrive, LogLevel, PHConnectRuntimeConfig } from './types'
 export type DefaultConnectConfig = {
   branding: {
     appName: string
-    homeBackground: { avif?: string; png?: string } | null
+    homeBackground: string | null
   }
   app: {
     logLevel: LogLevel
@@ -16,6 +16,7 @@ export type DefaultConnectConfig = {
   }
   packages: {
     externalEnabled: boolean
+    liveReload: boolean
   }
   drives: {
     allowAddDrive: boolean
@@ -29,6 +30,11 @@ export type DefaultConnectConfig = {
     url: string
     networkId: string
     chainId: number
+  }
+  sentry: {
+    dsn: string | null
+    env: string
+    tracing: boolean
   }
 }
 
@@ -58,6 +64,7 @@ export const DEFAULT_CONNECT_CONFIG: DefaultConnectConfig = {
   },
   packages: {
     externalEnabled: true,
+    liveReload: false,
   },
   drives: {
     allowAddDrive: true,
@@ -71,6 +78,11 @@ export const DEFAULT_CONNECT_CONFIG: DefaultConnectConfig = {
     url: 'https://www.renown.id',
     networkId: 'eip155',
     chainId: 1,
+  },
+  sentry: {
+    dsn: null,
+    env: 'dev',
+    tracing: false,
   },
 }
 

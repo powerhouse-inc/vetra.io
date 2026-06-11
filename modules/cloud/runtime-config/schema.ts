@@ -35,13 +35,8 @@ export const defaultDriveSchema = z
   })
   .strict()
 
-export const homeBackgroundSchema = z
-  .object({
-    avif: z.string().optional(),
-    png: z.string().optional(),
-  })
-  .strict()
-  .nullable()
+/** URL or path of the home-screen hero image; null uses the bundled default. */
+export const homeBackgroundSchema = z.string().nullable()
 
 export const brandingSchema = z
   .object({
@@ -60,6 +55,7 @@ export const appSchema = z
 export const packagesSchema = z
   .object({
     externalEnabled: z.boolean().optional(),
+    liveReload: z.boolean().optional(),
   })
   .strict()
 
@@ -86,6 +82,14 @@ export const renownSchema = z
   })
   .strict()
 
+export const sentrySchema = z
+  .object({
+    dsn: z.string().nullable().optional(),
+    env: z.string().optional(),
+    tracing: z.boolean().optional(),
+  })
+  .strict()
+
 export const connectRuntimeConfigSchema = z
   .object({
     branding: brandingSchema.optional(),
@@ -93,6 +97,7 @@ export const connectRuntimeConfigSchema = z
     packages: packagesSchema.optional(),
     drives: drivesSchema.optional(),
     renown: renownSchema.optional(),
+    sentry: sentrySchema.optional(),
   })
   .strict()
 
@@ -115,19 +120,7 @@ export const connectRuntimeConfigJsonSchema = {
       additionalProperties: false,
       properties: {
         appName: { type: 'string' },
-        homeBackground: {
-          oneOf: [
-            { type: 'null' },
-            {
-              type: 'object',
-              additionalProperties: false,
-              properties: {
-                avif: { type: 'string' },
-                png: { type: 'string' },
-              },
-            },
-          ],
-        },
+        homeBackground: { type: ['string', 'null'] },
       },
     },
     app: {
@@ -143,6 +136,7 @@ export const connectRuntimeConfigJsonSchema = {
       additionalProperties: false,
       properties: {
         externalEnabled: { type: 'boolean' },
+        liveReload: { type: 'boolean' },
       },
     },
     drives: {
@@ -200,6 +194,15 @@ export const connectRuntimeConfigJsonSchema = {
         url: { type: 'string' },
         networkId: { type: 'string' },
         chainId: { type: 'number' },
+      },
+    },
+    sentry: {
+      type: 'object',
+      additionalProperties: false,
+      properties: {
+        dsn: { type: ['string', 'null'] },
+        env: { type: 'string' },
+        tracing: { type: 'boolean' },
       },
     },
   },

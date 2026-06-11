@@ -140,7 +140,7 @@ function BrandingSection({ form, overrides }: SectionProps) {
     <SectionCard
       icon={Tag}
       title="Branding"
-      description="App name shown in the browser tab and in-app brand text."
+      description="App name shown in the browser tab and home-screen visual branding."
     >
       <TextField
         form={form}
@@ -148,6 +148,15 @@ function BrandingSection({ form, overrides }: SectionProps) {
         path="branding.appName"
         label="App name"
         placeholder={DEFAULT_CONNECT_CONFIG.branding.appName}
+      />
+      <TextField
+        form={form}
+        overrides={overrides}
+        path="branding.homeBackground"
+        label="Home background"
+        description="URL of the hero image on the empty home screen. Leave empty for the bundled default."
+        placeholder="https://example.com/background.png"
+        mono
       />
     </SectionCard>
   )
@@ -440,11 +449,13 @@ function TextField({
   overrides,
   path,
   label,
+  description,
   placeholder,
   mono,
 }: SectionProps & {
   path: Path<ConnectRuntimeConfigFormValues>
   label: string
+  description?: string
   placeholder?: string
   mono?: boolean
 }) {
@@ -455,7 +466,7 @@ function TextField({
       name={path}
       render={({ field }) => (
         <FormItem>
-          <FieldShell label={label} overridden={overridden}>
+          <FieldShell label={label} overridden={overridden} description={description}>
             <Input
               placeholder={placeholder}
               className={mono ? 'font-mono text-sm' : 'text-sm'}
@@ -623,6 +634,8 @@ function buildFormValues(overrides: PHConnectRuntimeConfig): ConnectRuntimeConfi
   return {
     branding: {
       appName: overrides.branding?.appName ?? DEFAULT_CONNECT_CONFIG.branding.appName,
+      homeBackground:
+        overrides.branding?.homeBackground ?? DEFAULT_CONNECT_CONFIG.branding.homeBackground,
     },
     app: {
       logLevel: overrides.app?.logLevel ?? DEFAULT_CONNECT_CONFIG.app.logLevel,
@@ -682,6 +695,12 @@ function pruneToOverrides(values: ConnectRuntimeConfigFormValues): PHConnectRunt
     values.branding.appName !== DEFAULT_CONNECT_CONFIG.branding.appName
   ) {
     branding.appName = values.branding.appName
+  }
+  // Default is null (bundled image), so any non-empty string is an override;
+  // an emptied field falls back to the default rather than writing "".
+  const homeBackground = values.branding?.homeBackground
+  if (typeof homeBackground === 'string' && homeBackground.length > 0) {
+    branding.homeBackground = homeBackground
   }
   if (Object.keys(branding).length > 0) out.branding = branding
 

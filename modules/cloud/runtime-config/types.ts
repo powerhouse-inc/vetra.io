@@ -25,10 +25,8 @@ export type DefaultDrive = {
   icon?: string | null
 }
 
-export type HomeBackground = {
-  avif?: string
-  png?: string
-} | null
+/** Hero image on the empty home screen. URL or path; null/omitted uses the bundled default image. */
+export type HomeBackground = string | null
 
 export type ConnectBranding = {
   appName?: string
@@ -42,6 +40,7 @@ export type ConnectApp = {
 
 export type ConnectPackages = {
   externalEnabled?: boolean
+  liveReload?: boolean
 }
 
 export type ConnectDrives = {
@@ -60,12 +59,20 @@ export type ConnectRenown = {
   chainId?: number
 }
 
+export type ConnectSentry = {
+  /** Sentry DSN URL. null disables Sentry entirely. */
+  dsn?: string | null
+  env?: string
+  tracing?: boolean
+}
+
 export type PHConnectRuntimeConfig = {
   branding?: ConnectBranding
   app?: ConnectApp
   packages?: ConnectPackages
   drives?: ConnectDrives
   renown?: ConnectRenown
+  sentry?: ConnectSentry
 }
 
 /**
