@@ -49,18 +49,37 @@ async function scanProducts(
   return Promise.all(
     matches.map(async ({ env, service }): Promise<StudioProduct> => {
       const subdomain = env.state.genericSubdomain ?? ''
-      const [brand, groups] = await Promise.all([
-        fetchProductBrand({ subdomain, prefix: service.prefix, token }),
-        fetchClintRuntimeEndpointsByEnv(subdomain, env.id, token).catch(() => []),
-      ])
+      // Ask switchboard for readiness FIRST, and only touch the per-tenant
+      // host (for the brand) once it reports a live website endpoint.
+      //
+      // Why: fetchProductBrand does a browser fetch to
+      // https://<prefix>.<subdomain>.vetra.io. For a just-created product the
+      // DNS record doesn't exist yet (external-dns creates it after the
+      // ingress is admitted), so the browser's lookup returns NXDOMAIN and the
+      // resolver NEGATIVE-CACHES it for the vetra.io zone's SOA minimum (1h).
+      // That poisoned cache then breaks the user's actual navigation to the
+      // studio for up to an hour. switchboard's pull-worker only reports
+      // endpoints after it has itself reached the agent over that same public
+      // host, so a 'ready' status guarantees the host already resolves —
+      // making this the safe moment for the browser to hit it.
+      const groups = await fetchClintRuntimeEndpointsByEnv(
+        subdomain,
+        env.id,
+        token,
+      ).catch(() => [])
       const group = groups.find((g) => g.prefix === service.prefix)
+      const status = deriveProductStatus(group)
+      const brand =
+        status === 'ready'
+          ? await fetchProductBrand({ subdomain, prefix: service.prefix, token })
+          : null
       return {
         envId: env.id,
         subdomain,
         prefix: service.prefix,
         label: env.state.label ?? env.name,
         brand,
-        status: deriveProductStatus(group),
+        status,
       }
     }),
   )
