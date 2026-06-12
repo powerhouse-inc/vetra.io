@@ -18,6 +18,7 @@ declare module '@powerhousedao/vetra-builder-package/document-models' {
       id: string
       ethAddress?: string
       name?: string
+      phid?: string
       profileImage?: string
     }): void
     removeMember(i: { id: string }): void

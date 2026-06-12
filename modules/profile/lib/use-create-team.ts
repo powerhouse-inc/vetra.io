@@ -26,34 +26,40 @@ export type CreateTeamForm = {
 // `window.ph.reactorClient` which vetra.to never initialises (vetra.to talks
 // to the remote switchboard via GraphQL, not via a browser-resident
 // reactor), and it silently drops the id/slug arguments anyway.
-function buildTeamDriveDocument(args: { id: string; slug: string; name: string }) {
+function buildTeamDriveDocument(args: { id: string; slug: string; name: string }): Record<string, unknown> {
   const doc = driveCreateDocument({
     global: { name: args.name, icon: null, nodes: [] },
   })
   doc.header.id = args.id
-  doc.header.slug = args.slug
   doc.header.name = args.name
-  return doc
+  // `slug` is a top-level document field in the reactor GraphQL schema (not
+  // inside `header`). Spreading it at the root ensures the switchboard
+  // registers the drive with the correct slug.
+  return { ...(doc as unknown as Record<string, unknown>), slug: args.slug }
 }
 
-async function waitForSlug(slug: string, timeoutMs: number): Promise<void> {
+// Poll until the relational-DB read model reflects the newly created team.
+// Returns true if found within the timeout, false if the processor is still
+// catching up (the team was created successfully either way).
+async function waitForSlug(slug: string, timeoutMs: number): Promise<boolean> {
   const start = Date.now()
   while (Date.now() - start < timeoutMs) {
     try {
       const team = await fetchBuilderTeamBySlug(slug)
-      if (team) return
+      if (team) return true
     } catch {
       // ignore transient errors and keep polling
     }
     await new Promise((r) => setTimeout(r, 500))
   }
+  return false
 }
 
 export function useCreateTeam() {
   const { signer } = useCanSign()
 
   const createTeam = useCallback(
-    async (form: CreateTeamForm): Promise<{ documentId: string }> => {
+    async (form: CreateTeamForm): Promise<{ documentId: string; indexed: boolean }> => {
       if (!signer) {
         throw new Error('You must be logged in with Renown to create a team')
       }
@@ -73,9 +79,7 @@ export function useCreateTeam() {
         name: form.name,
       })
       try {
-        await client.CreateDocument({
-          document: driveDocument as unknown as Record<string, unknown>,
-        })
+        await client.CreateDocument({ document: driveDocument })
       } catch (err) {
         const message = err instanceof Error ? err.message : String(err)
         if (!/already exists/i.test(message)) {
@@ -109,8 +113,11 @@ export function useCreateTeam() {
 
       const result = await controller.push()
       const documentId = result.remoteDocument.id
-      await waitForSlug(form.slug, 5000)
-      return { documentId }
+      // Give the async processor up to 10 s to index the team. The team is
+      // created regardless — `indexed: false` just means the page may need to
+      // show a "still loading" state instead of instant content.
+      const indexed = await waitForSlug(form.slug, 10_000)
+      return { documentId, indexed }
     },
     [signer],
   )

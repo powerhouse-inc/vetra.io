@@ -19,6 +19,7 @@ export type BuilderTeamActions = {
     id: string
     ethAddress?: string
     name?: string
+    phid?: string
     profileImage?: string
   }): void
   removeMember(i: { id: string }): void

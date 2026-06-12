@@ -1,20 +1,20 @@
 'use client'
 import { Check, Loader2, X } from 'lucide-react'
-import { useSlugAvailability } from '@/modules/profile/lib/use-slug-availability'
-import { isValidSlug, slugify } from '@/modules/profile/lib/validations'
+import type { SlugStatus } from '@/modules/profile/lib/use-slug-availability'
+import { slugify } from '@/modules/profile/lib/validations'
 import { cn } from '@/modules/shared/lib/utils'
 
 export function StepIdentity({
   name,
   slug,
+  slugStatus,
   onChange,
 }: {
   name: string
   slug: string
+  slugStatus: SlugStatus
   onChange: (next: { name: string; slug: string }) => void
 }) {
-  const slugStatus = useSlugAvailability(slug, isValidSlug(slug))
-
   return (
     <div className="space-y-6">
       <div>
@@ -40,7 +40,7 @@ export function StepIdentity({
           <label htmlFor="team-slug" className="text-sm font-medium">
             URL slug
           </label>
-          <SlugStatus status={slugStatus} />
+          <SlugStatusBadge status={slugStatus} />
         </div>
         <div className="bg-background focus-within:ring-primary flex items-stretch rounded-md border focus-within:ring-2">
           <span className="text-muted-foreground border-r px-3 py-2 text-sm">
@@ -63,7 +63,7 @@ export function StepIdentity({
   )
 }
 
-function SlugStatus({ status }: { status: 'idle' | 'checking' | 'available' | 'taken' | 'error' }) {
+function SlugStatusBadge({ status }: { status: SlugStatus }) {
   if (status === 'idle') return null
   const map = {
     checking: {

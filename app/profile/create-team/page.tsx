@@ -105,8 +105,11 @@ function CreateTeamInner() {
         ...form,
         members: form.members.filter((m) => m.address !== ''),
       }
-      await createTeam(cleaned)
-      toast?.('Team created', { type: 'success' })
+      const { indexed } = await createTeam(cleaned)
+      toast?.(
+        indexed ? 'Team created' : 'Team created — it may take a moment to appear',
+        { type: 'success' },
+      )
       router.push(`/builders/${form.slug}`)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Something went wrong'
@@ -128,6 +131,7 @@ function CreateTeamInner() {
         <StepIdentity
           name={form.name}
           slug={form.slug}
+          slugStatus={slugStatus}
           onChange={(v) => setForm((f) => ({ ...f, ...v }))}
         />
       )}
