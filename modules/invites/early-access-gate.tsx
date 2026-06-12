@@ -15,7 +15,7 @@ import {
   MessageCircle,
   Terminal,
 } from 'lucide-react'
-import { PENDING_CODE_KEY } from '@/modules/invites/lib/constants'
+import { ACCESS_GRANTED_KEY, PENDING_CODE_KEY } from '@/modules/invites/lib/constants'
 import {
   getRenownToken,
   inviteCodeValid,
@@ -25,6 +25,28 @@ import {
 
 const DISCORD_URL = 'https://discord.gg/Py28EMafEr'
 const CURL_CMD = 'curl -fsSL https://get.vetra.io | sh'
+
+/** Whether this browser has a cached early-access grant. */
+function readGranted(): boolean {
+  if (typeof window === 'undefined') return false
+  try {
+    return localStorage.getItem(ACCESS_GRANTED_KEY) === '1'
+  } catch {
+    return false
+  }
+}
+
+/** Persist (or clear) the cached early-access grant for this browser. */
+function writeGranted(granted: boolean): void {
+  if (typeof window === 'undefined') return
+  try {
+    if (granted) localStorage.setItem(ACCESS_GRANTED_KEY, '1')
+    else localStorage.removeItem(ACCESS_GRANTED_KEY)
+  } catch {
+    // Storage unavailable (private mode / blocked) — revalidation still works,
+    // the user just won't get the fast-path on the next load.
+  }
+}
 
 type Step = 'gate' | 'login' | 'granted'
 
@@ -47,14 +69,29 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   // validating a code on the gate form never flashes the splash.
   const [finalizing, setFinalizing] = useState(false)
 
+  // Returning user who already cleared the gate on this browser: reveal the
+  // studio immediately (no splash) and let the effect below revalidate quietly.
+  // Read on mount rather than during render — localStorage is unavailable during
+  // SSR, so a render-time read would hydration-mismatch.
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- syncing from localStorage, hydration-safe
+    if (readGranted()) setStep('granted')
+  }, [])
+
   // After a Renown login completes (same tab, ?user=… redirect), finish the
   // flow: redeem a pending code, or recognise a returning user who's already in.
+  // Runs whenever auth becomes authorized; for a cached grant it revalidates in
+  // the background, so only first-time grants and post-login redemptions wait
+  // behind the splash.
   useEffect(() => {
-    if (auth.status !== 'authorized' || step === 'granted') return
+    if (auth.status !== 'authorized') return
     let cancelled = false
 
     const finalize = async () => {
-      setFinalizing(true)
+      const cachedGrant = readGranted()
+      // No splash when we already have a cached grant — the studio is already
+      // showing and we're just confirming access hasn't been revoked.
+      if (!cachedGrant) setFinalizing(true)
       try {
         const token = await getRenownToken()
         if (!token) return
@@ -64,6 +101,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
           const redeemed = await redeemInviteCode(pending, token)
           if (redeemed?.allowed) {
             sessionStorage.removeItem(PENDING_CODE_KEY)
+            writeGranted(true)
             if (!cancelled) setStep('granted')
             return
           }
@@ -71,11 +109,20 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
           // fall through to the status check.
         }
 
-        // No pending code (or it failed) — maybe they're already a redeemed user.
+        // No pending code (or it failed) — confirm whether they're a redeemed user.
         const status = await myAccessStatus(token)
-        if (!cancelled && status?.allowed) {
+        if (cancelled) return
+        if (status?.allowed) {
+          writeGranted(true)
           setStep('granted')
+        } else if (status && !status.allowed) {
+          // Explicit denial (e.g. access revoked) — drop the cached grant and
+          // send them back to the gate.
+          writeGranted(false)
+          setStep('gate')
         }
+        // status === null → transient network failure; leave the current view
+        // untouched rather than gating a user who legitimately has access.
       } finally {
         if (!cancelled) setFinalizing(false)
       }
@@ -85,7 +132,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [auth.status, step])
+  }, [auth.status])
 
   const handleGetAccess = async () => {
     const entered = code.trim()
