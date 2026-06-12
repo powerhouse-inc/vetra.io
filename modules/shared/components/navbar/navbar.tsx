@@ -11,9 +11,9 @@ import { getNavbarConfig, PRIVATE_NAV_ITEMS, PUBLIC_NAV_ITEMS } from './navbar-c
 
 function AuthAwareNavItems({ pathname }: { pathname: string }) {
   const auth = useRenownAuth()
-  const isPublicRoute = pathname === '/'
+  const isUserRoute = pathname === '/user' || pathname.startsWith('/user/')
   const navItems =
-    !isPublicRoute && auth.status === 'authorized' ? PRIVATE_NAV_ITEMS : PUBLIC_NAV_ITEMS
+    isUserRoute && auth.status === 'authorized' ? PRIVATE_NAV_ITEMS : PUBLIC_NAV_ITEMS
   return (
     <>
       <NavbarItemsDesk navItems={navItems} pathname={pathname} />
