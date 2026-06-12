@@ -24,7 +24,7 @@ export function useTeamMembers(team: FullTeam | null | undefined) {
         })
         const id = generateId()
         controller.addMember({ id })
-        controller.updateMemberInfo({ id, ethAddress })
+        controller.updateMemberInfo({ id, ethAddress: ethAddress.toLowerCase() })
         await controller.push()
         await qc.invalidateQueries({ queryKey: ['team-by-slug'] })
       } finally {

@@ -17,9 +17,10 @@ function isValidTab(v: string | null): v is ProfileTab {
 interface ProfileTabsProps {
   address: string
   basePath?: string
+  showSettings?: boolean
 }
 
-export function ProfileTabs({ address, basePath = '/profile' }: ProfileTabsProps) {
+export function ProfileTabs({ address, basePath = '/profile', showSettings = true }: ProfileTabsProps) {
   const router = useRouter()
   const params = useSearchParams()
   const rawTab = params.get('tab')
@@ -36,16 +37,18 @@ export function ProfileTabs({ address, basePath = '/profile' }: ProfileTabsProps
 
   return (
     <Tabs value={active} onValueChange={onChange} className="w-full">
-      <TabsList className="mb-6 grid w-full grid-cols-3 sm:inline-flex sm:w-auto">
+      <TabsList className={`mb-6 grid w-full ${showSettings ? 'grid-cols-3' : 'grid-cols-2'} sm:inline-flex sm:w-auto`}>
         <TabsTrigger value="packages" className="gap-1.5">
           <Package className="size-4" /> Packages
         </TabsTrigger>
         <TabsTrigger value="teams" className="gap-1.5">
           <Users className="size-4" /> Teams
         </TabsTrigger>
-        <TabsTrigger value="settings" className="gap-1.5">
-          <Settings className="size-4" /> Profile settings
-        </TabsTrigger>
+        {showSettings && (
+          <TabsTrigger value="settings" className="gap-1.5">
+            <Settings className="size-4" /> Profile settings
+          </TabsTrigger>
+        )}
       </TabsList>
 
       <TabsContent value="packages">
@@ -54,9 +57,11 @@ export function ProfileTabs({ address, basePath = '/profile' }: ProfileTabsProps
       <TabsContent value="teams">
         <TeamsTab address={address} />
       </TabsContent>
-      <TabsContent value="settings">
-        <SettingsTab />
-      </TabsContent>
+      {showSettings && (
+        <TabsContent value="settings">
+          <SettingsTab />
+        </TabsContent>
+      )}
     </Tabs>
   )
 }

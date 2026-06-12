@@ -1,18 +1,13 @@
 'use client'
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
-import { Loader2, Plus } from 'lucide-react'
-import Link from 'next/link'
-import { useSearchParams } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
 import { Suspense } from 'react'
 import { useEnsureUserDrive } from '@/modules/profile/lib/use-ensure-user-drive'
-import { Button } from '@/modules/shared/components/ui/button'
 import { LoginPrompt } from '@/app/profile/components/login-prompt'
-import { ProfileTabs } from '@/app/profile/components/profile-tabs'
+import { PackagesTab } from '@/app/profile/components/packages-tab'
 
 function UserPackagesPageInner() {
   const auth = useRenownAuth()
-  const params = useSearchParams()
-  const showCreateButton = (params.get('tab') ?? 'packages') === 'teams'
   useEnsureUserDrive()
 
   if (auth.status === 'loading' || auth.status === 'checking') {
@@ -32,24 +27,14 @@ function UserPackagesPageInner() {
   }
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8">
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">My profile</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Packages you&apos;ve published, teams you&apos;re a member of, and account settings.
-          </p>
-        </div>
-        {showCreateButton && (
-          <Button asChild>
-            <Link href="/profile/create-team">
-              <Plus className="mr-1.5 size-4" />
-              Create team
-            </Link>
-          </Button>
-        )}
+    <div className="container mx-auto max-w-5xl px-4 pt-20 pb-8">
+      <div className="mb-8">
+        <h1 className="text-2xl font-bold tracking-tight">Packages</h1>
+        <p className="text-muted-foreground mt-1 text-sm">
+          Packages you&apos;ve published.
+        </p>
       </div>
-      <ProfileTabs address={auth.address} basePath="/user/packages" />
+      <PackagesTab />
     </div>
   )
 }
