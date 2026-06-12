@@ -15,8 +15,8 @@ export const STUDIO_AGENT_PACKAGE = 'vetra-cli'
 export const STUDIO_AGENT_VERSION = '0.0.1-dev.18'
 /** Default agent prefix for a freshly-provisioned studio (manifest agent.id). */
 export const STUDIO_AGENT_PREFIX = 'vetra-agent'
-/** Studio agents only support XL/XXL; v1 provisions XL. */
-export const STUDIO_AGENT_SIZE: CloudResourceSize = 'VETRA_AGENT_XL'
+/** Studio agents only support XL/XXL; v1 provisions XXL. */
+export const STUDIO_AGENT_SIZE: CloudResourceSize = 'VETRA_AGENT_XXL'
 /** Manifest serviceCommand for vetra-cli. */
 export const STUDIO_SERVICE_COMMAND = 'vetra'
 export const STUDIO_REGISTRY = 'https://registry.dev.vetra.io'
