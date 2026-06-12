@@ -3,8 +3,20 @@ import { describe, expect, it, vi } from 'vitest'
 import { render } from '@testing-library/react'
 
 vi.mock('next/link', () => ({
-  default: ({ href, children }: { href: string; children: ReactNode }) => (
-    <a href={href}>{children}</a>
+  default: ({
+    href,
+    target,
+    rel,
+    children,
+  }: {
+    href: string
+    target?: string
+    rel?: string
+    children: ReactNode
+  }) => (
+    <a href={href} target={target} rel={rel}>
+      {children}
+    </a>
   ),
 }))
 
@@ -25,12 +37,15 @@ const base: StudioProduct = {
 }
 
 describe('StudioProductCard', () => {
-  it('shows brand title/tagline/description and links to the env', () => {
+  it('shows brand title/tagline/description and links to the env in a new tab', () => {
     const { container, getByText } = render(<StudioProductCard product={base} />)
     getByText('Concord')
     getByText('Share the burden.')
     getByText('Coordinates procurement.')
-    expect(container.querySelector('a')?.getAttribute('href')).toBe('/studio/env1')
+    const link = container.querySelector('a')
+    expect(link?.getAttribute('href')).toBe('/studio/env1')
+    expect(link?.getAttribute('target')).toBe('_blank')
+    expect(link?.getAttribute('rel')).toBe('noopener noreferrer')
   })
   it('falls back to the env label when no brand, and shows Starting for booting', () => {
     const { getByText } = render(

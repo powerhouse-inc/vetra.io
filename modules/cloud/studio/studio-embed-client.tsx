@@ -1,10 +1,20 @@
 'use client'
 
+import { useEffect } from 'react'
 import Link from 'next/link'
 import { CloudLanding } from '@/modules/cloud/components/cloud-landing'
 import { StudioBootScreen } from './components/studio-boot-screen'
-import { StudioFrame } from './components/studio-frame'
 import { useStudioProductEmbed } from './use-studio-product-embed'
+
+// Once the agent is up and its URL is reachable, hand the tab off to the studio.
+// `replace` (not `assign`) keeps this intermediate route out of history, so Back
+// returns to the products grid rather than bouncing through here again.
+function StudioRedirect({ embedUrl }: { embedUrl: string }) {
+  useEffect(() => {
+    window.location.replace(embedUrl)
+  }, [embedUrl])
+  return <StudioBootScreen title="Opening Vetra Studio…" />
+}
 
 export function StudioEmbedClient({ envId }: { envId: string }) {
   const { status, embedUrl } = useStudioProductEmbed(envId)
@@ -31,6 +41,6 @@ export function StudioEmbedClient({ envId }: { envId: string }) {
         />
       )
     case 'ready':
-      return embedUrl ? <StudioFrame embedUrl={embedUrl} /> : <StudioBootScreen title="Opening…" />
+      return embedUrl ? <StudioRedirect embedUrl={embedUrl} /> : <StudioBootScreen title="Opening…" />
   }
 }

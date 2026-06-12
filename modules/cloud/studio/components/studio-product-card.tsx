@@ -9,6 +9,8 @@ export function StudioProductCard({ product }: { product: StudioProduct }) {
   return (
     <Link
       href={`/studio/${product.envId}`}
+      target="_blank"
+      rel="noopener noreferrer"
       className="border-border hover:border-foreground/30 bg-card flex flex-col rounded-xl border p-5 transition-colors"
     >
       <div className="flex items-start gap-3">
