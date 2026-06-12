@@ -12,7 +12,7 @@ export const STUDIO_AGENT_PACKAGE = 'vetra-cli'
  * verified, or switch back to undefined (= latest) once `latest` tracks a
  * working build.
  */
-export const STUDIO_AGENT_VERSION = '0.0.1-dev.14'
+export const STUDIO_AGENT_VERSION = '0.0.1-dev.15'
 /** Default agent prefix for a freshly-provisioned studio (manifest agent.id). */
 export const STUDIO_AGENT_PREFIX = 'vetra-agent'
 /** Studio agents only support XL/XXL; v1 provisions XL. */
