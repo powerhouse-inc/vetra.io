@@ -12,7 +12,7 @@ const faqs = [
   {
     question: 'What can I do with Vetra?',
     answer:
-      'Vetra lets you build software for your team using a simple chat interface — no coding required. Describe the workflow you need (a hiring tracker, a project board, a client portal) and Vetra sets it up. You can also browse ready-made templates from the community and customize them to fit your needs.',
+      'Vetra lets you build software for your team using a simple chat interface — no coding required. Describe the workflow you need (a hiring tracker, a project board, a client portal) and Vetra sets it up. You can also browse ready-made templates and packages from the community and customize them to fit your needs. Everything you build runs on a shared structured data layer that connects your APIs, identity, AI, and the content your team creates every day.',
   },
   {
     question: 'How do I get started?',
@@ -27,20 +27,30 @@ const faqs = [
         >
           Vetra Academy
         </a>{' '}
-        for step-by-step guides. You can also sign up for Vetra Cloud and explore the platform
-        hands-on — no setup required. Most teams are up and running within an hour.
+        for step-by-step guides. You can also sign up with one of our access codes and explore the
+        Vetra Studio hands-on — no setup required. Most teams are up and running within an hour.
       </>
     ),
   },
   {
     question: 'Do I need to know how to code?',
     answer:
-      "No. Vetra is designed so that anyone on your team can use it through a chat-style interface. Just describe what you need in plain language. If you are a developer, you also have full access to the underlying code and can customize everything — but it's completely optional.",
+      "No. Vetra is designed so that anyone on your team can use it through a chat-style interface in the Vetra Studio. Just describe what you need in plain language. If you are a developer, you can also dive into the underlying code and customize everything — but it's completely optional.",
   },
   {
     question: 'Is Vetra open source?',
     answer:
       'Yes, Vetra is fully open source under a copyleft license. Copyleft means that if you modify the code and distribute it, you must share those changes under the same open terms — keeping the ecosystem open for everyone. In practice this means you can inspect every line of code, modify it, and run it on your own servers freely. Unlike most AI tools, the platform itself is open — not just the apps it creates.',
+  },
+  {
+    question: 'How does AI work in Vetra? Can I use my own model?',
+    answer:
+      'Vetra uses AI agents to help you build, automate, and reason about your work. You can use Vetra\'s built-in AI out of the box. If you prefer to bring your own API key or run a self-hosted open-source model, that support is coming soon — so you stay in control of which model processes your data and what it costs. We believe AI should be a tool you own, not a vendor dependency.',
+  },
+  {
+    question: 'What connects everything inside Vetra?',
+    answer:
+      'At the core of Vetra is a shared structured data layer. Every workspace, document, and workflow your team creates is stored in an open, typed format that is readable by the API, your identity layer, and AI agents alike. This means your AI assistant can reason over your actual work, your integrations can query it without custom glue code, and your data stays meaningful and portable over time — rather than locked inside a proprietary database schema.',
   },
   {
     question: 'How can I get help?',
@@ -71,17 +81,17 @@ const faqs = [
   {
     question: 'Can I connect Vetra to other tools?',
     answer:
-      'Yes. Vetra is built to work alongside your existing tools. You can connect it to calendars, databases, external APIs, and more. The platform is designed to be extended, so you can add integrations as your needs grow.',
+      'Yes. Vetra is built to work alongside your existing tools. You can build custom integrations and connect it to calendars, databases, external APIs, and more. The platform is designed to be extended, so you can add integrations as your needs grow.',
   },
   {
     question: 'What is Vetra Cloud?',
     answer:
-      'Vetra Cloud is our hosted option — we run everything for you so you can focus on building. It handles storage, scaling, and backups automatically. If you prefer, you can also run Vetra on your own servers at any time.',
+      'Vetra Cloud is our hosted option — we run everything for you so you can focus on building. It handles storage, scaling, and backups automatically. If you prefer, you can also run Vetra on your own servers at any time. We deliberately avoid hyperscaler and big-tech services and run on an independent, open-source infrastructure stack — so your data never ends up enriching platforms with competing interests. You get managed hosting without the lock-in that usually comes with it.',
   },
   {
     question: 'Can I move my data if I decide to leave?',
     answer:
-      'Always. Your data is yours and is always portable. You can export it, move it to your own servers, or switch providers at any time. There are no hidden dependencies or lock-in.',
+      'Always. Your data is stored in an open structured format and is fully portable. You can export it, self-host it, or move it to another provider at any time. Vetra is built on the principle that sovereign infrastructure means you are never dependent on a single vendor — not for your data, your identity, or your compute.',
   },
   {
     question: 'How can I contribute?',
@@ -104,12 +114,12 @@ const faqs = [
   {
     question: 'Does Vetra support blockchain or crypto wallets?',
     answer:
-      'Yes. If your team needs it, Vetra supports logging in with a crypto wallet (Ethereum or Solana) and storing records on the blockchain. This is entirely optional — most teams never need it, but it is there if you do.',
+      'Yes. If your team needs it, Vetra supports logging in with a crypto wallet and storing records on the blockchain. This is entirely optional — most teams never need it, but it is there if you do.',
   },
 ]
 
-const leftColumn = faqs.slice(0, 5)
-const rightColumn = faqs.slice(5, 10)
+const leftColumn = faqs.slice(0, 6)
+const rightColumn = faqs.slice(6, 12)
 
 export function FaqSection() {
   return (

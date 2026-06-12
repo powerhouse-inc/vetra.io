@@ -13,22 +13,17 @@ export function CloudLandingFAQ() {
     {
       question: 'What is Vetra Cloud?',
       answer:
-        'Vetra Cloud is a comprehensive cloud infrastructure platform that provides scalable environments for modern applications build with Vetra. It offers automated deployment, monitoring, and management tools to help developers focus on building great products instead of managing infrastructure. It relies on open source technologies to avoid vendor lock-in or proprietary dependencies.',
+        'Vetra Cloud is a comprehensive cloud infrastructure platform that provides scalable environments for AI-ready applications build with Vetra. It offers automated deployment, monitoring, and management tools to help developers focus on building great products instead of managing infrastructure. It relies on open source technologies to avoid vendor lock-in or proprietary dependencies.',
     },
     {
       question: 'How do I get started with Vetra Cloud?',
       answer:
-        'Getting started is simple: create your account, connect your packages, and deploy your first application with our one-click deployment process. Our platform automatically handles the infrastructure setup, scaling, and monitoring so you can focus on your business logic.',
+        'Getting started is simple: Create your account, enter Vetra Studio, run through the product development workflow and create a product, deploy the package, and deploy your first application or software product with our one-click deployment process. Our platform automatically handles the infrastructure setup, scaling, and monitoring so you can focus on your business logic.',
     },
     {
       question: 'What are the pricing options?',
       answer:
-        'We offer flexible pricing tiers to suit different needs, from individual developers to large teams. Our plans include pay-as-you-scale options with transparent pricing for compute, storage, and bandwidth. Contact our team for enterprise pricing and custom solutions.',
-    },
-    {
-      question: 'What technologies and frameworks are supported?',
-      answer:
-        'Vetra Cloud supports a wide range of technologies including Node.js, Python, React, Next.js, Docker containers, and many more. Our platform is designed to be framework-agnostic and can run virtually any application that can be containerized.',
+        'As Vetra is currently in Beta we only offer dedicated access codes for our direct network. We offer flexible pricing tiers to suit different needs, from individual developers to large teams. Our plans include pay-as-you-scale options with transparent pricing for compute, storage, and bandwidth. Contact our team for enterprise pricing and custom solutions.',
     },
     {
       question: 'How secure is Vetra Cloud?',
@@ -48,12 +43,12 @@ export function CloudLandingFAQ() {
     {
       question: 'Can I self-host Vetra Cloud?',
       answer:
-        "Yes! Vetra Cloud is built on open-source technologies and can be self-hosted on your own infrastructure. We provide comprehensive documentation, Docker images, and deployment guides to help you set up your own instance. This gives you complete control over your data and infrastructure while still benefiting from Vetra's powerful features.",
+        "Yes! Vetra Cloud is built on open-source technologies and can be self-hosted on your own infrastructure. We will provide comprehensive documentation, Docker images, and deployment guides to help you set up your own instance. This gives you complete control over your data and infrastructure while still benefiting from Vetra's powerful features.",
     },
     {
       question: 'Is it E2EE and does it protect metadata privacy?',
       answer:
-        'Yes, Vetra Cloud is in the beta phase and will soon implement end-to-end encryption (E2EE) to ensure your data remains secure. We also protect metadata privacy through advanced encryption techniques, ensuring that not only your data content but also information about your data patterns and usage remains private.',
+        'Vetra Cloud is in the beta phase and will soon implement end-to-end encryption (E2EE) to ensure your data remains secure. We also protect metadata privacy through advanced encryption techniques, ensuring that not only your data content but also information about your data patterns and usage remains private.',
     },
     {
       question: 'What support options are available?',
