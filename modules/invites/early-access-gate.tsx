@@ -26,8 +26,6 @@ import {
 const DISCORD_URL = 'https://discord.gg/Py28EMafEr'
 const CURL_CMD = 'curl -fsSL https://get.vetra.io | sh'
 
-const BACKDROP = '/images/home/stack-connect-app.png'
-
 type Step = 'gate' | 'login' | 'granted'
 
 /**
@@ -141,10 +139,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   if (auth.status === 'loading' || auth.status === 'checking' || finalizing) {
     return (
       <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden">
-        <div className="absolute inset-0">
-          <Image src={BACKDROP} alt="" fill className="object-contain object-top" priority />
-          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-        </div>
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
         <div className="relative z-10 flex items-center gap-3 text-sm text-white/90">
           <Loader2 className="h-5 w-5 animate-spin" />
           Setting up your access…
@@ -157,10 +152,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden">
       {/* Backdrop */}
-      <div className="absolute inset-0">
-        <Image src={BACKDROP} alt="" fill className="object-contain object-top" priority />
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
-      </div>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
 
       <div className="relative z-10 mx-4 w-full max-w-[800px]">
         {step === 'gate' && (
