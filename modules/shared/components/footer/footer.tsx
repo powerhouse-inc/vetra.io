@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import VetraLogotype from '@/modules/shared/components/svgs/Vetra-logo-with-text-black.svg'
 import { PowerhouseLogoIsotype } from '../svgs'
 
 const footerLinks = {
@@ -52,13 +53,13 @@ function FooterLinkGroup({
 export function Footer() {
   return (
     <footer className="border-border bg-background border-t">
-      <div className="mx-auto max-w-5xl px-6 py-12">
+      <div className="mx-auto max-w-screen-xl px-6 py-12">
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
           <div>
-            <Link href="/" className="text-foreground text-lg font-bold">
-              VETRA
+            <Link href="/">
+              <VetraLogotype className="h-8 text-foreground" />
             </Link>
-            <p className="text-muted-foreground mt-2 text-sm">Build smarter, ship faster.</p>
+            <p className="text-muted-foreground mt-2 text-sm">Open by default. Sovereign by design.</p>
           </div>
           <FooterLinkGroup title="Product" links={footerLinks.product} />
           <FooterLinkGroup title="Resources" links={footerLinks.resources} />
@@ -74,10 +75,10 @@ export function Footer() {
             Powered by <PowerhouseLogoIsotype className="size-4" />
           </Link>
           <div className="text-muted-foreground flex gap-6 text-sm">
-            <Link href="/" className="hover:text-foreground transition-colors">
+            <Link href="/privacy-policy" className="hover:text-foreground transition-colors">
               Privacy Policy
             </Link>
-            <Link href="/" className="hover:text-foreground transition-colors">
+            <Link href="/terms-and-conditions" className="hover:text-foreground transition-colors">
               Terms & Conditions
             </Link>
           </div>

@@ -29,7 +29,7 @@ export function NavbarBrand({
             {typeof IsotypeLogo === 'function' && <IsotypeLogo className="h-8 w-8 md:hidden" />}
             {/* Show full logo with text on desktop */}
             {typeof Logotype === 'function' && (
-              <Logotype className={cn('hidden h-8 md:block', logotypeClassName)} />
+              <Logotype className={cn('hidden h-8 md:block text-foreground', logotypeClassName)} />
             )}
           </div>
         </Link>

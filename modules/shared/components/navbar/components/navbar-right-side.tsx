@@ -201,7 +201,7 @@ function NavbarRightSide() {
       <div className="hidden items-center gap-3 md:flex">
         <RenownButton />
         <Link
-          href="/studio"
+          href="/user"
           className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all hover:-translate-y-px"
         >
           Vetra Studio
