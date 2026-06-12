@@ -1,5 +1,5 @@
-import VetraLogoWithText from '@/modules/shared/components/svgs/vetra-logo-with-vetra.svg'
-import VetraIcon from '@/modules/shared/components/svgs/vetra-logo.svg'
+import VetraLogoWithText from '@/modules/shared/components/svgs/Vetra-logo-with-text-black.svg'
+import VetraIcon from '@/modules/shared/components/svgs/Vetra-200x200.svg'
 import type { NavItem, NavbarConfig } from './types'
 
 export const PUBLIC_NAV_ITEMS: NavItem[] = [

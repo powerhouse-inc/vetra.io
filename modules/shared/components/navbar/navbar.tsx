@@ -34,15 +34,15 @@ function Navbar() {
 
   return (
     <div className="border-border bg-background/80 fixed top-0 right-0 left-0 z-160 border-b backdrop-blur-xl">
-      <div className="mx-auto flex h-16 max-w-screen-xl items-center justify-between px-6">
-        <div className="flex items-center gap-6">
-          <NavbarBrand
-            isAchraPage={false}
-            isotypeLogo={Isotype}
-            logotype={Logotype}
-            logotypeClassName={logotypeClassName}
-            logoHref={logoHref}
-          />
+      <div className="mx-auto flex h-16 max-w-screen-xl items-center px-6">
+        <NavbarBrand
+          isAchraPage={false}
+          isotypeLogo={Isotype}
+          logotype={Logotype}
+          logotypeClassName={logotypeClassName}
+          logoHref={logoHref}
+        />
+        <div className="flex flex-1 justify-center">
           <AuthAwareNavItems pathname={pathname} />
         </div>
         <NavbarRightSide />
