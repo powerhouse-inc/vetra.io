@@ -223,7 +223,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
                     </div>
                     <p className="text-foreground text-sm font-semibold">I have an invite code</p>
                   </div>
-                  <p className="text-muted-foreground -mt-2 text-xs leading-relaxed">
+                  <p className="text-muted-foreground -mt-2 text-sm leading-relaxed">
                     Enter your code for immediate access to Vetra Cloud environments.
                   </p>
                   <div className="space-y-1.5">
@@ -263,7 +263,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
                       I don&apos;t have a code
                     </p>
                   </div>
-                  <p className="text-muted-foreground -mt-2 text-xs leading-relaxed">
+                  <p className="text-muted-foreground -mt-2 text-sm leading-relaxed">
                     Join the waitlist to be first in line when we open up more spots.
                   </p>
                   <form
@@ -311,7 +311,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
                   </div>
                   <p className="text-foreground text-sm font-semibold">Run it locally</p>
                 </div>
-                <p className="text-muted-foreground text-xs leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   No code needed. Spin up your own Vetra Cloud instance on your machine in seconds
                   with a single command.
                 </p>
@@ -334,7 +334,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
                     )}
                   </button>
                 </div>
-                <p className="text-muted-foreground text-xs leading-relaxed">
+                <p className="text-muted-foreground text-sm leading-relaxed">
                   Runs fully on your infrastructure. Supports Docker and Kubernetes out of the box.
                   Offline-first with peer-to-peer sync.
                 </p>
