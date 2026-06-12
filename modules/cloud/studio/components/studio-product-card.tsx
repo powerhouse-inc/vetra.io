@@ -1,18 +1,23 @@
 'use client'
 
-import Link from 'next/link'
 import { Boxes } from 'lucide-react'
 import type { StudioProduct } from '../use-studio-products'
 
-export function StudioProductCard({ product }: { product: StudioProduct }) {
+/**
+ * A product in the grid. When the agent is ready we link straight to its studio
+ * URL in a new tab; while it's still booting the card is inert (the agent host
+ * isn't reachable yet), and the "Starting…" badge communicates why.
+ */
+export function StudioProductCard({ product, href }: { product: StudioProduct; href: string }) {
   const title = product.brand?.title?.trim() || product.label || 'Untitled product'
-  return (
-    <Link
-      href={`/studio/${product.envId}`}
-      target="_blank"
-      rel="noopener noreferrer"
-      className="border-border hover:border-foreground/30 bg-card flex flex-col rounded-xl border p-5 transition-colors"
-    >
+  const isReady = product.status === 'ready'
+
+  const cardClass = `border-border bg-card flex flex-col rounded-xl border p-5 ${
+    isReady ? 'hover:border-foreground/30 transition-colors' : 'cursor-default opacity-80'
+  }`
+
+  const body = (
+    <>
       <div className="flex items-start gap-3">
         <div className="bg-muted flex h-10 w-10 shrink-0 items-center justify-center rounded-lg">
           <Boxes className="text-muted-foreground h-5 w-5" />
@@ -32,15 +37,25 @@ export function StudioProductCard({ product }: { product: StudioProduct }) {
       <div className="mt-4 flex items-center justify-between border-t pt-3">
         <span
           className={
-            product.status === 'ready'
+            isReady
               ? 'text-xs font-medium text-green-600'
               : 'text-muted-foreground text-xs font-medium'
           }
         >
-          {product.status === 'ready' ? 'Ready' : 'Starting…'}
+          {isReady ? 'Ready' : 'Starting…'}
         </span>
-        <span className="text-muted-foreground text-xs">Open →</span>
+        {isReady && <span className="text-muted-foreground text-xs">Open →</span>}
       </div>
-    </Link>
+    </>
+  )
+
+  if (!isReady) {
+    return <div className={cardClass}>{body}</div>
+  }
+
+  return (
+    <a href={href} target="_blank" rel="noopener noreferrer" className={cardClass}>
+      {body}
+    </a>
   )
 }
