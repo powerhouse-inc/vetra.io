@@ -3,13 +3,16 @@ import type { CloudResourceSize } from '@/modules/cloud/types'
 /** The package whose presence (as a CLINT agent) marks a Vetra Studio. */
 export const STUDIO_AGENT_PACKAGE = 'vetra-cli'
 /**
- * Pinned, known-good vetra-cli version. The `latest` dist-tag has pointed at
- * builds that crash on boot (e.g. dev.8: ERR_PACKAGE_PATH_NOT_EXPORTED for
- * `@powerhousedao/reactor-attachments/client` via ph-clint), so we pin
- * explicitly. Bump this when a newer build is verified, or switch back to
- * undefined (= latest) once `latest` tracks a working build.
+ * Pinned, known-good vetra-cli version. We pin explicitly because the `latest`
+ * dist-tag has pointed at builds that crash on boot (e.g. dev.8:
+ * ERR_PACKAGE_PATH_NOT_EXPORTED for `@powerhousedao/reactor-attachments/client`
+ * via ph-clint). dev.14 is the first build produced from vetra-cli's own
+ * Dockerfile (clint-image-builder in-job detection) and verified to build +
+ * push the clint-agent image end-to-end. Bump this when a newer build is
+ * verified, or switch back to undefined (= latest) once `latest` tracks a
+ * working build.
  */
-export const STUDIO_AGENT_VERSION = '0.0.1-dev.11'
+export const STUDIO_AGENT_VERSION = '0.0.1-dev.14'
 /** Default agent prefix for a freshly-provisioned studio (manifest agent.id). */
 export const STUDIO_AGENT_PREFIX = 'vetra-agent'
 /** Studio agents only support XL/XXL; v1 provisions XL. */

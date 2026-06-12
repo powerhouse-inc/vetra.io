@@ -50,7 +50,7 @@ describe('useCreateStudioEnvironment', () => {
     })
 
     expect(setOwner).toHaveBeenCalledWith({ address: '0xMe' })
-    expect(addPackage).toHaveBeenCalledWith({ packageName: 'vetra-cli', version: '0.0.1-dev.11' })
+    expect(addPackage).toHaveBeenCalledWith({ packageName: 'vetra-cli', version: '0.0.1-dev.14' })
     expect(enableService).toHaveBeenCalledOnce()
     expect(enableService.mock.calls[0][0]).toMatchObject({ type: 'CLINT', prefix: 'vetra-agent' })
 
