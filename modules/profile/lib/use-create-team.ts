@@ -105,10 +105,10 @@ export function useCreateTeam() {
       }
       // Creator first, then invited members.
       const allAddresses = [creatorAddress, ...form.members.map((m) => m.address)]
-      for (const ethAddress of allAddresses) {
+      for (const address of allAddresses) {
         const id = generateId()
         controller.addMember({ id })
-        controller.updateMemberInfo({ id, ethAddress })
+        controller.updateMemberInfo({ id, ethAddress: address.toLowerCase() })
       }
 
       const result = await controller.push()
