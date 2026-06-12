@@ -12,9 +12,7 @@ interface NavbarCenterProps {
 
 function NavbarItemsDesk({ navItems, pathname }: NavbarCenterProps) {
   return (
-    <nav
-      className="hidden items-center gap-12 px-12 lg:flex"
-    >
+    <nav className="hidden items-center gap-12 px-12 lg:flex">
       {navItems.map((item) => {
         return (
           <Link

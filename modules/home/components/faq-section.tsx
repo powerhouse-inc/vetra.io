@@ -45,7 +45,7 @@ const faqs = [
   {
     question: 'How does AI work in Vetra? Can I use my own model?',
     answer:
-      'Vetra uses AI agents to help you build, automate, and reason about your work. You can use Vetra\'s built-in AI out of the box. If you prefer to bring your own API key or run a self-hosted open-source model, that support is coming soon — so you stay in control of which model processes your data and what it costs. We believe AI should be a tool you own, not a vendor dependency.',
+      "Vetra uses AI agents to help you build, automate, and reason about your work. You can use Vetra's built-in AI out of the box. If you prefer to bring your own API key or run a self-hosted open-source model, that support is coming soon — so you stay in control of which model processes your data and what it costs. We believe AI should be a tool you own, not a vendor dependency.",
   },
   {
     question: 'What connects everything inside Vetra?',

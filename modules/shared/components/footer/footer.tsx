@@ -57,9 +57,11 @@ export function Footer() {
         <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-12">
           <div>
             <Link href="/">
-              <VetraLogotype className="h-8 text-foreground" />
+              <VetraLogotype className="text-foreground h-8" />
             </Link>
-            <p className="text-muted-foreground mt-2 text-sm">Open by default. Sovereign by design.</p>
+            <p className="text-muted-foreground mt-2 text-sm">
+              Open by default. Sovereign by design.
+            </p>
           </div>
           <FooterLinkGroup title="Product" links={footerLinks.product} />
           <FooterLinkGroup title="Resources" links={footerLinks.resources} />

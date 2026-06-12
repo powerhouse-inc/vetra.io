@@ -30,9 +30,7 @@ function UserPackagesPageInner() {
     <div className="container mx-auto max-w-5xl px-4 pt-20 pb-8">
       <div className="mb-8">
         <h1 className="text-2xl font-bold tracking-tight">Packages</h1>
-        <p className="text-muted-foreground mt-1 text-sm">
-          Packages you&apos;ve published.
-        </p>
+        <p className="text-muted-foreground mt-1 text-sm">Packages you&apos;ve published.</p>
       </div>
       <PackagesTab />
     </div>

@@ -20,7 +20,11 @@ interface ProfileTabsProps {
   showSettings?: boolean
 }
 
-export function ProfileTabs({ address, basePath = '/profile', showSettings = true }: ProfileTabsProps) {
+export function ProfileTabs({
+  address,
+  basePath = '/profile',
+  showSettings = true,
+}: ProfileTabsProps) {
   const router = useRouter()
   const params = useSearchParams()
   const rawTab = params.get('tab')
@@ -37,7 +41,9 @@ export function ProfileTabs({ address, basePath = '/profile', showSettings = tru
 
   return (
     <Tabs value={active} onValueChange={onChange} className="w-full">
-      <TabsList className={`mb-6 grid w-full ${showSettings ? 'grid-cols-3' : 'grid-cols-2'} sm:inline-flex sm:w-auto`}>
+      <TabsList
+        className={`mb-6 grid w-full ${showSettings ? 'grid-cols-3' : 'grid-cols-2'} sm:inline-flex sm:w-auto`}
+      >
         <TabsTrigger value="packages" className="gap-1.5">
           <Package className="size-4" /> Packages
         </TabsTrigger>
