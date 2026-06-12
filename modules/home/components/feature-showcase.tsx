@@ -17,7 +17,10 @@ const features = [
     title: 'Local first. Syncs when you want it to.',
     description:
       "Every app and agent can run entirely on your machine. Changes sync in real time when you're connected, and merge cleanly when you're not. Offline isn't a fallback, it's the default to take your team and your data anywhere.",
-    lottie: 'https://cdn.lottielab.com/l/E6XFYWdFhnNvBH.json',
+    // Patched copy of https://cdn.lottielab.com/l/E6XFYWdFhnNvBH.json — the
+    // original clips its background gradients at the top edge when rendered
+    // by dotlottie (artboard too short + a gradient ThorVG renders oversized).
+    lottie: '/lottie/local-first.json',
   },
   {
     label: 'Sovereignty',
