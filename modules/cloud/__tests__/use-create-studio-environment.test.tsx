@@ -11,12 +11,15 @@ vi.mock('@/modules/cloud/subdomain', () => ({ generateSubdomain: vi.fn(() => 'wa
 // client.ts calls createClient() at module load; the hook only needs DRIVE_ID.
 vi.mock('@/modules/cloud/client', () => ({ DRIVE_ID: 'powerhouse' }))
 vi.mock('@/modules/cloud/graphql', () => ({ getAuthToken: vi.fn().mockResolvedValue('tok') }))
-vi.mock('@/modules/invites/lib/client', () => ({ applyInviteCodeSecret: vi.fn() }))
+vi.mock('@/modules/invites/lib/client', () => ({
+  applyInviteCodeSecret: vi.fn(),
+  claimStudioEnvironment: vi.fn(),
+}))
 
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { createNewEnvironmentController } from '@/modules/cloud/controller'
 import { applyConfigChanges } from '@/modules/cloud/config/apply'
-import { applyInviteCodeSecret } from '@/modules/invites/lib/client'
+import { applyInviteCodeSecret, claimStudioEnvironment } from '@/modules/invites/lib/client'
 import { STUDIO_AGENT_PACKAGE, STUDIO_AGENT_VERSION } from '@/modules/cloud/studio/constants'
 import { useCreateStudioEnvironment } from '@/modules/cloud/studio/use-create-studio-environment'
 
@@ -104,6 +107,7 @@ describe('useCreateStudioEnvironment', () => {
 
   it('injects the invite-code key server-side when no key is passed', async () => {
     const ctrl = mockController()
+    vi.mocked(claimStudioEnvironment).mockResolvedValue(null) // pool empty → cold path
     vi.mocked(applyInviteCodeSecret).mockResolvedValue({
       injected: true,
       secretNames: ['ANTHROPIC_API_KEY'],
@@ -130,10 +134,50 @@ describe('useCreateStudioEnvironment', () => {
 
   it('throws when no key is passed and the code carries none', async () => {
     mockController()
+    vi.mocked(claimStudioEnvironment).mockResolvedValue(null) // pool empty → cold path
     vi.mocked(applyInviteCodeSecret).mockResolvedValue({ injected: false, secretNames: [] })
 
     const { result } = renderHook(() => useCreateStudioEnvironment())
     await expect(result.current()).rejects.toThrow(/no anthropic api key/i)
     expect(applyConfigChanges).not.toHaveBeenCalled()
+  })
+
+  it('claims a warm env on the invite-code path without running the controller', async () => {
+    const ctrl = mockController()
+    vi.mocked(claimStudioEnvironment).mockResolvedValue({
+      documentId: 'warm-doc',
+      subdomain: 'warm-newt-99',
+      tenantId: 'warm-newt-99-warmdoc0',
+    })
+
+    const { result } = renderHook(() => useCreateStudioEnvironment())
+    let res: { documentId: string; subdomain: string; tenantId: string } | undefined
+    await act(async () => {
+      res = await result.current()
+    })
+
+    expect(claimStudioEnvironment).toHaveBeenCalledOnce()
+    expect(ctrl.push).not.toHaveBeenCalled()
+    expect(applyInviteCodeSecret).not.toHaveBeenCalled()
+    expect(res).toEqual({
+      documentId: 'warm-doc',
+      subdomain: 'warm-newt-99',
+      tenantId: 'warm-newt-99-warmdoc0',
+    })
+  })
+
+  it('falls back to cold provisioning when the pool is empty (claim returns null)', async () => {
+    const ctrl = mockController()
+    vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
+    vi.mocked(applyInviteCodeSecret).mockResolvedValue({ injected: true, secretNames: ['ANTHROPIC_API_KEY'] })
+
+    const { result } = renderHook(() => useCreateStudioEnvironment())
+    await act(async () => {
+      await result.current()
+    })
+
+    expect(claimStudioEnvironment).toHaveBeenCalledOnce()
+    expect(ctrl.push).toHaveBeenCalledTimes(2) // cold path ran
+    expect(applyInviteCodeSecret).toHaveBeenCalledOnce()
   })
 })
