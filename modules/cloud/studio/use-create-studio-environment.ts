@@ -7,7 +7,7 @@ import { createNewEnvironmentController } from '@/modules/cloud/controller'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { applyConfigChanges, type ConfigChange } from '@/modules/cloud/config/apply'
 import { getAuthToken } from '@/modules/cloud/graphql'
-import { applyInviteCodeSecret } from '@/modules/invites/lib/client'
+import { applyInviteCodeSecret, claimStudioEnvironment } from '@/modules/invites/lib/client'
 import { generateSubdomain } from '@/modules/cloud/subdomain'
 import { deriveTenantId } from './studio-tenant'
 import {
@@ -45,6 +45,16 @@ export function useCreateStudioEnvironment() {
       if (!signer) throw new Error('You must be logged in with Renown to create a studio')
       const ownerAddress = signer.user?.address
       if (!ownerAddress) throw new Error('Signer has no user address — cannot claim ownership')
+
+      // Invite-code path: try to claim a pre-provisioned ("warm") env first.
+      // On null (pool empty / no server-side key) fall through to cold provisioning.
+      if (!input.anthropicApiKey) {
+        const token = await getAuthToken(renown)
+        if (token) {
+          const claimed = await claimStudioEnvironment(token)
+          if (claimed) return claimed
+        }
+      }
 
       const subdomain = generateSubdomain(crypto.randomUUID())
       const controller = createNewEnvironmentController({ parentIdentifier: DRIVE_ID, signer })
