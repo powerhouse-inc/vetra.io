@@ -6,6 +6,7 @@ import { fetchClintRuntimeEndpointsByEnv, fetchEnvironment } from '@/modules/clo
 import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environment'
 import { queryKeys } from '@/modules/cloud/query/keys'
 import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
+import { myAccessStatus } from '@/modules/invites/lib/client'
 import type { CloudEnvironment } from '@/modules/cloud/types'
 import { findStudioAgents } from './find-studio-agent'
 import { fetchProductBrand, type ProductBrand } from './fetch-product-brand'
@@ -29,8 +30,14 @@ export type StudioProductsState = {
   isScanning: boolean
   creating: boolean
   createError: string | null
-  /** Provision a new product env; resolves to the new env id for navigation. */
-  createProduct: (anthropicApiKey: string) => Promise<string>
+  /**
+   * Provision a new product env; resolves to the new env id for navigation.
+   * Omit the key when the caller's invite code carries one (`hasAttachedKey`) —
+   * the subgraph then injects it server-side.
+   */
+  createProduct: (anthropicApiKey?: string) => Promise<string>
+  /** True when the caller's redeemed code has a Claude key, so no manual entry is needed. */
+  hasAttachedKey: boolean
   did: string | undefined
 }
 
@@ -104,12 +111,21 @@ export function useStudioProducts(): StudioProductsState {
   const products = data ?? []
   const isScanning = isLoading && !data
 
+  // Whether the caller's redeemed code carries a key, so the create flow can
+  // skip the manual Anthropic-key prompt and let the subgraph inject it.
+  const { data: access } = useAuthedQuery(
+    ['vetra-access-status', did],
+    (token) => (token ? myAccessStatus(token) : Promise.resolve(null)),
+    { enabled: isAuthed },
+  )
+  const hasAttachedKey = access?.hasAttachedKey ?? false
+
   const createProduct = useCallback(
-    async (anthropicApiKey: string): Promise<string> => {
+    async (anthropicApiKey?: string): Promise<string> => {
       setCreateError(null)
       setCreating(true)
       try {
-        const res = await create({ anthropicApiKey })
+        const res = await create(anthropicApiKey ? { anthropicApiKey } : {})
         return res.documentId
       } catch (err) {
         setCreateError(err instanceof Error ? err.message : 'Failed to create product')
@@ -125,5 +141,14 @@ export function useStudioProducts(): StudioProductsState {
   if (!user) gate = 'unauthenticated'
   else gate = 'ready'
 
-  return { gate, products, isScanning, creating, createError, createProduct, did }
+  return {
+    gate,
+    products,
+    isScanning,
+    creating,
+    createError,
+    createProduct,
+    hasAttachedKey,
+    did,
+  }
 }

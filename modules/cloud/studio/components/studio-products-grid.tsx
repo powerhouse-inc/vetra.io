@@ -8,15 +8,16 @@ import { buildStudioEmbedUrl } from '../studio-embed-url'
 import { useStudioProducts } from '../use-studio-products'
 
 export function StudioProductsGrid() {
-  const { gate, products, isScanning, creating, createError, createProduct, did } =
+  const { gate, products, isScanning, creating, createError, createProduct, hasAttachedKey, did } =
     useStudioProducts()
 
   if (gate === 'unauthenticated') return <CloudLanding />
   if (gate === 'loading') return <StudioBootScreen title="Loading…" />
 
   // Provision a new product; it surfaces in the list (as "Starting…") once the
-  // env scan refetches — no separate studio page to navigate to.
-  const handleCreate = async (apiKey: string) => {
+  // env scan refetches — no separate studio page to navigate to. The key is
+  // omitted when the invite code carries one (server-side injection).
+  const handleCreate = async (apiKey?: string) => {
     await createProduct(apiKey)
   }
 
@@ -42,7 +43,11 @@ export function StudioProductsGrid() {
           {creating ? (
             <StudioBootScreen title="Creating your product…" />
           ) : (
-            <NewProductCard onCreate={handleCreate} createError={createError} />
+            <NewProductCard
+              onCreate={handleCreate}
+              createError={createError}
+              hasAttachedKey={hasAttachedKey}
+            />
           )}
         </div>
       )}
