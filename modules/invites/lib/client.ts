@@ -141,3 +141,32 @@ export async function applyInviteCodeSecret(
   )
   return data?.VetraAccessCodes?.applyInviteCodeSecret ?? null
 }
+
+export type ClaimStudioEnvironmentResult = {
+  documentId: string
+  subdomain: string
+  tenantId: string
+}
+
+/**
+ * Claim a pre-provisioned ("warm") studio for the authenticated invite-code
+ * caller. The subgraph assigns one atomically, transfers ownership, and injects
+ * the code's attached key server-side. Returns null when none is available
+ * (caller should fall back to cold provisioning) or on transport failure.
+ */
+export async function claimStudioEnvironment(
+  token: string,
+): Promise<ClaimStudioEnvironmentResult | null> {
+  const data = await gql<{
+    VetraStudioPool: { claimStudioEnvironment: ClaimStudioEnvironmentResult | null }
+  }>(
+    `mutation {
+      VetraStudioPool {
+        claimStudioEnvironment { documentId subdomain tenantId }
+      }
+    }`,
+    {},
+    token,
+  )
+  return data?.VetraStudioPool?.claimStudioEnvironment ?? null
+}
