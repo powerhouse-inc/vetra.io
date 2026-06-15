@@ -34,6 +34,17 @@ const nextConfig: NextConfig = {
   output: 'standalone',
   turbopack: {
     root: projectRoot,
+    resolveAlias: {
+      // `@powerhousedao/reactor-browser`'s barrel transitively imports the
+      // server reactor's pg-backed transport, dragging Node-only deps into the
+      // browser bundle and breaking the build. We can't stub the whole reactor
+      // (reactor-browser extends real reactor classes like BaseReadModel at
+      // load), so stub just the Node-only leaves of its server transport. The
+      // browser uses pglite/IndexedDB, never this pg transport, so the stub is
+      // never actually invoked client-side. See stubs/empty-module.js.
+      pg: './stubs/empty-module.js',
+      'node:worker_threads': './stubs/empty-module.js',
+    },
     rules: {
       '*.svg': {
         loaders: ['@svgr/webpack'],

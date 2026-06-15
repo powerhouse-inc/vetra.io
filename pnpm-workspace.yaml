@@ -15,3 +15,14 @@ allowBuilds:
   protobufjs: true
   sharp: true
   unrs-resolver: true
+
+minimumReleaseAgeExclude:
+  - '@powerhousedao/analytics-engine-browser@6.2.0-dev.11'
+  - '@powerhousedao/analytics-engine-core@6.2.0-dev.11'
+  - '@powerhousedao/reactor-attachments@6.2.0-dev.11'
+  - '@powerhousedao/reactor-browser@6.2.0-dev.11'
+  - '@powerhousedao/reactor-drive@6.2.0-dev.11'
+  - '@powerhousedao/reactor@6.2.0-dev.11'
+  - '@powerhousedao/shared@6.2.0-dev.11'
+  - '@renown/sdk@6.2.0-dev.11'
+  - document-model@6.2.0-dev.11
