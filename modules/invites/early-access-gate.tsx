@@ -68,6 +68,10 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   // splash and is only set by the post-login finalize effect below — so
   // validating a code on the gate form never flashes the splash.
   const [finalizing, setFinalizing] = useState(false)
+  // True once a freshly-entered code has been validated and we're on the login
+  // step, so we can show "code verified" copy — vs a returning cached-grant
+  // user who just needs to log in (no code in hand).
+  const [verifiedCode, setVerifiedCode] = useState(false)
 
   // Returning user who already cleared the gate on this browser: reveal the
   // studio immediately (no splash) and let the effect below revalidate quietly.
@@ -105,8 +109,21 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
             if (!cancelled) setStep('granted')
             return
           }
-          // Redeem failed — keep the pending code so a reload can retry, and
-          // fall through to the status check.
+          if (redeemed && !redeemed.allowed) {
+            // The code validated before login but can't be claimed by this
+            // account now (already used / expired). Don't strand the user on a
+            // blank screen — clear it and send them back to the gate with a
+            // clear error instead of silently falling through.
+            sessionStorage.removeItem(PENDING_CODE_KEY)
+            if (!cancelled) {
+              setError("We couldn't apply your invite code — please try again.")
+              setVerifiedCode(false)
+              setStep('gate')
+            }
+            return
+          }
+          // redeemed === null → transient network failure; keep the pending
+          // code so a reload can retry, and fall through to the status check.
         }
 
         // No pending code (or it failed) — confirm whether they're a redeemed user.
@@ -162,6 +179,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
       }
 
       sessionStorage.setItem(PENDING_CODE_KEY, entered)
+      setVerifiedCode(true)
       setStep('login')
     } catch {
       setError('Something went wrong. Please try again.')
@@ -176,8 +194,12 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
     setTimeout(() => setCopied(false), 2000)
   }
 
-  // Granted — reveal the wrapped studio page.
-  if (step === 'granted') {
+  // Reveal the wrapped studio page only when the user is actually signed in.
+  // A cached grant lets a returning user skip the code step, but the studio
+  // needs a logged-in user — so when granted-but-logged-out (e.g. cached grant,
+  // or right after entering a code) we fall through to the login step below
+  // rather than rendering the studio (which would show its logged-out landing).
+  if (step === 'granted' && auth.status === 'authorized') {
     return <>{children}</>
   }
 
@@ -186,7 +208,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   if (auth.status === 'loading' || auth.status === 'checking' || finalizing) {
     return (
       <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden">
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+        <div className="absolute inset-0 bg-[radial-gradient(125%_125%_at_50%_8%,#0d1014_38%,rgba(4,193,97,0.16)_100%)]" />
         <div className="relative z-10 flex items-center gap-3 text-sm text-white/90">
           <Loader2 className="h-5 w-5 animate-spin" />
           Setting up your access…
@@ -198,11 +220,16 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   // Gate + login — blurred backdrop with modal
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden">
-      {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      {/* Backdrop — dark, softly brand-tinted (kept dark regardless of theme so
+          the white modal/header text stays readable). */}
+      <div className="absolute inset-0 bg-[radial-gradient(125%_125%_at_50%_8%,#0d1014_38%,rgba(4,193,97,0.16)_100%)]" />
 
       <div className="relative z-10 mx-4 w-full max-w-[800px]">
-        {step === 'gate' && (
+        {/* Invite-code page — the default for any logged-out visitor. We reach
+            here for step 'gate', and also for 'granted' when not authorized (a
+            cached grant doesn't bypass login), so a logged-out /user always
+            shows the code page rather than the login step. */}
+        {step !== 'login' && (
           <div>
             {/* Header */}
             <div className="mb-5 text-center">
@@ -360,9 +387,13 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
               <div className="bg-primary/15 mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full">
                 <Check className="text-primary h-5 w-5" />
               </div>
-              <h2 className="text-foreground text-lg font-semibold">Code accepted</h2>
+              <h2 className="text-foreground text-lg font-semibold">
+                {verifiedCode ? 'Invite code verified' : 'Log in to continue'}
+              </h2>
               <p className="text-muted-foreground mt-2 text-sm">
-                Connect your account to access Vetra Studio.
+                {verifiedCode
+                  ? 'Your code is valid — log in to claim it and open Vetra Studio.'
+                  : 'Log in to continue to Vetra Studio.'}
               </p>
 
               <div className="border-border my-6 border-t" />
