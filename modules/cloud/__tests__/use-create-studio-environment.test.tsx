@@ -17,10 +17,7 @@ import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { createNewEnvironmentController } from '@/modules/cloud/controller'
 import { applyConfigChanges } from '@/modules/cloud/config/apply'
 import { applyInviteCodeSecret } from '@/modules/invites/lib/client'
-import {
-  STUDIO_AGENT_PACKAGE,
-  STUDIO_AGENT_VERSION,
-} from '@/modules/cloud/studio/constants'
+import { STUDIO_AGENT_PACKAGE, STUDIO_AGENT_VERSION } from '@/modules/cloud/studio/constants'
 import { useCreateStudioEnvironment } from '@/modules/cloud/studio/use-create-studio-environment'
 
 /** Minimal controller whose push() resolves to a fixed remote document id. */
