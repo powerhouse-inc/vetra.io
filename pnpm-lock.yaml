@@ -3634,14 +3634,14 @@ packages:
       react: '>=19.0.0'
 
   '@powerhousedao/vetra-builder-package@https://registry.dev.vetra.io/@powerhousedao/vetra-builder-package/-/vetra-builder-package-5.2.0-dev.66.tgz':
-    resolution: {tarball: https://registry.dev.vetra.io/@powerhousedao/vetra-builder-package/-/vetra-builder-package-5.2.0-dev.66.tgz}
+    resolution: {integrity: sha512-8yfR512Wu0dYjotmH/Mtb5am2gnYDPFPfSkEvIBTy2LtkOXMEWJ6P/WMeyT5Dj7UI5OHl3oSLmdUs9Mpd5TFlw==, tarball: https://registry.dev.vetra.io/@powerhousedao/vetra-builder-package/-/vetra-builder-package-5.2.0-dev.66.tgz}
     version: 5.2.0-dev.66
     peerDependencies:
       react: ^19.2.0
       react-dom: ^19.2.0
 
   '@powerhousedao/vetra-cloud-package@https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.3-dev.93.tgz':
-    resolution: {tarball: https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.3-dev.93.tgz}
+    resolution: {integrity: sha512-wMjDQW4fHx2an5fNz+ZE/CMhA4U1YHiUvNR5oLyTCU29k+novMn1Vc/9imT4R8E9FCb2Jn+A6T+DPp8BnJlxBw==, tarball: https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.3-dev.93.tgz}
     version: 0.0.3-dev.93
     peerDependencies:
       react: ^19.2.0
