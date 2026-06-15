@@ -26,16 +26,23 @@ describe('claimStudioEnvironment', () => {
         { status: 200 },
       ),
     )
-    expect(await claimStudioEnvironment('tok')).toEqual({ documentId: 'd', subdomain: 's', tenantId: 't' })
+    expect(await claimStudioEnvironment('tok')).toEqual({
+      documentId: 'd',
+      subdomain: 's',
+      tenantId: 't',
+    })
     const init = fetchMock.mock.calls[0][1] as RequestInit
     expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer tok')
   })
 
   it('returns null when the pool is empty', async () => {
     fetchMock.mockResolvedValue(
-      new Response(JSON.stringify({ data: { VetraStudioPool: { claimStudioEnvironment: null } } }), {
-        status: 200,
-      }),
+      new Response(
+        JSON.stringify({ data: { VetraStudioPool: { claimStudioEnvironment: null } } }),
+        {
+          status: 200,
+        },
+      ),
     )
     expect(await claimStudioEnvironment('tok')).toBeNull()
   })

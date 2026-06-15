@@ -169,7 +169,10 @@ describe('useCreateStudioEnvironment', () => {
   it('falls back to cold provisioning when the pool is empty (claim returns null)', async () => {
     const ctrl = mockController()
     vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
-    vi.mocked(applyInviteCodeSecret).mockResolvedValue({ injected: true, secretNames: ['ANTHROPIC_API_KEY'] })
+    vi.mocked(applyInviteCodeSecret).mockResolvedValue({
+      injected: true,
+      secretNames: ['ANTHROPIC_API_KEY'],
+    })
 
     const { result } = renderHook(() => useCreateStudioEnvironment())
     await act(async () => {
