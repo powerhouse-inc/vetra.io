@@ -1,35 +1,47 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { claimStudioEnvironment } from '../client'
 
 describe('claimStudioEnvironment', () => {
-  beforeEach(() => vi.stubGlobal('fetch', vi.fn()))
-  afterEach(() => vi.unstubAllGlobals())
+  let fetchMock: ReturnType<typeof vi.fn>
+
+  beforeEach(() => {
+    fetchMock = vi.fn()
+    vi.stubGlobal('fetch', fetchMock)
+  })
+
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
 
   it('returns the claim result and sends the bearer token', async () => {
-    ;(fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        data: {
-          VetraStudioPool: {
-            claimStudioEnvironment: { documentId: 'd', subdomain: 's', tenantId: 't' },
+    fetchMock.mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          data: {
+            VetraStudioPool: {
+              claimStudioEnvironment: { documentId: 'd', subdomain: 's', tenantId: 't' },
+            },
           },
-        },
-      }),
-    })
+        }),
+        { status: 200 },
+      ),
+    )
     expect(await claimStudioEnvironment('tok')).toEqual({ documentId: 'd', subdomain: 's', tenantId: 't' })
-    expect((fetch as any).mock.calls[0][1].headers['Authorization']).toBe('Bearer tok')
+    const init = fetchMock.mock.calls[0][1] as RequestInit
+    expect((init.headers as Record<string, string>)['Authorization']).toBe('Bearer tok')
   })
 
   it('returns null when the pool is empty', async () => {
-    ;(fetch as any).mockResolvedValue({
-      ok: true,
-      json: async () => ({ data: { VetraStudioPool: { claimStudioEnvironment: null } } }),
-    })
+    fetchMock.mockResolvedValue(
+      new Response(JSON.stringify({ data: { VetraStudioPool: { claimStudioEnvironment: null } } }), {
+        status: 200,
+      }),
+    )
     expect(await claimStudioEnvironment('tok')).toBeNull()
   })
 
   it('returns null on transport failure', async () => {
-    ;(fetch as any).mockResolvedValue({ ok: false })
+    fetchMock.mockResolvedValue(new Response(null, { status: 500 }))
     expect(await claimStudioEnvironment('tok')).toBeNull()
   })
 })
