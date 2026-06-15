@@ -6,6 +6,8 @@ import { DRIVE_ID } from '@/modules/cloud/client'
 import { createNewEnvironmentController } from '@/modules/cloud/controller'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { applyConfigChanges, type ConfigChange } from '@/modules/cloud/config/apply'
+import { getAuthToken } from '@/modules/cloud/graphql'
+import { applyInviteCodeSecret } from '@/modules/invites/lib/client'
 import { generateSubdomain } from '@/modules/cloud/subdomain'
 import { deriveTenantId } from './studio-tenant'
 import {
@@ -25,14 +27,21 @@ export type CreateStudioResult = { documentId: string; subdomain: string; tenant
 
 /**
  * Provisions a dedicated Vetra Studio environment: a single vetra-cli CLINT
- * agent (XL). Writes the Anthropic key to the tenant secret store under all
- * three names the manifest requires, then approves so the deploy rolls.
+ * agent (XL). Supplies the Anthropic key to the tenant secret store under all
+ * the names the manifest requires, then approves so the deploy rolls.
+ *
+ * Two ways the key is supplied:
+ *  - `anthropicApiKey` passed in → written client-side via applyConfigChanges
+ *    (manual entry / fallback path).
+ *  - omitted → asked of the vetra-access-codes subgraph, which writes the key
+ *    attached to the caller's redeemed invite code into the tenant secret store
+ *    server-side. The key never reaches this client.
  */
 export function useCreateStudioEnvironment() {
   const { signer } = useCanSign()
   const renown = useRenown()
   return useCallback(
-    async (input: { anthropicApiKey: string }): Promise<CreateStudioResult> => {
+    async (input: { anthropicApiKey?: string } = {}): Promise<CreateStudioResult> => {
       if (!signer) throw new Error('You must be logged in with Renown to create a studio')
       const ownerAddress = signer.user?.address
       if (!ownerAddress) throw new Error('Signer has no user address — cannot claim ownership')
@@ -66,12 +75,27 @@ export function useCreateStudioEnvironment() {
       const documentId = result.remoteDocument.id
       const tenantId = deriveTenantId(subdomain, documentId)
 
-      const changes: ConfigChange[] = STUDIO_ANTHROPIC_SECRET_NAMES.map((name) => ({
-        kind: 'setSecret',
-        name,
-        value: input.anthropicApiKey,
-      }))
-      await applyConfigChanges(tenantId, changes, renown)
+      if (input.anthropicApiKey) {
+        // Manual entry / fallback: write the provided key client-side.
+        const changes: ConfigChange[] = STUDIO_ANTHROPIC_SECRET_NAMES.map((name) => ({
+          kind: 'setSecret',
+          name,
+          value: input.anthropicApiKey as string,
+        }))
+        await applyConfigChanges(tenantId, changes, renown)
+      } else {
+        // Inject the key attached to the caller's invite code, server-side.
+        const token = await getAuthToken(renown)
+        if (!token) throw new Error('Could not authenticate to provision the studio key')
+        const result = await applyInviteCodeSecret(
+          tenantId,
+          [...STUDIO_ANTHROPIC_SECRET_NAMES],
+          token,
+        )
+        if (!result?.injected) {
+          throw new Error('No Anthropic API key is available for your invite code')
+        }
+      }
 
       controller.approveChanges({})
       await controller.push()

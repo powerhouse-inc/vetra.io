@@ -27,6 +27,13 @@ export type AccessStatus = {
   code?: string | null
   label?: string | null
   accessExpires?: string | null
+  /** Whether the caller's redeemed code carries a Claude key (the key itself is never sent). */
+  hasAttachedKey?: boolean
+}
+
+export type ApplyInviteCodeSecretResult = {
+  injected: boolean
+  secretNames: string[]
 }
 
 type GqlResponse<T> = {
@@ -89,7 +96,7 @@ export async function inviteCodeValid(code: string): Promise<boolean> {
 export async function redeemInviteCode(code: string, token: string): Promise<AccessStatus | null> {
   const data = await gql<{ VetraAccessCodes: { redeemInviteCode: AccessStatus } }>(
     `mutation ($code: String!) {
-      VetraAccessCodes { redeemInviteCode(code: $code) { allowed code label accessExpires } }
+      VetraAccessCodes { redeemInviteCode(code: $code) { allowed code label accessExpires hasAttachedKey } }
     }`,
     { code },
     token,
@@ -100,9 +107,37 @@ export async function redeemInviteCode(code: string, token: string): Promise<Acc
 /** Access status for the authenticated caller. Returns null on failure. */
 export async function myAccessStatus(token: string): Promise<AccessStatus | null> {
   const data = await gql<{ VetraAccessCodes: { myAccessStatus: AccessStatus } }>(
-    `query { VetraAccessCodes { myAccessStatus { allowed code label accessExpires } } }`,
+    `query { VetraAccessCodes { myAccessStatus { allowed code label accessExpires hasAttachedKey } } }`,
     {},
     token,
   )
   return data?.VetraAccessCodes?.myAccessStatus ?? null
+}
+
+/**
+ * Ask the subgraph to write the caller's attached Claude key into a tenant's
+ * secret store under each of `secretNames`. The key is resolved and written
+ * server-side — it never reaches this client. Returns `injected: false` when
+ * the caller's redeemed code carries no key. Returns null on transport failure.
+ */
+export async function applyInviteCodeSecret(
+  tenantId: string,
+  secretNames: string[],
+  token: string,
+): Promise<ApplyInviteCodeSecretResult | null> {
+  const data = await gql<{
+    VetraAccessCodes: { applyInviteCodeSecret: ApplyInviteCodeSecretResult }
+  }>(
+    `mutation ($tenantId: String!, $secretNames: [String!]!) {
+      VetraAccessCodes {
+        applyInviteCodeSecret(tenantId: $tenantId, secretNames: $secretNames) {
+          injected
+          secretNames
+        }
+      }
+    }`,
+    { tenantId, secretNames },
+    token,
+  )
+  return data?.VetraAccessCodes?.applyInviteCodeSecret ?? null
 }
