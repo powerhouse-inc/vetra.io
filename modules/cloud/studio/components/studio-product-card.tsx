@@ -33,7 +33,14 @@ export function StudioProductCard({ product, href }: { product: StudioProduct; h
       Ready
     </span>
   ) : (
-    <span className="bg-muted text-muted-foreground inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium">
+    // Still booting: the agent host isn't reachable yet (it restarts on claim),
+    // so the card stays inert until ready. The spinner + "Provisioning…" label
+    // make the setting-up state explicit; role/title expose it to AT and hover.
+    <span
+      role="status"
+      title="This studio is starting up and will be ready shortly."
+      className="bg-muted text-muted-foreground inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
+    >
       <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
       Provisioning…
     </span>
