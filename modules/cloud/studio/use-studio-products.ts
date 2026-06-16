@@ -1,16 +1,15 @@
 'use client'
 
 import { useCallback, useState } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useDid, useUser } from '@powerhousedao/reactor-browser'
-import { fetchClintRuntimeEndpointsByEnv, fetchEnvironment } from '@/modules/cloud/graphql'
-import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environment'
+import { fetchMyStudioProducts, type StudioProductSummary } from '@/modules/cloud/graphql'
 import { queryKeys } from '@/modules/cloud/query/keys'
 import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
 import { myAccessStatus } from '@/modules/invites/lib/client'
-import type { CloudEnvironment } from '@/modules/cloud/types'
-import { findStudioAgents } from './find-studio-agent'
-import { fetchProductBrand, type ProductBrand } from './fetch-product-brand'
-import { deriveProductStatus, type ProductStatus } from './studio-readiness'
+import { STUDIO_AGENT_PREFIX, STUDIO_ENV_LABEL } from './constants'
+import { type ProductBrand } from './fetch-product-brand'
+import { type ProductStatus } from './studio-readiness'
 import { useCreateStudioEnvironment } from './use-create-studio-environment'
 
 export type StudioGate = 'loading' | 'unauthenticated' | 'ready'
@@ -20,6 +19,10 @@ export type StudioProduct = {
   subdomain: string
   prefix: string
   label: string
+  /**
+   * Brand metadata is resolved lazily per card (only once `status === 'ready'`)
+   * so the list never blocks on a per-product host fetch. It stays `null` here.
+   */
   brand: ProductBrand | null
   status: ProductStatus
 }
@@ -27,6 +30,7 @@ export type StudioProduct = {
 export type StudioProductsState = {
   gate: StudioGate
   products: StudioProduct[]
+  /** True during the first load when there is no cached data to paint yet. */
   isScanning: boolean
   creating: boolean
   createError: string | null
@@ -41,58 +45,26 @@ export type StudioProductsState = {
   did: string | undefined
 }
 
-/** Scan a set of env summaries into resolved studio products (detail + brand + status). */
-async function scanProducts(
-  environments: CloudEnvironment[],
-  token: string | null,
-): Promise<StudioProduct[]> {
-  const details: CloudEnvironment[] = []
-  for (const summary of environments) {
-    const full = await fetchEnvironment(summary.id, token)
-    if (full) details.push(full)
+/**
+ * Map a server-resolved product summary onto the UI model. The switchboard
+ * already returns the filtered, status-resolved set, so this is a pure shape
+ * adapter — brand stays `null` and is filled in lazily by the card.
+ */
+function toStudioProduct(summary: StudioProductSummary): StudioProduct {
+  return {
+    envId: summary.envId,
+    subdomain: summary.subdomain,
+    prefix: summary.prefix,
+    label: summary.label,
+    brand: null,
+    status: summary.status,
   }
-  const matches = findStudioAgents(details)
-  return Promise.all(
-    matches.map(async ({ env, service }): Promise<StudioProduct> => {
-      const subdomain = env.state.genericSubdomain ?? ''
-      // Ask switchboard for readiness FIRST, and only touch the per-tenant
-      // host (for the brand) once it reports a live website endpoint.
-      //
-      // Why: fetchProductBrand does a browser fetch to
-      // https://<prefix>.<subdomain>.vetra.io. For a just-created product the
-      // DNS record doesn't exist yet (external-dns creates it after the
-      // ingress is admitted), so the browser's lookup returns NXDOMAIN and the
-      // resolver NEGATIVE-CACHES it for the vetra.io zone's SOA minimum (1h).
-      // That poisoned cache then breaks the user's actual navigation to the
-      // studio for up to an hour. switchboard's pull-worker only reports
-      // endpoints after it has itself reached the agent over that same public
-      // host, so a 'ready' status guarantees the host already resolves —
-      // making this the safe moment for the browser to hit it.
-      const groups = await fetchClintRuntimeEndpointsByEnv(subdomain, env.id, token).catch(() => [])
-      const group = groups.find((g) => g.prefix === service.prefix)
-      const status = deriveProductStatus(group)
-      const brand =
-        status === 'ready'
-          ? await fetchProductBrand({ subdomain, prefix: service.prefix, token })
-          : null
-      return {
-        envId: env.id,
-        subdomain,
-        prefix: service.prefix,
-        label: env.state.label ?? env.name,
-        brand,
-        status,
-      }
-    }),
-  )
 }
 
 export function useStudioProducts(): StudioProductsState {
   const user = useUser()
   const did = useDid()
-  const { viewer } = useViewer()
-  const address = viewer?.address ?? null
-  const environments = useEnvironments('MINE', address)
+  const queryClient = useQueryClient()
 
   const isAuthed = !!user
 
@@ -100,12 +72,15 @@ export function useStudioProducts(): StudioProductsState {
   const [createError, setCreateError] = useState<string | null>(null)
   const create = useCreateStudioEnvironment()
 
-  // SWR scan: keyed by the env-id set so it revalidates when the list changes,
-  // and paints instantly from the persisted product list on return visits.
-  const summaryIds = environments.map((e) => e.id).join(',')
+  // One round-trip to the switchboard for the whole list. The backend filters
+  // to the caller's products and resolves each product's status, so there is no
+  // client-side env scan, no N+1 fetchEnvironment, and no per-product readiness
+  // derivation. Polls every 30s and paints instantly from the persisted cache
+  // on return visits.
+  const productsKey = queryKeys.studioProducts(did)
   const { data, isLoading } = useAuthedQuery<StudioProduct[]>(
-    [...queryKeys.studioProducts(did), summaryIds],
-    (token) => scanProducts(environments, token),
+    productsKey,
+    async (token) => (await fetchMyStudioProducts(token)).map(toStudioProduct),
     { enabled: isAuthed, refetchInterval: 30_000 },
   )
   const products = data ?? []
@@ -126,6 +101,24 @@ export function useStudioProducts(): StudioProductsState {
       setCreating(true)
       try {
         const res = await create(anthropicApiKey ? { anthropicApiKey } : {})
+        // Optimistically insert a booting placeholder so the new product shows
+        // up immediately, then let the 30s poll (and the invalidate below)
+        // reconcile it against the server-resolved list. Guard against a double
+        // insert if the env already appears (e.g. a fast refetch raced us).
+        const placeholder: StudioProduct = {
+          envId: res.documentId,
+          subdomain: res.subdomain ?? '',
+          prefix: STUDIO_AGENT_PREFIX,
+          label: STUDIO_ENV_LABEL,
+          brand: null,
+          status: 'booting',
+        }
+        queryClient.setQueryData<StudioProduct[]>(productsKey, (prev) => {
+          const list = prev ?? []
+          if (list.some((p) => p.envId === placeholder.envId)) return list
+          return [...list, placeholder]
+        })
+        void queryClient.invalidateQueries({ queryKey: productsKey })
         return res.documentId
       } catch (err) {
         setCreateError(err instanceof Error ? err.message : 'Failed to create product')
@@ -134,7 +127,7 @@ export function useStudioProducts(): StudioProductsState {
         setCreating(false)
       }
     },
-    [create],
+    [create, queryClient, productsKey],
   )
 
   let gate: StudioGate
