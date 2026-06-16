@@ -64,6 +64,7 @@ export function BuildersPageClient({ children }: BuildersPageClientProps) {
   useEffect(() => {
     // Skip if searchTerm is empty (initial state) - let the initial load effect handle it
     if (searchTerm.trim() === '') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       void fetchBuilders()
       return
     }

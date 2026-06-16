@@ -54,6 +54,7 @@ export function useDatabaseSchema(tenantId: string | null): {
   }, [tenantId])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refetch()
   }, [refetch])
 

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 /**
  * Optimistic state with a debounced, serialized commit.
@@ -56,9 +56,11 @@ export function useDebouncedOptimistic<T>(opts: {
   const commitTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
   const pendingTargetRef = useRef<{ value: T } | null>(null)
   const commitRef = useRef(commit)
-  commitRef.current = commit
   const onErrorRef = useRef(onError)
-  onErrorRef.current = onError
+  useLayoutEffect(() => {
+    commitRef.current = commit
+    onErrorRef.current = onError
+  })
 
   const [isPending, setIsPending] = useState(false)
 

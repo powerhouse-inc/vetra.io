@@ -354,6 +354,7 @@ function UninstallDialog({
   useEffect(() => {
     const initial: Record<string, boolean> = {}
     for (const e of declaredEntries) initial[e.name] = exclusive.has(e.name)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedKeys(initial)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [declaredKeyNames, exclusive])

@@ -48,6 +48,7 @@ export function useQueryHistory(tenantId: string | null): {
 
   // Re-read when the tenant changes so each env shows its own list.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setHistory(readHistory(tenantId))
   }, [tenantId])
 

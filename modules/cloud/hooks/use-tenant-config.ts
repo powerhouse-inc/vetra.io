@@ -1,7 +1,7 @@
 'use client'
 
 import { useRenown } from '@powerhousedao/reactor-browser'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   deleteTenantEnvVar,
   deleteTenantSecret,
@@ -22,7 +22,9 @@ export type TenantConfig = {
 export function useTenantConfig(tenantId: string | null) {
   const renown = useRenown()
   const renownRef = useRef(renown)
-  renownRef.current = renown
+  useLayoutEffect(() => {
+    renownRef.current = renown
+  })
   const [envVars, setEnvVars] = useState<TenantEnvVar[]>([])
   const [secrets, setSecrets] = useState<TenantSecretEntry[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -52,6 +54,7 @@ export function useTenantConfig(tenantId: string | null) {
   }, [tenantId])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh()
   }, [refresh])
 

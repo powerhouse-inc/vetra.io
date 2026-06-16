@@ -14,7 +14,7 @@
  *     no signer (login required).
  */
 
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import {
   fetchEnvironment,
   getAuthToken,
@@ -66,7 +66,9 @@ function projectFromController(
 export function useEnvironmentDetail(documentId: string) {
   const renown = useRenown()
   const renownRef = useRef(renown)
-  renownRef.current = renown
+  useLayoutEffect(() => {
+    renownRef.current = renown
+  })
   const { canSign } = useCanSign()
 
   const ctrlResult = useEnvironmentController(canSign ? documentId : null)
@@ -80,7 +82,9 @@ export function useEnvironmentDetail(documentId: string) {
   const [fallbackLoading, setFallbackLoading] = useState<boolean>(true)
   const [fallbackError, setFallbackError] = useState<Error | null>(null)
   const fallbackRef = useRef<CloudEnvironment | null>(null)
-  fallbackRef.current = fallbackEnv
+  useLayoutEffect(() => {
+    fallbackRef.current = fallbackEnv
+  })
 
   const refetchFallback = useCallback(async () => {
     try {
@@ -106,6 +110,7 @@ export function useEnvironmentDetail(documentId: string) {
   }, [documentId])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refetchFallback()
   }, [refetchFallback])
 
@@ -114,7 +119,9 @@ export function useEnvironmentDetail(documentId: string) {
   // sees server-side state transitions (status flipping READY→DEPLOYING etc.)
   // until they refresh the page.
   const controllerRef = useRef(controller)
-  controllerRef.current = controller
+  useLayoutEffect(() => {
+    controllerRef.current = controller
+  })
 
   useDocumentSubscription(documentId, () => {
     if (canSign && controllerRef.current) {

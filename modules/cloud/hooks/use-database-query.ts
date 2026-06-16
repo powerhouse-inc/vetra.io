@@ -1,7 +1,7 @@
 'use client'
 
 import { useRenown } from '@powerhousedao/reactor-browser'
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useLayoutEffect, useRef, useState } from 'react'
 
 import { executeReadOnlyQuery, getAuthToken } from '../graphql'
 import type { DatabaseQueryResult } from '../types'
@@ -26,7 +26,9 @@ export function useDatabaseQuery(tenantId: string | null): {
 } {
   const renown = useRenown()
   const renownRef = useRef(renown)
-  renownRef.current = renown
+  useLayoutEffect(() => {
+    renownRef.current = renown
+  })
 
   const [result, setResult] = useState<DatabaseQueryResult | null>(null)
   const [isRunning, setIsRunning] = useState(false)

@@ -83,6 +83,7 @@ export const RuntimeConfigForm = forwardRef<RuntimeConfigFormHandle, Props>(
     )
 
     useEffect(() => {
+      // eslint-disable-next-line react-hooks/incompatible-library
       const sub = form.watch((value) => {
         onChange(pruneToOverrides(value as ConnectRuntimeConfigFormValues))
       })

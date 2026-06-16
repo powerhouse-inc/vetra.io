@@ -1,7 +1,7 @@
 'use client'
 
 import { useRenown } from '@powerhousedao/reactor-browser'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useLayoutEffect, useRef } from 'react'
 import { getAuthToken, fetchEnvironmentOverview } from '../graphql'
 import { useDocumentSubscription } from './use-document-subscription'
 import type { EnvironmentStatus, Pod } from '../types'
@@ -13,16 +13,18 @@ export function useEnvironmentStatus(
 ) {
   const renown = useRenown()
   const renownRef = useRef(renown)
-  renownRef.current = renown
   const [status, setStatus] = useState<EnvironmentStatus | null>(null)
   const [pods, setPods] = useState<Pod[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
   const statusRef = useRef(status)
-  statusRef.current = status
   const podsRef = useRef(pods)
-  podsRef.current = pods
+  useLayoutEffect(() => {
+    renownRef.current = renown
+    statusRef.current = status
+    podsRef.current = pods
+  })
 
   const refresh = useCallback(async () => {
     if (!subdomain || !tenantId) return

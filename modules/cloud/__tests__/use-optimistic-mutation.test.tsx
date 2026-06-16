@@ -53,9 +53,7 @@ describe('useOptimisticMutation', () => {
     const { result } = renderHook(
       () =>
         useOptimisticMutation<Item, Item>({
-          mutationFn: async () => {
-            throw new Error('boom')
-          },
+          mutationFn: () => Promise.reject<Item>(new Error('boom')),
           affectedKeys: () => [KEY],
           optimisticUpdate: (client, v) =>
             client.setQueryData(KEY, (old: Item[] = []) => [...old, v]),

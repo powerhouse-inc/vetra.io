@@ -155,6 +155,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   const statusStr = state?.status ?? 'DRAFT'
   useEffect(() => {
     if (intentDeploying && statusStr !== 'CHANGES_PENDING' && statusStr !== 'DRAFT') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIntentDeploying(false)
     }
   }, [statusStr, intentDeploying])

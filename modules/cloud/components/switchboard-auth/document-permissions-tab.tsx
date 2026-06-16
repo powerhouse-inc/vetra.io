@@ -1,7 +1,7 @@
 'use client'
 
 import { ChevronRight, File, Folder, HardDrive } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import type { SwitchboardAuthClient } from '@/modules/cloud/lib/switchboard-auth-client'
@@ -342,7 +342,7 @@ export function DocumentPermissionsTab({ client }: Props) {
   const [availableGroups, setAvailableGroups] = useState<AvailableGroup[]>([])
   const [protection, setProtection] = useState<DocumentProtection | null>(null)
 
-  const selectedLabel = useRef('')
+  const [selectedLabel, setSelectedLabel] = useState('')
 
   const loadDrives = useCallback(async () => {
     setDrivesLoading(true)
@@ -381,6 +381,7 @@ export function DocumentPermissionsTab({ client }: Props) {
   }, [client])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadDrives()
   }, [loadDrives])
 
@@ -389,6 +390,7 @@ export function DocumentPermissionsTab({ client }: Props) {
   // Auto-expand drives the first time we get a non-empty tree.
   useEffect(() => {
     if (tree.length === 0) return
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setExpandedIds((prev) => {
       if (prev.size > 0) return prev
       return new Set(tree.map((d) => d.id))
@@ -405,6 +407,7 @@ export function DocumentPermissionsTab({ client }: Props) {
   }, [client])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadGroups()
   }, [loadGroups])
 
@@ -471,7 +474,7 @@ export function DocumentPermissionsTab({ client }: Props) {
       return
     }
     setSelectedId(id)
-    selectedLabel.current = findNodeLabel(id)
+    setSelectedLabel(findNodeLabel(id))
     void loadAccess(id)
     void loadProtection(id)
   }
@@ -643,7 +646,7 @@ export function DocumentPermissionsTab({ client }: Props) {
               <PermissionPanel
                 access={access}
                 availableGroups={availableGroups}
-                nodeLabel={selectedLabel.current}
+                nodeLabel={selectedLabel}
                 onGrantUser={(addr, level) => handleGrantUser(addr, level)}
                 onRevokeUser={(addr) => handleRevokeUser(addr)}
                 onGrantGroup={(gid, level) => handleGrantGroup(gid, level)}

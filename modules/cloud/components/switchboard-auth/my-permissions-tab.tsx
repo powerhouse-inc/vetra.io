@@ -197,7 +197,9 @@ export function MyPermissionsTab({ client, viewerAddress }: Props) {
   )
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void loadMyPermissions()
+
     void loadUserGroups(viewerAddress)
   }, [loadMyPermissions, loadUserGroups, viewerAddress])
 

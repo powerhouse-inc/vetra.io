@@ -121,6 +121,7 @@ export function AddPackageModal({
   // Reset form state when the candidate manifest changes (new package/version).
   useEffect(() => {
     if (!selectedPackage) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setConfigState({})
       return
     }
@@ -129,6 +130,7 @@ export function AddPackageModal({
       setConfigState({})
       return
     }
+
     setConfigState(
       initialConfigFormState(entries, {
         existingVarValues,

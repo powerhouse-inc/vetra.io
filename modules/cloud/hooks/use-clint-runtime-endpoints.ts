@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { fetchClintRuntimeEndpointsByEnv } from '../graphql'
 import type { ClintRuntimeEndpointsForPrefix } from '../types'
 
@@ -24,7 +24,9 @@ export function useClintRuntimeEndpoints(
   const [groups, setGroups] = useState<ClintRuntimeEndpointsForPrefix[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const subdomainRef = useRef(subdomain)
-  subdomainRef.current = subdomain
+  useLayoutEffect(() => {
+    subdomainRef.current = subdomain
+  })
 
   useEffect(() => {
     let cancelled = false

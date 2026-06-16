@@ -10,7 +10,7 @@ import {
   Loader2,
   Zap,
 } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { fetchEnvironmentReleaseHistory, fetchLatestRelease } from '@/modules/cloud/graphql'
@@ -106,7 +106,9 @@ export function AutoUpdateCard({
   >({} as Record<TenantService, ReleaseIndexEntry | null>)
 
   const channelRef = useRef(channel)
-  channelRef.current = channel
+  useLayoutEffect(() => {
+    channelRef.current = channel
+  })
 
   useEffect(() => {
     if (!channel) return

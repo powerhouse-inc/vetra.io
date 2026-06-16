@@ -160,8 +160,11 @@ export function AgentCard({
   // When the service's persisted config changes (e.g. after a save), resync
   // the form so a re-expand reflects current truth.
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setServiceCommand(cfg?.serviceCommand ?? '')
+
     setSelectedRessource(cfg?.selectedRessource ?? null)
+
     setEnvVars(cfg?.env ?? [])
   }, [cfg])
 

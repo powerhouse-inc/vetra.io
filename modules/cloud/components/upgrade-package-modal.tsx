@@ -147,6 +147,7 @@ export function UpgradePackageModal({
 
   useEffect(() => {
     if (!selectedVersion) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setConfigState({})
       return
     }
@@ -154,6 +155,7 @@ export function UpgradePackageModal({
       setConfigState({})
       return
     }
+
     setConfigState(
       initialConfigFormState(gatedEntries, {
         existingVarValues,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRenown } from '@powerhousedao/reactor-browser'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useLayoutEffect, useRef } from 'react'
 import { getAuthToken, fetchLogs } from '../graphql'
 import type { LogEntry, MetricRange, TenantService } from '../types'
 
@@ -15,13 +15,15 @@ export function useEnvironmentLogs(
 ) {
   const renown = useRenown()
   const renownRef = useRef(renown)
-  renownRef.current = renown
   const [logs, setLogs] = useState<LogEntry[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
   const logsRef = useRef(logs)
-  logsRef.current = logs
+  useLayoutEffect(() => {
+    renownRef.current = renown
+    logsRef.current = logs
+  })
 
   const refresh = useCallback(async () => {
     if (!subdomain || !tenantId) return

@@ -54,6 +54,7 @@ export function EnvActionBar({ status, intentDeploying, driftDetected, onApprove
   const [intentSince, setIntentSince] = useState<number | null>(null)
   useEffect(() => {
     if (intentDeploying) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setIntentSince((prev) => prev ?? Date.now())
     } else {
       setIntentSince(null)

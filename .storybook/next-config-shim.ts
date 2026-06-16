@@ -13,6 +13,7 @@ export default function nextConfig() {
   return { publicRuntimeConfig: {}, serverRuntimeConfig: {} }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function setConfig(_config: unknown): void {
   // no-op
 }

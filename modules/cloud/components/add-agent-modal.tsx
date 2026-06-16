@@ -157,10 +157,14 @@ export function AddAgentModal({
     const agent = m.features?.agent || null
     const agentId = agent && typeof agent === 'object' ? agent.id : null
     const defaultPrefix = agentId ? sanitizeForPrefix(agentId) : sanitizeForPrefix(m.name)
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPrefix(defaultPrefix)
+
     setServiceCommand(m.serviceCommand ?? '')
     const supported = (m.supportedResources ?? []).map((s) => SIZE_TO_TS[s]).filter(Boolean)
+
     setSelectedRessource(supported[0] ?? null)
+
     setSelectedVersion('')
   }, [validation])
 
@@ -325,6 +329,7 @@ export function AddAgentModal({
 
   useEffect(() => {
     if (!validation?.ok || !selectedPackage) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setConfigState({})
       return
     }
@@ -333,6 +338,7 @@ export function AddAgentModal({
       setConfigState({})
       return
     }
+
     setConfigState(
       initialConfigFormState(entries, {
         existingVarValues,

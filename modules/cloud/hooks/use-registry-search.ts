@@ -21,6 +21,7 @@ export function useRegistryPackages(registryUrl: string | null, search: string) 
 
   useEffect(() => {
     if (!registryUrl) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setPackages([])
       return
     }
@@ -161,6 +162,7 @@ export function useRegistryManifests(
 
   useEffect(() => {
     if (!registryUrl || packages.length === 0) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setManifests([])
       return
     }

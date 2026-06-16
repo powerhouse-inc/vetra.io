@@ -1,7 +1,7 @@
 'use client'
 
 import { useRenown } from '@powerhousedao/reactor-browser'
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useLayoutEffect, useRef } from 'react'
 import { getAuthToken, fetchEnvironmentEvents } from '../graphql'
 import { useDocumentSubscription } from './use-document-subscription'
 import type { KubeEvent } from '../types'
@@ -14,13 +14,15 @@ export function useEnvironmentEvents(
 ) {
   const renown = useRenown()
   const renownRef = useRef(renown)
-  renownRef.current = renown
   const [events, setEvents] = useState<KubeEvent[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<Error | null>(null)
 
   const eventsRef = useRef(events)
-  eventsRef.current = events
+  useLayoutEffect(() => {
+    renownRef.current = renown
+    eventsRef.current = events
+  })
 
   const refresh = useCallback(async () => {
     if (!subdomain || !tenantId) return
@@ -40,6 +42,7 @@ export function useEnvironmentEvents(
   }, [subdomain, tenantId, limit])
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     void refresh()
   }, [refresh])
 
