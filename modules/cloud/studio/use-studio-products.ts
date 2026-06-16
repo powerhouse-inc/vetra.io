@@ -9,7 +9,7 @@ import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
 import { myAccessStatus } from '@/modules/invites/lib/client'
 import { STUDIO_AGENT_PREFIX, STUDIO_ENV_LABEL } from './constants'
 import { type ProductBrand } from './fetch-product-brand'
-import { type ProductStatus } from './studio-readiness'
+import { type ProductStatus, studioPollIntervalMs } from './studio-readiness'
 import { useCreateStudioEnvironment } from './use-create-studio-environment'
 
 export type StudioGate = 'loading' | 'unauthenticated' | 'ready'
@@ -75,13 +75,18 @@ export function useStudioProducts(): StudioProductsState {
   // One round-trip to the switchboard for the whole list. The backend filters
   // to the caller's products and resolves each product's status, so there is no
   // client-side env scan, no N+1 fetchEnvironment, and no per-product readiness
-  // derivation. Polls every 30s and paints instantly from the persisted cache
-  // on return visits.
+  // derivation. Adaptive cadence: poll fast while any product is still
+  // provisioning (so a just-claimed env flips to "ready" within ~3s of the
+  // backend signal instead of waiting a full 30s cycle), relax to 30s once all
+  // are ready. Paints instantly from the persisted cache on return visits.
   const productsKey = queryKeys.studioProducts(did)
   const { data, isLoading } = useAuthedQuery<StudioProduct[]>(
     productsKey,
     async (token) => (await fetchMyStudioProducts(token)).map(toStudioProduct),
-    { enabled: isAuthed, refetchInterval: 30_000 },
+    {
+      enabled: isAuthed,
+      refetchInterval: (query) => studioPollIntervalMs(query.state.data),
+    },
   )
   const products = data ?? []
   const isScanning = isLoading && !data
