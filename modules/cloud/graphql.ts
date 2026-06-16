@@ -374,6 +374,43 @@ export async function fetchMyEnvironments(
   return data.myEnvironments
 }
 
+// ---------------------------------------------------------------------------
+// Studio products (vetra-cloud-observability subgraph)
+// ---------------------------------------------------------------------------
+
+/**
+ * A studio product belonging to the caller, already filtered and
+ * status-resolved server-side. `status` is one of the `ProductStatus` strings
+ * ('ready' | 'booting'), so it maps straight onto the UI model with no further
+ * readiness derivation.
+ */
+export type StudioProductSummary = {
+  envId: string
+  subdomain: string
+  prefix: string
+  label: string
+  status: 'ready' | 'booting'
+}
+
+/**
+ * Fetch the caller's studio products in a single round-trip. Returns ONLY the
+ * products the caller owns or has just claimed; the switchboard performs the
+ * filtering + per-product readiness resolution that the client previously did
+ * via an N+1 environment scan.
+ *
+ * Without a token the switchboard returns an empty list (server-side enforced).
+ */
+export async function fetchMyStudioProducts(
+  token?: string | null,
+): Promise<StudioProductSummary[]> {
+  const data = await gql<{ myStudioProducts: StudioProductSummary[] }>(
+    `query { myStudioProducts { envId subdomain prefix label status } }`,
+    {},
+    token,
+  )
+  return data.myStudioProducts
+}
+
 /**
  * Fetch the caller's identity/admin status. Used by the UI to conditionally
  * show the "Mine | All" toggle.
