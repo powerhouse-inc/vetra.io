@@ -1,20 +1,43 @@
 'use client'
 
-import { Boxes } from 'lucide-react'
+import { Boxes, Loader2 } from 'lucide-react'
+import { useProductBrand } from '../use-product-brand'
 import type { StudioProduct } from '../use-studio-products'
 
 /**
  * A product in the grid. When the agent is ready we link straight to its studio
  * URL in a new tab; while it's still booting the card is inert (the agent host
- * isn't reachable yet), and the "Starting…" badge communicates why.
+ * isn't reachable yet), and a "Provisioning…" pill communicates why.
+ *
+ * Brand metadata is resolved lazily here (only once the product is ready) so the
+ * list never blocks on a per-product host fetch. A card with no brand still
+ * renders from its label/subdomain — we never drop a card on a transient error.
  */
 export function StudioProductCard({ product, href }: { product: StudioProduct; href: string }) {
-  const title = product.brand?.title?.trim() || product.label || 'Untitled product'
   const isReady = product.status === 'ready'
+  // Lazy brand: the hook only fetches when ready, falls back to null otherwise.
+  const brand = useProductBrand({
+    subdomain: product.subdomain,
+    prefix: product.prefix,
+    status: product.status,
+  })
+  const title = brand?.title?.trim() || product.label || 'Untitled product'
 
   const cardClass = `border-border bg-card flex flex-col rounded-xl border p-5 ${
     isReady ? 'hover:border-foreground/30 transition-colors' : 'cursor-default opacity-80'
   }`
+
+  const statusBadge = isReady ? (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
+      <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden />
+      Ready
+    </span>
+  ) : (
+    <span className="bg-muted text-muted-foreground inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium">
+      <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+      Provisioning…
+    </span>
+  )
 
   const body = (
     <>
@@ -24,26 +47,22 @@ export function StudioProductCard({ product, href }: { product: StudioProduct; h
         </div>
         <div className="min-w-0 flex-1">
           <div className="truncate text-base font-semibold">{title}</div>
-          {product.brand?.tagline && (
-            <div className="text-muted-foreground truncate text-sm">{product.brand.tagline}</div>
+          {brand?.tagline ? (
+            <div className="text-muted-foreground truncate text-sm">{brand.tagline}</div>
+          ) : (
+            product.subdomain && (
+              <div className="text-muted-foreground truncate text-sm">{product.subdomain}</div>
+            )
           )}
         </div>
       </div>
-      {product.brand?.description && (
+      {brand?.description && (
         <p className="text-muted-foreground mt-3 line-clamp-4 text-sm leading-relaxed">
-          {product.brand.description}
+          {brand.description}
         </p>
       )}
       <div className="mt-4 flex items-center justify-between border-t pt-3">
-        <span
-          className={
-            isReady
-              ? 'text-xs font-medium text-green-600'
-              : 'text-muted-foreground text-xs font-medium'
-          }
-        >
-          {isReady ? 'Ready' : 'Starting…'}
-        </span>
+        {statusBadge}
         {isReady && <span className="text-muted-foreground text-xs">Open →</span>}
       </div>
     </>
