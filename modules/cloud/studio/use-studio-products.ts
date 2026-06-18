@@ -93,10 +93,19 @@ export function useStudioProducts(): StudioProductsState {
 
   // Whether the caller's redeemed code carries a key, so the create flow can
   // skip the manual Anthropic-key prompt and let the subgraph inject it.
+  // Self-heal: this can resolve to null when the bearer token isn't ready yet
+  // at first fetch (right after the gate grants). A null result is "unknown",
+  // not "no key" — so keep refetching every 2s until we get a real status,
+  // otherwise the create card would wrongly prompt for a key the invite code
+  // already carries. Stops polling once a status object resolves.
   const { data: access } = useAuthedQuery(
     ['vetra-access-status', did],
     (token) => (token ? myAccessStatus(token) : Promise.resolve(null)),
-    { enabled: isAuthed },
+    {
+      enabled: isAuthed,
+      staleTime: 0,
+      refetchInterval: (query) => (query.state.data == null ? 2000 : false),
+    },
   )
   const hasAttachedKey = access?.hasAttachedKey ?? false
 
