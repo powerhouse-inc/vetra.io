@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -59,6 +60,7 @@ type Step = 'gate' | 'login' | 'granted'
  */
 export function EarlyAccessGate({ children }: { children: ReactNode }) {
   const auth = useRenownAuth()
+  const queryClient = useQueryClient()
   const [step, setStep] = useState<Step>('gate')
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
@@ -106,6 +108,9 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
           if (redeemed?.allowed) {
             sessionStorage.removeItem(PENDING_CODE_KEY)
             writeGranted(true)
+            // Refresh the attached-key status so the products create card knows
+            // the just-redeemed code carries a key (no manual-key prompt).
+            void queryClient.invalidateQueries({ queryKey: ['vetra-access-status'] })
             if (!cancelled) setStep('granted')
             return
           }
@@ -149,7 +154,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [auth.status])
+  }, [auth.status, queryClient])
 
   const handleGetAccess = async () => {
     const entered = code.trim()
@@ -170,6 +175,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
         if (token) {
           const redeemed = await redeemInviteCode(entered, token)
           if (redeemed?.allowed) {
+            void queryClient.invalidateQueries({ queryKey: ['vetra-access-status'] })
             setStep('granted')
             return
           }
