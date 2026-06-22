@@ -12,7 +12,7 @@ export const STUDIO_AGENT_PACKAGE = 'vetra-cli'
  * verified, or switch back to undefined (= latest) once `latest` tracks a
  * working build.
  */
-export const STUDIO_AGENT_VERSION = '0.0.1-dev.23'
+export const STUDIO_AGENT_VERSION = '0.0.1-dev.27'
 /** Default agent prefix for a freshly-provisioned studio (manifest agent.id). */
 export const STUDIO_AGENT_PREFIX = 'vetra-agent'
 /** Studio agents only support XL/XXL; v1 provisions XXL. */
@@ -22,11 +22,7 @@ export const STUDIO_SERVICE_COMMAND = 'vetra'
 export const STUDIO_REGISTRY = 'https://registry.dev.vetra.io'
 export const STUDIO_BASE_DOMAIN = 'vetra.io'
 export const STUDIO_ENV_LABEL = 'Vetra Studio'
-/**
- * Plain (non-secret) env vars baked into every freshly-provisioned studio's
- * CLINT agent. The agent reads VETRA_OBSERVABILITY_CONSENT to decide whether
- * to emit observability data; we provision studios with consent granted.
- */
+/** Non-secret env baked into every freshly-provisioned studio's CLINT agent. */
 export const STUDIO_DEFAULT_ENV_VARS = [
   { name: 'VETRA_OBSERVABILITY_CONSENT', value: 'granted', isSecret: false },
 ] as const
