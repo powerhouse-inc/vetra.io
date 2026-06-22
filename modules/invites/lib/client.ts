@@ -142,6 +142,21 @@ export async function applyInviteCodeSecret(
   return data?.VetraAccessCodes?.applyInviteCodeSecret ?? null
 }
 
+/**
+ * The vetra-cli version the backend pool currently provisions. Sourced live so
+ * a stale (cached) frontend bundle still cold-provisions the current CLI instead
+ * of the version baked into its bundle. Public (no token). Returns null on a
+ * transport/GraphQL error or an older backend that lacks the field — the caller
+ * then falls back to the bundled `STUDIO_AGENT_VERSION` constant.
+ */
+export async function fetchStudioPoolVersion(): Promise<string | null> {
+  const data = await gql<{ VetraStudioPool: { config: { version: string } } }>(
+    `query { VetraStudioPool { config { version } } }`,
+    {},
+  )
+  return data?.VetraStudioPool?.config?.version ?? null
+}
+
 export type ClaimStudioEnvironmentResult = {
   documentId: string
   subdomain: string

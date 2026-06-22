@@ -7,7 +7,11 @@ import { createNewEnvironmentController } from '@/modules/cloud/controller'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { applyConfigChanges, type ConfigChange } from '@/modules/cloud/config/apply'
 import { getAuthToken } from '@/modules/cloud/graphql'
-import { applyInviteCodeSecret, claimStudioEnvironment } from '@/modules/invites/lib/client'
+import {
+  applyInviteCodeSecret,
+  claimStudioEnvironment,
+  fetchStudioPoolVersion,
+} from '@/modules/invites/lib/client'
 import { generateSubdomain } from '@/modules/cloud/subdomain'
 import { deriveTenantId } from './studio-tenant'
 import {
@@ -56,6 +60,11 @@ export function useCreateStudioEnvironment() {
         }
       }
 
+      // Source the version live from the backend so a stale (cached) bundle
+      // still cold-provisions the current CLI. Falls back to the bundled
+      // constant if the backend is unreachable or predates the query.
+      const version = (await fetchStudioPoolVersion()) ?? STUDIO_AGENT_VERSION
+
       const subdomain = generateSubdomain(crypto.randomUUID())
       const controller = createNewEnvironmentController({ parentIdentifier: DRIVE_ID, signer })
       controller.setOwner({ address: ownerAddress })
@@ -65,7 +74,7 @@ export function useCreateStudioEnvironment() {
         genericBaseDomain: STUDIO_BASE_DOMAIN,
         defaultPackageRegistry: STUDIO_REGISTRY,
       })
-      controller.addPackage({ packageName: STUDIO_AGENT_PACKAGE, version: STUDIO_AGENT_VERSION })
+      controller.addPackage({ packageName: STUDIO_AGENT_PACKAGE, version })
       controller.enableService({
         type: 'CLINT',
         prefix: STUDIO_AGENT_PREFIX,
@@ -73,7 +82,7 @@ export function useCreateStudioEnvironment() {
           package: {
             registry: STUDIO_REGISTRY,
             name: STUDIO_AGENT_PACKAGE,
-            version: STUDIO_AGENT_VERSION,
+            version,
           },
           env: STUDIO_DEFAULT_ENV_VARS.map((v) => ({ ...v })),
           serviceCommand: STUDIO_SERVICE_COMMAND,
