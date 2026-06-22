@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRenown } from '@powerhousedao/reactor-browser'
 import { getAuthToken } from '@/modules/cloud/graphql'
 import {
@@ -43,6 +43,12 @@ export function useConnectGithub(environmentId: string) {
   const renown = useRenown()
   const [phase, setPhase] = useState<ConnectPhase>({ kind: 'idle' })
   const runRef = useRef(0)
+
+  useEffect(() => {
+    return () => {
+      runRef.current += 1
+    }
+  }, [])
 
   const connect = useCallback(
     async (repoName: string): Promise<void> => {
