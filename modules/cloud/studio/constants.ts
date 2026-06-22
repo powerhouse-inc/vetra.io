@@ -40,3 +40,6 @@ export const STUDIO_ANTHROPIC_SECRET_NAMES = [
   'VETRA_ANTHROPIC_API_KEY',
   'VETRA_CLI_ANTHROPIC_API_KEY',
 ] as const
+
+/** TTL (seconds) for the Renown bearer provisioned to a studio for GitHub pushes. */
+export const STUDIO_PUSH_BEARER_TTL_SECONDS = 30 * 24 * 60 * 60

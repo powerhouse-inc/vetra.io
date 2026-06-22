@@ -20,4 +20,7 @@ export const envSchema = z.object({
   NEXT_PUBLIC_RENOWN_URL: z
     .url({ error: 'Must be a valid URL for the Renown service.' })
     .optional(),
+
+  // GitHub App slug, used to build the app install URL (e.g. "vetra-studio").
+  NEXT_PUBLIC_GITHUB_APP_SLUG: z.string().optional(),
 })

@@ -1,6 +1,7 @@
 'use client'
 
 import { Boxes, Loader2 } from 'lucide-react'
+import { GithubConnectionControl } from '@/modules/connect-github/github-connection-control'
 import { useProductBrand } from '../use-product-brand'
 import type { StudioProduct } from '../use-studio-products'
 
@@ -75,13 +76,20 @@ export function StudioProductCard({ product, href }: { product: StudioProduct; h
     </>
   )
 
-  if (!isReady) {
-    return <div className={cardClass}>{body}</div>
-  }
-
-  return (
+  const card = isReady ? (
     <a href={href} target="_blank" rel="noopener noreferrer" className={cardClass}>
       {body}
     </a>
+  ) : (
+    <div className={cardClass}>{body}</div>
+  )
+
+  return (
+    <div className="flex flex-col gap-2">
+      {card}
+      <div className="px-1">
+        <GithubConnectionControl environmentId={product.envId} />
+      </div>
+    </div>
   )
 }
