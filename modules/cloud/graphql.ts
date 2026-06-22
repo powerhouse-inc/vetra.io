@@ -48,10 +48,13 @@ type Renown = {
   getBearerToken: (opts: { expiresIn: number }) => Promise<string>
 }
 
-export async function getAuthToken(renown: Renown | null | undefined): Promise<string | null> {
+export async function getAuthToken(
+  renown: Renown | null | undefined,
+  expiresIn = 600,
+): Promise<string | null> {
   if (!renown) return null
   try {
-    return await renown.getBearerToken({ expiresIn: 600 })
+    return await renown.getBearerToken({ expiresIn })
   } catch {
     return null
   }
