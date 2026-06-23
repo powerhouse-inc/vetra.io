@@ -12,11 +12,8 @@ import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
 import { myGithubConnection } from './lib/client'
 import { ConnectGithubStep } from './connect-github-step'
 
-/**
- * GitHub connection status and connect control for one environment: shows the
- * connected repo or a connect button, and opens the device-flow dialog. Takes
- * only an environmentId, so it can be placed on a product card or elsewhere.
- */
+/** GitHub connection status and connect control for one environment: shows the
+ * connected repo or a connect button, and opens the device-flow dialog. */
 export function GithubConnectionControl({ environmentId }: { environmentId: string }) {
   const [open, setOpen] = useState(false)
   const {
