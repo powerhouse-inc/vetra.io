@@ -14,6 +14,7 @@ vi.mock('@/modules/cloud/graphql', () => ({ getAuthToken: vi.fn().mockResolvedVa
 vi.mock('@/modules/invites/lib/client', () => ({
   applyInviteCodeSecret: vi.fn(),
   claimStudioEnvironment: vi.fn(),
+  fetchStudioPoolVersion: vi.fn().mockResolvedValue(null),
 }))
 
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
@@ -87,13 +88,18 @@ describe('useCreateStudioEnvironment', () => {
     expect(enableService).toHaveBeenCalledOnce()
     expect(enableService.mock.calls[0][0]).toMatchObject({ type: 'CLINT', prefix: 'vetra-agent' })
 
-    expect(applyConfigChanges).toHaveBeenCalledOnce()
-    const [tenantId, changes] = vi.mocked(applyConfigChanges).mock.calls[0]
+    expect(applyConfigChanges).toHaveBeenCalledTimes(2)
+    const [tenantId, secretChanges] = vi.mocked(applyConfigChanges).mock.calls[0]
     expect(tenantId).toBe('warm-newt-75-aa726a95')
-    expect(changes.map((c) => c.name).sort()).toEqual(
+    expect(secretChanges.map((c) => c.name).sort()).toEqual(
       ['ANTHROPIC_API_KEY', 'VETRA_ANTHROPIC_API_KEY', 'VETRA_CLI_ANTHROPIC_API_KEY'].sort(),
     )
-    expect(changes.every((c) => c.kind === 'setSecret' && c.value === 'sk-test')).toBe(true)
+    expect(secretChanges.every((c) => c.kind === 'setSecret' && c.value === 'sk-test')).toBe(true)
+    const githubChanges = vi.mocked(applyConfigChanges).mock.calls[1][1]
+    expect(githubChanges.map((c) => c.name).sort()).toEqual(
+      ['VETRA_CLOUD_SWITCHBOARD_URL', 'VETRA_ENVIRONMENT_ID'].sort(),
+    )
+    expect(githubChanges.every((c) => c.kind === 'setVar')).toBe(true)
 
     expect(approveChanges).toHaveBeenCalledOnce()
     expect(push).toHaveBeenCalledTimes(2)
@@ -119,8 +125,12 @@ describe('useCreateStudioEnvironment', () => {
       res = await result.current()
     })
 
-    // No client-side secret write on the injection path.
-    expect(applyConfigChanges).not.toHaveBeenCalled()
+    expect(applyConfigChanges).toHaveBeenCalledOnce()
+    const githubChanges = vi.mocked(applyConfigChanges).mock.calls[0][1]
+    expect(githubChanges.map((c) => c.name).sort()).toEqual(
+      ['VETRA_CLOUD_SWITCHBOARD_URL', 'VETRA_ENVIRONMENT_ID'].sort(),
+    )
+    expect(githubChanges.every((c) => c.kind === 'setVar')).toBe(true)
     expect(applyInviteCodeSecret).toHaveBeenCalledOnce()
     const [tenantId, secretNames] = vi.mocked(applyInviteCodeSecret).mock.calls[0]
     expect(tenantId).toBe('warm-newt-75-aa726a95')

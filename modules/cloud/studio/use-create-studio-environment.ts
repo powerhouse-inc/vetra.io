@@ -24,7 +24,6 @@ import {
   STUDIO_BASE_DOMAIN,
   STUDIO_DEFAULT_ENV_VARS,
   STUDIO_ENV_LABEL,
-  STUDIO_PUSH_BEARER_TTL_SECONDS,
   STUDIO_REGISTRY,
   STUDIO_SERVICE_COMMAND,
 } from './constants'
@@ -118,14 +117,14 @@ export function useCreateStudioEnvironment() {
         }
       }
 
-      const pushBearer = await getAuthToken(renown, STUDIO_PUSH_BEARER_TTL_SECONDS)
       const githubChanges: ConfigChange[] = [
         { kind: 'setVar', name: 'VETRA_ENVIRONMENT_ID', value: documentId },
-        { kind: 'setVar', name: 'VETRA_CLOUD_SWITCHBOARD_URL', value: cloudSwitchboardUrl() },
+        {
+          kind: 'setVar',
+          name: 'VETRA_CLOUD_SWITCHBOARD_URL',
+          value: cloudSwitchboardUrl().replace(/\/graphql\/?$/, ''),
+        },
       ]
-      if (pushBearer) {
-        githubChanges.push({ kind: 'setSecret', name: 'VETRA_USER_BEARER', value: pushBearer })
-      }
       try {
         await applyConfigChanges(tenantId, githubChanges, renown)
       } catch {
