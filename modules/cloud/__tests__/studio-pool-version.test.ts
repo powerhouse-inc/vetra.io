@@ -11,27 +11,30 @@ afterEach(() => {
 
 describe('fetchStudioPoolVersion', () => {
   it('returns the version the backend reports', async () => {
-    mockFetch(async () => ({
-      ok: true,
-      json: async () => ({
-        data: { VetraStudioPool: { config: { version: '0.0.1-dev.42' } } },
+    mockFetch(() =>
+      Promise.resolve({
+        ok: true,
+        json: () =>
+          Promise.resolve({
+            data: { VetraStudioPool: { config: { version: '0.0.1-dev.42' } } },
+          }),
       }),
-    }))
+    )
     expect(await fetchStudioPoolVersion()).toBe('0.0.1-dev.42')
   })
 
   it('returns null on transport failure (caller falls back to the constant)', async () => {
-    mockFetch(async () => {
-      throw new Error('network')
-    })
+    mockFetch(() => Promise.reject(new Error('network')))
     expect(await fetchStudioPoolVersion()).toBeNull()
   })
 
   it('returns null on a GraphQL error / older backend without the field', async () => {
-    mockFetch(async () => ({
-      ok: true,
-      json: async () => ({ errors: [{ message: 'Cannot query field config' }] }),
-    }))
+    mockFetch(() =>
+      Promise.resolve({
+        ok: true,
+        json: () => Promise.resolve({ errors: [{ message: 'Cannot query field config' }] }),
+      }),
+    )
     expect(await fetchStudioPoolVersion()).toBeNull()
   })
 })
