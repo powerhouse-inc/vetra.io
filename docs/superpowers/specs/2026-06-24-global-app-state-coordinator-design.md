@@ -54,19 +54,24 @@ Five workstreams: **(A) domain registry**, **(B) coordinator**, **(C) sync statu
 A declarative inventory of every app-wide domain. **Reuses existing key factories and fetchers — no duplication.**
 
 ```ts
-interface DomainContext { did?: string; address?: string }
+interface DomainContext {
+  did?: string
+  address?: string
+}
 
 interface StateDomain {
-  id: string                 // 'viewer' | 'my-teams' | 'environments' | 'packages'
-  label: string              // for the status tooltip
-  requiresIdentity: boolean  // skip prefetch until DID/address resolves
-  wsBacked: boolean          // true → the global Switchboard WS invalidates it
-  getKey: (ctx: DomainContext) => QueryKey       // reuse queryKeys.* / ['my-teams', …]
-  fetcher: (ctx: DomainContext) => () => Promise<unknown>  // reuse existing fetchers
+  id: string // 'viewer' | 'my-teams' | 'environments' | 'packages'
+  label: string // for the status tooltip
+  requiresIdentity: boolean // skip prefetch until DID/address resolves
+  wsBacked: boolean // true → the global Switchboard WS invalidates it
+  getKey: (ctx: DomainContext) => QueryKey // reuse queryKeys.* / ['my-teams', …]
+  fetcher: (ctx: DomainContext) => () => Promise<unknown> // reuse existing fetchers
   staleTime?: number
 }
 
-export const STATE_DOMAINS: StateDomain[] = [ /* viewer, my-teams, environments, packages, … */ ]
+export const STATE_DOMAINS: StateDomain[] = [
+  /* viewer, my-teams, environments, packages, … */
+]
 ```
 
 This is the single source of truth for "what is app state." Adding a domain is one entry. Each entry must reuse the feature's existing key factory and fetcher so keys never drift from what the hooks use.

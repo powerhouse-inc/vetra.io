@@ -45,10 +45,12 @@ app/layout.tsx                # MODIFY — wrap app in <AppStateCoordinator>, mo
 ### Task 1: Version-based cache-bust on deploy
 
 **Files:**
+
 - Modify: `next.config.ts`
 - Modify: `modules/shared/providers/query-client/query-client.ts:10` (the `CACHE_BUSTER` constant)
 
 **Interfaces:**
+
 - Produces: `CACHE_BUSTER: string` (now env-derived) — already consumed by `query-client-provider.tsx` `persistOptions.buster`. No signature change.
 
 - [ ] **Step 1: Inject the version into the client bundle via `next.config.ts`**
@@ -120,11 +122,13 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 Closes the "leftover from previous user" gap: on first load `CacheIdentityGuard` seeds and skips clearing, so non-DID-scoped persisted entries from a previous user can linger. We persist a last-known-DID marker and clear the cache on boot when it mismatches the resolved identity.
 
 **Files:**
+
 - Create: `modules/shared/state/identity-reset.ts`
 - Create: `modules/shared/state/__tests__/identity-reset.test.ts`
 - Modify: `modules/shared/providers/query-client/query-client-provider.tsx` (the `CacheIdentityGuard` component)
 
 **Interfaces:**
+
 - Produces:
   - `IDENTITY_MARKER_KEY: string`
   - `shouldClearForIdentity(storedDid: string | null, currentDid: string | null): boolean`
@@ -263,43 +267,43 @@ import {
 Replace the body of the `CacheIdentityGuard` `useEffect` so the seeding pass performs a boot reset and the marker is kept in sync. Replace this block:
 
 ```ts
-  useEffect(() => {
-    if (!seeded.current) {
-      seeded.current = true
-      prevDid.current = did
-      return
-    }
-    if (did !== prevDid.current) {
-      prevDid.current = did
-      queryClient.clear()
-      void persister.removeClient()
-    }
-  }, [did, queryClient])
+useEffect(() => {
+  if (!seeded.current) {
+    seeded.current = true
+    prevDid.current = did
+    return
+  }
+  if (did !== prevDid.current) {
+    prevDid.current = did
+    queryClient.clear()
+    void persister.removeClient()
+  }
+}, [did, queryClient])
 ```
 
 with:
 
 ```ts
-  useEffect(() => {
-    if (!seeded.current) {
-      seeded.current = true
-      prevDid.current = did
-      // Boot reset: if the persisted cache belonged to a different DID than
-      // the one resolving now, drop it so no previous-user data lingers.
-      if (shouldClearForIdentity(readIdentityMarker(), did ?? null)) {
-        queryClient.clear()
-        void persister.removeClient()
-      }
-      if (did) writeIdentityMarker(did)
-      return
-    }
-    if (did !== prevDid.current) {
-      prevDid.current = did
+useEffect(() => {
+  if (!seeded.current) {
+    seeded.current = true
+    prevDid.current = did
+    // Boot reset: if the persisted cache belonged to a different DID than
+    // the one resolving now, drop it so no previous-user data lingers.
+    if (shouldClearForIdentity(readIdentityMarker(), did ?? null)) {
       queryClient.clear()
       void persister.removeClient()
-      writeIdentityMarker(did ?? null)
     }
-  }, [did, queryClient])
+    if (did) writeIdentityMarker(did)
+    return
+  }
+  if (did !== prevDid.current) {
+    prevDid.current = did
+    queryClient.clear()
+    void persister.removeClient()
+    writeIdentityMarker(did ?? null)
+  }
+}, [did, queryClient])
 ```
 
 - [ ] **Step 6: Verify typecheck + tests pass**
@@ -323,10 +327,12 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 Pure, React-free functions and constants the coordinator and chip build on. Isolating them makes the behavior unit-testable without rendering.
 
 **Files:**
+
 - Create: `modules/shared/state/sync-status-logic.ts`
 - Create: `modules/shared/state/__tests__/sync-status-logic.test.ts`
 
 **Interfaces:**
+
 - Produces:
   - `type SyncStatus = 'up-to-date' | 'refreshing' | 'offline' | 'error'`
   - `COORDINATED_KEY_PREFIXES: readonly (readonly [string])[]` — `[['builder-account'], ['my-teams'], ['environments'], ['viewer']]`
@@ -488,10 +494,12 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 The provider that warms the cache on boot, owns the global WS, runs the been-away refresh, tracks `lastSyncedAt`, and exposes everything via `useAppState()`.
 
 **Files:**
+
 - Create: `modules/shared/state/app-state-coordinator.tsx`
 - Create: `modules/shared/state/index.ts`
 
 **Interfaces:**
+
 - Consumes:
   - `deriveSyncStatus`, `shouldRefreshAfterAway`, `isCoordinatedKey`, `COORDINATED_KEY_PREFIXES`, `AWAY_THRESHOLD_MS`, `type SyncStatus` from `./sync-status-logic`
   - `useBuilderAccount(address: string | null | undefined)` from `@/modules/profile/lib/use-builder-account`
@@ -510,15 +518,7 @@ Create `modules/shared/state/app-state-coordinator.tsx`:
 ```tsx
 'use client'
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react'
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
 import type { ReactNode } from 'react'
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import { useIsFetching, useIsMutating, useQueryClient } from '@tanstack/react-query'
@@ -704,10 +704,12 @@ Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
 Surface the status to the user and mount the coordinator so the whole app is covered.
 
 **Files:**
+
 - Create: `modules/shared/components/ui/sync-status-chip.tsx`
 - Modify: `app/layout.tsx`
 
 **Interfaces:**
+
 - Consumes: `useAppState` from `@/shared/state`
 - Produces: `SyncStatusChip: () => JSX.Element | null`
 
@@ -777,38 +779,38 @@ import { AppStateCoordinator } from '@/modules/shared/state'
 Then wrap the existing `QueryClientProvider` children with `<AppStateCoordinator>` and add the chip. Replace:
 
 ```tsx
-            <QueryClientProvider>
-              <GlobalRefreshIndicator />
-              <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
-              <CloudAuthBridge />
-              <PostLoginRedirect />
-              <div className="items-right flex min-h-screen flex-col">
-                <Navbar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-              <Toaster />
-            </QueryClientProvider>
+<QueryClientProvider>
+  <GlobalRefreshIndicator />
+  <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
+  <CloudAuthBridge />
+  <PostLoginRedirect />
+  <div className="items-right flex min-h-screen flex-col">
+    <Navbar />
+    <main className="flex-1">{children}</main>
+    <Footer />
+  </div>
+  <Toaster />
+</QueryClientProvider>
 ```
 
 with:
 
 ```tsx
-            <QueryClientProvider>
-              <AppStateCoordinator>
-                <GlobalRefreshIndicator />
-                <SyncStatusChip />
-                <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
-                <CloudAuthBridge />
-                <PostLoginRedirect />
-                <div className="items-right flex min-h-screen flex-col">
-                  <Navbar />
-                  <main className="flex-1">{children}</main>
-                  <Footer />
-                </div>
-                <Toaster />
-              </AppStateCoordinator>
-            </QueryClientProvider>
+<QueryClientProvider>
+  <AppStateCoordinator>
+    <GlobalRefreshIndicator />
+    <SyncStatusChip />
+    <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
+    <CloudAuthBridge />
+    <PostLoginRedirect />
+    <div className="items-right flex min-h-screen flex-col">
+      <Navbar />
+      <main className="flex-1">{children}</main>
+      <Footer />
+    </div>
+    <Toaster />
+  </AppStateCoordinator>
+</QueryClientProvider>
 ```
 
 - [ ] **Step 3: Verify typecheck passes**
