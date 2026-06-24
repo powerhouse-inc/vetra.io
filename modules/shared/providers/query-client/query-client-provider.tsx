@@ -13,6 +13,11 @@ import {
   getQueryClient,
   shouldPersistQuery,
 } from './query-client'
+import {
+  shouldClearForIdentity,
+  readIdentityMarker,
+  writeIdentityMarker,
+} from '@/shared/state/identity-reset'
 
 /**
  * localStorage-backed persister. Guarded for SSR — `createSyncStoragePersister`
@@ -41,12 +46,20 @@ function CacheIdentityGuard() {
     if (!seeded.current) {
       seeded.current = true
       prevDid.current = did
+      // Boot reset: if the persisted cache belonged to a different DID than
+      // the one resolving now, drop it so no previous-user data lingers.
+      if (shouldClearForIdentity(readIdentityMarker(), did ?? null)) {
+        queryClient.clear()
+        void persister.removeClient()
+      }
+      if (did) writeIdentityMarker(did)
       return
     }
     if (did !== prevDid.current) {
       prevDid.current = did
       queryClient.clear()
       void persister.removeClient()
+      writeIdentityMarker(did ?? null)
     }
   }, [did, queryClient])
 
