@@ -64,7 +64,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            TAG=${{ github.ref_name }}
+            TAG=${{ steps.meta.outputs.sha-tag }}
 
   update-k8s:
     needs: vetra-to
