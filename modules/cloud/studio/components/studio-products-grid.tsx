@@ -66,18 +66,17 @@ export function StudioProductsGrid() {
       <h1 className="mb-6 text-2xl font-semibold">Products</h1>
 
       {showEmptyState ? (
-        <div className="border-border flex flex-col items-center justify-center gap-4 rounded-xl border border-dashed py-20 text-center">
+        <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
           <p className="text-lg font-medium">No products yet</p>
           <p className="text-muted-foreground max-w-sm text-sm">
             Create your first product to spin up a dedicated Vetra Studio.
           </p>
-          <div className="w-full max-w-xs">
-            <NewProductCard
-              onCreate={handleCreate}
-              createError={createError}
-              hasAttachedKey={hasAttachedKey}
-            />
-          </div>
+          <NewProductCard
+            onCreate={handleCreate}
+            createError={createError}
+            hasAttachedKey={hasAttachedKey}
+            variant="button"
+          />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">

@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Plus } from 'lucide-react'
+import { Button } from '@/modules/shared/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -14,23 +15,37 @@ export function NewProductCard({
   onCreate,
   createError,
   hasAttachedKey,
+  variant = 'card',
 }: {
   onCreate: (apiKey?: string) => Promise<void>
   createError: string | null
   /** When true, the invite code supplies the key — provision directly, no form. */
   hasAttachedKey: boolean
+  /**
+   * `card` — dashed tile sized to sit in the products grid.
+   * `button` — solid green CTA for the empty state (no products yet).
+   */
+  variant?: 'card' | 'button'
 }) {
   const [open, setOpen] = useState(false)
 
-  const card = (
-    <button
-      onClick={() => (hasAttachedKey ? void onCreate() : setOpen(true))}
-      className="border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed transition-colors"
-    >
-      <Plus className="h-7 w-7" />
-      <span className="text-sm">Create new product…</span>
-    </button>
-  )
+  const handleClick = () => (hasAttachedKey ? void onCreate() : setOpen(true))
+
+  const card =
+    variant === 'button' ? (
+      <Button size="lg" onClick={handleClick}>
+        <Plus className="h-5 w-5" />
+        Create new product
+      </Button>
+    ) : (
+      <button
+        onClick={handleClick}
+        className="border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed transition-colors"
+      >
+        <Plus className="h-7 w-7" />
+        <span className="text-sm">Create new product…</span>
+      </button>
+    )
 
   // Invite code carries the key: clicking provisions immediately (the grid swaps
   // to its "Creating…" state via `creating`). Surface any error beneath the card.
