@@ -27,6 +27,13 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Unique per-deploy build identifier (image sha-tag on staging, semantic version
+# on release). Inlined into the bundle as NEXT_PUBLIC_BUILD_ID so it drives the
+# persisted React Query cache-buster — every deploy invalidates stale client
+# caches. Falls back to package.json's version when unset (local builds).
+ARG TAG
+ENV NEXT_PUBLIC_BUILD_ID=$TAG
+
 # Next.js collects completely anonymous telemetry data about general usage.
 # Learn more here: https://nextjs.org/telemetry
 # Uncomment the following line in case you want to disable telemetry during the build.
