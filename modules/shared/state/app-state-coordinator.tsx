@@ -60,7 +60,9 @@ export function AppStateCoordinator({ children }: { children: ReactNode }) {
   const address = useViewerAddress()
 
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null)
-  const [online, setOnline] = useState(true)
+  const [online, setOnline] = useState(() =>
+    typeof navigator !== 'undefined' ? navigator.onLine : true,
+  )
 
   // Aggregate fetching/mutating across only the coordinated queries.
   const activeCount =
@@ -87,9 +89,8 @@ export function AppStateCoordinator({ children }: { children: ReactNode }) {
     prevActive.current = activeCount
   }, [activeCount])
 
-  // Online/offline tracking (seed from the live value on mount).
+  // Online/offline tracking (initial value seeded lazily in useState above).
   useEffect(() => {
-    setOnline(navigator.onLine)
     const goOnline = () => {
       setOnline(true)
       refreshAll()
