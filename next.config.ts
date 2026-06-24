@@ -13,10 +13,12 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url))
 /** Next.js configuration for Vetra application */
 const nextConfig: NextConfig = {
   outputFileTracingRoot: projectRoot,
-  // Exposes the app version to the client so the persisted React Query cache
-  // is auto-busted on every release that bumps package.json's version.
+  // Build identifier inlined into the bundle to drive the persisted React Query
+  // cache-buster. Prefers the Docker TAG build-arg (unique per deploy: image
+  // sha-tag on staging, semantic version on release), falling back to
+  // package.json's version for local builds where no TAG is provided.
   env: {
-    NEXT_PUBLIC_BUILD_ID: pkg.version,
+    NEXT_PUBLIC_BUILD_ID: process.env.NEXT_PUBLIC_BUILD_ID ?? pkg.version,
   },
   images: {
     remotePatterns: [
