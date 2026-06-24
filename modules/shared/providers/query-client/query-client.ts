@@ -1,11 +1,15 @@
 import { QueryClient, isServer } from '@tanstack/react-query'
 
 /**
- * Bump when the shape of any persisted query payload changes (or on a deploy
- * that should drop stale client caches). The persisted localStorage blob is
- * discarded whenever this string no longer matches.
+ * Cache-bust key for the persisted localStorage blob. Sourced from the app
+ * version at build time (`NEXT_PUBLIC_BUILD_ID`), so every release that bumps
+ * `package.json`'s version discards stale persisted caches for all users.
+ * Falls back to 'dev' outside a build (tests / unconfigured env).
+ *
+ * Note: only changes when the version is bumped — bump `package.json` on
+ * release. Switchable to a git commit SHA later via a Docker build arg.
  */
-export const CACHE_BUSTER = 'v1'
+export const CACHE_BUSTER = process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev'
 
 /** localStorage key for the persisted React Query cache. */
 export const PERSIST_KEY = 'vetra-rq-cache'
