@@ -6,6 +6,8 @@ import { PostLoginRedirect } from '@/modules/shared/components/renown/post-login
 import { RenownProvider } from '@/modules/shared/components/renown/renown-provider'
 import { AmbientBackground } from '@/modules/shared/components/ui/ambient-background'
 import { GlobalRefreshIndicator } from '@/modules/shared/components/ui/global-refresh-indicator'
+import { SyncStatusChip } from '@/modules/shared/components/ui/sync-status-chip'
+import { AppStateCoordinator } from '@/modules/shared/state'
 import { Toaster } from '@/modules/shared/components/ui/sonner'
 import { ThemeProvider } from '@/modules/shared/providers/theme-provider'
 import { Footer } from '@/shared/components/footer/footer'
@@ -74,16 +76,19 @@ export default async function RootLayout({
             disableTransitionOnChange
           >
             <QueryClientProvider>
-              <GlobalRefreshIndicator />
-              <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
-              <CloudAuthBridge />
-              <PostLoginRedirect />
-              <div className="items-right flex min-h-screen flex-col">
-                <Navbar />
-                <main className="flex-1">{children}</main>
-                <Footer />
-              </div>
-              <Toaster />
+              <AppStateCoordinator>
+                <GlobalRefreshIndicator />
+                <SyncStatusChip />
+                <RenownProvider appName="vetra" url={process.env.NEXT_PUBLIC_RENOWN_URL} />
+                <CloudAuthBridge />
+                <PostLoginRedirect />
+                <div className="items-right flex min-h-screen flex-col">
+                  <Navbar />
+                  <main className="flex-1">{children}</main>
+                  <Footer />
+                </div>
+                <Toaster />
+              </AppStateCoordinator>
             </QueryClientProvider>
           </ThemeProvider>
         </NuqsAdapter>
