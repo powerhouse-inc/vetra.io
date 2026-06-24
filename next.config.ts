@@ -1,6 +1,7 @@
 import type { NextConfig } from 'next'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import pkg from './package.json' with { type: 'json' }
 
 // Pin Next/Turbopack's workspace root to this project's directory. Without
 // it, Next walks up the parent dir trying to find lockfiles and ends up
@@ -12,6 +13,11 @@ const projectRoot = path.dirname(fileURLToPath(import.meta.url))
 /** Next.js configuration for Vetra application */
 const nextConfig: NextConfig = {
   outputFileTracingRoot: projectRoot,
+  // Exposes the app version to the client so the persisted React Query cache
+  // is auto-busted on every release that bumps package.json's version.
+  env: {
+    NEXT_PUBLIC_BUILD_ID: pkg.version,
+  },
   images: {
     remotePatterns: [
       {
