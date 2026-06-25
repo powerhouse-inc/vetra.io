@@ -106,10 +106,13 @@ function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
   return (
     <Card className="transition-shadow hover:shadow-md">
       <CardHeader className="flex-row items-center justify-between pb-3">
-        <CardTitle className="flex items-center gap-2 text-base">
-          <Server className="h-4 w-4" />
-          {displayName}
-        </CardTitle>
+        <div className="flex min-w-0 flex-col gap-0.5">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Server className="h-4 w-4" />
+            {displayName}
+          </CardTitle>
+          {subdomain && <span className="text-muted-foreground truncate text-sm">{subdomain}</span>}
+        </div>
         <StatusDot status={env.state.status} />
       </CardHeader>
       <CardContent className="space-y-4 pt-0">
