@@ -42,6 +42,7 @@ describe('shouldRefreshAfterAway', () => {
 describe('isCoordinatedKey', () => {
   it('matches a coordinated prefix', () => {
     expect(isCoordinatedKey(['my-teams', '0xabc'])).toBe(true)
+    expect(isCoordinatedKey(['studio-products', 'did:x'])).toBe(true)
     expect(isCoordinatedKey(['environments', 'MINE', null])).toBe(true)
   })
 
@@ -54,6 +55,7 @@ describe('isCoordinatedKey', () => {
     expect(COORDINATED_KEY_PREFIXES.map((k) => k[0])).toEqual([
       'builder-account',
       'my-teams',
+      'studio-products',
       'environments',
       'viewer',
     ])

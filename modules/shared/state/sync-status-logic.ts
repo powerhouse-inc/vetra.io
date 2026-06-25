@@ -15,6 +15,7 @@ export type SyncStatus = 'up-to-date' | 'refreshing' | 'offline' | 'error'
 export const COORDINATED_KEY_PREFIXES = [
   ['builder-account'],
   ['my-teams'],
+  ['studio-products'],
   ['environments'],
   ['viewer'],
 ] as const
