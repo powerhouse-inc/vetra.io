@@ -1,17 +1,25 @@
 'use client'
 
 import { useDid } from '@powerhousedao/reactor-browser'
-import { keepPreviousData, useQueryClient } from '@tanstack/react-query'
+import { keepPreviousData } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { fetchMyEnvironments, fetchViewer } from '../graphql'
 import type { EnvironmentSummary, ListScope, Viewer } from '../graphql'
 import { queryKeys } from '../query/keys'
 import { useAuthedQuery } from '../query/use-authed-query'
-import { useDocumentListSubscription } from './use-document-subscription'
 import type { CloudEnvironment } from '../types'
 
-/** Background revalidation cadence — SWR + the WS subscription cover freshness. */
-const ENV_REFETCH_INTERVAL = 20_000
+/**
+ * Shared descriptor for the env-list query — reused by `useEnvironments` and by
+ * the nav intent-prefetch (modules/shared/state/route-prefetch.ts) so the key
+ * and fetcher never drift.
+ */
+export function myEnvironmentsQuery(did: string | undefined, scope: ListScope = 'MINE') {
+  return {
+    queryKey: queryKeys.environments(scope, did),
+    fetch: (token: string | null) => fetchMyEnvironments(scope, token),
+  }
+}
 
 /**
  * UI scope for the env list toggle. Maps to backend `ListScope` + client-side
@@ -101,30 +109,23 @@ function summaryToCloudEnvironment(summary: EnvironmentSummary): CloudEnvironmen
  * required to distinguish MINE from UNCLAIMED — pass `null` while the viewer
  * is still loading and the hook will show an empty list until it resolves.
  *
- * Subscribes to document changes via WebSocket for real-time updates and
- * polls every 10s as fallback.
+ * Freshness comes from the app-state coordinator's central WebSocket signal
+ * (debounced, active-only invalidation) — this hook does no polling and opens
+ * no socket of its own.
  */
 export function useEnvironments(
   viewScope: ViewScope = 'MINE',
   viewerAddress: string | null = null,
 ): CloudEnvironment[] {
   const did = useDid()
-  const queryClient = useQueryClient()
   const backendScope: ListScope = viewScope === 'ALL' ? 'ALL' : 'MINE'
 
   // SWR read: paints from the persisted/last-known list instantly, then
   // revalidates in the background. `MINE` and `UNCLAIMED` share the same
   // backend query (filtered in-memory below), so they dedupe to one fetch.
-  const { data, isError } = useAuthedQuery<EnvironmentSummary[]>(
-    queryKeys.environments(backendScope, did),
-    (token) => fetchMyEnvironments(backendScope, token),
-    { refetchInterval: ENV_REFETCH_INTERVAL, placeholderData: keepPreviousData },
-  )
-
-  // Any document change invalidates every env-list query, triggering a quiet
-  // background revalidation (replaces the old manual refetch + 10s polling).
-  useDocumentListSubscription(() => {
-    void queryClient.invalidateQueries({ queryKey: ['environments'] })
+  const q = myEnvironmentsQuery(did, backendScope)
+  const { data, isError } = useAuthedQuery<EnvironmentSummary[]>(q.queryKey, q.fetch, {
+    placeholderData: keepPreviousData,
   })
 
   return useMemo(() => {
