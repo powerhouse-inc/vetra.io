@@ -4,7 +4,7 @@
 
 **Goal:** Make pages instant and eliminate idle polling — one WS signal drives a debounced, active-only refresh of a single shared cache; pages warm via intent-prefetch.
 
-**Architecture:** Keep React Query (persisted) as the single source of truth. The coordinator's one `documentChanges` WS becomes a *debounced, active-only* invalidation signal; per-query idle polling is removed; queries share `queryOptions`-style descriptors reused by hooks and by an intent-prefetch hook wired into the nav.
+**Architecture:** Keep React Query (persisted) as the single source of truth. The coordinator's one `documentChanges` WS becomes a _debounced, active-only_ invalidation signal; per-query idle polling is removed; queries share `queryOptions`-style descriptors reused by hooks and by an intent-prefetch hook wired into the nav.
 
 **Tech Stack:** Next.js 16, React 19, TanStack Query v5, graphql-ws, `@powerhousedao/reactor-browser`, Vitest (`npm run test:unit`, happy-dom).
 
@@ -37,6 +37,7 @@ modules/shared/components/navbar/components/navbar-item-mobile.tsx   # spread in
 ### Task 1: Pure-logic foundations (debounce, idle-stop poll, coordinated key)
 
 **Files:**
+
 - Create: `modules/shared/lib/debounce.ts`, `modules/shared/lib/__tests__/debounce.test.ts`
 - Modify: `modules/cloud/studio/studio-readiness.ts` (`studioPollIntervalMs`)
 - Modify: `modules/shared/state/sync-status-logic.ts` (add `['studio-products']`)
@@ -45,6 +46,7 @@ modules/shared/components/navbar/components/navbar-item-mobile.tsx   # spread in
 **Produces:** `createDebouncer<T extends unknown[]>(fn: (...a:T)=>void, ms:number): { call:(...a:T)=>void; cancel:()=>void }`; `studioPollIntervalMs(...): number | false`.
 
 - [ ] **Step 1: Write failing debounce test** — `modules/shared/lib/__tests__/debounce.test.ts`:
+
 ```ts
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { createDebouncer } from '@/shared/lib/debounce'
@@ -56,7 +58,9 @@ describe('createDebouncer', () => {
   it('fires once after the window for a burst of calls', () => {
     const fn = vi.fn()
     const d = createDebouncer(fn, 750)
-    d.call(); d.call(); d.call()
+    d.call()
+    d.call()
+    d.call()
     expect(fn).not.toHaveBeenCalled()
     vi.advanceTimersByTime(750)
     expect(fn).toHaveBeenCalledTimes(1)
@@ -65,14 +69,17 @@ describe('createDebouncer', () => {
   it('cancel prevents a pending fire', () => {
     const fn = vi.fn()
     const d = createDebouncer(fn, 750)
-    d.call(); d.cancel()
+    d.call()
+    d.cancel()
     vi.advanceTimersByTime(1000)
     expect(fn).not.toHaveBeenCalled()
   })
 })
 ```
+
 - [ ] **Step 2: Run, expect FAIL** — `npm run test:unit -- debounce` (module missing).
 - [ ] **Step 3: Implement** — `modules/shared/lib/debounce.ts`:
+
 ```ts
 /** Trailing-edge debouncer: coalesces a burst of calls into one fire after `ms`. */
 export function createDebouncer<T extends unknown[]>(fn: (...args: T) => void, ms: number) {
@@ -92,8 +99,10 @@ export function createDebouncer<T extends unknown[]>(fn: (...args: T) => void, m
   }
 }
 ```
+
 - [ ] **Step 4: Run, expect PASS** — `npm run test:unit -- debounce`.
 - [ ] **Step 5: studioPollIntervalMs → idle-stop.** Edit `studio-readiness.ts`: change return type to `number | false` and return `false` (not `SLOW_STUDIO_POLL_MS`) when nothing is booting:
+
 ```ts
 export function studioPollIntervalMs(
   products: ReadonlyArray<{ status: ProductStatus }> | undefined,
@@ -102,7 +111,9 @@ export function studioPollIntervalMs(
   return anyBooting ? FAST_STUDIO_POLL_MS : false
 }
 ```
+
 Update `modules/cloud/__tests__/studio-poll-interval.test.ts`: the "all ready" case now expects `false` (was `SLOW_STUDIO_POLL_MS`); booting case still `FAST_STUDIO_POLL_MS`.
+
 - [ ] **Step 6: Add coordinated key.** In `sync-status-logic.ts` add `['studio-products']` after `['my-teams']`. Update `sync-status-logic.test.ts` `toEqual([...])` list and add `isCoordinatedKey(['studio-products','x']) === true`.
 - [ ] **Step 7: Run** — `npm run test:unit -- debounce studio-poll-interval sync-status-logic` → all PASS.
 - [ ] **Step 8: Commit** — `git add -A && git commit -m "feat(state): debounce util, idle-stop studio poll, studio-products coordinated key"`
@@ -112,16 +123,19 @@ Update `modules/cloud/__tests__/studio-poll-interval.test.ts`: the "all ready" c
 ### Task 2: Drop idle polling + export query descriptors
 
 **Files:**
+
 - Modify: `modules/cloud/hooks/use-environment.ts`
 - Modify: `modules/cloud/studio/use-studio-products.ts`
 
 **Consumes:** `studioPollIntervalMs` (now `number|false`).
 **Produces:**
+
 - `myEnvironmentsQuery(did, scope): { queryKey: QueryKey; fetch: (token: string|null) => Promise<EnvironmentSummary[]> }`
 - `studioProductsQuery(did): { queryKey: QueryKey; fetch: (token: string|null) => Promise<StudioProduct[]> }`
 
 - [ ] **Step 1: use-environment.ts.** Export a descriptor and reuse it in the hook; drop the 20s `refetchInterval` and the redundant per-hook `useDocumentListSubscription` (the coordinator's central WS now drives env freshness). Concretely:
   - Add near the top:
+
 ```ts
 export function myEnvironmentsQuery(did: string | undefined, scope: ListScope = 'MINE') {
   return {
@@ -130,24 +144,31 @@ export function myEnvironmentsQuery(did: string | undefined, scope: ListScope = 
   }
 }
 ```
-  - In `useEnvironments`, replace the `useAuthedQuery(queryKeys.environments(...), (token)=>fetchMyEnvironments(...), { refetchInterval: ENV_REFETCH_INTERVAL, placeholderData })` with the descriptor and **no** `refetchInterval`:
+
+- In `useEnvironments`, replace the `useAuthedQuery(queryKeys.environments(...), (token)=>fetchMyEnvironments(...), { refetchInterval: ENV_REFETCH_INTERVAL, placeholderData })` with the descriptor and **no** `refetchInterval`:
+
 ```ts
 const q = myEnvironmentsQuery(did, backendScope)
 const { data, isError } = useAuthedQuery<EnvironmentSummary[]>(q.queryKey, q.fetch, {
   placeholderData: keepPreviousData,
 })
 ```
-  - Delete the `useDocumentListSubscription(() => queryClient.invalidateQueries({ queryKey: ['environments'] }))` block in `useEnvironments` and the now-unused `ENV_REFETCH_INTERVAL` const + `useDocumentListSubscription` import if unused elsewhere in the file. (Keep `useQueryClient` only if still used; remove if not.)
+
+- Delete the `useDocumentListSubscription(() => queryClient.invalidateQueries({ queryKey: ['environments'] }))` block in `useEnvironments` and the now-unused `ENV_REFETCH_INTERVAL` const + `useDocumentListSubscription` import if unused elsewhere in the file. (Keep `useQueryClient` only if still used; remove if not.)
 - [ ] **Step 2: use-studio-products.ts.** Export descriptor; hook keeps `useAuthedQuery` with `refetchInterval: (q) => studioPollIntervalMs(q.state.data)` (now returns `false` when idle → polling stops automatically). Add:
+
 ```ts
 export function studioProductsQuery(did: string | undefined) {
   return {
     queryKey: queryKeys.studioProducts(did),
-    fetch: async (token: string | null) => (await fetchMyStudioProducts(token)).map(toStudioProduct),
+    fetch: async (token: string | null) =>
+      (await fetchMyStudioProducts(token)).map(toStudioProduct),
   }
 }
 ```
-  Refactor the existing `useAuthedQuery(productsKey, async (token)=>..., {...})` to call `studioProductsQuery(did)` for `queryKey`/`fetch` (behavior identical).
+
+Refactor the existing `useAuthedQuery(productsKey, async (token)=>..., {...})` to call `studioProductsQuery(did)` for `queryKey`/`fetch` (behavior identical).
+
 - [ ] **Step 3: Typecheck** — `npm run tsc` → 0 errors. (Confirms removed imports/consts don't dangle.)
 - [ ] **Step 4: Tests** — `npm run test:unit` → no new failures vs baseline (pre-existing: `agent-card`, `use-create-environment`).
 - [ ] **Step 5: Commit** — `git add -A && git commit -m "feat(state): drop idle env/studio polling; export query descriptors"`
@@ -161,31 +182,36 @@ export function studioProductsQuery(did: string | undefined) {
 **Consumes:** `createDebouncer`, `COORDINATED_KEY_PREFIXES`.
 
 - [ ] **Step 1: Replace the WS handler** with a debounced, active-only invalidator. Replace:
+
 ```tsx
-  useDocumentListSubscription(() => {
-    for (const prefix of COORDINATED_KEY_PREFIXES) {
-      void queryClient.invalidateQueries({ queryKey: prefix })
-    }
-  })
+useDocumentListSubscription(() => {
+  for (const prefix of COORDINATED_KEY_PREFIXES) {
+    void queryClient.invalidateQueries({ queryKey: prefix })
+  }
+})
 ```
+
 with:
+
 ```tsx
-  // One WS signal → debounced (coalesce the management-switchboard firehose) →
-  // refetch only ACTIVE coordinated queries (the page you're on); idle pages go
-  // stale and refresh lazily on next visit. No idle polling anywhere else.
-  const wsInvalidate = useMemo(
-    () =>
-      createDebouncer(() => {
-        for (const prefix of COORDINATED_KEY_PREFIXES) {
-          void queryClient.invalidateQueries({ queryKey: prefix, refetchType: 'active' })
-        }
-      }, 750),
-    [queryClient],
-  )
-  useEffect(() => () => wsInvalidate.cancel(), [wsInvalidate])
-  useDocumentListSubscription(() => wsInvalidate.call())
+// One WS signal → debounced (coalesce the management-switchboard firehose) →
+// refetch only ACTIVE coordinated queries (the page you're on); idle pages go
+// stale and refresh lazily on next visit. No idle polling anywhere else.
+const wsInvalidate = useMemo(
+  () =>
+    createDebouncer(() => {
+      for (const prefix of COORDINATED_KEY_PREFIXES) {
+        void queryClient.invalidateQueries({ queryKey: prefix, refetchType: 'active' })
+      }
+    }, 750),
+  [queryClient],
+)
+useEffect(() => () => wsInvalidate.cancel(), [wsInvalidate])
+useDocumentListSubscription(() => wsInvalidate.call())
 ```
+
 Add `import { createDebouncer } from '@/shared/lib/debounce'`.
+
 - [ ] **Step 2: Typecheck** — `npm run tsc` → 0.
 - [ ] **Step 3: Commit** — `git add -A && git commit -m "feat(state): debounce + active-only WS invalidation"`
 
@@ -194,6 +220,7 @@ Add `import { createDebouncer } from '@/shared/lib/debounce'`.
 ### Task 4: Intent prefetch wired into the nav
 
 **Files:**
+
 - Create: `modules/shared/state/route-prefetch.ts`, `modules/shared/state/use-prefetch-on-intent.ts`
 - Create test: `modules/shared/state/__tests__/route-prefetch.test.ts`
 - Modify: `navbar-items-desk.tsx`, `navbar-item-mobile.tsx`
@@ -202,6 +229,7 @@ Add `import { createDebouncer } from '@/shared/lib/debounce'`.
 **Produces:** `usePrefetchOnIntent(href: string): { onMouseEnter; onFocus; onTouchStart } | undefined`.
 
 - [ ] **Step 1: route-prefetch map** — `modules/shared/state/route-prefetch.ts`:
+
 ```ts
 import type { QueryClient } from '@tanstack/react-query'
 import { myEnvironmentsQuery } from '@/modules/cloud/hooks/use-environment'
@@ -230,7 +258,9 @@ export function hasPrefetch(href: string): boolean {
   return href in ROUTE_PREFETCH
 }
 ```
+
 - [ ] **Step 2: Test the map** — `modules/shared/state/__tests__/route-prefetch.test.ts`:
+
 ```ts
 import { describe, it, expect } from 'vitest'
 import { ROUTE_PREFETCH, hasPrefetch } from '@/shared/state/route-prefetch'
@@ -247,8 +277,11 @@ describe('ROUTE_PREFETCH', () => {
   })
 })
 ```
+
 Run `npm run test:unit -- route-prefetch` → PASS after Step 1.
+
 - [ ] **Step 3: intent hook** — `modules/shared/state/use-prefetch-on-intent.ts`:
+
 ```ts
 'use client'
 import { useCallback, useRef } from 'react'
@@ -270,7 +303,10 @@ export function usePrefetchOnIntent(href: string) {
     void (async () => {
       const token = await getAuthToken(renown)
       // Authed routes need a token; skip silently if signed out.
-      if (!token) { done.current = false; return }
+      if (!token) {
+        done.current = false
+        return
+      }
       await ROUTE_PREFETCH[href]({ queryClient, did, token })
     })()
   }, [href, queryClient, did, renown])
@@ -279,7 +315,9 @@ export function usePrefetchOnIntent(href: string) {
   return { onMouseEnter: trigger, onFocus: trigger, onTouchStart: trigger }
 }
 ```
+
 - [ ] **Step 4: wire desktop nav** — in `navbar-items-desk.tsx`, extract the link into a small child so the hook can be called per-item (hooks can't be in `.map` callbacks directly). Add:
+
 ```tsx
 function DeskNavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const intent = usePrefetchOnIntent(item.href)
@@ -299,7 +337,9 @@ function DeskNavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   )
 }
 ```
+
 and render `<DeskNavLink key={item.label} item={item} pathname={pathname} />` in the map. Add the import `import { usePrefetchOnIntent } from '@/modules/shared/state/use-prefetch-on-intent'`. (Note: `isActive`/`isExternal` access — `NavItem` is a union; guard with `!item.isExternal && item.isActive?.(pathname)` to satisfy TS, matching the existing `!item.isExternal && item.isActive(pathname)`.)
+
 - [ ] **Step 5: wire mobile nav** — apply the same `{...usePrefetchOnIntent(item.href)}` spread to the `<Link>` in `navbar-item-mobile.tsx` (extract a child component the same way if it maps items).
 - [ ] **Step 6: Typecheck + tests** — `npm run tsc && npm run test:unit -- route-prefetch` → clean/PASS.
 - [ ] **Step 7: Commit** — `git add -A && git commit -m "feat(state): intent-prefetch authed routes on nav hover/focus"`

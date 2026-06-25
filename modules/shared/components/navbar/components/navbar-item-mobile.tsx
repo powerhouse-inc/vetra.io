@@ -2,6 +2,7 @@ import { ChevronDown } from 'lucide-react'
 import Link from 'next/link'
 import React, { useMemo } from 'react'
 import { cn } from '@/modules/shared/lib/utils'
+import { usePrefetchOnIntent } from '@/modules/shared/state/use-prefetch-on-intent'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -13,6 +14,27 @@ import type { NavItem } from '../types'
 interface NavbarItemMobileProps {
   navItems: NavItem[]
   pathname: string
+}
+
+// One component per item so the prefetch hook obeys the rules of hooks.
+function MobileNavLink({ item, pathname }: { item: NavItem; pathname: string }) {
+  const intent = usePrefetchOnIntent(item.href)
+  return (
+    <DropdownMenuItem asChild className="p-2">
+      <Link
+        href={item.href}
+        {...intent}
+        className={cn(
+          'block w-full rounded-sm p-3 text-sm leading-none no-underline transition-colors outline-none select-none',
+          !item.isExternal && item.isActive(pathname)
+            ? 'text-primary hover:bg-accent hover:!text-primary font-semibold'
+            : 'text-foreground hover:bg-accent hover:!text-foreground/50',
+        )}
+      >
+        {item.label}
+      </Link>
+    </DropdownMenuItem>
+  )
 }
 
 function NavbarItemMobile({ navItems, pathname }: NavbarItemMobileProps) {
@@ -39,20 +61,7 @@ function NavbarItemMobile({ navItems, pathname }: NavbarItemMobileProps) {
           <ul className="flex flex-col">
             <li>
               {navItems.map((item) => (
-                <DropdownMenuItem key={item.label} asChild className="p-2">
-                  <Link
-                    href={item.href}
-                    className={cn(
-                      'block w-full rounded-sm p-3 text-sm leading-none no-underline transition-colors outline-none select-none',
-
-                      !item.isExternal && item.isActive(pathname)
-                        ? 'text-primary hover:bg-accent hover:!text-primary font-semibold'
-                        : 'text-foreground hover:bg-accent hover:!text-foreground/50',
-                    )}
-                  >
-                    {item.label}
-                  </Link>
-                </DropdownMenuItem>
+                <MobileNavLink key={item.label} item={item} pathname={pathname} />
               ))}
             </li>
           </ul>
