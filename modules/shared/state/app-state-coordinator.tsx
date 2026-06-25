@@ -6,6 +6,8 @@ import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import { useIsFetching, useIsMutating, useQueryClient } from '@tanstack/react-query'
 import { useBuilderAccount } from '@/modules/profile/lib/use-builder-account'
 import { useMyTeams } from '@/modules/profile/lib/use-my-teams'
+import { useEnvironments } from '@/modules/cloud/hooks/use-environment'
+import { useStudioProducts } from '@/modules/cloud/studio/use-studio-products'
 import { useDocumentListSubscription } from '@/modules/cloud/hooks/use-document-subscription'
 import {
   AWAY_THRESHOLD_MS,
@@ -34,16 +36,18 @@ function useViewerAddress(): string | null {
  * Invisible cache-warmer: mounting these existing hooks at the app root keeps
  * the user's cross-page data warm. React Query dedupes by key, so a page that
  * later mounts the same hook reads the warm cache instead of cold-fetching.
- * Each hook self-guards on `enabled`, so they no-op until identity resolves.
+ * Each hook self-guards on `enabled`/auth, so they no-op until identity
+ * resolves — unauthenticated visitors fetch nothing and open no sockets.
  *
- * Environments are intentionally not warmed here — they are cloud-only UI with
- * their own WS subscription + polling, and warming them globally would open a
- * redundant socket and fetch on every page. They are still kept fresh by the
- * coordinated refresh/WS below.
+ * This covers every signed-in domain the sync-status chip reports on, so
+ * "Up to date" means the pages (profile, teams, My Products, Cloud) are
+ * actually ready to paint from cache rather than cold-fetch on navigation.
  */
 function CacheWarmers({ address }: { address: string | null }) {
   useBuilderAccount(address)
   useMyTeams(address ?? undefined)
+  useStudioProducts()
+  useEnvironments()
   return null
 }
 
