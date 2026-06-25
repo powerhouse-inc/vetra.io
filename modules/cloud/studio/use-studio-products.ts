@@ -61,6 +61,19 @@ function toStudioProduct(summary: StudioProductSummary): StudioProduct {
   }
 }
 
+/**
+ * Shared descriptor for the studio-products query — reused by `useStudioProducts`
+ * and by the nav intent-prefetch (modules/shared/state/route-prefetch.ts) so the
+ * key and fetcher never drift.
+ */
+export function studioProductsQuery(did: string | undefined) {
+  return {
+    queryKey: queryKeys.studioProducts(did),
+    fetch: async (token: string | null) =>
+      (await fetchMyStudioProducts(token)).map(toStudioProduct),
+  }
+}
+
 export function useStudioProducts(): StudioProductsState {
   const user = useUser()
   const did = useDid()
@@ -77,17 +90,15 @@ export function useStudioProducts(): StudioProductsState {
   // client-side env scan, no N+1 fetchEnvironment, and no per-product readiness
   // derivation. Adaptive cadence: poll fast while any product is still
   // provisioning (so a just-claimed env flips to "ready" within ~3s of the
-  // backend signal instead of waiting a full 30s cycle), relax to 30s once all
-  // are ready. Paints instantly from the persisted cache on return visits.
-  const productsKey = queryKeys.studioProducts(did)
-  const { data, isLoading } = useAuthedQuery<StudioProduct[]>(
-    productsKey,
-    async (token) => (await fetchMyStudioProducts(token)).map(toStudioProduct),
-    {
-      enabled: isAuthed,
-      refetchInterval: (query) => studioPollIntervalMs(query.state.data),
-    },
-  )
+  // backend signal), then STOP polling once all are ready — freshness from then
+  // on comes from the coordinator's WS signal. Paints instantly from the
+  // persisted cache on return visits.
+  const q = studioProductsQuery(did)
+  const productsKey = q.queryKey
+  const { data, isLoading } = useAuthedQuery<StudioProduct[]>(q.queryKey, q.fetch, {
+    enabled: isAuthed,
+    refetchInterval: (query) => studioPollIntervalMs(query.state.data),
+  })
   const products = data ?? []
   const isScanning = isLoading && !data
 
