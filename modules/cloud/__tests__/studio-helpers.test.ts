@@ -23,7 +23,7 @@ describe('buildStudioEmbedUrl', () => {
         genericSubdomain: 'warm-newt-75',
         genericBaseDomain: 'vetra.io',
       }),
-    ).toBe('https://vetra-agent.warm-newt-75.vetra.io/')
+    ).toBe('https://warm-newt-75.vetra.io/')
   })
   it('appends ?user when a did is given', () => {
     expect(
@@ -33,7 +33,7 @@ describe('buildStudioEmbedUrl', () => {
         genericBaseDomain: 'vetra.io',
         userDid: 'did:ethr:0xabc',
       }),
-    ).toBe('https://vetra-agent.sub.vetra.io/?user=did%3Aethr%3A0xabc')
+    ).toBe('https://sub.vetra.io/?user=did%3Aethr%3A0xabc')
   })
   it('falls back to vetra.io base when missing', () => {
     expect(
@@ -42,7 +42,7 @@ describe('buildStudioEmbedUrl', () => {
         genericSubdomain: 'sub',
         genericBaseDomain: null,
       }),
-    ).toBe('https://vetra-agent.sub.vetra.io/')
+    ).toBe('https://sub.vetra.io/')
   })
 })
 

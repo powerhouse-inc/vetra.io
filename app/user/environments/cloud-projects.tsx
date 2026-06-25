@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 
 import { DRIVE_ID } from '@/modules/cloud/client'
 import { loadEnvironmentController } from '@/modules/cloud/controller'
+import { resolveGenericHost, isTypeAtApex } from '@/modules/cloud/lib/env-host'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { useEnvironments, useViewer, type ViewScope } from '@/modules/cloud/hooks/use-environment'
 import { useOptimisticMutation } from '@/modules/cloud/query/use-optimistic-mutation'
@@ -63,7 +64,12 @@ function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
   const baseDomain = env.state.genericBaseDomain ?? 'vetra.io'
   const visitUrl =
     env.state.status === 'READY' && subdomain && connectService
-      ? `https://${connectService.prefix}.${subdomain}.${baseDomain}`
+      ? `https://${resolveGenericHost(
+          subdomain,
+          connectService.prefix,
+          isTypeAtApex(env.state.services, env.state.apexService, 'CONNECT'),
+          baseDomain,
+        )}`
       : null
 
   // Optimistic delete: the card vanishes from every cached env list (and the

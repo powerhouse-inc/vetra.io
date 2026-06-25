@@ -3,7 +3,7 @@ import { render } from '@testing-library/react'
 
 import type { ProductBrand } from '@/modules/cloud/studio/fetch-product-brand'
 
-const AGENT_URL = 'https://vetra-agent.warm-newt-75.vetra.io/?user=did%3Aethr%3A0xabc'
+const AGENT_URL = 'https://warm-newt-75.vetra.io/?user=did%3Aethr%3A0xabc'
 
 // Brand is resolved lazily inside the card via useProductBrand (a per-ready
 // product host fetch). Stub it so the card renders synchronously in the test —

@@ -1,4 +1,5 @@
 import { STUDIO_BASE_DOMAIN } from './constants'
+import { resolveGenericHost } from '@/modules/cloud/lib/env-host'
 
 export type ProductBrand = {
   title: string
@@ -40,7 +41,8 @@ export async function fetchProductBrand(input: {
   token: string | null
 }): Promise<ProductBrand | null> {
   const base = input.baseDomain || STUDIO_BASE_DOMAIN
-  const url = `https://${input.prefix}.${input.subdomain}.${base}/switchboard/graphql`
+  // Studio = sole-CLINT env → its embedded switchboard is at the apex host.
+  const url = `https://${resolveGenericHost(input.subdomain, input.prefix, true, base)}/switchboard/graphql`
   try {
     const res = await fetch(url, {
       method: 'POST',

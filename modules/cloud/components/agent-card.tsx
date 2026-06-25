@@ -14,6 +14,7 @@ import type {
   Pod,
 } from '@/modules/cloud/types'
 import { composeClintEndpointUrl } from '@/modules/cloud/lib/clint-endpoint-url'
+import { isTypeAtApex } from '@/modules/cloud/lib/env-host'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -376,6 +377,11 @@ export function AgentCard({
                     url={composeClintEndpointUrl({
                       serviceUrl: service.url,
                       prefix: service.prefix,
+                      isApex: isTypeAtApex(
+                        env?.state.services ?? [],
+                        env?.state.apexService,
+                        service.type,
+                      ),
                       genericSubdomain: env?.state.genericSubdomain ?? null,
                       genericBaseDomain: env?.state.genericBaseDomain ?? null,
                       endpoint: { id: ep.id },

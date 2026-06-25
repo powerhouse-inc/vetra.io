@@ -20,6 +20,7 @@ import { useEnvironmentDetail } from '@/modules/cloud/hooks/use-environment-deta
 import { useEnvironmentStatus } from '@/modules/cloud/hooks/use-environment-status'
 import { generateSubdomain } from '@/modules/cloud/subdomain'
 import { getTenantId } from '@/modules/cloud/tenant-id'
+import { resolveGenericHost, isTypeAtApex } from '@/modules/cloud/lib/env-host'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   DropdownMenu,
@@ -274,7 +275,12 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
                       return (
                         <DropdownMenuItem key={svc.type} asChild>
                           <a
-                            href={`https://${svc.prefix}.${subdomain}.${baseDomain}${path}`}
+                            href={`https://${resolveGenericHost(
+                              subdomain,
+                              svc.prefix,
+                              isTypeAtApex(state?.services ?? [], state?.apexService, svc.type),
+                              baseDomain,
+                            )}${path}`}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
@@ -333,6 +339,8 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           onClose={drawer.close}
           kind={drawer.scope.id}
           service={drawerService ?? undefined}
+          services={state.services}
+          apexService={state.apexService ?? null}
           subdomain={subdomain}
           tenantId={tenantId}
           documentId={documentId}

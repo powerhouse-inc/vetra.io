@@ -23,6 +23,7 @@ import { useEnvironmentEvents } from '@/modules/cloud/hooks/use-environment-even
 import { useEnvironmentLogs } from '@/modules/cloud/hooks/use-environment-logs'
 import { useEnvironmentMetrics } from '@/modules/cloud/hooks/use-environment-metrics'
 import { getServiceQuota } from '@/modules/cloud/lib/resource-maps'
+import { resolveGenericHost, isTypeAtApex } from '@/modules/cloud/lib/env-host'
 import { extractRestartTimestamps } from '@/modules/cloud/lib/restart-events'
 import type {
   BackupCadence,
@@ -102,6 +103,9 @@ type Props = {
   onClose: () => void
   kind: ServiceKind
   service: CloudEnvironmentService | undefined
+  /** All env services + apex pin — to resolve the flattened switchboard host. */
+  services: CloudEnvironmentService[]
+  apexService: string | null
   subdomain: string | null
   tenantId: string | null
   documentId: string
@@ -158,6 +162,8 @@ export function ServiceDetailDrawer({
   onClose,
   kind,
   service,
+  services,
+  apexService,
   subdomain,
   tenantId,
   documentId,
@@ -188,7 +194,15 @@ export function ServiceDetailDrawer({
   // AuthTab still renders the "not yet running" placeholder when neither
   // is available (truly unprovisioned envs without a subdomain).
   const switchboardUrl =
-    service?.url ?? (subdomain ? `https://switchboard.${subdomain}.vetra.io` : null)
+    service?.url ??
+    (subdomain
+      ? `https://${resolveGenericHost(
+          subdomain,
+          'switchboard',
+          isTypeAtApex(services, apexService, 'SWITCHBOARD'),
+          'vetra.io',
+        )}`
+      : null)
   const clusterName = tenantId ? `${tenantId}-pg` : null
   const Icon = SERVICE_ICON[kind]
   const label = SERVICE_LABEL[kind]
