@@ -7,6 +7,7 @@ import { useIsFetching, useIsMutating, useQueryClient } from '@tanstack/react-qu
 import { useBuilderAccount } from '@/modules/profile/lib/use-builder-account'
 import { useMyTeams } from '@/modules/profile/lib/use-my-teams'
 import { useDocumentListSubscription } from '@/modules/cloud/hooks/use-document-subscription'
+import { createDebouncer } from '@/shared/lib/debounce'
 import {
   AWAY_THRESHOLD_MS,
   COORDINATED_KEY_PREFIXES,
@@ -113,13 +114,22 @@ export function AppStateCoordinator({ children }: { children: ReactNode }) {
     return () => document.removeEventListener('visibilitychange', onVisibility)
   }, [refreshAll])
 
-  // Global WS push: any Switchboard document change invalidates coordinated
-  // queries, so profile/teams get real-time refresh (they had none before).
-  useDocumentListSubscription(() => {
-    for (const prefix of COORDINATED_KEY_PREFIXES) {
-      void queryClient.invalidateQueries({ queryKey: prefix })
-    }
-  })
+  // Global WS push: any Switchboard document change refreshes coordinated
+  // queries. Debounced (the management switchboard emits a high-frequency
+  // documentChanges stream) and active-only — only queries with mounted
+  // observers (the page you're on) refetch; idle pages go stale and refresh
+  // lazily on next visit. This is the freshness mechanism that replaces polling.
+  const wsInvalidate = useMemo(
+    () =>
+      createDebouncer(() => {
+        for (const prefix of COORDINATED_KEY_PREFIXES) {
+          void queryClient.invalidateQueries({ queryKey: prefix, refetchType: 'active' })
+        }
+      }, 750),
+    [queryClient],
+  )
+  useEffect(() => () => wsInvalidate.cancel(), [wsInvalidate])
+  useDocumentListSubscription(() => wsInvalidate.call())
 
   const status = useMemo(
     () => deriveSyncStatus({ activeCount, online, hasError }),
