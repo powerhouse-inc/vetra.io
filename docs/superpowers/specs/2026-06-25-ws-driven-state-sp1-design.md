@@ -8,7 +8,7 @@
 
 After the app-state coordinator shipped (PR #78), two UX problems remain:
 
-1. **Pages aren't instant.** Opening *My Products* (and *Cloud*) cold-loads — the chip says "Up to date," yet the page shows skeletons because the data was never warmed and the chip never tracked it.
+1. **Pages aren't instant.** Opening _My Products_ (and _Cloud_) cold-loads — the chip says "Up to date," yet the page shows skeletons because the data was never warmed and the chip never tracked it.
 2. **Unnecessary requests.** Several queries poll on a fixed interval regardless of whether anything changed:
    - Environments: `refetchInterval: 20_000` (always).
    - Studio products: adaptive poll that idles at 30s even when nothing is provisioning.
@@ -19,12 +19,12 @@ The goal: a smooth experience where the user always has the latest state, with *
 ## Decisions (from brainstorming)
 
 - **Phased delivery.** This is SP1 of a larger plan:
-  - **SP1 (this spec, client-only, ships now):** WebSocket as the freshness *signal* → targeted, debounced refetch; remove idle polling; single cache all pages read; intent-prefetch for first load. No backend dependency.
-  - **SP2 (later, backend):** real GraphQL subscriptions in `vetra-cloud-package` that push the *projected data* over WS → client applies via `setQueryData` → true zero-refetch. A read-only spike confirmed this is buildable with local subgraph code (~95% confidence) using `BaseSubgraph.hasSubscriptions` + an own `graphql-subscriptions` PubSub + per-user `withFilter` on `context.user`. **Caveat:** the framework PubSub is in-memory, so it is only correct at `replicaCount: 1` (staging + vetra are 1 today); >1 replica needs a shared pubsub (Redis / PG LISTEN-NOTIFY), which is upstream framework work.
+  - **SP1 (this spec, client-only, ships now):** WebSocket as the freshness _signal_ → targeted, debounced refetch; remove idle polling; single cache all pages read; intent-prefetch for first load. No backend dependency.
+  - **SP2 (later, backend):** real GraphQL subscriptions in `vetra-cloud-package` that push the _projected data_ over WS → client applies via `setQueryData` → true zero-refetch. A read-only spike confirmed this is buildable with local subgraph code (~95% confidence) using `BaseSubgraph.hasSubscriptions` + an own `graphql-subscriptions` PubSub + per-user `withFilter` on `context.user`. **Caveat:** the framework PubSub is in-memory, so it is only correct at `replicaCount: 1` (staging + vetra are 1 today); >1 replica needs a shared pubsub (Redis / PG LISTEN-NOTIFY), which is upstream framework work.
   - **SP3 (later, client):** swap SP1's targeted-refetch for `setQueryData` from the SP2 push.
 - **Why not full backend push now:** SP1 delivers ~90% of the felt benefit (smooth UX, no idle requests, WS-driven) with zero backend/framework risk; SP2 is the last 10% behind real infra risk. Ship SP1, run the spike in parallel (done), commit to SP2/SP3 only if needed.
 - **Supersedes PR #80** (warm-everything-on-boot) — closed. Its one good idea (studio-products as a coordinated key) is folded in here.
-- **Server-prefetch + HydrationBoundary** (the textbook Next+RQ best practice) is *not* viable: auth is a client-side Renown wallet bearer token the server can't use. Hence client-side techniques.
+- **Server-prefetch + HydrationBoundary** (the textbook Next+RQ best practice) is _not_ viable: auth is a client-side Renown wallet bearer token the server can't use. Hence client-side techniques.
 
 ## Existing state (what we build on)
 
@@ -36,7 +36,7 @@ The goal: a smooth experience where the user always has the latest state, with *
 
 ## Architecture
 
-SP1 reshapes *when* the cache is read/refreshed; it does not change what the cache is (React Query, persisted) or that pages read from it.
+SP1 reshapes _when_ the cache is read/refreshed; it does not change what the cache is (React Query, persisted) or that pages read from it.
 
 ```
 React Query cache (single source of truth, persisted) — pages read from it
@@ -62,7 +62,7 @@ Authed queries need a token; the factory takes the token (resolved by the caller
 
 The coordinator keeps **one** `documentChanges` subscription. On an event:
 
-- Coalesce bursts with a **~750ms debounce** (the staging *management* switchboard emits a high-frequency `documentChanges` stream from its reconcile/pull-worker loops — without debounce this becomes a refetch firehose, the "constant pulling" failure mode).
+- Coalesce bursts with a **~750ms debounce** (the staging _management_ switchboard emits a high-frequency `documentChanges` stream from its reconcile/pull-worker loops — without debounce this becomes a refetch firehose, the "constant pulling" failure mode).
 - Then `queryClient.invalidateQueries({ queryKey: prefix, refetchType: 'active' })` for each coordinated prefix. `refetchType: 'active'` means **only queries with mounted observers refetch** — i.e. the page you're looking at; idle pages are marked stale and refresh lazily on next visit.
 
 Remove the now-redundant per-hook env list subscription (the central one covers it).
