@@ -3,6 +3,7 @@ name: Build and Publish Docker Image
 on:
   push:
     branches:
+      - main
       - staging
       - dev
   workflow_dispatch:
@@ -66,9 +67,12 @@ jobs:
           build-args: |
             TAG=${{ steps.meta.outputs.sha-tag }}
 
+  # Bump the image tag in the k8s repo so ArgoCD rolls the deployment.
+  # staging -> tenants/staging (staging env), main -> tenants/vetra (prod env).
+  # dev builds an image but is not auto-deployed.
   update-k8s:
     needs: vetra-to
-    if: github.ref_name == 'staging'
+    if: github.ref_name == 'staging' || github.ref_name == 'main'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout k8s repo
@@ -78,20 +82,36 @@ jobs:
           token: ${{ secrets.PATNAME }}
           ref: main
 
-      - name: Update staging image tag
+      - name: Resolve tenant values path
+        id: tenant
+        env:
+          BRANCH: ${{ github.ref_name }}
+        run: |
+          if [ "$BRANCH" = "main" ]; then
+            echo "values=tenants/vetra/powerhouse-values.yaml" >> "$GITHUB_OUTPUT"
+            echo "env=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "values=tenants/staging/powerhouse-values.yaml" >> "$GITHUB_OUTPUT"
+            echo "env=staging" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update image tag
         env:
           NEW_TAG: ${{ needs.vetra-to.outputs.image-tag }}
+          VALUES: ${{ steps.tenant.outputs.values }}
         run: |
-          sed -i '/^app:/,/^[a-z]/{/^  image:/,/tag:/{s/tag: .*/tag: '"$NEW_TAG"'/}}' tenants/staging/powerhouse-values.yaml
-          echo "Updated app.image.tag to ${NEW_TAG}"
-          grep -A3 "repository: cr.vetra.io/vetra/vetra-to" tenants/staging/powerhouse-values.yaml
+          sed -i '/^app:/,/^[a-z]/{/^  image:/,/tag:/{s/tag: .*/tag: '"$NEW_TAG"'/}}' "$VALUES"
+          echo "Updated app.image.tag to ${NEW_TAG} in ${VALUES}"
+          grep -A3 "repository: cr.vetra.io/vetra/vetra-to" "$VALUES"
 
       - name: Commit and push
         env:
           NEW_TAG: ${{ needs.vetra-to.outputs.image-tag }}
+          VALUES: ${{ steps.tenant.outputs.values }}
+          ENV_NAME: ${{ steps.tenant.outputs.env }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add tenants/staging/powerhouse-values.yaml
-          git commit -m "chore(staging): update vetra-to image to ${NEW_TAG}"
+          git add "$VALUES"
+          git commit -m "chore(${ENV_NAME}): update vetra-to image to ${NEW_TAG}"
           git push
