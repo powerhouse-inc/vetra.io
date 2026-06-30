@@ -414,6 +414,38 @@ export async function fetchMyStudioProducts(
   return data.myStudioProducts
 }
 
+// ---------------------------------------------------------------------------
+// Studio housekeeping (sleep/wake) — vetra-housekeeping subgraph
+// ---------------------------------------------------------------------------
+
+export type StudioPowerStatus = 'AWAKE' | 'SLEEPING' | 'WAKING' | 'UNKNOWN'
+
+const POWER_STATE_FIELDS = `host envId subdomain owner status`
+
+/** Read a studio's power state by host. Open query (no token needed). */
+export async function fetchStudioPowerState(
+  host: string,
+): Promise<StudioPowerStatus> {
+  const data = await gql<{ VetraHousekeeping: { studioPowerState: { status: StudioPowerStatus } } }>(
+    `query($host:String!){ VetraHousekeeping { studioPowerState(host:$host){ ${POWER_STATE_FIELDS} } } }`,
+    { host },
+  )
+  return data.VetraHousekeeping.studioPowerState.status
+}
+
+/**
+ * Wake a sleeping studio by host. Open + idempotent mutation (no token): only
+ * ever wakes a STOPPED env, and is inherently triggered by a user wanting it.
+ * Returns the resulting power state (WAKING when it kicked a wake).
+ */
+export async function wakeStudio(host: string): Promise<StudioPowerStatus> {
+  const data = await gql<{ VetraHousekeeping: { wakeStudio: { status: StudioPowerStatus } } }>(
+    `mutation($host:String!){ VetraHousekeeping { wakeStudio(host:$host){ ${POWER_STATE_FIELDS} } } }`,
+    { host },
+  )
+  return data.VetraHousekeeping.wakeStudio.status
+}
+
 /**
  * Fetch the caller's identity/admin status. Used by the UI to conditionally
  * show the "Mine | All" toggle.
