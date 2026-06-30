@@ -55,7 +55,6 @@ export function githubInstallUrl(): string | null {
 
 export type GithubConnection = {
   environmentId: string
-  installationId: string
   repoFullName: string
   repoUrl: string
   createdAt: string
@@ -110,7 +109,7 @@ export async function myGithubConnection(
       VetraGithubAuth {
         myGithubConnection(environmentId: $environmentId) {
           connected
-          connection { environmentId installationId repoFullName repoUrl createdAt }
+          connection { environmentId repoFullName repoUrl createdAt }
         }
       }
     }`,
@@ -153,7 +152,7 @@ export async function connectGithub(
       VetraGithubAuth {
         connectGithub(deviceCode: $deviceCode, repoName: $repoName, environmentId: $environmentId) {
           connected
-          connection { environmentId installationId repoFullName repoUrl createdAt }
+          connection { environmentId repoFullName repoUrl createdAt }
         }
       }
     }`,

@@ -6,6 +6,7 @@ import { AsyncButton } from '@/modules/cloud/components/async-button'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
 import { Label } from '@/modules/shared/components/ui/label'
+import { githubInstallUrl } from './lib/client'
 import { useConnectGithub } from './use-connect-github'
 
 /** GitHub connect step: name a repository and authorize it via the device flow. */
@@ -20,14 +21,15 @@ export function ConnectGithubStep({
   const [repoName, setRepoName] = useState('')
 
   if (phase.kind === 'connected') {
+    const installUrl = githubInstallUrl()
     return (
       <div className="space-y-4">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Check className="text-primary h-4 w-4" />
-          Connected to GitHub
+          Repository created
         </div>
         <p className="text-muted-foreground text-sm">
-          This studio will push to{' '}
+          The agent will push to{' '}
           <a
             href={phase.connection.repoUrl}
             target="_blank"
@@ -35,9 +37,20 @@ export function ConnectGithubStep({
             className="text-foreground underline"
           >
             {phase.connection.repoFullName}
-          </a>
-          .
+          </a>{' '}
+          once the Vetra app is installed on it. You can install it now or when you want to deploy.
         </p>
+        {installUrl ? (
+          <a
+            href={installUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-9 items-center justify-center rounded-lg px-4 text-sm font-semibold transition-colors"
+          >
+            <Github className="mr-2 h-4 w-4" />
+            Install the Vetra app
+          </a>
+        ) : null}
         <Button onClick={() => onDone()}>Continue</Button>
       </div>
     )

@@ -47,7 +47,7 @@ describe('connect-github client', () => {
       const status = {
         connected: true,
         connection: {
-          installationId: '123',
+          environmentId: 'env-1',
           repoFullName: 'alice/widget',
           repoUrl: 'https://github.com/alice/widget',
           createdAt: '2026-01-01T00:00:00Z',
@@ -66,7 +66,7 @@ describe('connect-github client', () => {
       const status = {
         connected: true,
         connection: {
-          installationId: '123',
+          environmentId: 'env-1',
           repoFullName: 'alice/widget',
           repoUrl: 'https://github.com/alice/widget',
           createdAt: '2026-01-01T00:00:00Z',
