@@ -392,7 +392,7 @@ export type StudioProductSummary = {
   subdomain: string
   prefix: string
   label: string
-  status: 'ready' | 'booting'
+  status: 'ready' | 'booting' | 'sleeping'
 }
 
 /**

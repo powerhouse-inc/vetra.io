@@ -1,6 +1,6 @@
 'use client'
 
-import { Boxes, Loader2 } from 'lucide-react'
+import { Boxes, Loader2, Moon } from 'lucide-react'
 import { GithubConnectionControl } from '@/modules/connect-github/github-connection-control'
 import { useProductBrand } from '../use-product-brand'
 import type { StudioProduct } from '../use-studio-products'
@@ -16,6 +16,11 @@ import type { StudioProduct } from '../use-studio-products'
  */
 export function StudioProductCard({ product, href }: { product: StudioProduct; href: string }) {
   const isReady = product.status === 'ready'
+  // Sleeping = housekeeping-hibernated. The card is clickable: opening the host
+  // hits the wake activator, which shows a spinner and reloads into the studio
+  // once it's back. So sleeping links out just like ready.
+  const isSleeping = product.status === 'sleeping'
+  const isClickable = isReady || isSleeping
   // Lazy brand: the hook only fetches when ready, falls back to null otherwise.
   const brand = useProductBrand({
     subdomain: product.subdomain,
@@ -25,13 +30,23 @@ export function StudioProductCard({ product, href }: { product: StudioProduct; h
   const title = brand?.title?.trim() || product.label || 'Untitled product'
 
   const cardClass = `border-border bg-card flex flex-col rounded-xl border p-5 ${
-    isReady ? 'hover:border-foreground/30 transition-colors' : 'cursor-default opacity-80'
+    isClickable ? 'hover:border-foreground/30 transition-colors' : 'cursor-default opacity-80'
   }`
 
   const statusBadge = isReady ? (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
       <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden />
       Ready
+    </span>
+  ) : isSleeping ? (
+    // Hibernated to save resources. Clicking wakes it (~1-2 min) via the
+    // activator. Communicate that it's intentional + resumable, not broken.
+    <span
+      title="This studio is asleep to save resources. Click to wake it — it'll open when ready."
+      className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-500"
+    >
+      <Moon className="h-3 w-3" aria-hidden />
+      Sleeping
     </span>
   ) : (
     // Still booting: the agent host isn't reachable yet (it restarts on claim),
@@ -72,11 +87,12 @@ export function StudioProductCard({ product, href }: { product: StudioProduct; h
       <div className="mt-4 flex items-center justify-between border-t pt-3">
         {statusBadge}
         {isReady && <span className="text-muted-foreground text-xs">Open →</span>}
+        {isSleeping && <span className="text-muted-foreground text-xs">Wake →</span>}
       </div>
     </>
   )
 
-  const card = isReady ? (
+  const card = isClickable ? (
     <a href={href} target="_blank" rel="noopener noreferrer" className={cardClass}>
       {body}
     </a>
