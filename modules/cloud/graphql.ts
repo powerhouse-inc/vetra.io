@@ -423,10 +423,10 @@ export type StudioPowerStatus = 'AWAKE' | 'SLEEPING' | 'WAKING' | 'UNKNOWN'
 const POWER_STATE_FIELDS = `host envId subdomain owner status`
 
 /** Read a studio's power state by host. Open query (no token needed). */
-export async function fetchStudioPowerState(
-  host: string,
-): Promise<StudioPowerStatus> {
-  const data = await gql<{ VetraHousekeeping: { studioPowerState: { status: StudioPowerStatus } } }>(
+export async function fetchStudioPowerState(host: string): Promise<StudioPowerStatus> {
+  const data = await gql<{
+    VetraHousekeeping: { studioPowerState: { status: StudioPowerStatus } }
+  }>(
     `query($host:String!){ VetraHousekeeping { studioPowerState(host:$host){ ${POWER_STATE_FIELDS} } } }`,
     { host },
   )
