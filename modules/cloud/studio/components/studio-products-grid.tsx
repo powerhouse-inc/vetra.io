@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Loader2 } from 'lucide-react'
 import { CloudLanding } from '@/modules/cloud/components/cloud-landing'
 import {
   Dialog,
@@ -101,7 +102,13 @@ export function StudioProductsGrid() {
                 />
               ))}
               {creating ? (
-                <StudioBootScreen title="Creating your product…" />
+                // Card-sized creating state that sits in the grid alongside the
+                // product cards. (StudioBootScreen is a min-h-[60vh] full-screen
+                // spinner — using it here ballooned the grid cell.)
+                <div className="border-border flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-xl border">
+                  <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
+                  <p className="text-sm font-medium">Creating your product…</p>
+                </div>
               ) : (
                 <NewProductCard
                   onCreate={handleCreate}
