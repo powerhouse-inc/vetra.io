@@ -3,46 +3,68 @@
 import { Boxes, Loader2, Moon } from 'lucide-react'
 import { GithubConnectionControl } from '@/modules/connect-github/github-connection-control'
 import { useProductBrand } from '../use-product-brand'
+import { useStudioWake } from '../use-studio-wake'
 import type { StudioProduct } from '../use-studio-products'
 
 /**
- * A product in the grid. When the agent is ready we link straight to its studio
- * URL in a new tab; while it's still booting the card is inert (the agent host
- * isn't reachable yet), and a "Provisioning…" pill communicates why.
+ * A product in the grid.
+ *  - ready  → links straight to the studio URL in a new tab.
+ *  - sleeping (housekeeping-hibernated) → clicking wakes it in place: we call
+ *    the open wakeStudio mutation and poll until AWAKE, then the card becomes
+ *    openable (no standalone activator / catch-all ingress needed).
+ *  - booting → inert with a "Provisioning…" pill.
  *
  * Brand metadata is resolved lazily here (only once the product is ready) so the
- * list never blocks on a per-product host fetch. A card with no brand still
- * renders from its label/subdomain — we never drop a card on a transient error.
+ * list never blocks on a per-product host fetch.
  */
 export function StudioProductCard({ product, href }: { product: StudioProduct; href: string }) {
-  const isReady = product.status === 'ready'
-  // Sleeping = housekeeping-hibernated. The card is clickable: opening the host
-  // hits the wake activator, which shows a spinner and reloads into the studio
-  // once it's back. So sleeping links out just like ready.
+  let host: string
+  try {
+    host = new URL(href).host
+  } catch {
+    host = product.subdomain ? `${product.subdomain}.vetra.io` : ''
+  }
+  const wake = useStudioWake(host)
+
   const isSleeping = product.status === 'sleeping'
-  const isClickable = isReady || isSleeping
+  const isWaking = isSleeping && wake.state === 'waking'
+  // Openable once ready, or once a woken-from-sleep studio reports AWAKE.
+  const canOpen = product.status === 'ready' || (isSleeping && wake.state === 'awake')
+  // Clickable to start a wake while it's still sleeping and we haven't begun.
+  const canWake = isSleeping && (wake.state === 'idle' || wake.state === 'error')
+
   // Lazy brand: the hook only fetches when ready, falls back to null otherwise.
   const brand = useProductBrand({
     subdomain: product.subdomain,
     prefix: product.prefix,
-    status: product.status,
+    status: canOpen ? 'ready' : product.status,
   })
   const title = brand?.title?.trim() || product.label || 'Untitled product'
 
-  const cardClass = `border-border bg-card flex flex-col rounded-xl border p-5 ${
-    isClickable ? 'hover:border-foreground/30 transition-colors' : 'cursor-default opacity-80'
+  const interactive = canOpen || canWake
+  const cardClass = `border-border bg-card flex flex-col rounded-xl border p-5 text-left w-full ${
+    interactive ? 'hover:border-foreground/30 transition-colors' : 'cursor-default opacity-80'
   }`
 
-  const statusBadge = isReady ? (
+  const statusBadge = canOpen ? (
     <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
       <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden />
       Ready
     </span>
-  ) : isSleeping ? (
-    // Hibernated to save resources. Clicking wakes it (~1-2 min) via the
-    // activator. Communicate that it's intentional + resumable, not broken.
+  ) : isWaking ? (
     <span
-      title="This studio is asleep to save resources. Click to wake it — it'll open when ready."
+      role="status"
+      title="Waking this studio — it'll be openable in a minute or two."
+      className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-500"
+    >
+      <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
+      Waking…
+    </span>
+  ) : isSleeping ? (
+    // Hibernated to save resources. Clicking wakes it (~1-2 min). Communicate
+    // that it's intentional + resumable, not broken.
+    <span
+      title="This studio is asleep to save resources. Click to wake it."
       className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-500"
     >
       <Moon className="h-3 w-3" aria-hidden />
@@ -50,8 +72,7 @@ export function StudioProductCard({ product, href }: { product: StudioProduct; h
     </span>
   ) : (
     // Still booting: the agent host isn't reachable yet (it restarts on claim),
-    // so the card stays inert until ready. The spinner + "Provisioning…" label
-    // make the setting-up state explicit; role/title expose it to AT and hover.
+    // so the card stays inert until ready.
     <span
       role="status"
       title="This studio is starting up and will be ready shortly."
@@ -86,16 +107,20 @@ export function StudioProductCard({ product, href }: { product: StudioProduct; h
       )}
       <div className="mt-4 flex items-center justify-between border-t pt-3">
         {statusBadge}
-        {isReady && <span className="text-muted-foreground text-xs">Open →</span>}
-        {isSleeping && <span className="text-muted-foreground text-xs">Wake →</span>}
+        {canOpen && <span className="text-muted-foreground text-xs">Open →</span>}
+        {canWake && <span className="text-muted-foreground text-xs">Wake →</span>}
       </div>
     </>
   )
 
-  const card = isClickable ? (
+  const card = canOpen ? (
     <a href={href} target="_blank" rel="noopener noreferrer" className={cardClass}>
       {body}
     </a>
+  ) : canWake ? (
+    <button type="button" onClick={() => wake.wake()} className={cardClass}>
+      {body}
+    </button>
   ) : (
     <div className={cardClass}>{body}</div>
   )
