@@ -9,8 +9,9 @@ import type { ProductStatus } from './studio-readiness'
  * Lazily resolve a product's brand from its per-tenant agent host — but ONLY
  * once the switchboard reports the product as `ready`.
  *
- * Why gated on readiness: fetchProductBrand does a browser fetch to
- * https://<prefix>.<subdomain>.vetra.io. For a just-created product the DNS
+ * Why gated on readiness: fetchProductBrand does a browser fetch to the
+ * product's flattened host (a Studio sits at the apex: https://<subdomain>.vetra.io).
+ * For a just-created product the DNS
  * record doesn't exist yet (external-dns creates it after the ingress is
  * admitted), so the browser's lookup returns NXDOMAIN and the resolver
  * NEGATIVE-CACHES it for the vetra.io zone's SOA minimum (1h). That poisoned
