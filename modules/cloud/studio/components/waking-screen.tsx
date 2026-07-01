@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import { useSearchParams } from 'next/navigation'
 import { useStudioWake } from '../use-studio-wake'
 
@@ -40,8 +39,7 @@ export function WakingScreen() {
   if (!valid) {
     return (
       <main className="bg-background text-foreground flex min-h-screen flex-col items-center justify-center px-6 text-center">
-        <VetraMark />
-        <h1 className="mt-6 text-xl font-semibold">Nothing to wake here</h1>
+        <h1 className="text-xl font-semibold">Nothing to wake here</h1>
         <p className="text-muted-foreground mt-2 max-w-sm text-sm">
           This link is missing a valid studio address.
         </p>
@@ -57,13 +55,17 @@ export function WakingScreen() {
 
   return (
     <main className="bg-background text-foreground flex min-h-screen flex-col items-center justify-center px-6 text-center">
-      <VetraMark />
       <div
-        className="border-muted border-t-primary mt-8 h-11 w-11 animate-spin rounded-full border-4 motion-reduce:animate-none"
+        className="relative flex h-20 w-20 items-center justify-center"
         role="status"
         aria-label="Waking your studio"
-      />
-      <h1 className="mt-6 text-xl font-semibold tracking-tight">Waking your studio…</h1>
+      >
+        {/* Soft green halo pulsing behind the ring. */}
+        <span className="bg-primary/15 absolute inset-0 animate-ping rounded-full motion-reduce:hidden" />
+        {/* Green arc on a faint track — the arc (top + right) makes the spin read clearly. */}
+        <span className="border-muted/50 border-t-primary border-r-primary h-14 w-14 animate-spin rounded-full border-4 motion-reduce:animate-none" />
+      </div>
+      <h1 className="mt-8 text-xl font-semibold tracking-tight">Waking your studio…</h1>
       <p className="text-muted-foreground mt-2 max-w-md text-sm leading-relaxed">
         It was asleep to save resources. We&rsquo;re starting it back up and will open{' '}
         <span className="text-foreground font-medium">{host}</span> automatically.
@@ -74,18 +76,5 @@ export function WakingScreen() {
         </p>
       )}
     </main>
-  )
-}
-
-function VetraMark() {
-  return (
-    <Image
-      src="/vetra-logo.png"
-      alt="Vetra"
-      width={120}
-      height={32}
-      priority
-      className="h-8 w-auto"
-    />
   )
 }
