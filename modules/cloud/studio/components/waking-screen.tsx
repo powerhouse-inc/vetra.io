@@ -7,23 +7,24 @@ import { useStudioWake } from '../use-studio-wake'
 /** Apex studio host, e.g. tall-duck-ab12cd34.vetra.io. */
 const HOST_RE = /^[a-z0-9-]+\.vetra\.io$/
 
+/** How often to probe the studio's route-readiness once its agent is up. */
+const READINESS_POLL_MS = 2_500
 /**
- * Grace period between the studio reporting AWAKE and actually redirecting.
- * AWAKE means the agent's webserver is up, but the app can still 404 for a
- * moment while it finishes mounting its routes. We can't probe the studio
- * host directly (it's cross-origin, so the browser can't read its status), so
- * we wait a short beat to let the app become route-ready before sending the
- * user there — otherwise they land on a transient "not found".
+ * Hard cap on the route-readiness wait. AWAKE means the agent's webserver is up,
+ * but the app can 404 for a bit while it mounts routes. We probe readiness via a
+ * same-origin API route (the studio host is cross-origin, so the browser can't
+ * read its status directly); if it somehow never reports ready, redirect anyway
+ * rather than spin forever.
  */
-const POST_WAKE_GRACE_MS = 5_000
+const READINESS_MAX_WAIT_MS = 90_000
 
 /**
  * Full-page, vetra.io-branded "waking your studio" screen. The wake activator
  * redirects a browser here (with ?host=<studio-host>) when a slept studio is
  * hit. We kick the open wakeStudio mutation, poll until the studio reports
- * AWAKE (agent webserver up), wait a short grace for the app to become
- * route-ready, then send the user to it. Reuses the app's real theme
- * (green #04c161, Inter).
+ * AWAKE (agent webserver up), then poll a same-origin readiness probe until the
+ * app actually serves `/` before redirecting — so the user never lands on a
+ * transient "not found". Reuses the app's real theme (green #04c161, Inter).
  */
 export function WakingScreen() {
   const params = useSearchParams()
@@ -32,7 +33,7 @@ export function WakingScreen() {
 
   const { state, wake } = useStudioWake(valid ? host : '')
   const [slow, setSlow] = useState(false)
-  // Agent is up but the app may 404 for a beat while it mounts routes.
+  // Agent is up; now wait until the app is route-ready before redirecting.
   const opening = state === 'awake'
 
   useEffect(() => {
@@ -41,10 +42,36 @@ export function WakingScreen() {
 
   useEffect(() => {
     if (!opening) return
-    // Give the app a beat to become route-ready before redirecting so the user
-    // doesn't land on a transient "not found".
-    const t = setTimeout(() => window.location.replace(`https://${host}`), POST_WAKE_GRACE_MS)
-    return () => clearTimeout(t)
+    let alive = true
+    let timer: ReturnType<typeof setTimeout>
+    const go = () => {
+      if (alive) window.location.replace(`https://${host}`)
+    }
+    // Poll the server-side readiness probe; only redirect once the studio app
+    // actually serves `/` (route-ready), not merely when its webserver answers.
+    const tick = async () => {
+      try {
+        const res = await fetch(`/api/studio-ready?host=${encodeURIComponent(host)}`, {
+          cache: 'no-store',
+        })
+        const { ready } = (await res.json()) as { ready?: boolean }
+        if (alive && ready) {
+          go()
+          return
+        }
+      } catch {
+        // transient — keep probing
+      }
+      if (alive) timer = setTimeout(() => void tick(), READINESS_POLL_MS)
+    }
+    // Safety net: never spin forever — redirect after the cap regardless.
+    const cap = setTimeout(go, READINESS_MAX_WAIT_MS)
+    void tick()
+    return () => {
+      alive = false
+      clearTimeout(timer)
+      clearTimeout(cap)
+    }
   }, [opening, host])
 
   // Reassure after a bit — waking is ~1–2 min (cold agent boot).
