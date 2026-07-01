@@ -8,11 +8,22 @@ import { useStudioWake } from '../use-studio-wake'
 const HOST_RE = /^[a-z0-9-]+\.vetra\.io$/
 
 /**
+ * Grace period between the studio reporting AWAKE and actually redirecting.
+ * AWAKE means the agent's webserver is up, but the app can still 404 for a
+ * moment while it finishes mounting its routes. We can't probe the studio
+ * host directly (it's cross-origin, so the browser can't read its status), so
+ * we wait a short beat to let the app become route-ready before sending the
+ * user there — otherwise they land on a transient "not found".
+ */
+const POST_WAKE_GRACE_MS = 5_000
+
+/**
  * Full-page, vetra.io-branded "waking your studio" screen. The wake activator
  * redirects a browser here (with ?host=<studio-host>) when a slept studio is
  * hit. We kick the open wakeStudio mutation, poll until the studio reports
- * AWAKE (its agent's readiness probe is green — so the host actually serves),
- * then send the user to it. Reuses the app's real theme (green #04c161, Inter).
+ * AWAKE (agent webserver up), wait a short grace for the app to become
+ * route-ready, then send the user to it. Reuses the app's real theme
+ * (green #04c161, Inter).
  */
 export function WakingScreen() {
   const params = useSearchParams()
@@ -21,14 +32,20 @@ export function WakingScreen() {
 
   const { state, wake } = useStudioWake(valid ? host : '')
   const [slow, setSlow] = useState(false)
+  // Agent is up but the app may 404 for a beat while it mounts routes.
+  const opening = state === 'awake'
 
   useEffect(() => {
     if (valid) wake()
   }, [valid, wake])
 
   useEffect(() => {
-    if (state === 'awake') window.location.replace(`https://${host}`)
-  }, [state, host])
+    if (!opening) return
+    // Give the app a beat to become route-ready before redirecting so the user
+    // doesn't land on a transient "not found".
+    const t = setTimeout(() => window.location.replace(`https://${host}`), POST_WAKE_GRACE_MS)
+    return () => clearTimeout(t)
+  }, [opening, host])
 
   // Reassure after a bit — waking is ~1–2 min (cold agent boot).
   useEffect(() => {
@@ -65,12 +82,23 @@ export function WakingScreen() {
         {/* Green arc on a faint track — the arc (top + right) makes the spin read clearly. */}
         <span className="border-muted/50 border-t-primary border-r-primary h-14 w-14 animate-spin rounded-full border-4 motion-reduce:animate-none" />
       </div>
-      <h1 className="mt-8 text-xl font-semibold tracking-tight">Waking your studio…</h1>
+      <h1 className="mt-8 text-xl font-semibold tracking-tight">
+        {opening ? 'Opening your studio…' : 'Waking your studio…'}
+      </h1>
       <p className="text-muted-foreground mt-2 max-w-md text-sm leading-relaxed">
-        It was asleep to save resources. We&rsquo;re starting it back up and will open{' '}
-        <span className="text-foreground font-medium">{host}</span> automatically.
+        {opening ? (
+          <>
+            It&rsquo;s awake — taking you to{' '}
+            <span className="text-foreground font-medium">{host}</span> now.
+          </>
+        ) : (
+          <>
+            It was asleep to save resources. We&rsquo;re starting it back up and will open{' '}
+            <span className="text-foreground font-medium">{host}</span> automatically.
+          </>
+        )}
       </p>
-      {slow && (
+      {slow && !opening && (
         <p className="text-muted-foreground mt-4 max-w-md text-xs">
           Still booting — this can take a minute or two on a cold start.
         </p>
