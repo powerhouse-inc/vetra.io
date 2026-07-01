@@ -30,6 +30,22 @@ function getEndpoint() {
   )
 }
 
+/**
+ * Switchboard for the housekeeping subgraph (studioPowerState / wakeStudio).
+ * It is federated only on the switchboard that actually hosts the sleeping
+ * studios — today that's staging. The public prod switchboard does NOT expose
+ * `VetraHousekeeping`, so the waking page must target the housekeeping
+ * switchboard explicitly rather than falling back to the prod default (which
+ * errors "Cannot query field VetraHousekeeping" and hangs the spinner).
+ * Overridable for when housekeeping ships elsewhere.
+ */
+function getHousekeepingEndpoint() {
+  return (
+    env('NEXT_PUBLIC_HOUSEKEEPING_SWITCHBOARD_URL') ||
+    'https://switchboard.staging.vetra.io/graphql'
+  )
+}
+
 function getDriveId() {
   return env('NEXT_PUBLIC_CLOUD_DRIVE_ID') || 'powerhouse'
 }
@@ -73,13 +89,14 @@ async function gql<T>(
   query: string,
   variables?: Record<string, unknown>,
   token?: string | null,
+  endpoint?: string,
 ): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' }
   if (token) {
     headers['Authorization'] = `Bearer ${token}`
   }
 
-  const res = await fetch(getEndpoint(), {
+  const res = await fetch(endpoint ?? getEndpoint(), {
     method: 'POST',
     headers,
     body: JSON.stringify({ query, variables }),
@@ -429,6 +446,8 @@ export async function fetchStudioPowerState(host: string): Promise<StudioPowerSt
   }>(
     `query($host:String!){ VetraHousekeeping { studioPowerState(host:$host){ ${POWER_STATE_FIELDS} } } }`,
     { host },
+    null,
+    getHousekeepingEndpoint(),
   )
   return data.VetraHousekeeping.studioPowerState.status
 }
@@ -442,6 +461,8 @@ export async function wakeStudio(host: string): Promise<StudioPowerStatus> {
   const data = await gql<{ VetraHousekeeping: { wakeStudio: { status: StudioPowerStatus } } }>(
     `mutation($host:String!){ VetraHousekeeping { wakeStudio(host:$host){ ${POWER_STATE_FIELDS} } } }`,
     { host },
+    null,
+    getHousekeepingEndpoint(),
   )
   return data.VetraHousekeeping.wakeStudio.status
 }
