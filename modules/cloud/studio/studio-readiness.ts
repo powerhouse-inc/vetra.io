@@ -8,7 +8,7 @@ export function hasStudioWebsiteEndpoint(
   return group.endpoints.some((e) => e.type === 'website' && e.status === 'enabled')
 }
 
-export type ProductStatus = 'ready' | 'booting'
+export type ProductStatus = 'ready' | 'booting' | 'sleeping'
 
 /** A product is 'ready' once its agent announces an enabled website endpoint. */
 export function deriveProductStatus(
@@ -33,6 +33,9 @@ export const FAST_STUDIO_POLL_MS = 3_000
 export function studioPollIntervalMs(
   products: ReadonlyArray<{ status: ProductStatus }> | undefined,
 ): number | false {
-  const anyBooting = (products ?? []).some((p) => p.status !== 'ready')
+  // Poll fast only while something is actively booting. 'sleeping' is a stable
+  // resting state (it only changes when the user wakes it, which navigates away
+  // to the activator), so it must NOT keep the list polling forever.
+  const anyBooting = (products ?? []).some((p) => p.status === 'booting')
   return anyBooting ? FAST_STUDIO_POLL_MS : false
 }
