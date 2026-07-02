@@ -1,15 +1,7 @@
 'use client'
 
-import { useState } from 'react'
 import { Loader2 } from 'lucide-react'
 import { CloudLanding } from '@/modules/cloud/components/cloud-landing'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/modules/shared/components/ui/dialog'
-import { ConnectGithubStep } from '@/modules/connect-github/connect-github-step'
 import { StudioBootScreen } from './studio-boot-screen'
 import { StudioProductCard } from './studio-product-card'
 import { NewProductCard } from './new-product-card'
@@ -38,22 +30,15 @@ export function StudioProductsGrid() {
   const { gate, products, isScanning, creating, createError, createProduct, hasAttachedKey, did } =
     useStudioProducts()
 
-  // Set to the new env's id once provisioning resolves, which opens the GitHub
-  // connect step for that environment. Lives here (not in NewProductCard) so it
-  // survives the `creating` state swapping the card out for the boot screen.
-  const [connectEnvId, setConnectEnvId] = useState<string | null>(null)
-
   if (gate === 'unauthenticated') return <CloudLanding />
   if (gate === 'loading') return <StudioBootScreen title="Loading…" />
 
   // Provision a new product; it surfaces in the list optimistically (as
   // "Provisioning…") immediately, and the 30s poll reconciles it against the
   // server-resolved list. The key is omitted when the invite code carries one
-  // (server-side injection). Once provisioned, prompt to connect a GitHub repo
-  // for the environment — the repo the studio pushes everything it generates to.
+  // (server-side injection).
   const handleCreate = async (apiKey?: string) => {
-    const documentId = await createProduct(apiKey)
-    setConnectEnvId(documentId)
+    await createProduct(apiKey)
   }
 
   // First load with nothing cached: show skeleton cards so the layout settles
@@ -120,22 +105,6 @@ export function StudioProductsGrid() {
           )}
         </div>
       )}
-
-      <Dialog
-        open={!!connectEnvId}
-        onOpenChange={(o) => {
-          if (!o) setConnectEnvId(null)
-        }}
-      >
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>Connect GitHub</DialogTitle>
-          </DialogHeader>
-          {connectEnvId ? (
-            <ConnectGithubStep environmentId={connectEnvId} onDone={() => setConnectEnvId(null)} />
-          ) : null}
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }
