@@ -15,10 +15,6 @@ vi.mock('@/modules/cloud/studio/use-product-brand', () => ({
   useProductBrand: ({ status }: { status: string }) =>
     status === 'ready' ? { title: 'Concord', tagline: null, description: null } : null,
 }))
-vi.mock('@/modules/connect-github/github-connection-control', () => ({
-  GithubConnectionControl: () => null,
-}))
-
 // Mutable holder so each test can drive the grid through its states.
 let state: StudioProductsState
 vi.mock('@/modules/cloud/studio/use-studio-products', () => ({ useStudioProducts: () => state }))

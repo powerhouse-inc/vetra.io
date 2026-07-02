@@ -7,7 +7,7 @@ import { createNewEnvironmentController } from '@/modules/cloud/controller'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { applyConfigChanges, type ConfigChange } from '@/modules/cloud/config/apply'
 import { getAuthToken } from '@/modules/cloud/graphql'
-import { cloudSwitchboardUrl } from '@/modules/connect-github/lib/client'
+import { cloudSwitchboardUrl } from '@/modules/cloud/switchboard-url'
 import {
   applyInviteCodeSecret,
   claimStudioEnvironment,
