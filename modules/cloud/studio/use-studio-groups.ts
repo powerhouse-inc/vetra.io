@@ -3,6 +3,7 @@
 import { useMemo } from 'react'
 import type { CloudEnvironment } from '@/modules/cloud/types'
 import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environment'
+import { findStudioAgents } from './find-studio-agent'
 import { useStudioProducts, type StudioProduct } from './use-studio-products'
 
 /** One studio (product) with the environments it deployed to, nested underneath. */
@@ -22,8 +23,12 @@ export type StudioGroupsResult = {
  *
  * - An env belongs to a studio group when its `studioInstanceId` equals that
  *   studio's env id (and it isn't the studio env itself).
- * - Studio envs (the `vetra-cli` agents) are headers, never nested cards, so
- *   they're excluded from `standalone`.
+ * - Studio envs (any env running a `vetra-cli` CLINT agent) are headers or
+ *   background infra, never nested/standalone cards — so they're excluded from
+ *   `standalone` by DETECTION (findStudioAgents), not just by membership in the
+ *   `myStudioProducts` list. A user typically has many studio envs (stopped/old
+ *   ones) that never surface as products; without detection those leak into
+ *   "Other environments" as stray "Vetra Studio" cards.
  * - An env with a null studioInstanceId — or one pointing at a studio not in
  *   the list (dangling) — falls into `standalone` so it stays visible.
  *
@@ -33,7 +38,12 @@ export function groupStudioEnvironments(
   studios: StudioProduct[],
   envs: CloudEnvironment[],
 ): StudioGroupsResult {
-  const studioEnvIds = new Set(studios.map((s) => s.envId))
+  // Every env that IS a studio (runs a vetra-cli agent), by detection — a
+  // superset of the ready studios in `myStudioProducts`. Never a card.
+  const studioEnvIds = new Set([
+    ...studios.map((s) => s.envId),
+    ...findStudioAgents(envs).map((m) => m.env.id),
+  ])
 
   const groups: StudioGroup[] = studios.map((studio) => ({
     studio,
