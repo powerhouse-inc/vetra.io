@@ -121,6 +121,13 @@ export type CloudEnvironmentState = {
    * `null`/`undefined` = no overrides (or feature not yet rolled out).
    */
   runtimeConfig?: string | null
+  /**
+   * Document id of the Vetra Studio that produced this environment (deployed a
+   * package into it). `null`/`undefined` = the studio itself, an env created
+   * directly by the user, or a backend that predates the field. Used to group
+   * environments under their studio on /user/products.
+   */
+  studioInstanceId?: string | null
 }
 
 export type AutoUpdateChannel = 'DEV' | 'STAGING' | 'LATEST'

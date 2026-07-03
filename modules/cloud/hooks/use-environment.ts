@@ -93,10 +93,25 @@ function summaryToCloudEnvironment(summary: EnvironmentSummary): CloudEnvironmen
         ? { enabled: true, domain: summary.customDomain, dnsRecords: [] }
         : null,
       defaultPackageRegistry: null,
-      services: [],
-      packages: [],
+      // Carry the summary's services/packages so env cards render real package
+      // counts + service lists. Older backends omit these → empty arrays.
+      services: (summary.services ?? []).map((s) => ({
+        type: s.type as CloudEnvironment['state']['services'][number]['type'],
+        prefix: s.prefix ?? '',
+        enabled: s.enabled,
+        url: null,
+        status: 'ACTIVE' as const,
+        version: null,
+        selectedRessource: null,
+      })),
+      packages: (summary.packages ?? []).map((p) => ({
+        registry: p.registry ?? '',
+        name: p.name,
+        version: p.version,
+      })),
       // status is a string from the DB; cast to the union type the UI expects
       status: (summary.status ?? 'DRAFT') as CloudEnvironment['state']['status'],
+      studioInstanceId: summary.studioInstanceId ?? null,
     },
   }
 }
