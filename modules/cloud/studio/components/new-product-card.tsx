@@ -24,8 +24,10 @@ export function NewProductCard({
   /**
    * `card` — dashed tile sized to sit in the products grid.
    * `button` — solid green CTA for the empty state (no products yet).
+   * `row` — short dashed button for the bottom "New Vetra Studio…" action,
+   *   matching the sibling "New environment…" button's height.
    */
-  variant?: 'card' | 'button'
+  variant?: 'card' | 'button' | 'row'
 }) {
   const [open, setOpen] = useState(false)
 
@@ -37,6 +39,14 @@ export function NewProductCard({
         <Plus className="h-5 w-5" />
         Create new product
       </Button>
+    ) : variant === 'row' ? (
+      <button
+        onClick={handleClick}
+        className="border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground flex w-full items-center justify-center gap-2 rounded-2xl border border-dashed py-5 text-sm font-medium transition-colors"
+      >
+        <Plus className="h-5 w-5" />
+        New Vetra Studio…
+      </button>
     ) : (
       <button
         onClick={handleClick}

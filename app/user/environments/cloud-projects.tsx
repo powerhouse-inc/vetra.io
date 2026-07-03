@@ -51,7 +51,7 @@ function StatusDot({ status }: { status: string }) {
   )
 }
 
-function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
+export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
   const { signer, canSign } = useCanSign()
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const displayName = env.state.label || env.name || 'Unnamed'
