@@ -37,6 +37,25 @@ function env(id: string, studioInstanceId: string | null): CloudEnvironment {
   }
 }
 
+/** A studio-type env: runs a vetra-cli CLINT agent, so findStudioAgents detects
+ * it even when it isn't among the ready `myStudioProducts`. */
+function studioEnv(id: string): CloudEnvironment {
+  const e = env(id, null)
+  e.state.services = [
+    {
+      type: 'CLINT',
+      prefix: 'vetra-agent',
+      enabled: true,
+      url: null,
+      status: 'ACTIVE',
+      version: null,
+      selectedRessource: 'VETRA_AGENT_XXL',
+    },
+  ]
+  e.state.packages = [{ registry: 'r', name: 'vetra-cli', version: null }]
+  return e
+}
+
 describe('groupStudioEnvironments', () => {
   it('nests each env under the studio its studioInstanceId points to', () => {
     const studios = [studio('studio-a'), studio('studio-b')]
@@ -70,6 +89,21 @@ describe('groupStudioEnvironments', () => {
 
     expect(groups[0].environments.map((e) => e.id)).toEqual(['a-prod'])
     expect(standalone).toHaveLength(0)
+  })
+
+  it('excludes a studio env detected by vetra-cli, even when not in myStudioProducts', () => {
+    // Users accrue many stopped/old studio envs that never surface as ready
+    // products; detection (not just the products list) must keep them out of
+    // "Other environments".
+    const { groups, standalone } = groupStudioEnvironments(
+      [studio('studio-a')],
+      [env('a-prod', 'studio-a'), studioEnv('old-studio'), env('solo', null)],
+    )
+
+    expect(groups[0].environments.map((e) => e.id)).toEqual(['a-prod'])
+    // old-studio is excluded (detected as a studio); only the real deployable
+    // env is standalone.
+    expect(standalone.map((e) => e.id)).toEqual(['solo'])
   })
 
   it('treats an env pointing at an unknown studio as standalone (dangling link stays visible)', () => {
