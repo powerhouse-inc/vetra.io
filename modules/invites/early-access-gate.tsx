@@ -23,6 +23,7 @@ import {
   myAccessStatus,
   redeemInviteCode,
 } from '@/modules/invites/lib/client'
+import { PreAlphaWarningDialog } from '@/modules/invites/pre-alpha-warning-dialog'
 
 const DISCORD_URL = 'https://discord.gg/Py28EMafEr'
 const CURL_CMD = 'curl -fsSL https://get.vetra.io | sh'
@@ -74,6 +75,9 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   // step, so we can show "code verified" copy — vs a returning cached-grant
   // user who just needs to log in (no code in hand).
   const [verifiedCode, setVerifiedCode] = useState(false)
+  // Shown once, right after a genuine first-time redemption (not for returning
+  // cached-grant users), to warn that pre-alpha data isn't durable.
+  const [showPreAlphaWarning, setShowPreAlphaWarning] = useState(false)
 
   // Returning user who already cleared the gate on this browser: reveal the
   // studio immediately (no splash) and let the effect below revalidate quietly.
@@ -111,7 +115,10 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
             // Refresh the attached-key status so the products create card knows
             // the just-redeemed code carries a key (no manual-key prompt).
             void queryClient.invalidateQueries({ queryKey: ['vetra-access-status'] })
-            if (!cancelled) setStep('granted')
+            if (!cancelled) {
+              setShowPreAlphaWarning(true)
+              setStep('granted')
+            }
             return
           }
           if (redeemed && !redeemed.allowed) {
@@ -176,6 +183,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
           const redeemed = await redeemInviteCode(entered, token)
           if (redeemed?.allowed) {
             void queryClient.invalidateQueries({ queryKey: ['vetra-access-status'] })
+            setShowPreAlphaWarning(true)
             setStep('granted')
             return
           }
@@ -206,7 +214,15 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   // or right after entering a code) we fall through to the login step below
   // rather than rendering the studio (which would show its logged-out landing).
   if (step === 'granted' && auth.status === 'authorized') {
-    return <>{children}</>
+    return (
+      <>
+        {children}
+        <PreAlphaWarningDialog
+          open={showPreAlphaWarning}
+          onAcknowledge={() => setShowPreAlphaWarning(false)}
+        />
+      </>
+    )
   }
 
   // While the initial auth check runs, or while we finalize a redemption after
