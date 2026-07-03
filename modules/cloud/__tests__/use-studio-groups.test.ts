@@ -40,11 +40,7 @@ function env(id: string, studioInstanceId: string | null): CloudEnvironment {
 describe('groupStudioEnvironments', () => {
   it('nests each env under the studio its studioInstanceId points to', () => {
     const studios = [studio('studio-a'), studio('studio-b')]
-    const envs = [
-      env('a-prod', 'studio-a'),
-      env('a-test', 'studio-a'),
-      env('b-prod', 'studio-b'),
-    ]
+    const envs = [env('a-prod', 'studio-a'), env('a-test', 'studio-a'), env('b-prod', 'studio-b')]
 
     const { groups, standalone } = groupStudioEnvironments(studios, envs)
 

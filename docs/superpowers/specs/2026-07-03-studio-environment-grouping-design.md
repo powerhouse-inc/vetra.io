@@ -130,8 +130,8 @@ being present so a locally-run deploy (no studio context) simply doesn't stamp.
    `myEnvironments` (envs: now carrying `studioInstanceId`). Produce:
    - `groups`: one per studio product → `{ studio, environments: envs where studioInstanceId === studio.envId }`.
    - `standalone`: envs with `studioInstanceId == null` that are not themselves studios.
-   Freshness stays on the coordinator's WS signal + `myStudioProducts` adaptive
-   poll — no new polling loop (keeps the SP1 single-source model).
+     Freshness stays on the coordinator's WS signal + `myStudioProducts` adaptive
+     poll — no new polling loop (keeps the SP1 single-source model).
 4. **Layout** `modules/cloud/studio/components/`: port the four preview
    components off mock types onto the real model, reusing `CloudEnvironmentCard`,
    `StatusDot` / `STATUS_LABELS` (extend with a `sleeping`→"Hibernating"

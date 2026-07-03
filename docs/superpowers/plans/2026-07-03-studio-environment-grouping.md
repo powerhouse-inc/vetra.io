@@ -22,6 +22,7 @@
 ### Task 1: Add `studioInstanceId` field + `SET_STUDIO_INSTANCE` action to the doc-model, regenerate
 
 **Files:**
+
 - Modify: `document-models/vetra-cloud-environment/vetra-cloud-environment.json` (state schema string, initialValue, data_management operations)
 - Regenerate: `document-models/vetra-cloud-environment/v1/gen/**`
 - Modify: `document-models/vetra-cloud-environment/v1/schema.graphql` (kept in sync with the json)
@@ -35,6 +36,7 @@
 ### Task 2: Implement + test the reducer
 
 **Files:**
+
 - Modify: `document-models/vetra-cloud-environment/v1/src/reducers/data-management.ts`
 - Test: `document-models/vetra-cloud-environment/v1/tests/data-management.test.ts`
 
@@ -47,6 +49,7 @@
 ### Task 3: Processor — project `studioInstanceId` into the `environments` table
 
 **Files:**
+
 - Modify: `processors/vetra-cloud-environment/migrations.ts` (add column)
 - Modify: `processors/vetra-cloud-environment/schema.ts` (row type)
 - Modify: `processors/vetra-cloud-environment/index.ts` (destructure + row)
@@ -62,6 +65,7 @@
 ### Task 4: Subgraph — expose `studioInstanceId` + packages/services on `myEnvironments`
 
 **Files:**
+
 - Modify: `subgraphs/vetra-cloud-observability/schema.ts` (`VetraCloudEnvironmentSummary`)
 - Modify: `subgraphs/vetra-cloud-observability/resolvers.ts` (`myEnvironments` select + shape)
 - Test: `subgraphs/vetra-cloud-observability/__tests__/*` (add a myEnvironments test)
@@ -85,6 +89,7 @@
 ### Task 6: Stamp `setStudioInstance` at deploy
 
 **Files:**
+
 - Modify: `vetra-app/editors/vetra-studio/deploy/deployProject.ts`
 - Modify: `package.json` (bump `@powerhousedao/vetra-cloud-package` to the Phase 1 dev version)
 - Test: `vetra-app/editors/vetra-studio/deploy/*.test.ts` (or nearest deploy test)
@@ -104,6 +109,7 @@
 ### Task 7: Types + query carry `studioInstanceId` / packages / services
 
 **Files:**
+
 - Modify: `modules/cloud/types.ts` (`CloudEnvironmentState`)
 - Modify: `modules/cloud/graphql.ts` (`EnvironmentSummary`, `fetchMyEnvironments` query)
 - Modify: `modules/cloud/hooks/use-environment.ts` (`summaryToCloudEnvironment`)
@@ -117,6 +123,7 @@
 ### Task 8: Grouping hook
 
 **Files:**
+
 - Create: `modules/cloud/studio/use-studio-groups.ts`
 - Test: `modules/cloud/__tests__/use-studio-groups.test.ts` (pure grouping fn)
 
@@ -129,6 +136,7 @@
 ### Task 9: Real grouped layout (port the preview components)
 
 **Files:**
+
 - Create: `modules/cloud/studio/components/studio-group.tsx`, `studio-group-header.tsx` (ported off mock types onto `StudioProduct` + brand)
 - Modify: `app/user/environments/cloud-projects.tsx` (export `CloudEnvironmentCard` + `STATUS_LABELS`; add `sleeping`→"Hibernating")
 - Create: `modules/cloud/studio/components/studio-groups-view.tsx` (composes groups + "Other environments" + bottom actions)
@@ -145,6 +153,7 @@
 ### Task 10: Cleanup + verification
 
 **Files:**
+
 - Delete: `modules/cloud/studio/preview/**`, `app/user/products/preview/page.tsx` (mock superseded)
 - Modify: any leftover imports
 
