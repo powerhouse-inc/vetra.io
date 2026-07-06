@@ -1,30 +1,25 @@
-import { describe, expect, it, vi } from 'vitest'
+import { describe, expect, it } from 'vitest'
 import { render } from '@testing-library/react'
 
-import type { ProductBrand } from '@/modules/cloud/studio/fetch-product-brand'
+import { StudioProductCard } from '@/modules/cloud/studio/components/studio-product-card'
+import type { StudioBrand, StudioProduct } from '@/modules/cloud/studio/use-studio-products'
 
 const AGENT_URL = 'https://warm-newt-75.vetra.io/?user=did%3Aethr%3A0xabc'
 
-// Brand is resolved lazily inside the card via useProductBrand (a per-ready
-// product host fetch). Stub it so the card renders synchronously in the test —
-// ready products get a brand, booting products get none.
-const READY_BRAND: ProductBrand = {
+// Brand is cached server-side and carried on the product, so the card renders
+// synchronously from `product.brand` with no host fetch to stub.
+const READY_BRAND: StudioBrand = {
   title: 'Concord',
   tagline: 'Share the burden.',
   description: 'Coordinates procurement.',
 }
-vi.mock('@/modules/cloud/studio/use-product-brand', () => ({
-  useProductBrand: ({ status }: { status: string }) => (status === 'ready' ? READY_BRAND : null),
-}))
-import { StudioProductCard } from '@/modules/cloud/studio/components/studio-product-card'
-import type { StudioProduct } from '@/modules/cloud/studio/use-studio-products'
 
 const base: StudioProduct = {
   envId: 'env1',
   subdomain: 'sub',
   prefix: 'vetra-agent',
   label: 'Vetra Studio',
-  brand: null,
+  brand: READY_BRAND,
   status: 'ready',
 }
 
@@ -43,7 +38,7 @@ describe('StudioProductCard', () => {
 
   it('renders a booting product as inert (no link) with a Provisioning badge', () => {
     const { container, getByText } = render(
-      <StudioProductCard product={{ ...base, status: 'booting' }} href={AGENT_URL} />,
+      <StudioProductCard product={{ ...base, brand: null, status: 'booting' }} href={AGENT_URL} />,
     )
     // Falls back to the env label when brand is unavailable.
     getByText('Vetra Studio')
@@ -53,7 +48,10 @@ describe('StudioProductCard', () => {
 
   it('still renders a card with unknown brand from its label/subdomain', () => {
     const { getByText } = render(
-      <StudioProductCard product={{ ...base, label: 'Untitled', status: 'booting' }} href="#" />,
+      <StudioProductCard
+        product={{ ...base, brand: null, label: 'Untitled', status: 'booting' }}
+        href="#"
+      />,
     )
     getByText('Untitled')
     getByText('sub')

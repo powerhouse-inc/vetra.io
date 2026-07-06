@@ -8,11 +8,17 @@ import { queryKeys } from '@/modules/cloud/query/keys'
 import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
 import { myAccessStatus } from '@/modules/invites/lib/client'
 import { STUDIO_AGENT_PREFIX, STUDIO_ENV_LABEL } from './constants'
-import { type ProductBrand } from './fetch-product-brand'
 import { type ProductStatus, studioPollIntervalMs } from './studio-readiness'
 import { useCreateStudioEnvironment } from './use-create-studio-environment'
 
 export type StudioGate = 'loading' | 'unauthenticated' | 'ready'
+
+/** Cached studio identity from the BrandSheet, resolved server-side. */
+export type StudioBrand = {
+  title: string
+  tagline: string | null
+  description: string | null
+}
 
 export type StudioProduct = {
   envId: string
@@ -20,10 +26,11 @@ export type StudioProduct = {
   prefix: string
   label: string
   /**
-   * Brand metadata is resolved lazily per card (only once `status === 'ready'`)
-   * so the list never blocks on a per-product host fetch. It stays `null` here.
+   * Studio identity cached server-side (observability pull-worker → obsDB) and
+   * returned by `myStudioProducts`, so the list survives studio hibernation
+   * with no per-card host fetch. Null until the studio has been polled awake.
    */
-  brand: ProductBrand | null
+  brand: StudioBrand | null
   status: ProductStatus
 }
 
@@ -47,8 +54,8 @@ export type StudioProductsState = {
 
 /**
  * Map a server-resolved product summary onto the UI model. The switchboard
- * already returns the filtered, status-resolved set, so this is a pure shape
- * adapter — brand stays `null` and is filled in lazily by the card.
+ * already returns the filtered, status-resolved set with the cached brand, so
+ * this is a pure shape adapter.
  */
 function toStudioProduct(summary: StudioProductSummary): StudioProduct {
   return {
@@ -56,7 +63,13 @@ function toStudioProduct(summary: StudioProductSummary): StudioProduct {
     subdomain: summary.subdomain,
     prefix: summary.prefix,
     label: summary.label,
-    brand: null,
+    brand: summary.brand
+      ? {
+          title: summary.brand.title,
+          tagline: summary.brand.tagline,
+          description: summary.brand.description,
+        }
+      : null,
     status: summary.status,
   }
 }

@@ -16,7 +16,6 @@ export const queryKeys = {
     ['environment', envId, did ?? null] as const,
   viewer: (did: string | undefined) => ['viewer', did ?? null] as const,
   studioProducts: (did: string | undefined) => ['studio-products', did ?? null] as const,
-  brand: (subdomain: string, prefix: string) => ['brand', subdomain, prefix] as const,
   runtimeEndpoints: (subdomain: string, envId: string) =>
     ['runtime-endpoints', subdomain, envId] as const,
   tenantSecrets: (envId: string) => ['tenant-secrets', envId] as const,
