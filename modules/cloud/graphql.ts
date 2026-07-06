@@ -422,6 +422,12 @@ export type StudioProductSummary = {
   prefix: string
   label: string
   status: 'ready' | 'booting' | 'sleeping'
+  /**
+   * Cached studio identity from the BrandSheet, resolved server-side by the
+   * observability pull-worker. Null until the studio has been polled while
+   * awake — so it survives hibernation without a per-card host fetch.
+   */
+  brand: { title: string; tagline: string | null; description: string | null } | null
 }
 
 /**
@@ -436,7 +442,7 @@ export async function fetchMyStudioProducts(
   token?: string | null,
 ): Promise<StudioProductSummary[]> {
   const data = await gql<{ myStudioProducts: StudioProductSummary[] }>(
-    `query { myStudioProducts { envId subdomain prefix label status } }`,
+    `query { myStudioProducts { envId subdomain prefix label status brand { title tagline description } } }`,
     {},
     token,
   )
