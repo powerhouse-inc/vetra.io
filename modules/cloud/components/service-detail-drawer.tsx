@@ -190,7 +190,7 @@ export function ServiceDetailDrawer({
   // `service.url` is populated only after the SET_SERVICE_STATUS reconciler
   // runs against a live ingress; while we wait for that (or on envs where
   // the reconciler hasn't caught up), the chart's deterministic ingress
-  // host `switchboard.<subdomain>.vetra.io` is the right URL to call. The
+  // host `<subdomain>-switchboard.vetra.io` is the right URL to call. The
   // AuthTab still renders the "not yet running" placeholder when neither
   // is available (truly unprovisioned envs without a subdomain).
   const switchboardUrl =

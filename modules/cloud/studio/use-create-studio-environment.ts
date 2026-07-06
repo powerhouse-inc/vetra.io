@@ -7,7 +7,7 @@ import { createNewEnvironmentController } from '@/modules/cloud/controller'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { applyConfigChanges, type ConfigChange } from '@/modules/cloud/config/apply'
 import { getAuthToken } from '@/modules/cloud/graphql'
-import { cloudSwitchboardUrl } from '@/modules/connect-github/lib/client'
+import { cloudSwitchboardUrl, studioRegistry } from '@/modules/cloud/switchboard-url'
 import {
   applyInviteCodeSecret,
   claimStudioEnvironment,
@@ -24,7 +24,6 @@ import {
   STUDIO_BASE_DOMAIN,
   STUDIO_DEFAULT_ENV_VARS,
   STUDIO_ENV_LABEL,
-  STUDIO_REGISTRY,
   STUDIO_SERVICE_COMMAND,
 } from './constants'
 
@@ -67,13 +66,15 @@ export function useCreateStudioEnvironment() {
       const version = (await fetchStudioPoolVersion()) ?? STUDIO_AGENT_VERSION
 
       const subdomain = generateSubdomain(crypto.randomUUID())
+      // Per-deployment registry (prod → registry.vetra.io, staging → dev).
+      const registry = studioRegistry()
       const controller = createNewEnvironmentController({ parentIdentifier: DRIVE_ID, signer })
       controller.setOwner({ address: ownerAddress })
       controller.setLabel({ label: STUDIO_ENV_LABEL })
       controller.initialize({
         genericSubdomain: subdomain,
         genericBaseDomain: STUDIO_BASE_DOMAIN,
-        defaultPackageRegistry: STUDIO_REGISTRY,
+        defaultPackageRegistry: registry,
       })
       controller.addPackage({ packageName: STUDIO_AGENT_PACKAGE, version })
       controller.enableService({
@@ -81,7 +82,7 @@ export function useCreateStudioEnvironment() {
         prefix: STUDIO_AGENT_PREFIX,
         clintConfig: {
           package: {
-            registry: STUDIO_REGISTRY,
+            registry,
             name: STUDIO_AGENT_PACKAGE,
             version,
           },

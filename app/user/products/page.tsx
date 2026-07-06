@@ -1,10 +1,10 @@
-import { StudioProductsGrid } from '@/modules/cloud/studio/components/studio-products-grid'
+import { StudioGroupsView } from '@/modules/cloud/studio/components/studio-groups-view'
 import { EarlyAccessGate } from '@/modules/invites/early-access-gate'
 
 export default function UserProductsPage() {
   return (
     <EarlyAccessGate>
-      <StudioProductsGrid />
+      <StudioGroupsView />
     </EarlyAccessGate>
   )
 }

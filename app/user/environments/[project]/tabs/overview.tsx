@@ -26,6 +26,7 @@ import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtim
 import { partitionPackagesByManifestType } from '@/modules/cloud/lib/module-package-filter'
 import { toServiceImageTag } from '@/modules/cloud/registry/channels'
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
+import { resolveGenericHost } from '@/modules/cloud/lib/env-host'
 import type {
   CloudEnvironment,
   CloudEnvironmentServiceType,
@@ -123,9 +124,15 @@ function ServiceRow({
   const [tagsLoading, setTagsLoading] = useState(false)
   const label = SERVICE_LABELS[serviceType]
   const Icon = SERVICE_ICONS[serviceType]
-  const defaultUrl = subdomain
-    ? `${prefix}.${subdomain}.vetra.io`
-    : `${prefix}.<subdomain>.vetra.io`
+  // Flattened single-label env host (covered by the *.vetra.io wildcard cert):
+  //   apex  -> <subdomain>.vetra.io
+  //   other -> <subdomain>-<prefix>.vetra.io
+  const defaultUrl = resolveGenericHost(
+    subdomain ?? '<subdomain>',
+    prefix,
+    isApexService ?? false,
+    'vetra.io',
+  )
   const customServiceUrl =
     customDomain && customDomainValid !== false
       ? isApexService

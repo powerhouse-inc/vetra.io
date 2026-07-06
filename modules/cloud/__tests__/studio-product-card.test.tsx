@@ -16,10 +16,6 @@ const READY_BRAND: ProductBrand = {
 vi.mock('@/modules/cloud/studio/use-product-brand', () => ({
   useProductBrand: ({ status }: { status: string }) => (status === 'ready' ? READY_BRAND : null),
 }))
-vi.mock('@/modules/connect-github/github-connection-control', () => ({
-  GithubConnectionControl: () => null,
-}))
-
 import { StudioProductCard } from '@/modules/cloud/studio/components/studio-product-card'
 import type { StudioProduct } from '@/modules/cloud/studio/use-studio-products'
 

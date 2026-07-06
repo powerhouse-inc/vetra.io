@@ -245,6 +245,15 @@ export type EnvironmentSummary = {
   owner: string | null
   /** @deprecated Prefer `owner`. Kept for transitional compatibility. */
   createdBy: string | null
+  /**
+   * Document id of the studio that produced this env, or null. Absent on
+   * backends that predate the field — treat missing as null.
+   */
+  studioInstanceId?: string | null
+  /** Installed packages, for the env card's package count + version. */
+  packages?: Array<{ registry: string | null; name: string; version: string | null }>
+  /** Configured services (type + prefix + enabled), for the card's service list + Visit link. */
+  services?: Array<{ type: string; prefix: string | null; enabled: boolean }>
 }
 
 export type Viewer = {
@@ -386,6 +395,9 @@ export async function fetchMyEnvironments(
         status
         owner
         createdBy
+        studioInstanceId
+        packages { registry name version }
+        services { type prefix enabled }
       }
     }`,
     { scope },
