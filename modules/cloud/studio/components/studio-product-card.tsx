@@ -1,7 +1,6 @@
 'use client'
 
 import { Boxes, Loader2, Moon } from 'lucide-react'
-import { useProductBrand } from '../use-product-brand'
 import type { StudioProduct } from '../use-studio-products'
 
 /**
@@ -13,8 +12,8 @@ import type { StudioProduct } from '../use-studio-products'
  *    carries a 💤 badge so the resting state is visible.
  *  - booting → inert with a "Provisioning…" pill.
  *
- * Brand metadata is resolved lazily here (only once the product is ready) so the
- * list never blocks on a per-product host fetch.
+ * Brand metadata is cached server-side (myStudioProducts → obsDB) so the card
+ * shows the real product name even while hibernated, with no per-card host fetch.
  */
 export function StudioProductCard({ product, href }: { product: StudioProduct; href: string }) {
   const isReady = product.status === 'ready'
@@ -23,12 +22,8 @@ export function StudioProductCard({ product, href }: { product: StudioProduct; h
   // → /studio/waking spinner, ready lands directly in the studio.
   const canOpen = isReady || isSleeping
 
-  // Lazy brand: the hook only fetches when ready, falls back to null otherwise.
-  const brand = useProductBrand({
-    subdomain: product.subdomain,
-    prefix: product.prefix,
-    status: product.status,
-  })
+  // Cached brand from the switchboard; falls back to the env label when absent.
+  const brand = product.brand
   const title = brand?.title?.trim() || product.label || 'Untitled product'
 
   const cardClass = `border-border bg-card flex flex-col rounded-xl border p-5 ${
