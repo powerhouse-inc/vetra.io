@@ -1,7 +1,7 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { AnimatedVetraLogo } from '@/modules/shared/components/ui/animated-vetra-logo'
 
@@ -14,27 +14,63 @@ const devFeatures = [
   ['REST + WebSocket support', 'Specification Driven AI'],
 ]
 
-const chatMessages = [
-  {
-    role: 'user',
-    text: "Build a case tracker for our field teams. They're often offline and can't depend on any single company's servers.",
-  },
-  {
-    role: 'assistant',
-    text: 'Done! Case tracker set up across your own nodes. Syncs peer-to-peer when connected. Want per-case access controls?',
-  },
-  {
-    role: 'user',
-    text: 'Yes. Our team is spread across 14 countries.',
-  },
-  {
-    role: 'assistant',
-    text: "Covered. It runs entirely on infrastructure you control. Real-time sync keeps your distributed team in step whenever they're connected.",
-  },
+const typewriterPrompts = [
+  'Build a case tracker for our field teams that works offline...',
+  'Generate a supply chain backend for an NGO distributing medical supplies...',
+  'Build a contributor management system for a decentralized network...',
+  'Build a compliance tracker that syncs our operational policies...',
+  'Set up an invoicing workflow my whole team can edit in real time...',
+  'Create a CRM and shared equipment tracker for an agricultural cooperative...',
 ]
+
+const TYPE_SPEED_MS = 45
+const DELETE_SPEED_MS = 20
+const PAUSE_AFTER_TYPE_MS = 2200
+const PAUSE_AFTER_DELETE_MS = 500
+
+function useTypewriter(prompts: string[]) {
+  const [promptIndex, setPromptIndex] = useState(0)
+  const [charCount, setCharCount] = useState(0)
+  const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    const prompt = prompts[promptIndex]
+
+    let delay: number
+    if (!deleting && charCount === prompt.length) {
+      delay = PAUSE_AFTER_TYPE_MS
+    } else if (deleting && charCount === 0) {
+      delay = PAUSE_AFTER_DELETE_MS
+    } else {
+      delay = deleting ? DELETE_SPEED_MS : TYPE_SPEED_MS
+    }
+
+    const timeout = setTimeout(() => {
+      if (!deleting) {
+        if (charCount < prompt.length) {
+          setCharCount(charCount + 1)
+        } else {
+          setDeleting(true)
+        }
+      } else {
+        if (charCount > 0) {
+          setCharCount(charCount - 1)
+        } else {
+          setDeleting(false)
+          setPromptIndex((promptIndex + 1) % prompts.length)
+        }
+      }
+    }, delay)
+
+    return () => clearTimeout(timeout)
+  }, [prompts, promptIndex, charCount, deleting])
+
+  return prompts[promptIndex].slice(0, charCount)
+}
 
 export function Hero() {
   const [devOpen, setDevOpen] = useState(false)
+  const typedPrompt = useTypewriter(typewriterPrompts)
 
   return (
     <section className="relative bg-transparent px-[74px] py-20 text-center md:py-28">
@@ -75,38 +111,23 @@ export function Hero() {
           {/* Header bar */}
           <div className="border-border flex items-center gap-2 border-b px-4 py-3">
             <AnimatedVetraLogo size={24} variant="loader" />
-            <span className="text-foreground text-sm font-semibold">Vetra Agent Rupert</span>
+            <span className="text-foreground text-sm font-semibold">Vetra Agent</span>
             <span className="bg-primary/15 text-primary ml-auto rounded-full px-2 py-0.5 text-xs font-medium">
               Online
             </span>
           </div>
 
-          {/* Messages */}
-          <div className="space-y-3 p-4">
-            {chatMessages.map((msg, i) => (
-              <div
-                key={i}
-                className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
-              >
-                <div
-                  className={`max-w-[75%] rounded-2xl px-4 py-2.5 text-sm leading-relaxed ${
-                    msg.role === 'user'
-                      ? 'bg-primary text-primary-foreground rounded-br-sm text-right'
-                      : 'bg-accent text-foreground rounded-bl-sm text-left'
-                  }`}
-                >
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Input area */}
-          <div className="border-border flex items-center gap-2 border-t px-4 py-3">
-            <div className="bg-muted text-muted-foreground flex-1 rounded-lg px-4 py-2 text-left text-sm">
-              Ask Vetra anything...
+          {/* Typewriter input */}
+          <div className="flex items-center gap-2 px-4 py-4">
+            <div className="bg-muted flex-1 overflow-hidden rounded-lg px-4 py-3 text-left text-sm whitespace-nowrap">
+              {typedPrompt ? (
+                <span className="text-foreground">{typedPrompt}</span>
+              ) : (
+                <span className="text-muted-foreground">Ask Vetra anything...</span>
+              )}
+              <span className="bg-primary ml-0.5 inline-block h-4 w-0.5 animate-pulse align-middle" />
             </div>
-            <button className="bg-primary text-primary-foreground flex h-8 w-8 items-center justify-center rounded-lg text-sm font-bold transition-opacity hover:opacity-80">
+            <button className="bg-primary text-primary-foreground flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-sm font-bold transition-opacity hover:opacity-80">
               ↑
             </button>
           </div>
