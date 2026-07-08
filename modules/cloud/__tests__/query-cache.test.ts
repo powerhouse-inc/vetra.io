@@ -6,7 +6,7 @@ describe('shouldPersistQuery', () => {
   it('persists ordinary per-user queries', () => {
     expect(shouldPersistQuery(queryKeys.environments('MINE', 'did:x'))).toBe(true)
     expect(shouldPersistQuery(queryKeys.studioProducts('did:x'))).toBe(true)
-    expect(shouldPersistQuery(queryKeys.brand('jade-fish-29', 'vetra-agent'))).toBe(true)
+    expect(shouldPersistQuery(queryKeys.viewer('did:x'))).toBe(true)
   })
 
   it('never persists sensitive tenant queries', () => {

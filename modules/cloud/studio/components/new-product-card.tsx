@@ -16,6 +16,8 @@ export function NewProductCard({
   createError,
   hasAttachedKey,
   variant = 'card',
+  atLimit = false,
+  limit = 0,
 }: {
   onCreate: (apiKey?: string) => Promise<void>
   createError: string | null
@@ -28,10 +30,31 @@ export function NewProductCard({
    *   matching the sibling "New environment…" button's height.
    */
   variant?: 'card' | 'button' | 'row'
+  /** When true, the user hit the create cap — render a disabled limit notice. */
+  atLimit?: boolean
+  /** The configured cap, shown in the limit-reached copy. */
+  limit?: number
 }) {
   const [open, setOpen] = useState(false)
 
   const handleClick = () => (hasAttachedKey ? void onCreate() : setOpen(true))
+
+  // At the cap: a disabled, non-interactive tile explaining why (no dialog, no
+  // create). Sized per variant so it drops into the same slot as the CTA.
+  if (atLimit) {
+    const message = `Limit reached — ${limit} of ${limit} products`
+    const shape =
+      variant === 'card' ? 'min-h-[200px] flex-col rounded-xl' : 'rounded-2xl py-5 flex-row w-full'
+    return (
+      <div
+        role="note"
+        title="Delete a product to create a new one."
+        className={`border-border text-muted-foreground flex cursor-not-allowed items-center justify-center gap-2 border border-dashed px-4 text-sm font-medium opacity-70 ${shape}`}
+      >
+        {message}
+      </div>
+    )
+  }
 
   const card =
     variant === 'button' ? (

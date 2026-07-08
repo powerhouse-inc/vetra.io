@@ -4,15 +4,22 @@ import { useCallback, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDid, useUser } from '@powerhousedao/reactor-browser'
 import { fetchMyStudioProducts, type StudioProductSummary } from '@/modules/cloud/graphql'
+import { maxStudiosPerUser } from '@/modules/cloud/switchboard-url'
 import { queryKeys } from '@/modules/cloud/query/keys'
 import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
 import { myAccessStatus } from '@/modules/invites/lib/client'
 import { STUDIO_AGENT_PREFIX, STUDIO_ENV_LABEL } from './constants'
-import { type ProductBrand } from './fetch-product-brand'
 import { type ProductStatus, studioPollIntervalMs } from './studio-readiness'
 import { useCreateStudioEnvironment } from './use-create-studio-environment'
 
 export type StudioGate = 'loading' | 'unauthenticated' | 'ready'
+
+/** Cached studio identity from the BrandSheet, resolved server-side. */
+export type StudioBrand = {
+  title: string
+  tagline: string | null
+  description: string | null
+}
 
 export type StudioProduct = {
   envId: string
@@ -20,10 +27,11 @@ export type StudioProduct = {
   prefix: string
   label: string
   /**
-   * Brand metadata is resolved lazily per card (only once `status === 'ready'`)
-   * so the list never blocks on a per-product host fetch. It stays `null` here.
+   * Studio identity cached server-side (observability pull-worker → obsDB) and
+   * returned by `myStudioProducts`, so the list survives studio hibernation
+   * with no per-card host fetch. Null until the studio has been polled awake.
    */
-  brand: ProductBrand | null
+  brand: StudioBrand | null
   status: ProductStatus
 }
 
@@ -32,6 +40,10 @@ export type StudioProductsState = {
   products: StudioProduct[]
   /** True during the first load when there is no cached data to paint yet. */
   isScanning: boolean
+  /** Max products the user may create; 0 = unlimited (NEXT_PUBLIC_MAX_STUDIOS_PER_USER). */
+  limit: number
+  /** True when the user has reached the configured limit — create is blocked. */
+  atLimit: boolean
   creating: boolean
   createError: string | null
   /**
@@ -47,8 +59,8 @@ export type StudioProductsState = {
 
 /**
  * Map a server-resolved product summary onto the UI model. The switchboard
- * already returns the filtered, status-resolved set, so this is a pure shape
- * adapter — brand stays `null` and is filled in lazily by the card.
+ * already returns the filtered, status-resolved set with the cached brand, so
+ * this is a pure shape adapter.
  */
 function toStudioProduct(summary: StudioProductSummary): StudioProduct {
   return {
@@ -56,7 +68,13 @@ function toStudioProduct(summary: StudioProductSummary): StudioProduct {
     subdomain: summary.subdomain,
     prefix: summary.prefix,
     label: summary.label,
-    brand: null,
+    brand: summary.brand
+      ? {
+          title: summary.brand.title,
+          tagline: summary.brand.tagline,
+          description: summary.brand.description,
+        }
+      : null,
     status: summary.status,
   }
 }
@@ -102,6 +120,13 @@ export function useStudioProducts(): StudioProductsState {
   const products = data ?? []
   const isScanning = isLoading && !data
 
+  // Client-side create cap (prod=3, unset=unlimited). Counts all products in
+  // any state (ready/booting/sleeping) — a hibernated studio still occupies a
+  // slot, and the optimistic booting placeholder below counts too, so a
+  // double-submit can't slip past.
+  const limit = maxStudiosPerUser()
+  const atLimit = limit > 0 && products.length >= limit
+
   // Whether the caller's redeemed code carries a key, so the create flow can
   // skip the manual Anthropic-key prompt and let the subgraph inject it.
   // Self-heal: this can resolve to null when the bearer token isn't ready yet
@@ -122,6 +147,9 @@ export function useStudioProducts(): StudioProductsState {
 
   const createProduct = useCallback(
     async (anthropicApiKey?: string): Promise<string> => {
+      // Enforce the cap even for programmatic in-app callers, not just the
+      // disabled button. (Client-side only — see the max-products spec.)
+      if (atLimit) throw new Error(`You've reached the maximum of ${limit} products`)
       setCreateError(null)
       setCreating(true)
       try {
@@ -152,7 +180,7 @@ export function useStudioProducts(): StudioProductsState {
         setCreating(false)
       }
     },
-    [create, queryClient, productsKey],
+    [atLimit, limit, create, queryClient, productsKey],
   )
 
   let gate: StudioGate
@@ -163,6 +191,8 @@ export function useStudioProducts(): StudioProductsState {
     gate,
     products,
     isScanning,
+    limit,
+    atLimit,
     creating,
     createError,
     createProduct,

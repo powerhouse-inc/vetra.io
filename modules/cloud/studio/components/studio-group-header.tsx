@@ -13,7 +13,6 @@ import Link from 'next/link'
 import { useDid } from '@powerhousedao/reactor-browser'
 import { Button } from '@/modules/shared/components/ui/button'
 import { buildStudioEmbedUrl } from '../studio-embed-url'
-import { useProductBrand } from '../use-product-brand'
 import type { ProductStatus } from '../studio-readiness'
 import type { StudioProduct } from '../use-studio-products'
 
@@ -64,13 +63,9 @@ export function StudioGroupHeader({
   onToggleCollapse: () => void
 }) {
   const did = useDid()
-  // Brand resolves only once the studio is `ready` (see use-product-brand);
-  // until then we fall back to the env label.
-  const brand = useProductBrand({
-    subdomain: studio.subdomain,
-    prefix: studio.prefix,
-    status: studio.status,
-  })
+  // Brand is cached server-side (myStudioProducts → obsDB) so it survives
+  // hibernation; fall back to the env label until the studio has been polled.
+  const brand = studio.brand
   const title = brand?.title || studio.label || 'Vetra Studio'
   const tagline = brand?.tagline || null
   const studioUrl = buildStudioEmbedUrl({

@@ -10,11 +10,8 @@ vi.mock('next/link', () => ({
 }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 
-// Brand resolves lazily inside each card; stub it so cards render synchronously.
-vi.mock('@/modules/cloud/studio/use-product-brand', () => ({
-  useProductBrand: ({ status }: { status: string }) =>
-    status === 'ready' ? { title: 'Concord', tagline: null, description: null } : null,
-}))
+// Brand is cached server-side and carried on each product, so cards render
+// synchronously from `product.brand` — no hook to stub.
 // Mutable holder so each test can drive the grid through its states.
 let state: StudioProductsState
 vi.mock('@/modules/cloud/studio/use-studio-products', () => ({ useStudioProducts: () => state }))
@@ -25,6 +22,8 @@ const baseState: StudioProductsState = {
   gate: 'ready',
   products: [],
   isScanning: false,
+  limit: 0,
+  atLimit: false,
   creating: false,
   createError: null,
   createProduct: vi.fn(),
@@ -42,7 +41,7 @@ describe('StudioProductsGrid', () => {
           subdomain: 's',
           prefix: 'vetra-agent',
           label: 'L',
-          brand: null,
+          brand: { title: 'Concord', tagline: null, description: null },
           status: 'ready',
         },
       ],
