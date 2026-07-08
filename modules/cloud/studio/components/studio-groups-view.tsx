@@ -40,6 +40,8 @@ export function StudioGroupsView() {
     groups,
     standalone,
     isScanning,
+    limit,
+    atLimit,
     creating,
     createError,
     createProduct,
@@ -112,6 +114,8 @@ export function StudioGroupsView() {
               createError={createError}
               hasAttachedKey={hasAttachedKey}
               variant="row"
+              atLimit={atLimit}
+              limit={limit}
             />
           </div>
         </div>

@@ -27,7 +27,7 @@
 
 - [ ] `env-schema.ts`: add `NEXT_PUBLIC_MAX_STUDIOS_PER_USER: z.string().optional()`.
 - [ ] `app/layout.tsx` `__ENV`: add
-  `NEXT_PUBLIC_MAX_STUDIOS_PER_USER: process.env.MAX_STUDIOS_PER_USER || process.env.NEXT_PUBLIC_MAX_STUDIOS_PER_USER || ''`.
+      `NEXT_PUBLIC_MAX_STUDIOS_PER_USER: process.env.MAX_STUDIOS_PER_USER || process.env.NEXT_PUBLIC_MAX_STUDIOS_PER_USER || ''`.
 - [ ] `.env.example`: document the var (commented, unset = unlimited).
 - [ ] `switchboard-url.ts`: add accessor:
 
@@ -44,7 +44,7 @@ export function maxStudiosPerUser(): number {
 ```
 
 - [ ] Test `studio-limit.test.ts` (mock `window.__ENV`): `""`→0, `"3"`→3,
-  `"0"`→0, `"-2"`→0, `"abc"`→0. Run unit config → PASS.
+      `"0"`→0, `"-2"`→0, `"abc"`→0. Run unit config → PASS.
 - [ ] Commit: `feat(studio): NEXT_PUBLIC_MAX_STUDIOS_PER_USER accessor`
 
 ### Task 2: gate in `useStudioProducts`
@@ -52,11 +52,11 @@ export function maxStudiosPerUser(): number {
 **Files:** `modules/cloud/studio/use-studio-products.ts`
 
 - [ ] Import `maxStudiosPerUser`. Compute `const limit = maxStudiosPerUser()`
-  and `const atLimit = limit > 0 && products.length >= limit`.
+      and `const atLimit = limit > 0 && products.length >= limit`.
 - [ ] Add `limit: number` and `atLimit: boolean` to `StudioProductsState` and
-  the returned object.
+      the returned object.
 - [ ] Guard `createProduct`: first line
-  `if (atLimit) throw new Error(\`You've reached the maximum of ${limit} products\`)`.
+      `if (atLimit) throw new Error(\`You've reached the maximum of ${limit} products\`)`.
 - [ ] `npm run tsc` clean. Commit: `feat(studio): expose limit/atLimit + guard createProduct`
 
 ### Task 3: UI — disable create at limit
@@ -67,20 +67,20 @@ export function maxStudiosPerUser(): number {
 `modules/cloud/__tests__/new-product-card.test.tsx` (new)
 
 - [ ] `NewProductCard`: add optional props `atLimit?: boolean; limit?: number`.
-  When `atLimit`, render a disabled tile (respecting `variant`) with copy
-  `Limit reached — {limit} of {limit} products` and no click handler / dialog.
+      When `atLimit`, render a disabled tile (respecting `variant`) with copy
+      `Limit reached — {limit} of {limit} products` and no click handler / dialog.
 - [ ] `studio-products-grid.tsx`: read `atLimit`, `limit` from `useStudioProducts`;
-  pass to the in-grid `<NewProductCard>`.
+      pass to the in-grid `<NewProductCard>`.
 - [ ] `studio-groups-view.tsx`: read `atLimit`, `limit` (already on the hook via
-  spread); pass to the bottom `<NewProductCard variant="row">`.
+      spread); pass to the bottom `<NewProductCard variant="row">`.
 - [ ] Test `new-product-card.test.tsx`: `atLimit` → disabled + message, no
-  dialog on click; below limit → normal CTA. Run unit config → PASS.
+      dialog on click; below limit → normal CTA. Run unit config → PASS.
 - [ ] `npm run tsc`, lint, `format:check` clean. Commit:
-  `feat(studio): show limit-reached state on the create card`
+      `feat(studio): show limit-reached state on the create card`
 
 ### Task 4: prod config + PR
 
 - [ ] `powerhouse-k8s-hosting` `tenants/vetra/powerhouse-values.yaml` vetra.io
-  `env`: add `NEXT_PUBLIC_MAX_STUDIOS_PER_USER: "3"` (with a comment). Commit +
-  push to `main` (ArgoCD syncs; frontend redeploys).
+      `env`: add `NEXT_PUBLIC_MAX_STUDIOS_PER_USER: "3"` (with a comment). Commit +
+      push to `main` (ArgoCD syncs; frontend redeploys).
 - [ ] vetra.io: PR `feat-max-products-per-user` → `staging`.
