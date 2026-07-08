@@ -22,6 +22,8 @@ const baseState: StudioProductsState = {
   gate: 'ready',
   products: [],
   isScanning: false,
+  limit: 0,
+  atLimit: false,
   creating: false,
   createError: null,
   createProduct: vi.fn(),

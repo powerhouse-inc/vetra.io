@@ -27,8 +27,18 @@ function ProductCardSkeleton() {
 }
 
 export function StudioProductsGrid() {
-  const { gate, products, isScanning, creating, createError, createProduct, hasAttachedKey, did } =
-    useStudioProducts()
+  const {
+    gate,
+    products,
+    isScanning,
+    limit,
+    atLimit,
+    creating,
+    createError,
+    createProduct,
+    hasAttachedKey,
+    did,
+  } = useStudioProducts()
 
   if (gate === 'unauthenticated') return <CloudLanding />
   if (gate === 'loading') return <StudioBootScreen title="Loading…" />
@@ -99,6 +109,8 @@ export function StudioProductsGrid() {
                   onCreate={handleCreate}
                   createError={createError}
                   hasAttachedKey={hasAttachedKey}
+                  atLimit={atLimit}
+                  limit={limit}
                 />
               )}
             </>

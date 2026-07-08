@@ -4,6 +4,7 @@ import { useCallback, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
 import { useDid, useUser } from '@powerhousedao/reactor-browser'
 import { fetchMyStudioProducts, type StudioProductSummary } from '@/modules/cloud/graphql'
+import { maxStudiosPerUser } from '@/modules/cloud/switchboard-url'
 import { queryKeys } from '@/modules/cloud/query/keys'
 import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
 import { myAccessStatus } from '@/modules/invites/lib/client'
@@ -39,6 +40,10 @@ export type StudioProductsState = {
   products: StudioProduct[]
   /** True during the first load when there is no cached data to paint yet. */
   isScanning: boolean
+  /** Max products the user may create; 0 = unlimited (NEXT_PUBLIC_MAX_STUDIOS_PER_USER). */
+  limit: number
+  /** True when the user has reached the configured limit — create is blocked. */
+  atLimit: boolean
   creating: boolean
   createError: string | null
   /**
@@ -115,6 +120,13 @@ export function useStudioProducts(): StudioProductsState {
   const products = data ?? []
   const isScanning = isLoading && !data
 
+  // Client-side create cap (prod=3, unset=unlimited). Counts all products in
+  // any state (ready/booting/sleeping) — a hibernated studio still occupies a
+  // slot, and the optimistic booting placeholder below counts too, so a
+  // double-submit can't slip past.
+  const limit = maxStudiosPerUser()
+  const atLimit = limit > 0 && products.length >= limit
+
   // Whether the caller's redeemed code carries a key, so the create flow can
   // skip the manual Anthropic-key prompt and let the subgraph inject it.
   // Self-heal: this can resolve to null when the bearer token isn't ready yet
@@ -135,6 +147,9 @@ export function useStudioProducts(): StudioProductsState {
 
   const createProduct = useCallback(
     async (anthropicApiKey?: string): Promise<string> => {
+      // Enforce the cap even for programmatic in-app callers, not just the
+      // disabled button. (Client-side only — see the max-products spec.)
+      if (atLimit) throw new Error(`You've reached the maximum of ${limit} products`)
       setCreateError(null)
       setCreating(true)
       try {
@@ -165,7 +180,7 @@ export function useStudioProducts(): StudioProductsState {
         setCreating(false)
       }
     },
-    [create, queryClient, productsKey],
+    [atLimit, limit, create, queryClient, productsKey],
   )
 
   let gate: StudioGate
@@ -176,6 +191,8 @@ export function useStudioProducts(): StudioProductsState {
     gate,
     products,
     isScanning,
+    limit,
+    atLimit,
     creating,
     createError,
     createProduct,

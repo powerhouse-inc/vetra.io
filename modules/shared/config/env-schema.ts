@@ -31,4 +31,9 @@ export const envSchema = z.object({
   NEXT_PUBLIC_STUDIO_REGISTRY: z
     .url({ error: 'Must be a valid URL for the studio package registry.' })
     .optional(),
+
+  // Max studios/products a single user may create. Integer as a string; unset,
+  // "0", negative, or non-numeric means no limit. Read at runtime by
+  // maxStudiosPerUser(). Prod sets "3"; staging/local omit it (unlimited).
+  NEXT_PUBLIC_MAX_STUDIOS_PER_USER: z.string().optional(),
 })

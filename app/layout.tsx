@@ -61,6 +61,10 @@ export default async function RootLayout({
                 process.env.GITHUB_APP_SLUG || process.env.NEXT_PUBLIC_GITHUB_APP_SLUG || '',
               NEXT_PUBLIC_STUDIO_REGISTRY:
                 process.env.STUDIO_REGISTRY || process.env.NEXT_PUBLIC_STUDIO_REGISTRY || '',
+              NEXT_PUBLIC_MAX_STUDIOS_PER_USER:
+                process.env.MAX_STUDIOS_PER_USER ||
+                process.env.NEXT_PUBLIC_MAX_STUDIOS_PER_USER ||
+                '',
             })}`,
           }}
         />
