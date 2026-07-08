@@ -24,3 +24,13 @@ export function cloudSwitchboardUrl(): string {
 export function studioRegistry(): string {
   return readEnv('NEXT_PUBLIC_STUDIO_REGISTRY') || 'https://registry.dev.vetra.io'
 }
+
+/**
+ * Max studios/products a user may create. Runtime __ENV via
+ * NEXT_PUBLIC_MAX_STUDIOS_PER_USER (prod → "3"). Returns 0 for unset / "0" /
+ * negative / non-numeric, meaning no limit. Read at call time.
+ */
+export function maxStudiosPerUser(): number {
+  const n = Number.parseInt(readEnv('NEXT_PUBLIC_MAX_STUDIOS_PER_USER'), 10)
+  return Number.isFinite(n) && n > 0 ? n : 0
+}
