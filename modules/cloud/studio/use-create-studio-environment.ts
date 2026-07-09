@@ -103,6 +103,13 @@ export function useCreateStudioEnvironment() {
           name,
           value: input.anthropicApiKey as string,
         }))
+        // Per-env random secret gating vetra-cli's session-export endpoints. The
+        // invite paths set this server-side; this covers manual key entry.
+        changes.push({
+          kind: 'setSecret',
+          name: 'VETRA_SESSION_EXPORT_SECRET',
+          value: crypto.randomUUID() + crypto.randomUUID(),
+        })
         await applyConfigChanges(tenantId, changes, renown)
       } else {
         // Inject the key attached to the caller's invite code, server-side.
