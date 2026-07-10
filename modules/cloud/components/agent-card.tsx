@@ -74,6 +74,9 @@ type Props = {
    */
   tenantId: string | null
   manifest?: PackageManifest | null
+  /** True while the manifest is still being fetched — distinguishes a loading
+   *  manifest from one that is genuinely absent (so we don't spin forever). */
+  manifestLoading?: boolean
   /**
    * Endpoints announced by the agent at runtime (sourced from the
    * observability subgraph). Read-only: we display them but the user
@@ -113,6 +116,7 @@ export function AgentCard({
   canEdit,
   tenantId,
   manifest,
+  manifestLoading = false,
   runtimeEndpoints,
   pods,
   defaultExpanded = false,
@@ -506,7 +510,11 @@ export function AgentCard({
       {expanded && canEdit && (!cfg || !manifest) && (
         <div className="border-foreground/10 space-y-3 border-t p-6">
           <p className="text-muted-foreground text-sm">
-            {!cfg ? 'This service has no config to edit.' : 'Loading package manifest…'}
+            {!cfg
+              ? 'This service has no config to edit.'
+              : manifestLoading
+                ? 'Loading package manifest…'
+                : 'Package manifest unavailable — the registry has no manifest for this version. You can still change the version or remove the agent.'}
           </p>
           {onDisable && (
             <Button

@@ -573,7 +573,7 @@ export function OverviewTab({
   const [addAgentOpen, setAddAgentOpen] = useState(false)
 
   const state = environment.state
-  const { clintPackages } = useClintPackages({
+  const { clintPackages, isLoading: manifestsLoading } = useClintPackages({
     registry: state.defaultPackageRegistry ?? null,
     packages: state.packages,
   })
@@ -744,6 +744,7 @@ export function OverviewTab({
             tenantId={tenantId}
             onAddAgent={() => setAddAgentOpen(true)}
             manifests={clintManifestsByName}
+            manifestsLoading={manifestsLoading}
             runtimeEndpointsByPrefix={clintRuntimeEndpointsByPrefix}
             pods={pods}
             onOpenDetail={onOpenAgentDetail}

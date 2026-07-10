@@ -171,7 +171,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   }
 
   const { canSign } = useCanSign()
-  const { clintPackages } = useClintPackages({
+  const { clintPackages, isLoading: manifestsLoading } = useClintPackages({
     registry: state?.defaultPackageRegistry ?? null,
     packages: state?.packages ?? [],
   })
@@ -372,6 +372,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
               ? (clintManifestsByName[drawerAgent.config.package.name] ?? null)
               : null
           }
+          manifestLoading={manifestsLoading}
           runtimeEndpoints={clintRuntimeEndpointsByPrefix[drawerAgent.prefix] ?? null}
           pods={envPods}
           activeTab={drawer.tab ?? 'logs'}

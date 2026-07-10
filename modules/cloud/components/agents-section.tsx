@@ -27,6 +27,8 @@ type Props = {
   tenantId: string | null
   onAddAgent?: () => void
   manifests?: Record<string, PackageManifest>
+  /** True while agent manifests are still being fetched from the registry. */
+  manifestsLoading?: boolean
   /** prefix → runtime-announced endpoints (from observability subgraph). */
   runtimeEndpointsByPrefix?: Record<string, ClintRuntimeEndpointsForPrefix>
   /** All pods in the env namespace; each card filters to its own. */
@@ -48,6 +50,7 @@ export function AgentsSection({
   tenantId,
   onAddAgent,
   manifests,
+  manifestsLoading,
   runtimeEndpointsByPrefix,
   pods,
   onOpenDetail,
@@ -110,6 +113,7 @@ export function AgentsSection({
               canEdit={canEdit}
               tenantId={tenantId}
               manifest={s.config ? (manifests?.[s.config.package.name] ?? null) : null}
+              manifestLoading={manifestsLoading}
               runtimeEndpoints={runtimeEndpointsByPrefix?.[s.prefix] ?? null}
               pods={pods}
               onOpenDetail={onOpenDetail ? () => onOpenDetail(s.prefix) : undefined}
