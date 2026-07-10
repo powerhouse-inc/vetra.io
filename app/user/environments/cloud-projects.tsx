@@ -1,6 +1,6 @@
 'use client'
 
-import { ExternalLink, Package, Server, Trash2 } from 'lucide-react'
+import { ExternalLink, Loader2, Package, Server, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { toast } from 'sonner'
@@ -208,7 +208,7 @@ const ADMIN_SCOPE_OPTIONS: VisibleScope[] = ['MINE', 'ALL']
 export function CloudEnvironments() {
   const [scope, setScope] = useState<VisibleScope>('MINE')
   const { viewer } = useViewer()
-  const environments = useEnvironments(scope, viewer?.address ?? null)
+  const { environments, isPending } = useEnvironments(scope, viewer?.address ?? null)
   const isAdmin = viewer?.isAdmin ?? false
 
   return (
@@ -236,7 +236,12 @@ export function CloudEnvironments() {
         </div>
       )}
 
-      {environments.length === 0 ? (
+      {isPending ? (
+        <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4 py-12">
+          <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
+          <p className="text-muted-foreground text-sm">Loading environments…</p>
+        </div>
+      ) : environments.length === 0 ? (
         <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4 py-12">
           <Server className="text-muted-foreground h-12 w-12" />
           <div className="text-center">

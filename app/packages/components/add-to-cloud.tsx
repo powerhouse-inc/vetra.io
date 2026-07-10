@@ -20,7 +20,7 @@ interface AddToCloudProps {
 export function AddToCloud({ packageName, version }: AddToCloudProps) {
   const user = useUser()
   const isAuthenticated = !!user
-  const environments = useEnvironments()
+  const { environments, isPending } = useEnvironments()
 
   const addParams = new URLSearchParams({
     tab: 'overview',
@@ -40,6 +40,15 @@ export function AddToCloud({ packageName, version }: AddToCloudProps) {
             Sign in
           </Link>
         </Button>
+      </div>
+    )
+  }
+
+  // Don't flash the "create environment" state while the list is still loading.
+  if (isPending) {
+    return (
+      <div className="space-y-3">
+        <p className="text-muted-foreground text-xs">Loading your environments…</p>
       </div>
     )
   }
