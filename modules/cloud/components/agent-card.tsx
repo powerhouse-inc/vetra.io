@@ -43,6 +43,7 @@ import { EndpointRow } from './endpoint-row'
 import { EnvVarsEditor } from './env-vars-editor'
 import { LiveStatusPill } from './live-status-pill'
 import { ResourceSizePicker } from './resource-size-picker'
+import { UpgradePackageModal } from './upgrade-package-modal'
 
 const SIZE_LABELS: Record<CloudResourceSize, string> = {
   VETRA_AGENT_S: 'Small',
@@ -153,6 +154,7 @@ export function AgentCard({
   const [saving, setSaving] = useState(false)
   const [disabling, setDisabling] = useState(false)
   const [confirmDisableOpen, setConfirmDisableOpen] = useState(false)
+  const [versionModalOpen, setVersionModalOpen] = useState(false)
   const [error, setError] = useState<string | null>(null)
   // Only the setSecret action is read here; the {envVars, secrets}
   // payload isn't displayed anywhere in this card.
@@ -324,7 +326,7 @@ export function AgentCard({
                 </Button>
               )
             )}
-            {canEdit && onDisable && (
+            {canEdit && (onSave || onDisable) && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button variant="ghost" size="icon" aria-label="Agent actions">
@@ -332,16 +334,29 @@ export function AgentCard({
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem
-                    className="text-destructive focus:text-destructive"
-                    onSelect={(e) => {
-                      e.preventDefault()
-                      setConfirmDisableOpen(true)
-                    }}
-                  >
-                    <Trash2 className="mr-2 h-3.5 w-3.5" />
-                    Remove agent
-                  </DropdownMenuItem>
+                  {onSave && cfg && (
+                    <DropdownMenuItem
+                      onSelect={(e) => {
+                        e.preventDefault()
+                        setVersionModalOpen(true)
+                      }}
+                    >
+                      <RefreshCw className="mr-2 h-3.5 w-3.5" />
+                      Change version…
+                    </DropdownMenuItem>
+                  )}
+                  {onDisable && (
+                    <DropdownMenuItem
+                      className="text-destructive focus:text-destructive"
+                      onSelect={(e) => {
+                        e.preventDefault()
+                        setConfirmDisableOpen(true)
+                      }}
+                    >
+                      <Trash2 className="mr-2 h-3.5 w-3.5" />
+                      Remove agent
+                    </DropdownMenuItem>
+                  )}
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
@@ -506,6 +521,23 @@ export function AgentCard({
             </Button>
           )}
         </div>
+      )}
+
+      {onSave && cfg && (
+        <UpgradePackageModal
+          open={versionModalOpen}
+          onOpenChange={setVersionModalOpen}
+          registryUrl={cfg.package.registry}
+          tenantId={tenantId}
+          installedPackages={env?.state.packages ?? []}
+          packageName={cfg.package.name}
+          currentVersion={cfg.package.version ?? null}
+          // The agent's deployed version is clintConfig.package.version (gitops
+          // resolves it to the clint-agent image); update the service config.
+          onUpgrade={async (_name, version) => {
+            await onSave({ ...cfg, package: { ...cfg.package, version } })
+          }}
+        />
       )}
 
       <AlertDialog open={confirmDisableOpen} onOpenChange={setConfirmDisableOpen}>
