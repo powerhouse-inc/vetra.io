@@ -227,9 +227,14 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
     )
   }
 
-  // While the initial auth check runs, or while we finalize a redemption after
-  // login, show a splash instead of flashing the gate form.
-  if (auth.status === 'loading' || auth.status === 'checking' || finalizing) {
+  // `undefined` is the SSR/pre-init snapshot — splash on it so the server doesn't
+  // render the gate into the HTML and flash on refresh (vs client 'initial' → gate).
+  if (
+    auth.status === undefined ||
+    auth.status === 'loading' ||
+    auth.status === 'checking' ||
+    finalizing
+  ) {
     return (
       <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(125%_125%_at_50%_8%,#0d1014_38%,rgba(4,193,97,0.16)_100%)]" />
