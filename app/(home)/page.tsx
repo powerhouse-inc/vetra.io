@@ -11,6 +11,7 @@ import { TrustBar } from '@/modules/home/components/trust-bar'
 import { WaitlistSignup } from '@/modules/home/components/waitlist-signup'
 import { WhyVetra } from '@/modules/home/components/why-vetra'
 import { GridBackground } from '@/modules/shared/components/ui/grid-background'
+import { HomeAuthedRedirect } from '@/modules/home/components/home-authed-redirect'
 
 export const metadata = {
   title: 'Vetra — Work smarter, together.',
@@ -21,6 +22,7 @@ export const metadata = {
 export default function HomePage() {
   return (
     <div className="relative pt-16">
+      <HomeAuthedRedirect />
       {/* Grid background for hero section */}
       <div className="pointer-events-none absolute inset-0 z-0">
         <div className="relative h-[600px]">
