@@ -213,7 +213,9 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   // needs a logged-in user — so when granted-but-logged-out (e.g. cached grant,
   // or right after entering a code) we fall through to the login step below
   // rather than rendering the studio (which would show its logged-out landing).
-  if (step === 'granted' && auth.status === 'authorized') {
+  // Read the cached grant directly, not just `step` (which a mount effect sets one
+  // render late) — otherwise a refresh flashes the code gate before `step` catches up.
+  if ((step === 'granted' || readGranted()) && auth.status === 'authorized') {
     return (
       <>
         {children}
