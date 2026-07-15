@@ -10,6 +10,7 @@ import {
   BookOpen,
   Check,
   Copy,
+  Github,
   Key,
   Loader2,
   Mail,
@@ -27,6 +28,10 @@ import { PreAlphaWarningDialog } from '@/modules/invites/pre-alpha-warning-dialo
 
 const DISCORD_URL = 'https://discord.gg/Py28EMafEr'
 const CURL_CMD = 'curl -fsSL https://get.vetra.io | sh'
+const NPM_CMD = 'npm install -g ph-cmd vetra'
+const GITHUB_URL = 'https://github.com/powerhouse-inc/vetra-cli'
+
+type InstallMethod = 'curl' | 'npm'
 
 /** Whether this browser has a cached early-access grant. */
 function readGranted(): boolean {
@@ -65,7 +70,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   const [step, setStep] = useState<Step>('gate')
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<InstallMethod | null>(null)
   const [working, setWorking] = useState(false)
   // Distinct from `working` (the Get Access button): this drives the full-screen
   // splash and is only set by the post-login finalize effect below — so
@@ -202,10 +207,10 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
     }
   }
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(CURL_CMD)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const handleCopy = async (method: InstallMethod, cmd: string) => {
+    await navigator.clipboard.writeText(cmd)
+    setCopied(method)
+    setTimeout(() => setCopied(null), 2000)
   }
 
   // Reveal the wrapped studio page only when the user is actually signed in.
@@ -371,32 +376,91 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
                   No code needed. Spin up your own Vetra Cloud instance on your machine in seconds
                   with a single command.
                 </p>
-                <div className="bg-muted flex items-center gap-2 rounded-lg px-3 py-2.5">
-                  <span className="text-primary font-mono text-xs font-bold">$</span>
-                  <code className="text-foreground min-w-0 flex-1 truncate font-mono text-xs">
-                    {CURL_CMD}
-                  </code>
-                  <button
-                    onClick={() => {
-                      void handleCopy()
-                    }}
-                    className="text-muted-foreground hover:text-foreground ml-1 shrink-0 transition-colors"
-                    aria-label="Copy command"
-                  >
-                    {copied ? (
-                      <Check className="text-primary h-3.5 w-3.5" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                  </button>
+                <div className="space-y-1.5">
+                  <div className="bg-muted flex items-center gap-2 rounded-lg px-3 py-2.5">
+                    <span className="text-primary font-mono text-xs font-bold">$</span>
+                    <code className="text-foreground min-w-0 flex-1 truncate font-mono text-xs">
+                      {CURL_CMD}
+                    </code>
+                    <button
+                      onClick={() => {
+                        void handleCopy('curl', CURL_CMD)
+                      }}
+                      className="text-muted-foreground hover:text-foreground ml-1 shrink-0 transition-colors"
+                      aria-label="Copy install script command"
+                    >
+                      {copied === 'curl' ? (
+                        <Check className="text-primary h-3.5 w-3.5" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Runs fully on your infrastructure. Supports Docker and Kubernetes out of the box.
-                  Offline-first with peer-to-peer sync.
-                </p>
+                <div className="flex items-center gap-3">
+                  <div className="border-border flex-1 border-t" />
+                  <span className="text-muted-foreground text-xs">
+                    or install with{' '}
+                    <Link
+                      href="https://docs.npmjs.com/downloading-and-installing-node-js-and-npm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-foreground underline underline-offset-2 transition-colors"
+                    >
+                      npm
+                    </Link>
+                    {' / '}
+                    <Link
+                      href="https://pnpm.io/installation"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-foreground underline underline-offset-2 transition-colors"
+                    >
+                      pnpm
+                    </Link>
+                  </span>
+                  <div className="border-border flex-1 border-t" />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="bg-muted flex items-start gap-2 rounded-lg px-3 py-2.5">
+                    <span className="text-primary font-mono text-xs font-bold leading-relaxed">
+                      $
+                    </span>
+                    <code className="text-foreground min-w-0 flex-1 font-mono text-xs leading-relaxed">
+                      <span className="whitespace-nowrap">npm install -g ph-cmd vetra</span>
+                    </code>
+                    <button
+                      onClick={() => {
+                        void handleCopy('npm', NPM_CMD)
+                      }}
+                      className="text-muted-foreground hover:text-foreground ml-1 shrink-0 transition-colors"
+                      aria-label="Copy npm install command"
+                    >
+                      {copied === 'npm' ? (
+                        <Check className="text-primary h-3.5 w-3.5" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="border-border flex-1 border-t" />
+                  <span className="text-muted-foreground text-xs">or</span>
+                  <div className="border-border flex-1 border-t" />
+                </div>
+                <Link
+                  href={GITHUB_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="border-border hover:bg-accent inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+                >
+                  <Github className="h-4 w-4" />
+                  Checkout the project from GitHub
+                </Link>
                 <div className="border-border border-t pt-4">
                   <Link
-                    href="https://academy.vetra.io/academy/MasteryTrack/BuilderEnvironment/CreateAPackageWithVetra"
+                    href="https://academy.vetra.io/academy/GetStarted/VetraStudio#running-vetra-studio-locally"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-xs transition-colors"
