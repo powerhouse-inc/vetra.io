@@ -1,32 +1,35 @@
-import { Check, X } from 'lucide-react'
-
+import Link from 'next/link'
 import { ScrollReveal, ScrollRevealItem } from '@/modules/shared/components/ui/scroll-reveal'
 
-const differentiators = [
-  {
-    title: 'Open source, all the way down',
-    description:
-      "Vetra isn't just a tool that generates apps. The platform itself is open source. Inspect it, modify it, run it wherever you like.",
-  },
-  {
-    title: 'No hostage situations',
-    description:
-      'With most AI builders, your data and logic live on their servers. Leave them and you start over. With Vetra, everything is portable — always.',
-  },
-  {
-    title: 'A workspace, not a generator',
-    description:
-      "Vetra isn't a one-shot tool. It's the environment your team works in every day — with real-time collaboration, version history, and role-based access built in.",
-  },
-]
+function GitHubLogo({ className }: { className?: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      aria-hidden="true"
+      fill="currentColor"
+      className={className}
+    >
+      <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z" />
+    </svg>
+  )
+}
 
-const comparison = [
-  { feature: 'Platform is open source (Copyleft)', others: false, vetra: true },
-  { feature: 'Self-host everything', others: false, vetra: true },
-  { feature: 'Local first & Works offline', others: false, vetra: true },
-  { feature: 'Data stays portable', others: false, vetra: true },
-  { feature: 'Team collaboration built in', others: false, vetra: true },
-  { feature: 'Developer customizable', others: false, vetra: true },
+const openSourceFacts = [
+  {
+    title: 'Copyleft licensed',
+    description:
+      'Every line of Vetra is published under a copyleft license. Read it, fork it, audit it. If you ship a derivative, the ecosystem stays open for everyone.',
+  },
+  {
+    title: 'Self-host or we host it',
+    description:
+      'Run Vetra on your own servers, your own cloud, or let us manage it. The code is the same either way — no feature gating, no lock-in tier.',
+  },
+  {
+    title: 'Portable data, always',
+    description:
+      'Your documents live in an open structured format. Move them to another host, export them, or query them directly.',
+  },
 ]
 
 export function WhyVetra() {
@@ -35,18 +38,28 @@ export function WhyVetra() {
       <section className="mx-auto max-w-screen-xl px-6 py-20">
         <ScrollRevealItem>
           <div className="mb-12 text-center">
-            <h2 className="text-foreground mb-4 text-3xl font-bold">Yours to run. Yours to own.</h2>
+            <h2 className="text-foreground mb-4 text-3xl font-bold">100% open source.</h2>
             <p className="text-foreground-70 mt-2 text-2xl">
-              Most AI builders generate code and host it for you.
+              Not just the apps it creates — the platform itself.
               <br />
-              Vetra gives you the platform itself.
+              Inspect every line on GitHub.
             </p>
+            <div className="mt-6 flex justify-center">
+              <Link
+                href="https://github.com/powerhouse-inc"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-accent text-foreground hover:bg-accent/80 inline-flex items-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold transition-colors"
+              >
+                <GitHubLogo className="h-4 w-4" />
+                Powerhouse on GitHub
+              </Link>
+            </div>
           </div>
         </ScrollRevealItem>
 
-        {/* Three differentiator cards */}
-        <div className="mb-16 grid gap-6 lg:grid-cols-3">
-          {differentiators.map((item) => (
+        <div className="grid gap-6 lg:grid-cols-3">
+          {openSourceFacts.map((item) => (
             <ScrollRevealItem key={item.title}>
               <div className="border-border rounded-xl border p-6">
                 <h3 className="text-foreground mb-3 text-lg font-bold">{item.title}</h3>
@@ -55,48 +68,6 @@ export function WhyVetra() {
             </ScrollRevealItem>
           ))}
         </div>
-
-        {/* Comparison table */}
-        <ScrollRevealItem>
-          <div className="border-border overflow-hidden rounded-xl border">
-            <table className="w-full">
-              <thead>
-                <tr className="bg-accent/50">
-                  <th className="text-foreground px-6 py-4 text-left text-sm font-semibold">
-                    Feature
-                  </th>
-                  <th className="text-foreground-70 px-6 py-4 text-center text-sm font-semibold">
-                    Other AI builders
-                  </th>
-                  <th className="text-foreground px-6 py-4 text-center text-sm font-semibold">
-                    Vetra
-                  </th>
-                </tr>
-              </thead>
-              <tbody>
-                {comparison.map((row, i) => (
-                  <tr key={row.feature} className={i % 2 === 0 ? 'bg-background' : 'bg-accent/20'}>
-                    <td className="text-foreground px-6 py-3.5 text-sm">{row.feature}</td>
-                    <td className="px-6 py-3.5 text-center">
-                      {row.others ? (
-                        <Check className="text-primary mx-auto h-4 w-4" />
-                      ) : (
-                        <X className="text-foreground-30 mx-auto h-4 w-4" />
-                      )}
-                    </td>
-                    <td className="px-6 py-3.5 text-center">
-                      {row.vetra ? (
-                        <Check className="text-primary mx-auto h-4 w-4" />
-                      ) : (
-                        <X className="text-foreground-30 mx-auto h-4 w-4" />
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </ScrollRevealItem>
       </section>
     </ScrollReveal>
   )

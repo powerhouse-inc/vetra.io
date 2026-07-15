@@ -1,3 +1,4 @@
+import { ArchitectureDiagram } from '@/modules/home/components/architecture-diagram'
 import { AudienceCards } from '@/modules/home/components/audience-cards'
 import { CloudCta } from '@/modules/home/components/cloud-cta'
 import { FaqSection } from '@/modules/home/components/faq-section'
@@ -7,7 +8,6 @@ import { Hero } from '@/modules/home/components/hero'
 import { PackageCta } from '@/modules/home/components/package-cta'
 import { PowerhouseStack } from '@/modules/home/components/powerhouse-stack'
 import { SpecToScale } from '@/modules/home/components/spec-to-scale'
-import { TrustBar } from '@/modules/home/components/trust-bar'
 import { WaitlistSignup } from '@/modules/home/components/waitlist-signup'
 import { WhyVetra } from '@/modules/home/components/why-vetra'
 import { GridBackground } from '@/modules/shared/components/ui/grid-background'
@@ -48,12 +48,12 @@ export default function HomePage() {
       <div className="relative z-10">
         <Hero />
       </div>
-      <TrustBar />
-      <FeaturesTabs />
       <WhyVetra />
+      <ArchitectureDiagram />
+      <PackageCta />
+      <FeaturesTabs />
       <AudienceCards />
       <FeatureShowcase />
-      <PackageCta />
       <CloudCta />
       <PowerhouseStack />
       <SpecToScale />
