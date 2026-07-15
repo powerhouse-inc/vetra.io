@@ -1,11 +1,29 @@
+import Image from 'next/image'
+
 import { ScrollReveal, ScrollRevealItem } from '@/modules/shared/components/ui/scroll-reveal'
 
-const layers = [
+interface LayerProduct {
+  label: string
+  brand: string
+}
+
+interface Layer {
+  role: string
+  name?: string
+  products?: LayerProduct[]
+  description: string
+  features: string[]
+}
+
+const layers: Layer[] = [
   {
     role: 'Client layer',
-    name: 'Vetra Studio & Connect',
+    products: [
+      { label: 'Team workspace', brand: 'Connect' },
+      { label: 'Public apps', brand: 'Fusion' },
+    ],
     description:
-      'Local-first apps and a builder studio your whole team works in — online or offline.',
+      'Local-first apps and a builder studio your whole team works in, online or offline.',
     features: [
       'Local-first, P2P sync, works offline',
       'Specification Driven AI',
@@ -26,9 +44,9 @@ const layers = [
   },
   {
     role: 'API layer',
-    name: 'Switchboard',
+    products: [{ label: 'API backend', brand: 'Switchboard' }],
     description:
-      'Every document model instantly exposed as an API — for your apps, agents, and integrations.',
+      'Every document model instantly exposed as an API, for your apps, agents, and integrations.',
     features: [
       'Data instantly as GraphQL API',
       'REST + WebSocket support',
@@ -44,13 +62,24 @@ const deployFacts = [
   '100% open source (+ proprietary extensions)',
 ]
 
-function LayerCard({ layer }: { layer: (typeof layers)[number] }) {
+function LayerCard({ layer }: { layer: Layer }) {
   return (
     <div className="border-border bg-accent/30 flex h-full flex-col rounded-xl border p-6 text-left">
       <p className="text-primary mb-1 text-xs font-semibold tracking-wider uppercase">
         {layer.role}
       </p>
-      <h3 className="text-foreground mb-2 text-lg font-bold">{layer.name}</h3>
+      {layer.products ? (
+        <div className="mb-2 flex flex-col gap-1">
+          {layer.products.map((product) => (
+            <div key={product.brand} className="flex items-center gap-2">
+              <h3 className="text-foreground text-lg font-bold">{product.label}</h3>
+              <span className="text-foreground-70 text-xs">{product.brand}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <h3 className="text-foreground mb-2 text-lg font-bold">{layer.name}</h3>
+      )}
       <p className="text-foreground-70 mb-4 text-sm leading-relaxed">{layer.description}</p>
       <ul className="mt-auto flex flex-col gap-1.5">
         {layer.features.map((feature) => (
@@ -84,7 +113,7 @@ export function ArchitectureDiagram() {
           <div className="mb-12 text-center">
             <h2 className="text-foreground mb-4 text-3xl font-bold">How Vetra works</h2>
             <p className="text-foreground-70 mt-2 text-xl">
-              From structured documents to production APIs — three layers,
+              From structured documents to production APIs: three layers,
               <br />
               all open source, all yours to run.
             </p>
@@ -94,9 +123,43 @@ export function ArchitectureDiagram() {
         <ScrollRevealItem>
           <div className="border-primary/40 relative rounded-2xl border-2 border-dashed p-6 pt-8 md:p-8 md:pt-10">
             <span className="bg-background text-primary absolute -top-3 left-1/2 -translate-x-1/2 px-3 text-xs font-semibold tracking-wider whitespace-nowrap uppercase">
-              Runs on your infrastructure
+              Runs on your infrastructure or Vetra Cloud
             </span>
-            <div className="grid grid-cols-1 items-stretch gap-4 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
+
+            <div className="border-primary/30 bg-primary/5 flex flex-col items-center gap-2 rounded-xl border p-5 text-center md:flex-row md:gap-4 md:text-left">
+              <div className="flex items-center gap-2">
+                <Image
+                  src="/logos/vetra-icon.svg"
+                  alt="Vetra Studio"
+                  width={24}
+                  height={24}
+                  className="h-6 w-6 shrink-0 object-contain"
+                />
+                <h3 className="text-foreground text-lg font-bold whitespace-nowrap">
+                  Vetra Studio
+                </h3>
+                <span className="text-primary text-xs font-semibold tracking-wider uppercase">
+                  AI Builder
+                </span>
+              </div>
+              <p className="text-foreground-70 text-sm leading-relaxed">
+                Specification-driven AI: Define state schemas and generate the document models,
+                clients & APIs that conform to them.
+              </p>
+            </div>
+
+            <div
+              aria-hidden="true"
+              className="text-primary hidden py-2 text-center text-2xl font-bold md:grid md:grid-cols-[1fr_auto_1fr_auto_1fr]"
+            >
+              <span>↓</span>
+              <span />
+              <span>↓</span>
+              <span />
+              <span>↓</span>
+            </div>
+
+            <div className="mt-4 grid grid-cols-1 items-stretch gap-4 md:mt-0 md:grid-cols-[1fr_auto_1fr_auto_1fr]">
               <LayerCard layer={layers[0]} />
               <FlowArrow />
               <LayerCard layer={layers[1]} />
