@@ -1,6 +1,6 @@
+import Image from 'next/image'
 import Link from 'next/link'
-import { ChevronDown } from 'lucide-react'
-import { AnimatedVetraLogo } from '@/modules/shared/components/ui/animated-vetra-logo'
+import { HeroTerminal } from '@/modules/home/components/hero-terminal'
 
 export function Hero() {
   return (
@@ -17,32 +17,55 @@ export function Hero() {
           instant APIs, and let your whole team build &amp; deploy wherever you choose.
         </p>
 
-        <div className="mb-8 flex flex-wrap justify-center gap-3">
-          <Link
-            href="/user"
-            className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-10 items-center rounded-lg px-8 py-3.5 text-base font-semibold transition-colors"
-          >
-            Vetra Studio
-          </Link>
-          <Link
-            href="https://academy.vetra.io/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="bg-accent text-foreground hover:bg-accent/80 inline-flex h-10 items-center rounded-lg px-8 py-3.5 text-base font-semibold transition-colors"
-          >
-            See how it works
-          </Link>
-        </div>
+        <div className="mx-auto grid max-w-4xl gap-4 text-left md:grid-cols-2">
+          <div className="border-border bg-accent/30 flex flex-col gap-4 rounded-xl border p-6">
+            <p className="text-primary text-xs font-semibold tracking-wider uppercase">
+              Run it locally
+            </p>
+            <div className="flex flex-1 items-center">
+              <div className="w-full">
+                <HeroTerminal />
+              </div>
+            </div>
+            <p className="text-foreground-70 text-sm leading-relaxed">
+              One command spins up your own Vetra instance. Docker &amp; Kubernetes ready.
+            </p>
+          </div>
 
-        <div className="flex justify-center">
-          <Link
-            href="#architecture"
-            className="text-foreground-70 hover:text-foreground inline-flex items-center gap-2 text-sm font-medium transition-colors"
-          >
-            <AnimatedVetraLogo size={20} variant="threeStep" />
-            For developers — see the architecture
-            <ChevronDown className="h-4 w-4" />
-          </Link>
+          <div className="border-border bg-accent/30 flex flex-col gap-4 rounded-xl border p-6">
+            <p className="text-primary text-xs font-semibold tracking-wider uppercase">
+              Try it hosted
+            </p>
+            <div className="flex flex-1 items-center gap-2">
+              <Link
+                href="/user"
+                className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-lg px-6 text-base font-semibold transition-colors"
+              >
+                <Image
+                  src="/logos/vetra-icon-dark.svg"
+                  alt=""
+                  width={24}
+                  height={24}
+                  className="h-6 w-6 shrink-0 object-contain"
+                />
+                <span className="text-lg font-bold whitespace-nowrap">Vetra Studio</span>
+                <span className="text-primary-foreground/80 text-xs font-semibold tracking-wider uppercase">
+                  AI Builder
+                </span>
+              </Link>
+              <Link
+                href="https://academy.vetra.io/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="bg-accent text-foreground hover:bg-accent/80 inline-flex h-12 shrink-0 items-center rounded-lg px-4 text-sm font-semibold transition-colors"
+              >
+                Docs
+              </Link>
+            </div>
+            <p className="text-foreground-70 text-sm leading-relaxed">
+              Jump straight into Vetra Studio in the cloud. Nothing to install.
+            </p>
+          </div>
         </div>
       </div>
     </section>
