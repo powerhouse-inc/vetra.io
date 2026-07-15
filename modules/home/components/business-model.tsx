@@ -1,15 +1,18 @@
+import { Cloud, Plug } from 'lucide-react'
 import Link from 'next/link'
 import { ScrollReveal, ScrollRevealItem } from '@/modules/shared/components/ui/scroll-reveal'
 
 const revenueStreams = [
   {
     title: 'Managed hosting',
+    icon: Cloud,
     description:
       'Vetra Cloud runs and scales your instance for you: storage, backups, and upgrades handled. Same open-source code as self-hosting, with zero ops on your side.',
     cta: { label: 'Explore Vetra Cloud', href: '/cloud', external: false },
   },
   {
     title: 'Integration services',
+    icon: Plug,
     description:
       'BAI, our Business Analysis & Integrations team, helps you model your workflows, design document models, and connect Vetra to the systems you already run.',
     cta: {
@@ -39,7 +42,10 @@ export function BusinessModel() {
           {revenueStreams.map((stream) => (
             <ScrollRevealItem key={stream.title} className="h-full">
               <div className="border-border flex h-full flex-col rounded-xl border p-6">
-                <h3 className="text-foreground mb-3 text-lg font-bold">{stream.title}</h3>
+                <h3 className="text-foreground mb-3 flex items-center gap-2 text-lg font-bold">
+                  <stream.icon className="size-5 shrink-0" />
+                  {stream.title}
+                </h3>
                 <p className="text-foreground-70 mb-6 text-sm leading-relaxed">
                   {stream.description}
                 </p>

@@ -26,7 +26,6 @@ const layers: Layer[] = [
       'Local-first apps and a builder studio your whole team works in, online or offline.',
     features: [
       'Local-first, P2P sync, works offline',
-      'Specification Driven AI',
       'Team collaboration built in',
       'TypeScript + React SDK',
     ],
@@ -50,7 +49,6 @@ const layers: Layer[] = [
     features: [
       'Data instantly as GraphQL API',
       'REST + WebSocket support',
-      'Real-time event streaming',
       'Blockchain & Web3 support',
     ],
   },
