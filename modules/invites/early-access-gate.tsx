@@ -10,6 +10,7 @@ import {
   BookOpen,
   Check,
   Copy,
+  ExternalLink,
   Github,
   Key,
   Loader2,
@@ -446,17 +447,20 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
                 </div>
                 <div className="flex items-center gap-3">
                   <div className="border-border flex-1 border-t" />
-                  <span className="text-muted-foreground text-xs">or</span>
+                  <span className="text-muted-foreground text-xs">
+                    or checkout the project from GitHub
+                  </span>
                   <div className="border-border flex-1 border-t" />
                 </div>
                 <Link
                   href={GITHUB_URL}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="border-border hover:bg-accent inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors"
+                  className="bg-muted border-border hover:bg-accent group inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-sm transition-colors"
                 >
-                  <Github className="h-4 w-4" />
-                  Checkout the project from GitHub
+                  <Github className="h-4 w-4 shrink-0" />
+                  <span className="font-mono">powerhouse-inc/vetra-cli</span>
+                  <ExternalLink className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 shrink-0 transition-colors" />
                 </Link>
                 <div className="border-border border-t pt-4">
                   <Link
