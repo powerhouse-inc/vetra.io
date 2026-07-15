@@ -1,9 +1,9 @@
 import { ArchitectureDiagram } from '@/modules/home/components/architecture-diagram'
 import { AudienceCards } from '@/modules/home/components/audience-cards'
+import { BusinessModel } from '@/modules/home/components/business-model'
 import { CloudCta } from '@/modules/home/components/cloud-cta'
 import { FaqSection } from '@/modules/home/components/faq-section'
 import { FeatureShowcase } from '@/modules/home/components/feature-showcase'
-import { FeaturesTabs } from '@/modules/home/components/features-tabs'
 import { Hero } from '@/modules/home/components/hero'
 import { PackageCta } from '@/modules/home/components/package-cta'
 import { PowerhouseStack } from '@/modules/home/components/powerhouse-stack'
@@ -14,9 +14,9 @@ import { GridBackground } from '@/modules/shared/components/ui/grid-background'
 import { HomeAuthedRedirect } from '@/modules/home/components/home-authed-redirect'
 
 export const metadata = {
-  title: 'Vetra — Work smarter, together.',
+  title: 'Vetra | Work smarter, together.',
   description:
-    'Vetra turns your ideas into working software through a simple chat interface. Your whole team stays in sync — and developers keep full control under the hood.',
+    'Vetra turns your ideas into working software through a simple chat interface. Your whole team stays in sync, and developers keep full control under the hood.',
 }
 
 export default function HomePage() {
@@ -48,10 +48,10 @@ export default function HomePage() {
       <div className="relative z-10">
         <Hero />
       </div>
-      <WhyVetra />
       <ArchitectureDiagram />
       <PackageCta />
-      <FeaturesTabs />
+      <WhyVetra />
+      <BusinessModel />
       <AudienceCards />
       <FeatureShowcase />
       <CloudCta />

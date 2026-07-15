@@ -12,8 +12,8 @@ export function CloudCta() {
           <div className="flex-1">
             <h2 className="text-foreground mb-4 text-3xl font-bold">Launch your apps, your way</h2>
             <p className="text-foreground-70 mb-1 max-w-lg leading-relaxed">
-              Vetra Cloud keeps your workflows running — no servers to manage. Or run everything on
-              your own infrastructure.
+              Vetra Cloud keeps your workflows running with no servers to manage. Or run everything
+              on your own infrastructure.
             </p>
             <p className="text-foreground mb-6 font-semibold">
               Your software. Your data. Your call.
