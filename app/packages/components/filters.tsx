@@ -7,7 +7,7 @@ import { capitalCase } from 'change-case'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Checkbox } from '@/modules/shared/components/ui/checkbox'
 import { cn } from '@/modules/shared/lib/utils'
-import { getCategoryStyle } from '../lib/category-colors'
+import { getCategoryStyle, publisherLabel } from '../lib/category-colors'
 import { Search } from './search'
 
 export function Filters(props: {
@@ -170,21 +170,23 @@ function FilterSection(props: { title: string; children: React.ReactNode }) {
 
 const moduleTypeColors: Record<string, string> = {
   documentModels:
-    'text-red-700 bg-red-50 border-red-200 dark:text-red-400 dark:bg-red-950 dark:border-red-800',
+    'text-red-700 bg-red-100 border-red-300 dark:text-red-300 dark:bg-red-500/15 dark:border-red-500/30',
   editors:
-    'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-950 dark:border-orange-800',
-  apps: 'text-orange-700 bg-orange-50 border-orange-200 dark:text-orange-400 dark:bg-orange-950 dark:border-orange-800',
+    'text-orange-700 bg-orange-100 border-orange-300 dark:text-orange-300 dark:bg-orange-500/15 dark:border-orange-500/30',
+  apps: 'text-orange-700 bg-orange-100 border-orange-300 dark:text-orange-300 dark:bg-orange-500/15 dark:border-orange-500/30',
   subgraphs:
-    'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800',
+    'text-blue-700 bg-blue-100 border-blue-300 dark:text-blue-300 dark:bg-blue-500/15 dark:border-blue-500/30',
   processors:
-    'text-blue-700 bg-blue-50 border-blue-200 dark:text-blue-400 dark:bg-blue-950 dark:border-blue-800',
+    'text-blue-700 bg-blue-100 border-blue-300 dark:text-blue-300 dark:bg-blue-500/15 dark:border-blue-500/30',
 }
 
 function getLabelColor(option: string, filterKey: string) {
   if (filterKey === 'moduleTypes') {
     return moduleTypeColors[option] ?? moduleTypeColors.documentModels
   }
-  // For categories and publishers, use the shared category color system
+  if (filterKey === 'publisherNames') {
+    return publisherLabel
+  }
   return getCategoryStyle(option).label
 }
 
