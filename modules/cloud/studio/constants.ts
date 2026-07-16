@@ -1,7 +1,9 @@
 import type { CloudResourceSize } from '@/modules/cloud/types'
 
-/** The package whose presence (as a CLINT agent) marks a Vetra Studio. */
+/** The package a freshly-provisioned Vetra Studio installs as its CLINT agent. */
 export const STUDIO_AGENT_PACKAGE = 'vetra-cli'
+/** Package names that mark an env as a studio — includes the pre-rename `vetra-cli`. */
+export const STUDIO_AGENT_PACKAGE_NAMES = ['vetra', 'vetra-cli'] as const
 /**
  * Pinned, known-good vetra-cli version. We pin explicitly because the `latest`
  * dist-tag has pointed at builds that crash on boot (e.g. dev.8:
