@@ -11,11 +11,9 @@ export async function proxy(request: NextRequest) {
 
   if (session) return NextResponse.next()
 
-  const { pathname, search } = request.nextUrl
-  const url = new URL('/', request.url)
-  url.searchParams.set('signin', '1')
-  url.searchParams.set('from', `${pathname}${search}`)
-  return NextResponse.redirect(url)
+  // Send logged-out visitors to the public home; login is an explicit action
+  // there (no auto-open param, which otherwise re-fires on the post-logout refetch).
+  return NextResponse.redirect(new URL('/', request.url))
 }
 
 export const config = {

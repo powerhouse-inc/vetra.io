@@ -6,15 +6,15 @@ import { useEffect, useRef } from 'react'
 import { useLoginModal } from '@/modules/shared/components/renown/login-modal-context'
 
 // Handles the client-side auth transitions the server redirects miss (those only
-// run on a fresh request): after login enter the target, after logout leave gated.
+// run on a fresh request): after login enter the dashboard, after logout leave gated.
 export function AuthRedirect() {
   const { state } = useRenownAuthAsync()
   const sessionSynced = useRenownSessionSynced()
-  const { open, from, closeLogin, clearFrom } = useLoginModal()
+  const { open, closeLogin } = useLoginModal()
   const pathname = usePathname()
   const router = useRouter()
-  // One post-login navigation per session (resets on logout) so a bounce (cookie
-  // not yet honored) can't become a redirect loop.
+  // One post-login navigation per session (resets on logout) so a bounce can't
+  // become a redirect loop.
   const navigated = useRef(false)
 
   useEffect(() => {
@@ -25,23 +25,23 @@ export function AuthRedirect() {
 
     if (state === 'unauthenticated') {
       navigated.current = false
-      if (onGated) router.replace('/')
+      // Logout while on a gated route: close the modal and return to home.
+      if (onGated) {
+        closeLogin()
+        router.replace('/')
+      }
       return
     }
 
-    // Authenticated: close the modal, then wait for the cookie before entering a
-    // gated route so the proxy sees it. `from` = a proxy-gated origin, else home.
+    // Authenticated: close the modal, then (once the cookie is synced so the proxy
+    // sees it) send a home-page visitor to the dashboard.
     if (open) closeLogin()
     if (!sessionSynced || navigated.current) return
-    if (from) {
-      navigated.current = true
-      clearFrom()
-      router.replace(from)
-    } else if (pathname === '/') {
+    if (pathname === '/') {
       navigated.current = true
       router.replace('/user')
     }
-  }, [state, sessionSynced, open, from, pathname, router, closeLogin, clearFrom])
+  }, [state, sessionSynced, open, pathname, router, closeLogin])
 
   return null
 }
