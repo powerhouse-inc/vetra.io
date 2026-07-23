@@ -3875,7 +3875,7 @@ packages:
       react-dom: ^19.2.0
 
   '@powerhousedao/vetra-cloud-package@https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.3-dev.93.tgz':
-    resolution: {tarball: https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.3-dev.93.tgz}
+    resolution: {integrity: sha512-wMjDQW4fHx2an5fNz+ZE/CMhA4U1YHiUvNR5oLyTCU29k+novMn1Vc/9imT4R8E9FCb2Jn+A6T+DPp8BnJlxBw==, tarball: https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.3-dev.93.tgz}
     version: 0.0.3-dev.93
     peerDependencies:
       react: ^19.2.0
