@@ -1,11 +1,8 @@
 'use client'
 
-import { useRenownAuth, useRenownSessionSynced } from '@powerhousedao/reactor-browser/renown'
-import { useRenownLoginMethods } from '@powerhousedao/reactor-browser/renown'
+import { useRenownAuth, useRenownLoginMethods } from '@powerhousedao/reactor-browser/renown'
 import { LoginMethod } from '@renown/sdk/wallet'
 import { Loader2, Wallet } from 'lucide-react'
-import { useRouter } from 'next/navigation'
-import { useEffect, useRef } from 'react'
 import { useLoginModal } from '@/modules/shared/components/renown/login-modal-context'
 import { walletAdapters } from '@/modules/shared/config/renown'
 import {
@@ -19,27 +16,11 @@ import {
 // Open state lives in LoginModalProvider (React, not the URL). `from` carries the
 // page a proxy redirect came from, used for the post-login navigation.
 export function RenownLoginModal() {
-  const { open, from, closeLogin } = useLoginModal()
-  const router = useRouter()
-  const { user, login, pending, status, error } = useRenownAuth()
-  const sessionSynced = useRenownSessionSynced()
+  const { open, closeLogin } = useLoginModal()
+  const { login, pending, status, error } = useRenownAuth()
   const methods = useRenownLoginMethods(walletAdapters())
 
   const busy = pending || status === 'loading' || status === 'checking'
-
-  // Signed in + cookie written: close and navigate once to the target (gated
-  // `from`, else dashboard). Ref guard keeps it to a single navigation.
-  const redirected = useRef(false)
-  useEffect(() => {
-    if (!open) {
-      redirected.current = false
-      return
-    }
-    if (!user || !sessionSynced || redirected.current) return
-    redirected.current = true
-    closeLogin()
-    router.replace(from ?? '/user')
-  }, [open, user, sessionSynced, from, router, closeLogin])
 
   const wallet = methods.find((m) => m.id === LoginMethod.WALLET)
   const others = methods.filter((m) => m.id !== LoginMethod.WALLET)

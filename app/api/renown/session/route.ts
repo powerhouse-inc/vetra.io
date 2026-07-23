@@ -8,16 +8,10 @@ interface SessionBody {
   profile?: { name?: string | null; avatar?: string | null } | null
 }
 
-// Reject cross-origin writes: the cookie is set from a caller-supplied token, so
-// an off-site POST could fixate a victim into the attacker's session (login CSRF).
+// Reject cross-site writes (login-CSRF: the cookie is set from a caller-supplied
+// token). Sec-Fetch-Site is proxy-safe, unlike an Origin-vs-Host comparison.
 function isSameOrigin(request: Request): boolean {
-  const origin = request.headers.get('origin')
-  if (!origin) return true
-  try {
-    return new URL(origin).host === request.headers.get('host')
-  } catch {
-    return false
-  }
+  return request.headers.get('sec-fetch-site') !== 'cross-site'
 }
 
 // The client POSTs the minted bearer token (+ display hint) after sign-in; we

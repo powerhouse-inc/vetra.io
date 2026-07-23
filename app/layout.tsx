@@ -2,6 +2,7 @@ import { Inter } from 'next/font/google'
 import { headers } from 'next/headers'
 import { CloudAuthBridge } from '@/modules/cloud/components/cloud-auth-bridge'
 import { OpenPanelProvider } from '@/modules/shared/components/openpanel'
+import { AuthRedirect } from '@/modules/shared/components/renown/auth-redirect'
 import { LoginModalProvider } from '@/modules/shared/components/renown/login-modal-context'
 import { RenownLoginModal } from '@/modules/shared/components/renown/renown-login-modal'
 import { RenownProviders } from '@/modules/shared/components/renown/renown-providers'
@@ -110,6 +111,7 @@ export default async function RootLayout({
                     <GlobalRefreshIndicator />
                     <SyncStatusChip />
                     <CloudAuthBridge />
+                    <AuthRedirect />
                     <RenownLoginModal />
                     <div className="items-right flex min-h-screen flex-col">
                       <Navbar />

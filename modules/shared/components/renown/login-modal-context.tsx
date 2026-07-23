@@ -18,6 +18,8 @@ interface LoginModalContextValue {
   from: string | null
   openLogin: () => void
   closeLogin: () => void
+  /** Clear the captured `from` once it's been navigated to. */
+  clearFrom: () => void
 }
 
 const LoginModalContext = createContext<LoginModalContextValue | null>(null)
@@ -64,10 +66,11 @@ export function LoginModalProvider({ children }: { children: ReactNode }) {
     setOpen(true)
   }, [])
   const closeLogin = useCallback(() => setOpen(false), [])
+  const clearFrom = useCallback(() => setFrom(null), [])
 
   const value = useMemo<LoginModalContextValue>(
-    () => ({ open, from, openLogin, closeLogin }),
-    [open, from, openLogin, closeLogin],
+    () => ({ open, from, openLogin, closeLogin, clearFrom }),
+    [open, from, openLogin, closeLogin, clearFrom],
   )
 
   return <LoginModalContext.Provider value={value}>{children}</LoginModalContext.Provider>
