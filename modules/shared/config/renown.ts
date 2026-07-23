@@ -20,7 +20,11 @@ function readEnv(key: string): string {
 // is the dedicated Renown switchboard, distinct from vetra's own data API.
 export function renownSwitchboardUrl(): string {
   return (
-    readEnv('NEXT_PUBLIC_RENOWN_SWITCHBOARD_URL') || 'https://switchboard.renown.vetra.io/graphql'
+    readEnv('NEXT_PUBLIC_RENOWN_SWITCHBOARD_URL') ||
+    // Server-side (verifySession) sees only process.env, where the container
+    // sets the unprefixed name; the layout injects it as NEXT_PUBLIC_ for clients.
+    readEnv('RENOWN_SWITCHBOARD_URL') ||
+    'https://switchboard.renown.vetra.io/graphql'
   )
 }
 
