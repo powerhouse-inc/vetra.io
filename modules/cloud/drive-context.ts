@@ -68,6 +68,8 @@ export function isTeamDrive(driveId: string): boolean {
  */
 export function useUserDrive(): DriveId | null {
   const auth = useRenownAuth()
-  if (auth.status !== 'authorized' || !auth.address) return null
+  // `status` stays "initial" after a reload even with a restored user, so key
+  // off the address (set iff a user is present), matching useViewerAddress.
+  if (!auth.address) return null
   return userDriveFor(auth.address)
 }

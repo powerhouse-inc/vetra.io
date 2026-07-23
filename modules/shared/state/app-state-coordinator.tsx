@@ -44,10 +44,12 @@ function subscribeOnline(onChange: () => void): () => void {
   }
 }
 
-/** Returns the connected address once authorized, else null. */
+/** Returns the connected address when a user is present, else null. */
 function useViewerAddress(): string | null {
   const auth = useRenownAuth()
-  return auth.status === 'authorized' ? (auth.address ?? null) : null
+  // User-first: `status` stays "initial" after a reload even with a restored
+  // user, so key off the user (address is set iff a user is present).
+  return auth.address ?? null
 }
 
 /**

@@ -1,5 +1,5 @@
 'use client'
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
+import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
 import { Loader2, Plus, Settings, Users } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -18,7 +18,7 @@ function isValidTab(v: string | null): v is SettingsTab_ {
 }
 
 function UserSettingsPageInner() {
-  const auth = useRenownAuth()
+  const auth = useRenownAuthAsync()
   const router = useRouter()
   const params = useSearchParams()
   const rawTab = params.get('tab')
@@ -33,7 +33,7 @@ function UserSettingsPageInner() {
     [params, router],
   )
 
-  if (auth.status === 'loading' || auth.status === 'checking') {
+  if (auth.state === 'resolving') {
     return (
       <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-8">
         <Loader2 className="text-muted-foreground size-6 animate-spin" />
@@ -41,10 +41,10 @@ function UserSettingsPageInner() {
     )
   }
 
-  if (auth.status !== 'authorized' || !auth.address) {
+  if (auth.state !== 'authenticated' || !auth.address) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <LoginPrompt onLogin={auth.login} />
+        <LoginPrompt />
       </div>
     )
   }

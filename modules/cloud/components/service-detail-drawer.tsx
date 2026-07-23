@@ -217,7 +217,7 @@ export function ServiceDetailDrawer({
   const showRuntimeConfig = kind === 'connect' && !!runtimeConfigSupported && !!onSaveRuntimeConfig
   const renown = useRenown()
   const auth = useRenownAuth()
-  const viewerAddress = auth.status === 'authorized' ? (auth.address ?? null) : null
+  const viewerAddress = auth.address ?? null
 
   const servicePods = useMemo(() => {
     if (!pods) return []
