@@ -20,7 +20,9 @@ function Row({ label, value }: { label: string; value: string | undefined | null
 
 export function SettingsTab() {
   const auth = useRenownAuth()
-  if (auth.status !== 'authorized') return null
+  // `status` stays "initial" after a reload even with a restored user, so key
+  // off the user rather than the resolved status.
+  if (!auth.user) return null
 
   return (
     <Card>

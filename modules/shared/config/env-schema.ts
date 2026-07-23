@@ -21,6 +21,12 @@ export const envSchema = z.object({
     .url({ error: 'Must be a valid URL for the Renown service.' })
     .optional(),
 
+  // Dedicated Renown switchboard that issues/verifies auth credentials (in-page
+  // sign-in). Distinct from the data API; defaults to switchboard.renown.vetra.io.
+  NEXT_PUBLIC_RENOWN_SWITCHBOARD_URL: z
+    .url({ error: 'Must be a valid URL for the Renown switchboard GraphQL API.' })
+    .optional(),
+
   // GitHub App slug, used to build the app install URL (e.g. "vetra-studio").
   NEXT_PUBLIC_GITHUB_APP_SLUG: z.string().optional(),
 

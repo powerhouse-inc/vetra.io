@@ -2,7 +2,8 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
+import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
+import { useOpenLogin } from '@/modules/shared/components/renown/login-modal-context'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -66,7 +67,8 @@ type Step = 'gate' | 'login' | 'granted'
  * page is in use with it.
  */
 export function EarlyAccessGate({ children }: { children: ReactNode }) {
-  const auth = useRenownAuth()
+  const auth = useRenownAuthAsync()
+  const openLogin = useOpenLogin()
   const queryClient = useQueryClient()
   const [step, setStep] = useState<Step>('gate')
   const [code, setCode] = useState('')
@@ -100,7 +102,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   // the background, so only first-time grants and post-login redemptions wait
   // behind the splash.
   useEffect(() => {
-    if (auth.status !== 'authorized') return
+    if (auth.state !== 'authenticated') return
     let cancelled = false
 
     const finalize = async () => {
@@ -167,7 +169,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [auth.status, queryClient])
+  }, [auth.state, queryClient])
 
   const handleGetAccess = async () => {
     const entered = code.trim()
@@ -183,7 +185,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
 
       // Already logged in → redeem now. Otherwise stash the code and send them
       // through Renown login; the effect above redeems when they return.
-      if (auth.status === 'authorized') {
+      if (auth.state === 'authenticated') {
         const token = await getRenownToken()
         if (token) {
           const redeemed = await redeemInviteCode(entered, token)
@@ -221,7 +223,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   // rather than rendering the studio (which would show its logged-out landing).
   // Read the cached grant directly, not just `step` (which a mount effect sets one
   // render late) — otherwise a refresh flashes the code gate before `step` catches up.
-  if ((step === 'granted' || readGranted()) && auth.status === 'authorized') {
+  if ((step === 'granted' || readGranted()) && auth.state === 'authenticated') {
     return (
       <>
         {children}
@@ -233,14 +235,9 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
     )
   }
 
-  // `undefined` is the SSR/pre-init snapshot — splash on it so the server doesn't
-  // render the gate into the HTML and flash on refresh (vs client 'initial' → gate).
-  if (
-    auth.status === undefined ||
-    auth.status === 'loading' ||
-    auth.status === 'checking' ||
-    finalizing
-  ) {
+  // "resolving" covers the SSR/pre-init snapshot too, so the server splashes
+  // rather than rendering the gate into the HTML and flashing it on refresh.
+  if (auth.state === 'resolving' || finalizing) {
     return (
       <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(125%_125%_at_50%_8%,#0d1014_38%,rgba(4,193,97,0.16)_100%)]" />
@@ -424,7 +421,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
                 </div>
                 <div className="space-y-1.5">
                   <div className="bg-muted flex items-start gap-2 rounded-lg px-3 py-2.5">
-                    <span className="text-primary font-mono text-xs font-bold leading-relaxed">
+                    <span className="text-primary font-mono text-xs leading-relaxed font-bold">
                       $
                     </span>
                     <code className="text-foreground min-w-0 flex-1 font-mono text-xs leading-relaxed">
@@ -496,7 +493,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
               <div className="border-border my-6 border-t" />
 
               <button
-                onClick={() => void auth.login()}
+                onClick={openLogin}
                 disabled={working}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold transition-colors disabled:opacity-60"
               >

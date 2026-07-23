@@ -1,5 +1,5 @@
 'use client'
-import { useRenownAuth, usePHToast } from '@powerhousedao/reactor-browser'
+import { useRenownAuthAsync, usePHToast } from '@powerhousedao/reactor-browser'
 import { Loader2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useMemo, useState } from 'react'
@@ -26,7 +26,7 @@ const emptyForm: CreateTeamForm = {
 }
 
 function CreateTeamInner() {
-  const auth = useRenownAuth()
+  const auth = useRenownAuthAsync()
   const router = useRouter()
   const params = useSearchParams()
   const toast = usePHToast()
@@ -79,17 +79,17 @@ function CreateTeamInner() {
     }
   }, [activeStep, form, slugStatus, allMembersValid])
 
-  if (auth.status === 'loading' || auth.status === 'checking') {
+  if (auth.state === 'resolving') {
     return (
       <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-8">
         <Loader2 className="text-muted-foreground size-6 animate-spin" />
       </div>
     )
   }
-  if (auth.status !== 'authorized' || !auth.address) {
+  if (auth.state !== 'authenticated' || !auth.address) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <LoginPrompt onLogin={auth.login} />
+        <LoginPrompt />
       </div>
     )
   }
