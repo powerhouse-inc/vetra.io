@@ -25,9 +25,23 @@ export function RenownLoginModal() {
   const wallet = methods.find((m) => m.id === LoginMethod.WALLET)
   const others = methods.filter((m) => m.id !== LoginMethod.WALLET)
 
+  // Trigger the method's adapter; its own modal (Privy, RainbowKit) opens on top.
+  const startLogin = (method?: LoginMethod) => {
+    login(undefined, method)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={(next) => !next && closeLogin()}>
-      <DialogContent className="sm:max-w-sm">
+    // Non-modal so the adapter's own modal opens on top and holds focus while this
+    // picker stays put; AuthRedirect closes it on success.
+    <Dialog open={open} onOpenChange={(next) => !next && closeLogin()} modal={false}>
+      <DialogContent
+        className="sm:max-w-sm"
+        // While a login is in flight, outside clicks land on the adapter modal —
+        // keep this picker open so a cancel returns here instead of vanishing.
+        onInteractOutside={(e) => {
+          if (busy) e.preventDefault()
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Sign in to Vetra</DialogTitle>
           <DialogDescription>Authenticate with Renown to continue.</DialogDescription>
@@ -37,7 +51,7 @@ export function RenownLoginModal() {
             <button
               type="button"
               disabled={busy}
-              onClick={() => login()}
+              onClick={() => startLogin()}
               className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
@@ -49,7 +63,7 @@ export function RenownLoginModal() {
             <button
               type="button"
               disabled={busy}
-              onClick={() => login(undefined, wallet.id)}
+              onClick={() => startLogin(wallet.id)}
               className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
             >
               {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
@@ -70,7 +84,7 @@ export function RenownLoginModal() {
               key={method.id}
               type="button"
               disabled={busy}
-              onClick={() => login(undefined, method.id)}
+              onClick={() => startLogin(method.id)}
               className="bg-accent text-foreground hover:bg-muted inline-flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
             >
               {method.label}

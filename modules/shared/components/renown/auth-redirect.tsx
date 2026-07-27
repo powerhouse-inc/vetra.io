@@ -39,7 +39,9 @@ export function AuthRedirect() {
     if (!sessionSynced || navigated.current) return
     if (pathname === '/') {
       navigated.current = true
-      router.replace('/user')
+      // Hard nav (not router.replace): a logged-out prefetch cached the /user -> /
+      // 307, and a soft transition reuses it; a document load re-runs middleware.
+      window.location.replace('/user')
     }
   }, [state, sessionSynced, open, pathname, router, closeLogin])
 

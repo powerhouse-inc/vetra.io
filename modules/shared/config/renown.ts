@@ -44,10 +44,12 @@ export function walletAdapters(): WalletAdaptersConfig {
   // WalletConnect id — the adapter just hides WC). Privy added only when configured.
   const privyAppId = readEnv('NEXT_PUBLIC_PRIVY_APP_ID')
   const privyClientId = readEnv('NEXT_PUBLIC_PRIVY_CLIENT_ID')
-  const walletConnectProjectId = readEnv('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID')
+  const walletConnectProjectId = readEnv('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID') || undefined
 
   return {
-    rainbow: { walletConnectProjectId },
+    // ssr: this is a Next.js host, so wagmi defers its hydrate onMount to an effect
+    // instead of running it during render (which warns via RainbowKit's ConnectModal).
+    rainbow: { ...(walletConnectProjectId ? { walletConnectProjectId } : {}), ssr: true },
     ...(privyAppId
       ? {
           privy: {

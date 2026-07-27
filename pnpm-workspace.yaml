@@ -27,12 +27,12 @@ allowBuilds:
   utf-8-validate: false
 
 minimumReleaseAgeExclude:
-  - '@powerhousedao/analytics-engine-browser@6.2.2-dev.14'
-  - '@powerhousedao/analytics-engine-core@6.2.2-dev.14'
-  - '@powerhousedao/reactor-attachments@6.2.2-dev.14'
-  - '@powerhousedao/reactor-browser@6.2.2-dev.14'
-  - '@powerhousedao/reactor-drive@6.2.2-dev.14'
-  - '@powerhousedao/reactor@6.2.2-dev.14'
-  - '@powerhousedao/shared@6.2.2-dev.14'
-  - '@renown/sdk@6.2.2-dev.14'
-  - document-model@6.2.2-dev.14
+  - '@powerhousedao/analytics-engine-browser@6.2.2-dev.19'
+  - '@powerhousedao/analytics-engine-core@6.2.2-dev.19'
+  - '@powerhousedao/reactor-attachments@6.2.2-dev.19'
+  - '@powerhousedao/reactor-browser@6.2.2-dev.19'
+  - '@powerhousedao/reactor-drive@6.2.2-dev.19'
+  - '@powerhousedao/reactor@6.2.2-dev.19'
+  - '@powerhousedao/shared@6.2.2-dev.19'
+  - '@renown/sdk@6.2.2-dev.19'
+  - document-model@6.2.2-dev.19
