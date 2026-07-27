@@ -10,6 +10,12 @@ overrides:
   viem: 2.52.2
   'zod@3': 3.25.76
   'zod@4': 4.4.3
+  # vetra-cloud-package ships against the 6.0.0-dev.244 stack, whose
+  # `PHAuthState` is `{}`; 6.2.2-dev.19 gave it `version`/`grants`. Its
+  # generated `VetraCloudEnvironmentPHState` therefore no longer satisfies the
+  # `PHBaseState` our `PHDocumentController` expects. Point its `document-model`
+  # (which pins `@powerhousedao/shared`) at ours so both compile units agree.
+  '@powerhousedao/vetra-cloud-package>document-model': 6.2.2-dev.19
 
 allowBuilds:
   '@apollo/protobufjs': true
