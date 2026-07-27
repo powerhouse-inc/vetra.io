@@ -3,6 +3,7 @@
 import { useRenownAuth, useRenownLoginMethods } from '@powerhousedao/reactor-browser/renown'
 import { LoginMethod } from '@renown/sdk/wallet'
 import { Loader2, Wallet } from 'lucide-react'
+import { useState } from 'react'
 import { useLoginModal } from '@/modules/shared/components/renown/login-modal-context'
 import { walletAdapters } from '@/modules/shared/config/renown'
 import {
@@ -25,10 +26,19 @@ export function RenownLoginModal() {
   const wallet = methods.find((m) => m.id === LoginMethod.WALLET)
   const others = methods.filter((m) => m.id !== LoginMethod.WALLET)
 
+  // Which button started the in-flight login, so the spinner lands on it rather
+  // than on a fixed one. `null` is the no-methods "Continue with Renown" button.
+  const [active, setActive] = useState<LoginMethod | null>()
+
   // Trigger the method's adapter; its own modal (Privy, RainbowKit) opens on top.
   const startLogin = (method?: LoginMethod) => {
+    setActive(method ?? null)
     login(undefined, method)
   }
+
+  // Gated on `busy`, so a stale `active` from a cancelled login stays invisible.
+  const spinnerFor = (method: LoginMethod | null) =>
+    busy && active === method ? <Loader2 className="h-4 w-4 animate-spin" /> : null
 
   return (
     // Non-modal so the adapter's own modal opens on top and holds focus while this
@@ -54,7 +64,7 @@ export function RenownLoginModal() {
               onClick={() => startLogin()}
               className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+              {spinnerFor(null)}
               Continue with Renown
             </button>
           ) : null}
@@ -66,7 +76,7 @@ export function RenownLoginModal() {
               onClick={() => startLogin(wallet.id)}
               className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
             >
-              {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wallet className="h-4 w-4" />}
+              {spinnerFor(wallet.id) ?? <Wallet className="h-4 w-4" />}
               {wallet.label}
             </button>
           ) : null}
@@ -87,6 +97,7 @@ export function RenownLoginModal() {
               onClick={() => startLogin(method.id)}
               className="bg-accent text-foreground hover:bg-muted inline-flex h-11 items-center justify-center gap-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50"
             >
+              {spinnerFor(method.id)}
               {method.label}
             </button>
           ))}
