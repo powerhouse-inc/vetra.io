@@ -2,6 +2,10 @@ packages:
   - '.'
 
 overrides:
+  # vetra-cloud-package@0.0.3-dev.93 is built on the 6.0.0 stack, whose PHAuthState
+  # lacks version/grants added in shared 6.2.2-dev.19; pin its document-model so the
+  # generated PHState satisfies PHBaseState (TS2344 in modules/cloud/controller.ts).
+  '@powerhousedao/vetra-cloud-package>document-model': 6.2.2-dev.19
   '@codemirror/state': 6.5.2
   '@codemirror/view': 6.36.7
   # Dedupe the wallet-lib dependency graph (privy/rainbow/wagmi pulled in 5 viem
