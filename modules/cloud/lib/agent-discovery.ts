@@ -10,8 +10,7 @@ export function isAgentPackageName(name: string): boolean {
 }
 
 export type AgentManifestValidation =
-  | { ok: true; manifest: PackageManifest }
-  | { ok: false; reason: 'manifest-missing' | 'not-clint' }
+  { ok: true; manifest: PackageManifest } | { ok: false; reason: 'manifest-missing' | 'not-clint' }
 
 /** Validate a registry-fetched manifest as an installable agent. */
 export function validateAgentManifest(manifest: PackageManifest | null): AgentManifestValidation {

@@ -3,11 +3,7 @@ export type CloudEnvironmentServiceType = 'CONNECT' | 'SWITCHBOARD' | 'FUSION' |
 export type ServiceStatus = 'ACTIVE' | 'SUSPENDED' | 'PROVISIONING' | 'BILLING_ISSUE'
 
 export type CloudResourceSize =
-  | 'VETRA_AGENT_S'
-  | 'VETRA_AGENT_M'
-  | 'VETRA_AGENT_L'
-  | 'VETRA_AGENT_XL'
-  | 'VETRA_AGENT_XXL'
+  'VETRA_AGENT_S' | 'VETRA_AGENT_M' | 'VETRA_AGENT_L' | 'VETRA_AGENT_XL' | 'VETRA_AGENT_XXL'
 
 /**
  * Mirrors `VetraCloudServiceEnv` in the document model schema (vetra-cloud-
@@ -193,12 +189,7 @@ export type PodPhase = 'RUNNING' | 'PENDING' | 'SUCCEEDED' | 'FAILED' | 'UNKNOWN
 export type EventType = 'NORMAL' | 'WARNING'
 export type TenantService = 'CONNECT' | 'SWITCHBOARD' | 'CLINT' | 'FUSION'
 export type MetricRange =
-  | 'ONE_MIN'
-  | 'FIVE_MIN'
-  | 'FIFTEEN_MIN'
-  | 'ONE_HOUR'
-  | 'SIX_HOURS'
-  | 'TWENTY_FOUR_HOURS'
+  'ONE_MIN' | 'FIVE_MIN' | 'FIFTEEN_MIN' | 'ONE_HOUR' | 'SIX_HOURS' | 'TWENTY_FOUR_HOURS'
 
 export type EnvironmentStatus = {
   tenantId: string

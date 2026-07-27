@@ -16,8 +16,7 @@ addFormats(ajv)
 const validate = ajv.compile(connectRuntimeConfigJsonSchema)
 
 export type JsonValidationResult =
-  | { ok: true; parsed: unknown }
-  | { ok: false; issues: Array<{ path: string; message: string }> }
+  { ok: true; parsed: unknown } | { ok: false; issues: Array<{ path: string; message: string }> }
 
 /**
  * Parse + validate a JSON string against the runtime-config schema.
