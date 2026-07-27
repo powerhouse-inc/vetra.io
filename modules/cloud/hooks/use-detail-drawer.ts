@@ -12,8 +12,7 @@ import { useCallback, useMemo } from 'react'
  * them. Anything that doesn't parse cleanly means "no drawer open".
  */
 export type DrawerScope =
-  | { kind: 'service'; id: 'connect' | 'switchboard' | 'fusion' }
-  | { kind: 'agent'; id: string }
+  { kind: 'service'; id: 'connect' | 'switchboard' | 'fusion' } | { kind: 'agent'; id: string }
 
 const VALID_SERVICE_IDS = new Set(['connect', 'switchboard', 'fusion'])
 

@@ -12,9 +12,7 @@ import { useRenownAuth } from '@powerhousedao/reactor-browser'
 export type DriveId = string
 
 export type ParsedDriveId =
-  | { type: 'user'; key: string }
-  | { type: 'team'; key: string }
-  | { type: 'legacy'; key: string }
+  { type: 'user'; key: string } | { type: 'team'; key: string } | { type: 'legacy'; key: string }
 
 const USER_PREFIX = 'user:'
 const TEAM_PREFIX = 'team:'
