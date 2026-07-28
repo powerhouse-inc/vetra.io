@@ -37,7 +37,7 @@ export function RenownProviders({
       sessionEndpoint={RENOWN_SESSION_ENDPOINT}
       // Trust the localStorage-restored credential across reloads. "always" would
       // re-read it from the switchboard and log out on any read-back miss (#2881).
-      revalidate="never"
+      revalidate="always"
       onError={(error) => console.error('Renown init failed', error)}
     >
       {children}

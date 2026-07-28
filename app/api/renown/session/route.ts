@@ -1,12 +1,15 @@
-import { RENOWN_SESSION_COOKIE, serializeRenownSessionCookie } from '@renown/sdk/node'
+import {
+  RENOWN_SESSION_COOKIE,
+  serializeRenownSessionCookie,
+  type RenownSessionCookie,
+} from '@renown/sdk/node'
 import { cookies } from 'next/headers'
 
 const MAX_AGE = 7 * 24 * 60 * 60 // 7 days, matching the token lifetime
 
-interface SessionBody {
-  token?: string
-  profile?: { name?: string | null; avatar?: string | null } | null
-}
+// The wire shape is the cookie payload itself, minus the SDK's required `token`
+// (this is untrusted input, so it is validated below).
+type SessionBody = Partial<RenownSessionCookie>
 
 // Reject cross-site writes (login-CSRF: the cookie is set from a caller-supplied
 // token). Sec-Fetch-Site is proxy-safe, unlike an Origin-vs-Host comparison.

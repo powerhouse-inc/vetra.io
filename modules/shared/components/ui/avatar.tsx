@@ -15,11 +15,21 @@ function Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimi
   )
 }
 
-function AvatarImage({ className, ...props }: React.ComponentProps<typeof AvatarPrimitive.Image>) {
+// Radix's Image renders null until an onload fires in the browser, so the server
+// HTML never carries the src and every avatar paints its fallback first.
+function AvatarImage({ className, alt = '', onError, ...props }: React.ComponentProps<'img'>) {
   return (
-    <AvatarPrimitive.Image
+    // eslint-disable-next-line @next/next/no-img-element -- next/image can't SSR-paint here; hosts are unbounded
+    <img
       data-slot="avatar-image"
-      className={cn('aspect-square size-full', className)}
+      alt={alt}
+      // Opaque, so a transparent source doesn't composite over the fallback behind it.
+      className={cn('bg-muted absolute inset-0 aspect-square size-full', className)}
+      // Uncover the fallback underneath when the source is broken.
+      onError={(event) => {
+        event.currentTarget.style.display = 'none'
+        onError?.(event)
+      }}
       {...props}
     />
   )
