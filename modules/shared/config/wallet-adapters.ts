@@ -29,6 +29,7 @@ function buildWalletAdapters(): WalletAdapterDescriptor[] {
   return [
     rainbowAdapter({
       ...(walletConnectProjectId ? { walletConnectProjectId } : {}),
+      appName: 'Vetra',
       // ssr: this is a Next.js host, so wagmi defers its hydrate onMount to an effect
       // instead of running it during render (which warns via RainbowKit's ConnectModal).
       ssr: true,
