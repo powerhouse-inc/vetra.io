@@ -10,6 +10,9 @@ overrides:
   viem: 2.52.2
   'zod@3': 3.25.76
   'zod@4': 4.4.3
+  # RainbowKit -> cuer@0.0.3 asks for `qr: "~0"`, so it floats to 0.6, whose API
+  # change breaks the WalletConnect QR modal. Hold the last working line.
+  'qr@>=0.6': 0.5.5
 
 allowBuilds:
   '@apollo/protobufjs': true

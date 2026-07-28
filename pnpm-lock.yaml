@@ -10,6 +10,7 @@ overrides:
   viem: 2.52.2
   zod@3: 3.25.76
   zod@4: 4.4.3
+  qr@>=0.6: 0.5.5
 
 importers:
 
@@ -12537,8 +12538,8 @@ packages:
     resolution: {integrity: sha512-O+Wd1chXj5YE1DwmD+ae0bXiSLehmnS3czlC1R9FL/Nt/3q8uMS1bIHmg2lJfCoiimCxClWM8AAuJrF0EvNiog==}
     engines: {node: '>= 16'}
 
-  qr@0.6.0:
-    resolution: {integrity: sha512-P23VoX7SipHALdiIYG+D+LT/6n22dNKwV92FAb3d+Nlki/5WisSsfLt0UDFz2XEBtuwrECTznvu+chKKFCSYhA==}
+  qr@0.5.5:
+    resolution: {integrity: sha512-iQBvKj7MRKO+co+MY0IZpyLO+ezvttxsmV86WywrgPuAmgBkv0pytyi03wourniSoPgzffeBW6cBgIkpqcvjTg==}
     engines: {node: '>= 20.19.0'}
 
   qrcode@1.5.3:
@@ -27880,7 +27881,7 @@ snapshots:
 
   cuer@0.0.3(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@6.0.2):
     dependencies:
-      qr: 0.6.0
+      qr: 0.5.5
       react: 19.2.6
       react-dom: 19.2.6(react@19.2.6)
     optionalDependencies:
@@ -32687,7 +32688,7 @@ snapshots:
   qlobber@8.0.1:
     optional: true
 
-  qr@0.6.0: {}
+  qr@0.5.5: {}
 
   qrcode@1.5.3:
     dependencies:
