@@ -25,10 +25,13 @@ function buildWalletAdapters(): WalletAdapterDescriptor[] {
   const privyAppId = readEnv('NEXT_PUBLIC_PRIVY_APP_ID')
   const privyClientId = readEnv('NEXT_PUBLIC_PRIVY_CLIENT_ID')
   const walletConnectProjectId = readEnv('NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID') || undefined
+  // Without it the adapter falls back to wagmi's public RPCs, which rate-limit.
+  const infuraProjectId = readEnv('NEXT_PUBLIC_INFURA_PROJECT_ID') || undefined
 
   return [
     rainbowAdapter({
       ...(walletConnectProjectId ? { walletConnectProjectId } : {}),
+      ...(infuraProjectId ? { infuraProjectId } : {}),
       appName: 'Vetra',
       // ssr: this is a Next.js host, so wagmi defers its hydrate onMount to an effect
       // instead of running it during render (which warns via RainbowKit's ConnectModal).

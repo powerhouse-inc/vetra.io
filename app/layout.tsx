@@ -72,6 +72,10 @@ export default async function RootLayout({
                 process.env.WALLETCONNECT_PROJECT_ID ||
                 process.env.NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID ||
                 '',
+              NEXT_PUBLIC_INFURA_PROJECT_ID:
+                process.env.INFURA_PROJECT_ID ||
+                process.env.NEXT_PUBLIC_INFURA_PROJECT_ID ||
+                '',
               NEXT_PUBLIC_PRIVY_APP_ID:
                 process.env.PRIVY_APP_ID || process.env.NEXT_PUBLIC_PRIVY_APP_ID || '',
               NEXT_PUBLIC_PRIVY_CLIENT_ID:
