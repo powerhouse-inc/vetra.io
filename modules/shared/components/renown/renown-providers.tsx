@@ -10,8 +10,8 @@ import {
   RENOWN_SESSION_ENDPOINT,
   renownSwitchboardUrl,
   renownUrl,
-  walletAdapters,
 } from '@/modules/shared/config/renown'
+import { walletAdapters } from '@/modules/shared/config/wallet-adapters'
 
 // One provider: SDK init, first-render seed from the server `session`, wallet
 // adapters (lazy), and the cookie sync. A defined `session` enables both.
@@ -35,8 +35,6 @@ export function RenownProviders({
       theme={theme}
       session={session}
       sessionEndpoint={RENOWN_SESSION_ENDPOINT}
-      // Trust the localStorage-restored credential across reloads. "always" would
-      // re-read it from the switchboard and log out on any read-back miss (#2881).
       revalidate="always"
       onError={(error) => console.error('Renown init failed', error)}
     >

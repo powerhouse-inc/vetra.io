@@ -30,13 +30,6 @@ allowBuilds:
   utf-8-validate: false
 
 minimumReleaseAgeExclude:
-  - '@powerhousedao/analytics-engine-browser@6.2.2-dev.20'
-  - '@powerhousedao/analytics-engine-core@6.2.2-dev.20'
-  - '@powerhousedao/reactor-attachments@6.2.2-dev.20'
-  - '@powerhousedao/reactor-browser@6.2.2-dev.20'
-  - '@powerhousedao/reactor-drive@6.2.2-dev.20'
-  - '@powerhousedao/reactor@6.2.2-dev.20'
-  - '@powerhousedao/shared@6.2.2-dev.20'
-  - '@renown/sdk@6.2.2-dev.20'
-  - document-model@6.2.2-dev.20
-  - '@powerhousedao/vetra-cloud-package@0.0.22-dev.0'
+  - '@powerhousedao/*'
+  - '@renown/sdk'
+  - document-model
