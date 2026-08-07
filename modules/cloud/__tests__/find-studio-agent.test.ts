@@ -48,6 +48,26 @@ describe('findStudioAgent', () => {
     expect(match?.env.id).toBe('e1')
     expect(match?.service.prefix).toBe('vetra-agent')
   })
+  it('returns the env + service when a renamed `vetra` CLINT agent exists', () => {
+    const match = findStudioAgent([
+      env([
+        svc({
+          config: {
+            package: { registry: 'r', name: 'vetra', version: null },
+            env: [],
+            serviceCommand: null,
+            selectedRessource: 'VETRA_AGENT_XL',
+          },
+        }),
+      ]),
+    ])
+    expect(match?.env.id).toBe('e1')
+  })
+  it('matches via env packages under the renamed `vetra` name', () => {
+    const e = env([svc({ config: null })])
+    e.state.packages = [{ registry: 'r', name: 'vetra', version: '0.0.1-dev.50' }]
+    expect(findStudioAgent([e])?.env.id).toBe('e1')
+  })
   it('ignores disabled agents', () => {
     expect(findStudioAgent([env([svc({ enabled: false })])])).toBeNull()
   })

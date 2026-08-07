@@ -1,5 +1,5 @@
 import type { CloudEnvironment, CloudEnvironmentService } from '@/modules/cloud/types'
-import { STUDIO_AGENT_PACKAGE } from './constants'
+import { STUDIO_AGENT_PACKAGE_NAMES } from './constants'
 
 export type StudioAgentMatch = {
   env: CloudEnvironment
@@ -16,12 +16,15 @@ export type StudioAgentMatch = {
  * which the fragment does return — since a studio env has the vetra-cli
  * package installed alongside its enabled CLINT agent.
  */
+const isStudioPackageName = (name?: string | null): boolean =>
+  !!name && (STUDIO_AGENT_PACKAGE_NAMES as readonly string[]).includes(name)
+
 function matchStudioService(env: CloudEnvironment): CloudEnvironmentService | undefined {
-  const hasStudioPackage = env.state.packages.some((p) => p.name === STUDIO_AGENT_PACKAGE)
+  const hasStudioPackage = env.state.packages.some((p) => isStudioPackageName(p.name))
   return env.state.services.find((s) => {
     if (s.type !== 'CLINT' || !s.enabled) return false
     const pkgName = s.config?.package?.name
-    return pkgName ? pkgName === STUDIO_AGENT_PACKAGE : hasStudioPackage
+    return pkgName ? isStudioPackageName(pkgName) : hasStudioPackage
   })
 }
 
