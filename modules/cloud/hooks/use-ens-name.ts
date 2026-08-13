@@ -2,7 +2,19 @@
 
 import { useEffect, useState } from 'react'
 
+// Bounded (LRU-ish) cache. A module-scope Map lives for the lifetime of the
+// process (server) / tab (browser), NOT the page — keyed by address it would
+// grow unbounded as an admin browses many teams/permissions. Cap + evict the
+// oldest so retained size plateaus instead of climbing.
+const CACHE_MAX = 500
 const cache = new Map<string, string | null>()
+function cachePut(key: string, value: string | null): void {
+  cache.delete(key) // refresh insertion order (most-recent last)
+  cache.set(key, value)
+  if (cache.size > CACHE_MAX) {
+    cache.delete(cache.keys().next().value as string) // evict oldest
+  }
+}
 
 interface EnsIdeasResponse {
   name?: string | null
@@ -11,7 +23,7 @@ interface EnsIdeasResponse {
 /**
  * Resolves an Ethereum address to its ENS name via the public ensideas REST
  * gateway. Falls back to `null` on any error so callers can render the raw
- * address. Results are cached for the lifetime of the page.
+ * address. Results are cached (bounded to CACHE_MAX entries).
  */
 async function resolveEns(address: string): Promise<string | null> {
   const lower = address.toLowerCase()
@@ -20,15 +32,15 @@ async function resolveEns(address: string): Promise<string | null> {
   try {
     const res = await fetch(`https://api.ensideas.com/ens/resolve/${encodeURIComponent(address)}`)
     if (!res.ok) {
-      cache.set(lower, null)
+      cachePut(lower, null)
       return null
     }
     const data = (await res.json()) as EnsIdeasResponse
     const name = data.name ?? null
-    cache.set(lower, name)
+    cachePut(lower, name)
     return name
   } catch {
-    cache.set(lower, null)
+    cachePut(lower, null)
     return null
   }
 }
