@@ -53,4 +53,36 @@ describe('isTypeAtApex', () => {
     const s = [svc('CLINT', true, 'a'), svc('CLINT', true, 'b')]
     expect(isTypeAtApex(s, 'CLINT', 'CLINT')).toBe(false)
   })
+  it('sole CONNECT product env with apexService unset → CONNECT at apex', () => {
+    // A CONNECT-only "product" environment leaves apexService null and relies
+    // on the lone-service auto-claim.
+    expect(isTypeAtApex([svc('CONNECT')], null, 'CONNECT')).toBe(true)
+    expect(isTypeAtApex([svc('CONNECT')], undefined, 'CONNECT')).toBe(true)
+  })
+})
+
+// Regression (coral-quail-16b2d931, 2026-08-14): a CONNECT-only env leaves
+// apexService unset; CONNECT auto-claims the apex, so its URL MUST be the bare
+// subdomain, not `<sub>-connect`. The bug was a caller computing apex as
+// `apexService === type` (misses the auto-claim) instead of using isTypeAtApex.
+// This locks the full data flow the UI uses: isTypeAtApex → resolveGenericHost.
+describe('CONNECT-only env host resolution (regression)', () => {
+  const connectOnly: ServiceLike[] = [svc('CONNECT')]
+  it('resolves to the bare subdomain, never <sub>-connect', () => {
+    const host = resolveGenericHost(
+      'coral-quail-16b2d931',
+      'connect',
+      isTypeAtApex(connectOnly, null, 'CONNECT'),
+      'vetra.io',
+    )
+    expect(host).toBe('coral-quail-16b2d931.vetra.io')
+    expect(host).not.toContain('-connect')
+  })
+  it('the buggy `apexService === type` check would have regressed this', () => {
+    // Documents WHY the manual check is wrong: null === "CONNECT" is false,
+    // which would have produced the -connect host.
+    const apexService: string | null = null
+    expect(apexService === 'CONNECT').toBe(false) // the old, wrong signal
+    expect(isTypeAtApex(connectOnly, apexService, 'CONNECT')).toBe(true) // the correct one
+  })
 })
