@@ -26,7 +26,7 @@ import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtim
 import { partitionPackagesByManifestType } from '@/modules/cloud/lib/module-package-filter'
 import { toServiceImageTag } from '@/modules/cloud/registry/channels'
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
-import { resolveGenericHost } from '@/modules/cloud/lib/env-host'
+import { isTypeAtApex, resolveGenericHost } from '@/modules/cloud/lib/env-host'
 import type {
   CloudEnvironment,
   CloudEnvironmentServiceType,
@@ -683,7 +683,7 @@ export function OverviewTab({
                   customDomainValid={
                     status?.domainResolves === true && status?.tlsCertValid === true
                   }
-                  isApexService={(state.apexService ?? null) === type}
+                  isApexService={isTypeAtApex(state.services, state.apexService, type)}
                   isEnabled={service?.enabled ?? false}
                   serviceStatus={service?.status ?? 'PROVISIONING'}
                   environmentStatus={state.status}
