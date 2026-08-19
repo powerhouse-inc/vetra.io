@@ -46,10 +46,17 @@ import { InlineEditableTitle, OverviewTab } from './tabs/overview'
  * warning explaining why (logged once per distinct payload, since this
  * runs on every render).
  */
+// Bounded dedup set. Module-scope, keyed by the raw payload string, so it
+// would grow unbounded across distinct payloads (this runs on every render).
+// A warning-dedup set never needs to be large — cap it and evict the oldest.
+const WARNED_MAX = 200
 const warnedRuntimeConfigPayloads = new Set<string>()
 function warnRuntimeConfigOnce(raw: string, message: string, detail?: unknown) {
   if (warnedRuntimeConfigPayloads.has(raw)) return
   warnedRuntimeConfigPayloads.add(raw)
+  if (warnedRuntimeConfigPayloads.size > WARNED_MAX) {
+    warnedRuntimeConfigPayloads.delete(warnedRuntimeConfigPayloads.values().next().value as string)
+  }
   console.warn(`[runtime-config] ${message}`, detail ?? '')
 }
 
