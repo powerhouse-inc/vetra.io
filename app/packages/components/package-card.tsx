@@ -15,16 +15,8 @@ export function PackageCard(props: {
   recommended?: boolean
 }) {
   const { manifest, registryName, searchWords, recommended } = props
-  const {
-    publisher,
-    description,
-    category,
-    documentModels,
-    editors,
-    apps,
-    processors,
-    subgraphs,
-  } = manifest
+  const { publisher, description, category, documentModels, editors, apps, processors, subgraphs } =
+    manifest
 
   // Some registry entries ship an empty manifest name; fall back to the
   // registered npm name so the card title and detail link stay usable.

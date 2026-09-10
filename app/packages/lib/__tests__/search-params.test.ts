@@ -9,9 +9,9 @@ describe('packagesShowUrl', () => {
   })
 
   it('preserves scalar params and swaps the show value', () => {
-    expect(
-      packagesShowUrl('all', { search: 'billing', show: 'recommended' }),
-    ).toBe('/packages?search=billing&show=all')
+    expect(packagesShowUrl('all', { search: 'billing', show: 'recommended' })).toBe(
+      '/packages?search=billing&show=all',
+    )
   })
 
   it('serializes array params as repeated keys (nuqs format)', () => {
@@ -24,8 +24,8 @@ describe('packagesShowUrl', () => {
   })
 
   it('drops undefined values and ignores an invalid show value in the source', () => {
-    expect(
-      packagesShowUrl('recommended', { search: undefined, show: 'bogus' }),
-    ).toBe('/packages?show=recommended')
+    expect(packagesShowUrl('recommended', { search: undefined, show: 'bogus' })).toBe(
+      '/packages?show=recommended',
+    )
   })
 })

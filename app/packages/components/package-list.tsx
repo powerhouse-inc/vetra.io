@@ -11,7 +11,12 @@ import { getCategoryStyle } from '../lib/category-colors'
 import { PackageCard } from './package-card'
 
 interface PackageListProps {
-  results: { manifest: Manifest; registryName: string; searchWords: string[]; recommended?: boolean }[]
+  results: {
+    manifest: Manifest
+    registryName: string
+    searchWords: string[]
+    recommended?: boolean
+  }[]
 }
 
 type SortKey = 'name' | 'category' | 'publisher' | 'modules'
