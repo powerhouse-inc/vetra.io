@@ -6,6 +6,12 @@ export const envSchema = z.object({
     error: 'Must be a valid URL (e.g., https://example.com) pointing to the hosted homepage.',
   }),
 
+  // Curated allowlist for the package library: comma-separated npm package
+  // names that get a "Powerhouse Recommended" badge and the recommended-only
+  // default view at /packages. Server-only (no NEXT_PUBLIC_ prefix, never
+  // reaches window.__ENV). Unset/empty = no curation.
+  PACKAGES_RECOMMENDED: z.string().optional(),
+
   // public env variables
   NEXT_PUBLIC_SWITCHBOARD_URL: z.url({
     error:
