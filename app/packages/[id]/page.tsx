@@ -6,6 +6,7 @@ import {
   Github,
   PackageIcon,
   Scale,
+  Star,
   Tag,
   Users,
 } from 'lucide-react'
@@ -23,6 +24,7 @@ import { Badge } from '@/modules/shared/components/ui/badge'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Card, CardContent } from '@/modules/shared/components/ui/card'
 import { REGISTRY_URL } from '../lib/constants'
+import { isRecommended } from '../lib/recommended'
 import { getCategoryStyle } from '../lib/category-colors'
 import { getPackageManifest, getPackageRegistryData } from '../lib/registry'
 import { CopyCommand } from '../components/copy-command'
@@ -227,6 +229,12 @@ export default async function PackageDetailPage({ params, searchParams }: Packag
                 <Badge variant="outline" className="gap-1 text-xs">
                   <Tag className="size-3" />
                   {activeTag}
+                </Badge>
+              )}
+              {isRecommended(pkg.name) && (
+                <Badge className="gap-1 text-xs">
+                  <Star className="size-3" />
+                  Powerhouse Recommended
                 </Badge>
               )}
             </div>

@@ -1,7 +1,7 @@
 'use client'
 
 import { type Manifest } from '@powerhousedao/shared'
-import { ArrowDown, ArrowUp, ArrowUpDown, LayoutGrid, List } from 'lucide-react'
+import { ArrowDown, ArrowUp, ArrowUpDown, LayoutGrid, List, Star } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { capitalCase } from 'change-case'
 import Link from 'next/link'
@@ -11,7 +11,7 @@ import { getCategoryStyle } from '../lib/category-colors'
 import { PackageCard } from './package-card'
 
 interface PackageListProps {
-  results: { manifest: Manifest; searchWords: string[] }[]
+  results: { manifest: Manifest; registryName: string; searchWords: string[]; recommended?: boolean }[]
 }
 
 type SortKey = 'name' | 'category' | 'publisher' | 'modules'
@@ -60,7 +60,7 @@ export function PackageList({ results }: PackageListProps) {
       let cmp = 0
       switch (sortKey) {
         case 'name':
-          cmp = (a.manifest.name ?? '').localeCompare(b.manifest.name ?? '')
+          cmp = (a.manifest.name || a.registryName).localeCompare(b.manifest.name || b.registryName)
           break
         case 'category':
           cmp = (a.manifest.category ?? '').localeCompare(b.manifest.category ?? '')
@@ -107,8 +107,14 @@ export function PackageList({ results }: PackageListProps) {
 
       {view === 'grid' ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {results.map(({ manifest, searchWords }) => (
-            <PackageCard key={manifest.name} manifest={manifest} searchWords={searchWords} />
+          {results.map(({ manifest, registryName, searchWords, recommended }) => (
+            <PackageCard
+              key={registryName}
+              manifest={manifest}
+              registryName={registryName}
+              searchWords={searchWords}
+              recommended={recommended}
+            />
           ))}
         </div>
       ) : (
@@ -159,12 +165,12 @@ export function PackageList({ results }: PackageListProps) {
               </tr>
             </thead>
             <tbody className="text-sm">
-              {sorted.map(({ manifest }, i) => {
+              {sorted.map(({ manifest, registryName, recommended }, i) => {
                 const catStyle = getCategoryStyle(manifest.category)
                 const count = getModuleCount(manifest)
                 return (
                   <tr
-                    key={manifest.name}
+                    key={registryName}
                     className={cn(
                       'hover:bg-accent/30 border-muted border-b-[0.5px] transition-colors last:border-0',
                       i % 2 === 0 ? 'bg-card' : 'bg-accent/10',
@@ -172,10 +178,11 @@ export function PackageList({ results }: PackageListProps) {
                   >
                     <td className="px-4 py-3">
                       <Link
-                        href={`/packages/${encodeURIComponent(manifest.name)}`}
-                        className="hover:text-primary font-medium hover:underline"
+                        href={`/packages/${encodeURIComponent(registryName)}`}
+                        className="hover:text-primary flex items-center gap-1.5 font-medium hover:underline"
                       >
-                        {manifest.name}
+                        {recommended && <Star className="text-primary size-3 shrink-0" />}
+                        {manifest.name || registryName}
                       </Link>
                     </td>
                     <td className="hidden max-w-sm px-4 py-3 lg:table-cell">

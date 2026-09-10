@@ -17,7 +17,8 @@ import { Filters } from './components/filters'
 import { MobileFilters } from './components/mobile-filters'
 import { fuse, packageModuleTypes, REGISTRY_URL } from './lib/constants'
 import { map, unique, filter, isTruthy } from 'remeda'
-import { filterManifests, getSearchWords } from './lib/utils'
+import { filterEntries, getSearchWords } from './lib/utils'
+import { type PackageEntry } from './lib/types'
 import { PackageList } from './components/package-list'
 import { CreatePackageModal } from './components/create-package-modal'
 
@@ -71,24 +72,24 @@ export default async function PackagesPage({ searchParams }: PageProps) {
     effectiveShow === 'recommended'
       ? filter(allPackages, (p) => recommended.has(p.name.toLowerCase()))
       : allPackages
-  const manifests = filter(
-    map(packages, (m) => m.manifest),
-    isTruthy,
+  const entries = filter(
+    map(packages, (p) => ({ registryName: p.name, manifest: p.manifest })),
+    (e): e is PackageEntry => isTruthy(e.manifest),
   )
   const categoryOptions = unique(
     filter(
-      map(manifests, (m) => m.category),
+      map(entries, (e) => e.manifest.category),
       isTruthy,
     ),
   )
   const publisherNameOptions = unique(
     filter(
-      map(manifests, (m) => m.publisher?.name),
+      map(entries, (e) => e.manifest.publisher?.name),
       isTruthy,
     ),
   )
-  const filteredManifests = filterManifests(manifests, filters)
-  fuse.setCollection(filteredManifests)
+  const filteredEntries = filterEntries(entries, filters)
+  fuse.setCollection(filteredEntries)
 
   const searchResult = fuse.search(search ?? '')
 
@@ -164,9 +165,11 @@ export default async function PackagesPage({ searchParams }: PageProps) {
             </div>
           ) : (
             <PackageList
-              results={searchResult.map(({ item: manifest, matches }) => ({
-                manifest,
+              results={searchResult.map(({ item, matches }) => ({
+                manifest: item.manifest,
+                registryName: item.registryName,
                 searchWords: getSearchWords(matches),
+                recommended: recommended.has(item.registryName.toLowerCase()),
               }))}
             />
           )}
