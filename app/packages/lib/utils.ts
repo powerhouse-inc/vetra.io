@@ -1,15 +1,14 @@
-import { type Manifest } from '@powerhousedao/shared'
-import { type PackageFilters } from './types'
+import { type PackageFilters, type PackageEntry } from './types'
 import { type FuseResultMatch } from 'fuse.js'
 import { filter, isTruthy } from 'remeda'
 
-export function filterManifests(
-  manifests: Manifest[],
+export function filterEntries(
+  entries: PackageEntry[],
   { moduleTypes, categories, publisherNames }: PackageFilters,
 ) {
-  if (!moduleTypes?.length && !categories?.length && !publisherNames?.length) return manifests
+  if (!moduleTypes?.length && !categories?.length && !publisherNames?.length) return entries
 
-  return manifests.filter((manifest) => {
+  return entries.filter(({ manifest }) => {
     for (const moduleType of moduleTypes ?? []) {
       if (manifest[moduleType]?.length) return true
     }
