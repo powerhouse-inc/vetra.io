@@ -12,7 +12,7 @@ import {
   Pencil,
   Check,
   X,
-  Loader2,
+  Loader2, FileText
 } from 'lucide-react'
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
@@ -67,6 +67,7 @@ const SERVICE_LABELS: Record<CloudEnvironmentServiceType, string> = {
   SWITCHBOARD: 'Powerhouse Switchboard',
   FUSION: 'Powerhouse Fusion',
   CLINT: 'Agent',
+  DOCLING: 'Document Conversion',
 }
 
 const SERVICE_ICONS: Record<
@@ -77,6 +78,7 @@ const SERVICE_ICONS: Record<
   SWITCHBOARD: Server,
   FUSION: Zap,
   CLINT: Bot,
+  DOCLING: FileText,
 }
 
 function ServiceRow({
@@ -595,6 +597,7 @@ export function OverviewTab({
     SWITCHBOARD: 'switchboard',
     FUSION: 'fusion',
     CLINT: 'agent',
+    DOCLING: 'docling',
   }
 
   const getServiceEnabled = (type: CloudEnvironmentServiceType) =>
