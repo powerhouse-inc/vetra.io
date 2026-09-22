@@ -13,6 +13,7 @@ export type DefaultConnectConfig = {
   app: {
     logLevel: LogLevel
     basePath: string
+    workflowsEnabled: boolean
   }
   packages: {
     externalEnabled: boolean
@@ -61,6 +62,7 @@ export const DEFAULT_CONNECT_CONFIG: DefaultConnectConfig = {
   app: {
     logLevel: 'info',
     basePath: '/',
+    workflowsEnabled: false,
   },
   packages: {
     externalEnabled: true,

@@ -36,6 +36,12 @@ export type ConnectBranding = {
 export type ConnectApp = {
   logLevel?: LogLevel
   basePath?: string
+  /**
+   * Loads `@powerhousedao/workflow` in Connect — the workflow and connection
+   * editors plus Workflow Studio. Connect's half of the reactor-side
+   * `PH_WORKFLOWS_ENABLED`; neither implies the other.
+   */
+  workflowsEnabled?: boolean
 }
 
 export type ConnectPackages = {
