@@ -49,6 +49,7 @@ export const appSchema = z
   .object({
     logLevel: logLevelSchema.optional(),
     basePath: z.string().optional(),
+    workflowsEnabled: z.boolean().optional(),
   })
   .strict()
 
@@ -129,6 +130,7 @@ export const connectRuntimeConfigJsonSchema = {
       properties: {
         logLevel: { type: 'string', enum: ['debug', 'info', 'warn', 'error'] },
         basePath: { type: 'string' },
+        workflowsEnabled: { type: 'boolean' },
       },
     },
     packages: {
