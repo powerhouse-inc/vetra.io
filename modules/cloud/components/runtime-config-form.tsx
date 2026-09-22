@@ -181,6 +181,13 @@ function AppSection({ form, overrides }: SectionProps) {
         placeholder={DEFAULT_CONNECT_CONFIG.app.basePath}
         mono
       />
+      <SwitchField
+        form={form}
+        overrides={overrides}
+        path="app.workflowsEnabled"
+        label="Workflows enabled"
+        description="Loads the workflow package in Connect: the workflow and connection editors plus Workflow Studio. The engine that runs them is the reactor's own PH_WORKFLOWS_ENABLED, set from the Add-ons tab."
+      />
     </SectionCard>
   )
 }
@@ -641,6 +648,8 @@ function buildFormValues(overrides: PHConnectRuntimeConfig): ConnectRuntimeConfi
     app: {
       logLevel: overrides.app?.logLevel ?? DEFAULT_CONNECT_CONFIG.app.logLevel,
       basePath: overrides.app?.basePath ?? DEFAULT_CONNECT_CONFIG.app.basePath,
+      workflowsEnabled:
+        overrides.app?.workflowsEnabled ?? DEFAULT_CONNECT_CONFIG.app.workflowsEnabled,
     },
     packages: {
       externalEnabled:
@@ -717,6 +726,12 @@ function pruneToOverrides(values: ConnectRuntimeConfigFormValues): PHConnectRunt
     values.app.basePath !== DEFAULT_CONNECT_CONFIG.app.basePath
   ) {
     app.basePath = values.app.basePath
+  }
+  if (
+    values.app?.workflowsEnabled !== undefined &&
+    values.app.workflowsEnabled !== DEFAULT_CONNECT_CONFIG.app.workflowsEnabled
+  ) {
+    app.workflowsEnabled = values.app.workflowsEnabled
   }
   if (Object.keys(app).length > 0) out.app = app
 
