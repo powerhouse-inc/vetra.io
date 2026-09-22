@@ -9,12 +9,16 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from '@/modules/shared/components/ui/breadcrumb'
-import { loadSearchParams } from './lib/search-params'
+import Link from 'next/link'
+import { Button } from '@/modules/shared/components/ui/button'
+import { loadSearchParams, packagesShowUrl } from './lib/search-params'
+import { recommendedNames } from './lib/recommended'
 import { Filters } from './components/filters'
 import { MobileFilters } from './components/mobile-filters'
 import { fuse, packageModuleTypes, REGISTRY_URL } from './lib/constants'
 import { map, unique, filter, isTruthy } from 'remeda'
-import { filterManifests, getSearchWords } from './lib/utils'
+import { filterEntries, getSearchWords } from './lib/utils'
+import { type PackageEntry } from './lib/types'
 import { PackageList } from './components/package-list'
 import { CreatePackageModal } from './components/create-package-modal'
 
@@ -56,29 +60,36 @@ type PageProps = {
 }
 
 export default async function PackagesPage({ searchParams }: PageProps) {
-  const { search, ...filters } = await loadSearchParams(searchParams)
+  const raw = await searchParams
+  const { search, show, ...filters } = await loadSearchParams(searchParams)
+  const recommended = recommendedNames()
+  const effectiveShow = recommended.size > 0 ? (show ?? 'recommended') : 'all'
   const packagesRes = await fetch(`${REGISTRY_URL}/packages`, {
     next: { revalidate: 30 },
   })
-  const packages = (await packagesRes.json()) as PackageInfo[]
-  const manifests = filter(
-    map(packages, (m) => m.manifest),
-    isTruthy,
+  const allPackages = (await packagesRes.json()) as PackageInfo[]
+  const packages =
+    effectiveShow === 'recommended'
+      ? filter(allPackages, (p) => recommended.has(p.name.toLowerCase()))
+      : allPackages
+  const entries = filter(
+    map(packages, (p) => ({ registryName: p.name, manifest: p.manifest })),
+    (e): e is PackageEntry => isTruthy(e.manifest),
   )
   const categoryOptions = unique(
     filter(
-      map(manifests, (m) => m.category),
+      map(entries, (e) => e.manifest.category),
       isTruthy,
     ),
   )
   const publisherNameOptions = unique(
     filter(
-      map(manifests, (m) => m.publisher?.name),
+      map(entries, (e) => e.manifest.publisher?.name),
       isTruthy,
     ),
   )
-  const filteredManifests = filterManifests(manifests, filters)
-  fuse.setCollection(filteredManifests)
+  const filteredEntries = filterEntries(entries, filters)
+  fuse.setCollection(filteredEntries)
 
   const searchResult = fuse.search(search ?? '')
 
@@ -116,6 +127,17 @@ export default async function PackagesPage({ searchParams }: PageProps) {
         />
       </div>
 
+      {/* Recommended / all view toggle */}
+      {recommended.size > 0 && (
+        <Button asChild variant="outline" size="sm">
+          <Link
+            href={packagesShowUrl(effectiveShow === 'recommended' ? 'all' : 'recommended', raw)}
+          >
+            {effectiveShow === 'recommended' ? 'Show all packages' : 'Show recommended only'}
+          </Link>
+        </Button>
+      )}
+
       {/* Content Grid */}
       <div className="grid gap-6 lg:grid-cols-4">
         {/* Desktop Sidebar */}
@@ -135,12 +157,19 @@ export default async function PackagesPage({ searchParams }: PageProps) {
             <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-20">
               <SearchIcon className="size-10 opacity-50" />
               <p className="text-sm">No packages match the current filters</p>
+              {effectiveShow === 'recommended' && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={packagesShowUrl('all', raw)}>Show all packages</Link>
+                </Button>
+              )}
             </div>
           ) : (
             <PackageList
-              results={searchResult.map(({ item: manifest, matches }) => ({
-                manifest,
+              results={searchResult.map(({ item, matches }) => ({
+                manifest: item.manifest,
+                registryName: item.registryName,
                 searchWords: getSearchWords(matches),
+                recommended: recommended.has(item.registryName.toLowerCase()),
               }))}
             />
           )}

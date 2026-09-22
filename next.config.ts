@@ -52,6 +52,13 @@ const nextConfig: NextConfig = {
       // never actually invoked client-side. See stubs/empty-module.js.
       pg: './stubs/empty-module.js',
       'node:worker_threads': './stubs/empty-module.js',
+      // Optional @x402 payment peers of @coinbase/cdp-sdk (pulled via Privy).
+      // Vetra never uses x402, so stub the leaves it references at build time.
+      '@x402/core/client': './stubs/empty-module.js',
+      '@x402/evm': './stubs/empty-module.js',
+      '@x402/evm/exact/client': './stubs/empty-module.js',
+      '@x402/evm/upto/client': './stubs/empty-module.js',
+      '@x402/svm/exact/client': './stubs/empty-module.js',
     },
     rules: {
       '*.svg': {

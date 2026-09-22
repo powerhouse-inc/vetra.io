@@ -6,6 +6,12 @@ export const envSchema = z.object({
     error: 'Must be a valid URL (e.g., https://example.com) pointing to the hosted homepage.',
   }),
 
+  // Curated allowlist for the package library: comma-separated npm package
+  // names that get a "Powerhouse Recommended" badge and the recommended-only
+  // default view at /packages. Server-only (no NEXT_PUBLIC_ prefix, never
+  // reaches window.__ENV). Unset/empty = no curation.
+  PACKAGES_RECOMMENDED: z.string().optional(),
+
   // public env variables
   NEXT_PUBLIC_SWITCHBOARD_URL: z.url({
     error:
@@ -19,6 +25,12 @@ export const envSchema = z.object({
     .optional(),
   NEXT_PUBLIC_RENOWN_URL: z
     .url({ error: 'Must be a valid URL for the Renown service.' })
+    .optional(),
+
+  // Dedicated Renown switchboard that issues/verifies auth credentials (in-page
+  // sign-in). Distinct from the data API; defaults to switchboard.renown.vetra.io.
+  NEXT_PUBLIC_RENOWN_SWITCHBOARD_URL: z
+    .url({ error: 'Must be a valid URL for the Renown switchboard GraphQL API.' })
     .optional(),
 
   // GitHub App slug, used to build the app install URL (e.g. "vetra-studio").

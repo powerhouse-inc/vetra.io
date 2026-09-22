@@ -21,7 +21,7 @@ const benefits: Benefit[] = [
   {
     title: 'Your data, your rules',
     description:
-      'Your data lives where you choose — our cloud or your own servers. No lock-in, ever.',
+      'Your data lives where you choose: our cloud or your own servers. No lock-in, ever.',
     icon: Database,
   },
   {

@@ -67,7 +67,10 @@ export function groupStudioEnvironments(
 export function useStudioGroups() {
   const studio = useStudioProducts()
   const { viewer } = useViewer()
-  const environments = useEnvironments('MINE', viewer?.address ?? null)
+  const { environments, isPending: environmentsPending } = useEnvironments(
+    'MINE',
+    viewer?.address ?? null,
+  )
 
   const { groups, standalone } = useMemo(
     () => groupStudioEnvironments(studio.products, environments),
@@ -76,6 +79,9 @@ export function useStudioGroups() {
 
   return {
     ...studio,
+    // Scanning until BOTH sources settle — the environments query has its own
+    // load, so an empty gate on studios alone would flash before envs arrive.
+    isScanning: studio.isScanning || environmentsPending,
     groups,
     standalone,
   }

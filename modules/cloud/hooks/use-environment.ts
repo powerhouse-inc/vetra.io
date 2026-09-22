@@ -122,16 +122,17 @@ function summaryToCloudEnvironment(summary: EnvironmentSummary): CloudEnvironmen
  * Switching between `MINE` and `UNCLAIMED` filters in-memory (no refetch);
  * switching to/from `ALL` triggers a new server query. `viewerAddress` is
  * required to distinguish MINE from UNCLAIMED — pass `null` while the viewer
- * is still loading and the hook will show an empty list until it resolves.
+ * is still loading (the list stays empty until it resolves).
  *
- * Freshness comes from the app-state coordinator's central WebSocket signal
- * (debounced, active-only invalidation) — this hook does no polling and opens
- * no socket of its own.
+ * Returns `isPending` so callers can distinguish "first load in flight" from
+ * "loaded but empty" and not flash an empty state during load. Freshness comes
+ * from the app-state coordinator's central WebSocket signal (debounced,
+ * active-only invalidation) — this hook does no polling and opens no socket.
  */
 export function useEnvironments(
   viewScope: ViewScope = 'MINE',
   viewerAddress: string | null = null,
-): CloudEnvironment[] {
+): { environments: CloudEnvironment[]; isPending: boolean; isError: boolean } {
   const did = useDid()
   const backendScope: ListScope = viewScope === 'ALL' ? 'ALL' : 'MINE'
 
@@ -139,19 +140,21 @@ export function useEnvironments(
   // revalidates in the background. `MINE` and `UNCLAIMED` share the same
   // backend query (filtered in-memory below), so they dedupe to one fetch.
   const q = myEnvironmentsQuery(did, backendScope)
-  const { data, isError } = useAuthedQuery<EnvironmentSummary[]>(q.queryKey, q.fetch, {
+  const { data, isError, isPending } = useAuthedQuery<EnvironmentSummary[]>(q.queryKey, q.fetch, {
     placeholderData: keepPreviousData,
   })
 
-  return useMemo(() => {
+  const environments = useMemo(() => {
     if (isError || !data) return []
     return filterByScope(data, viewScope, viewerAddress).map(summaryToCloudEnvironment)
   }, [data, isError, viewScope, viewerAddress])
+
+  return { environments, isPending, isError }
 }
 
 /** Hook to get a single environment by ID, looked up in the user's MINE list. */
 export function useEnvironment(id: string): CloudEnvironment | undefined {
-  const environments = useEnvironments()
+  const { environments } = useEnvironments()
   return useMemo(() => {
     return environments.find((env) => env.id === id)
   }, [environments, id])

@@ -37,6 +37,7 @@ const SERVICE_LABELS: Record<TenantService, string> = {
   SWITCHBOARD: 'Powerhouse Switchboard',
   CLINT: 'Clint',
   FUSION: 'Fusion',
+  DOCLING: 'Document Conversion',
 }
 
 type Props = {

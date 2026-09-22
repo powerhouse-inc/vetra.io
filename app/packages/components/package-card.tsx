@@ -1,6 +1,6 @@
 import { type Manifest } from '@powerhousedao/shared'
 import { capitalCase } from 'change-case'
-import { PackageIcon } from 'lucide-react'
+import { PackageIcon, Star } from 'lucide-react'
 import Link from 'next/link'
 import Highlighter from 'react-highlight-words'
 import { Card, CardContent } from '@/modules/shared/components/ui/card'
@@ -8,21 +8,19 @@ import { Badge } from '@/modules/shared/components/ui/badge'
 import { cn } from '@/modules/shared/lib/utils'
 import { getCategoryStyle } from '../lib/category-colors'
 
-export function PackageCard(props: { manifest: Manifest; searchWords: string[] }) {
-  const {
-    manifest: {
-      name,
-      publisher,
-      description,
-      category,
-      documentModels,
-      editors,
-      apps,
-      processors,
-      subgraphs,
-    },
-    searchWords,
-  } = props
+export function PackageCard(props: {
+  manifest: Manifest
+  registryName: string
+  searchWords: string[]
+  recommended?: boolean
+}) {
+  const { manifest, registryName, searchWords, recommended } = props
+  const { publisher, description, category, documentModels, editors, apps, processors, subgraphs } =
+    manifest
+
+  // Some registry entries ship an empty manifest name; fall back to the
+  // registered npm name so the card title and detail link stay usable.
+  const name = manifest.name || registryName
 
   const moduleCount =
     (documentModels?.length ?? 0) +
@@ -34,7 +32,7 @@ export function PackageCard(props: { manifest: Manifest; searchWords: string[] }
   const catStyle = getCategoryStyle(category)
 
   return (
-    <Link href={`/packages/${encodeURIComponent(name)}`}>
+    <Link href={`/packages/${encodeURIComponent(registryName)}`}>
       <Card
         className={cn(
           'flex h-full flex-col border-t-3 transition-shadow hover:shadow-md',
@@ -62,6 +60,12 @@ export function PackageCard(props: { manifest: Manifest; searchWords: string[] }
           )}
 
           <div className="mt-auto flex flex-wrap gap-1 pt-2">
+            {recommended && (
+              <Badge size="xs">
+                <Star className="size-3" />
+                Powerhouse Recommended
+              </Badge>
+            )}
             {category && (
               <span
                 className={cn(

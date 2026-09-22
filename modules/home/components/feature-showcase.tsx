@@ -26,21 +26,21 @@ const features = [
     label: 'Sovereignty',
     title: 'Build your niche. Keep it yours.',
     description:
-      'The best platforms are specific, community-owned, and impossible to extract value from. Vetra gives you the infrastructure for that — open schemas, data sovereignty, no proprietary middleman between you and your users.',
+      'The best platforms are specific, community-owned, and impossible to extract value from. Vetra gives you the infrastructure for that: open schemas, data sovereignty, no proprietary middleman between you and your users.',
     image: '/images/home/collaborative-infrastructure.svg',
   },
   {
     label: 'Open Source',
     title: "Self-hosted or we'll host it for you.",
     description:
-      "Deploy on our cloud, your cloud, or a private node. The platform is 100% open source — inspect every line, fork it, modify it, contribute it back to the community. You're never dependent on our uptime or our roadmap.",
+      "Deploy on our cloud, your cloud, or a private node. The platform is 100% open source: inspect every line, fork it, modify it, contribute it back to the community. You're never dependent on our uptime or our roadmap.",
     image: '/images/home/feature-collaborative.svg',
   },
   {
     label: 'Auditability',
     title: 'Every action signed. Every change traceable.',
     description:
-      'Every operation — human or agent — is cryptographically signed and appended to an immutable log. Know exactly who did what, when, and why. Optionally anchor to a blockchain for external auditability.',
+      'Every operation, human or agent, is cryptographically signed and appended to an immutable log. Know exactly who did what, when, and why. Optionally anchor to a blockchain for external auditability.',
     image: '/images/home/web3-enabled.svg',
   },
 ]

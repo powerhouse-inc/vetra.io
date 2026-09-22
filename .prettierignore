@@ -9,3 +9,9 @@ build
 coverage
 package-lock.json
 pnpm-lock.yaml
+
+# Prose/generated files: Prettier mangles the box-drawing chars in doc trees
+# (corrupts CLAUDE.md) and these aren't format-gated content.
+docs/
+CLAUDE.md
+**/*.html

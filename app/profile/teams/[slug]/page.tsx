@@ -1,5 +1,5 @@
 'use client'
-import { usePHToast, useRenownAuth } from '@powerhousedao/reactor-browser'
+import { usePHToast, useRenownAuthAsync } from '@powerhousedao/reactor-browser'
 import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
@@ -16,7 +16,7 @@ import { SpacesSection } from './components/spaces-section'
 function ManageTeamInner() {
   const params = useParams<{ slug: string }>()
   const slug = params.slug
-  const auth = useRenownAuth()
+  const auth = useRenownAuthAsync()
   const router = useRouter()
   const toast = usePHToast()
 
@@ -37,17 +37,17 @@ function ManageTeamInner() {
     }
   }, [team, auth.address, isLoading, isMember, toast, router, slug])
 
-  if (auth.status === 'loading' || auth.status === 'checking') {
+  if (auth.state === 'resolving') {
     return (
       <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-8">
         <Loader2 className="text-muted-foreground size-6 animate-spin" />
       </div>
     )
   }
-  if (auth.status !== 'authorized' || !auth.address) {
+  if (auth.state !== 'authenticated' || !auth.address) {
     return (
       <div className="container mx-auto px-4 py-8">
-        <LoginPrompt onLogin={auth.login} />
+        <LoginPrompt />
       </div>
     )
   }

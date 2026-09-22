@@ -92,6 +92,7 @@ type Props = {
   isStopped: boolean
   canEdit: boolean
   manifest?: PackageManifest | null
+  manifestLoading?: boolean
   runtimeEndpoints?: ClintRuntimeEndpointsForPrefix | null
   pods?: readonly Pod[]
   activeTab: string
@@ -132,6 +133,7 @@ export function AgentDetailDrawer({
   isStopped,
   canEdit,
   manifest,
+  manifestLoading,
   runtimeEndpoints,
   pods,
   activeTab,
@@ -442,6 +444,7 @@ export function AgentDetailDrawer({
                 canEdit={canEdit}
                 tenantId={tenantId}
                 manifest={manifest}
+                manifestLoading={manifestLoading}
                 runtimeEndpoints={runtimeEndpoints}
                 pods={pods}
                 defaultExpanded

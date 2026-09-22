@@ -3,19 +3,17 @@ import { render, screen } from '@testing-library/react'
 import { RequireSigner } from '../components/require-signer'
 
 vi.mock('../hooks/use-can-sign', () => ({ useCanSign: vi.fn() }))
-vi.mock('@powerhousedao/reactor-browser', () => ({
-  useRenownAuth: vi.fn(),
+vi.mock('@/modules/shared/components/renown/login-modal-context', () => ({
+  useOpenLogin: () => vi.fn(),
 }))
 
 import { useCanSign } from '../hooks/use-can-sign'
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
 
 describe('RequireSigner', () => {
   beforeEach(() => vi.clearAllMocks())
 
   it('renders nothing while loading', () => {
     vi.mocked(useCanSign).mockReturnValue({ canSign: false, signer: null, loading: true })
-    vi.mocked(useRenownAuth).mockReturnValue({ status: 'loading', login: vi.fn() } as never)
     const { container } = render(
       <RequireSigner>
         <div data-testid="child">child</div>
@@ -30,7 +28,6 @@ describe('RequireSigner', () => {
       signer: { sign: vi.fn() } as never,
       loading: false,
     })
-    vi.mocked(useRenownAuth).mockReturnValue({ status: 'authorized', login: vi.fn() } as never)
     render(
       <RequireSigner>
         <div data-testid="child">child</div>
@@ -41,7 +38,6 @@ describe('RequireSigner', () => {
 
   it('renders login CTA when not signed in', () => {
     vi.mocked(useCanSign).mockReturnValue({ canSign: false, signer: null, loading: false })
-    vi.mocked(useRenownAuth).mockReturnValue({ status: 'unauthorized', login: vi.fn() } as never)
     render(
       <RequireSigner>
         <div data-testid="child">child</div>
@@ -54,7 +50,6 @@ describe('RequireSigner', () => {
 
   it('renders fallback when provided and not signed in', () => {
     vi.mocked(useCanSign).mockReturnValue({ canSign: false, signer: null, loading: false })
-    vi.mocked(useRenownAuth).mockReturnValue({ status: 'unauthorized', login: vi.fn() } as never)
     render(
       <RequireSigner fallback={<div data-testid="fallback">custom</div>}>
         <div data-testid="child">child</div>

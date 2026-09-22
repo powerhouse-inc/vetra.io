@@ -12,9 +12,7 @@ import { useRenownAuth } from '@powerhousedao/reactor-browser'
 export type DriveId = string
 
 export type ParsedDriveId =
-  | { type: 'user'; key: string }
-  | { type: 'team'; key: string }
-  | { type: 'legacy'; key: string }
+  { type: 'user'; key: string } | { type: 'team'; key: string } | { type: 'legacy'; key: string }
 
 const USER_PREFIX = 'user:'
 const TEAM_PREFIX = 'team:'
@@ -68,6 +66,8 @@ export function isTeamDrive(driveId: string): boolean {
  */
 export function useUserDrive(): DriveId | null {
   const auth = useRenownAuth()
-  if (auth.status !== 'authorized' || !auth.address) return null
+  // `status` stays "initial" after a reload even with a restored user, so key
+  // off the address (set iff a user is present), matching useViewerAddress.
+  if (!auth.address) return null
   return userDriveFor(auth.address)
 }

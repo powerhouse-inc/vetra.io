@@ -1,6 +1,6 @@
 'use client'
 
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
+import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
 import {
   Check,
   Cloud,
@@ -19,6 +19,7 @@ import {
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useSyncExternalStore, useState } from 'react'
+import { useOpenLogin } from '@/modules/shared/components/renown/login-modal-context'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -63,7 +64,8 @@ function CopyAddressButton({ address }: { address: string }) {
 }
 
 function RenownButton() {
-  const auth = useRenownAuth()
+  const auth = useRenownAuthAsync()
+  const openLogin = useOpenLogin()
   const { resolvedTheme, setTheme } = useTheme()
   const mounted = useSyncExternalStore(
     () => () => {},
@@ -74,7 +76,7 @@ function RenownButton() {
   const toggleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
   const isDark = mounted && resolvedTheme === 'dark'
 
-  if (auth.status === 'loading' || auth.status === 'checking') {
+  if (auth.state === 'resolving') {
     return (
       <span className={btnSecondary}>
         <Loader2 className="h-4 w-4 animate-spin" />
@@ -82,7 +84,7 @@ function RenownButton() {
       </span>
     )
   }
-  if (auth.status === 'authorized') {
+  if (auth.state === 'authenticated') {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
@@ -182,7 +184,7 @@ function RenownButton() {
     )
   }
   return (
-    <button type="button" onClick={auth.login} className={btnSecondary}>
+    <button type="button" onClick={openLogin} className={btnSecondary}>
       <LogIn className="h-4 w-4" />
       Log in
     </button>

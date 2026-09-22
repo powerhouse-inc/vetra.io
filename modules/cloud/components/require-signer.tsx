@@ -1,7 +1,7 @@
 'use client'
 
 import type { ReactNode } from 'react'
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
+import { useOpenLogin } from '@/modules/shared/components/renown/login-modal-context'
 import { Button } from '@/modules/shared/components/ui/button'
 import { useCanSign } from '../hooks/use-can-sign'
 
@@ -18,7 +18,7 @@ export function RequireSigner({
   fallback?: ReactNode
 }) {
   const { canSign, loading } = useCanSign()
-  const auth = useRenownAuth()
+  const openLogin = useOpenLogin()
 
   if (loading) return null
   if (canSign) return <>{children}</>
@@ -27,7 +27,7 @@ export function RequireSigner({
   return (
     <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-6 text-center">
       <p className="text-muted-foreground text-sm">Log in with Renown to continue.</p>
-      <Button onClick={() => auth.login?.()}>Log in with Renown</Button>
+      <Button onClick={openLogin}>Log in with Renown</Button>
     </div>
   )
 }

@@ -3,9 +3,10 @@
 import { ArrowLeft, ExternalLink, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Suspense, use, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
+import { DOCLING_PREFIX } from '@/modules/cloud/components/addons-section'
 import { AgentDetailDrawer } from '@/modules/cloud/components/agent-detail-drawer'
 import { EnvActionBar } from '@/modules/cloud/components/env-action-bar'
 import { useDebouncedValue } from '@/modules/cloud/hooks/use-debounced-value'
@@ -177,8 +178,20 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
     }
   }
 
+  // Docling is a plain on/off service in the doc model: no version, no size, no
+  // ingress. Collapsing enable/disable into one boolean here keeps the settings
+  // drawer from taking the whole generic service API for a single switch.
+  const { enableService, disableService } = detail
+  const handleToggleDocling = useCallback(
+    async (enabled: boolean) => {
+      if (enabled) await enableService('DOCLING', DOCLING_PREFIX)
+      else await disableService('DOCLING', DOCLING_PREFIX)
+    },
+    [enableService, disableService],
+  )
+
   const { canSign } = useCanSign()
-  const { clintPackages } = useClintPackages({
+  const { clintPackages, isLoading: manifestsLoading } = useClintPackages({
     registry: state?.defaultPackageRegistry ?? null,
     packages: state?.packages ?? [],
   })
@@ -379,6 +392,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
               ? (clintManifestsByName[drawerAgent.config.package.name] ?? null)
               : null
           }
+          manifestLoading={manifestsLoading}
           runtimeEndpoints={clintRuntimeEndpointsByPrefix[drawerAgent.prefix] ?? null}
           pods={envPods}
           activeTab={drawer.tab ?? 'logs'}
@@ -420,6 +434,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           onUpdateToLatest={detail.updateToLatest}
           onRollbackRelease={detail.rollbackRelease}
           onTerminate={detail.terminate}
+          onToggleDocling={handleToggleDocling}
         />
       )}
     </>

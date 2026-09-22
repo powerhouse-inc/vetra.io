@@ -1,4 +1,5 @@
 import { unstable_cache } from 'next/cache'
+import { recommendedNames } from '../../../packages/lib/recommended'
 import { type NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -47,15 +48,18 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const registryUrl = searchParams.get('registry')
     const search = searchParams.get('search') ?? ''
+    const onlyRecommended = searchParams.get('recommended') === 'true'
 
     if (!registryUrl) {
       return NextResponse.json({ error: 'registry parameter is required' }, { status: 400 })
     }
 
-    const packages = await fetchRegistryPackages(registryUrl)
-    const filtered = search
-      ? packages.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
-      : packages
+    const recSet = onlyRecommended ? recommendedNames() : null
+    let filtered = await fetchRegistryPackages(registryUrl)
+    if (recSet) filtered = filtered.filter((p) => recSet.has(p.name.toLowerCase()))
+    if (search) {
+      filtered = filtered.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    }
 
     return NextResponse.json(filtered)
   } catch (error) {

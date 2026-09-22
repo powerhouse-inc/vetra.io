@@ -1,9 +1,11 @@
 'use client'
 import { LogIn } from 'lucide-react'
+import { useOpenLogin } from '@/modules/shared/components/renown/login-modal-context'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Card, CardContent } from '@/modules/shared/components/ui/card'
 
-export function LoginPrompt({ onLogin }: { onLogin: () => void }) {
+export function LoginPrompt() {
+  const openLogin = useOpenLogin()
   return (
     <Card className="mx-auto mt-12 max-w-md">
       <CardContent className="flex flex-col items-center gap-4 p-8 text-center">
@@ -17,7 +19,7 @@ export function LoginPrompt({ onLogin }: { onLogin: () => void }) {
             you&apos;ve published.
           </p>
         </div>
-        <Button onClick={onLogin} className="w-full">
+        <Button onClick={openLogin} className="w-full">
           <LogIn className="mr-2 size-4" />
           Sign in with Renown
         </Button>

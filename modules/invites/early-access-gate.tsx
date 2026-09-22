@@ -2,7 +2,8 @@
 
 import { useEffect, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
+import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
+import { useOpenLogin } from '@/modules/shared/components/renown/login-modal-context'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -10,6 +11,8 @@ import {
   BookOpen,
   Check,
   Copy,
+  ExternalLink,
+  Github,
   Key,
   Loader2,
   Mail,
@@ -27,6 +30,10 @@ import { PreAlphaWarningDialog } from '@/modules/invites/pre-alpha-warning-dialo
 
 const DISCORD_URL = 'https://discord.gg/Py28EMafEr'
 const CURL_CMD = 'curl -fsSL https://get.vetra.io | sh'
+const NPM_CMD = 'npm install -g ph-cmd vetra'
+const GITHUB_URL = 'https://github.com/powerhouse-inc/vetra-cli'
+
+type InstallMethod = 'curl' | 'npm'
 
 /** Whether this browser has a cached early-access grant. */
 function readGranted(): boolean {
@@ -60,12 +67,13 @@ type Step = 'gate' | 'login' | 'granted'
  * page is in use with it.
  */
 export function EarlyAccessGate({ children }: { children: ReactNode }) {
-  const auth = useRenownAuth()
+  const auth = useRenownAuthAsync()
+  const openLogin = useOpenLogin()
   const queryClient = useQueryClient()
   const [step, setStep] = useState<Step>('gate')
   const [code, setCode] = useState('')
   const [error, setError] = useState('')
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState<InstallMethod | null>(null)
   const [working, setWorking] = useState(false)
   // Distinct from `working` (the Get Access button): this drives the full-screen
   // splash and is only set by the post-login finalize effect below — so
@@ -94,7 +102,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   // the background, so only first-time grants and post-login redemptions wait
   // behind the splash.
   useEffect(() => {
-    if (auth.status !== 'authorized') return
+    if (auth.state !== 'authenticated') return
     let cancelled = false
 
     const finalize = async () => {
@@ -161,7 +169,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [auth.status, queryClient])
+  }, [auth.state, queryClient])
 
   const handleGetAccess = async () => {
     const entered = code.trim()
@@ -177,7 +185,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
 
       // Already logged in → redeem now. Otherwise stash the code and send them
       // through Renown login; the effect above redeems when they return.
-      if (auth.status === 'authorized') {
+      if (auth.state === 'authenticated') {
         const token = await getRenownToken()
         if (token) {
           const redeemed = await redeemInviteCode(entered, token)
@@ -202,10 +210,10 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
     }
   }
 
-  const handleCopy = async () => {
-    await navigator.clipboard.writeText(CURL_CMD)
-    setCopied(true)
-    setTimeout(() => setCopied(false), 2000)
+  const handleCopy = async (method: InstallMethod, cmd: string) => {
+    await navigator.clipboard.writeText(cmd)
+    setCopied(method)
+    setTimeout(() => setCopied(null), 2000)
   }
 
   // Reveal the wrapped studio page only when the user is actually signed in.
@@ -213,7 +221,9 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
   // needs a logged-in user — so when granted-but-logged-out (e.g. cached grant,
   // or right after entering a code) we fall through to the login step below
   // rather than rendering the studio (which would show its logged-out landing).
-  if (step === 'granted' && auth.status === 'authorized') {
+  // Read the cached grant directly, not just `step` (which a mount effect sets one
+  // render late) — otherwise a refresh flashes the code gate before `step` catches up.
+  if ((step === 'granted' || readGranted()) && auth.state === 'authenticated') {
     return (
       <>
         {children}
@@ -225,9 +235,9 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
     )
   }
 
-  // While the initial auth check runs, or while we finalize a redemption after
-  // login, show a splash instead of flashing the gate form.
-  if (auth.status === 'loading' || auth.status === 'checking' || finalizing) {
+  // "resolving" covers the SSR/pre-init snapshot too, so the server splashes
+  // rather than rendering the gate into the HTML and flashing it on refresh.
+  if (auth.state === 'resolving' || finalizing) {
     return (
       <div className="relative flex min-h-screen w-full items-center justify-center overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(125%_125%_at_50%_8%,#0d1014_38%,rgba(4,193,97,0.16)_100%)]" />
@@ -364,32 +374,94 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
                   No code needed. Spin up your own Vetra Cloud instance on your machine in seconds
                   with a single command.
                 </p>
-                <div className="bg-muted flex items-center gap-2 rounded-lg px-3 py-2.5">
-                  <span className="text-primary font-mono text-xs font-bold">$</span>
-                  <code className="text-foreground min-w-0 flex-1 truncate font-mono text-xs">
-                    {CURL_CMD}
-                  </code>
-                  <button
-                    onClick={() => {
-                      void handleCopy()
-                    }}
-                    className="text-muted-foreground hover:text-foreground ml-1 shrink-0 transition-colors"
-                    aria-label="Copy command"
-                  >
-                    {copied ? (
-                      <Check className="text-primary h-3.5 w-3.5" />
-                    ) : (
-                      <Copy className="h-3.5 w-3.5" />
-                    )}
-                  </button>
+                <div className="space-y-1.5">
+                  <div className="bg-muted flex items-center gap-2 rounded-lg px-3 py-2.5">
+                    <span className="text-primary font-mono text-xs font-bold">$</span>
+                    <code className="text-foreground min-w-0 flex-1 truncate font-mono text-xs">
+                      {CURL_CMD}
+                    </code>
+                    <button
+                      onClick={() => {
+                        void handleCopy('curl', CURL_CMD)
+                      }}
+                      className="text-muted-foreground hover:text-foreground ml-1 shrink-0 transition-colors"
+                      aria-label="Copy install script command"
+                    >
+                      {copied === 'curl' ? (
+                        <Check className="text-primary h-3.5 w-3.5" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
                 </div>
-                <p className="text-muted-foreground text-sm leading-relaxed">
-                  Runs fully on your infrastructure. Supports Docker and Kubernetes out of the box.
-                  Offline-first with peer-to-peer sync.
-                </p>
+                <div className="flex items-center gap-3">
+                  <div className="border-border flex-1 border-t" />
+                  <span className="text-muted-foreground text-xs">
+                    or install with{' '}
+                    <Link
+                      href="https://docs.npmjs.com/downloading-and-installing-node-js-and-npm"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-foreground underline underline-offset-2 transition-colors"
+                    >
+                      npm
+                    </Link>
+                    {' / '}
+                    <Link
+                      href="https://pnpm.io/installation"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="hover:text-foreground underline underline-offset-2 transition-colors"
+                    >
+                      pnpm
+                    </Link>
+                  </span>
+                  <div className="border-border flex-1 border-t" />
+                </div>
+                <div className="space-y-1.5">
+                  <div className="bg-muted flex items-start gap-2 rounded-lg px-3 py-2.5">
+                    <span className="text-primary font-mono text-xs leading-relaxed font-bold">
+                      $
+                    </span>
+                    <code className="text-foreground min-w-0 flex-1 font-mono text-xs leading-relaxed">
+                      <span className="whitespace-nowrap">npm install -g ph-cmd vetra</span>
+                    </code>
+                    <button
+                      onClick={() => {
+                        void handleCopy('npm', NPM_CMD)
+                      }}
+                      className="text-muted-foreground hover:text-foreground ml-1 shrink-0 transition-colors"
+                      aria-label="Copy npm install command"
+                    >
+                      {copied === 'npm' ? (
+                        <Check className="text-primary h-3.5 w-3.5" />
+                      ) : (
+                        <Copy className="h-3.5 w-3.5" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="border-border flex-1 border-t" />
+                  <span className="text-muted-foreground text-xs">
+                    or checkout the project from GitHub
+                  </span>
+                  <div className="border-border flex-1 border-t" />
+                </div>
+                <Link
+                  href={GITHUB_URL}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-muted border-border hover:bg-accent group inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium shadow-sm transition-colors"
+                >
+                  <Github className="h-4 w-4 shrink-0" />
+                  <span className="font-mono">powerhouse-inc/vetra-cli</span>
+                  <ExternalLink className="text-muted-foreground group-hover:text-foreground h-3.5 w-3.5 shrink-0 transition-colors" />
+                </Link>
                 <div className="border-border border-t pt-4">
                   <Link
-                    href="https://academy.vetra.io/academy/MasteryTrack/BuilderEnvironment/CreateAPackageWithVetra"
+                    href="https://academy.vetra.io/academy/GetStarted/VetraStudio#running-vetra-studio-locally"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-xs transition-colors"
@@ -421,7 +493,7 @@ export function EarlyAccessGate({ children }: { children: ReactNode }) {
               <div className="border-border my-6 border-t" />
 
               <button
-                onClick={() => void auth.login()}
+                onClick={openLogin}
                 disabled={working}
                 className="bg-primary text-primary-foreground hover:bg-primary/90 inline-flex w-full items-center justify-center gap-2 rounded-lg px-6 py-3 text-sm font-semibold transition-colors disabled:opacity-60"
               >

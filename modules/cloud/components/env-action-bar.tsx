@@ -83,12 +83,12 @@ export function EnvActionBar({ status, intentDeploying, driftDetected, onApprove
         <motion.div
           key="env-action-bar"
           role="status"
-          initial={{ opacity: 0, y: 12 }}
+          initial={{ opacity: 0, y: -12 }}
           animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 12 }}
+          exit={{ opacity: 0, y: -12 }}
           transition={{ duration: 0.15, ease: 'easeOut' }}
           className={cn(
-            'fixed inset-x-0 bottom-6 z-40 flex justify-center px-4',
+            'fixed inset-x-0 top-20 z-50 flex justify-center px-4',
             'pointer-events-none', // outer doesn't catch clicks; inner pill does
           )}
         >

@@ -1,6 +1,6 @@
 'use client'
 
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
+import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
 import { EarlyAccessGate } from '@/modules/invites/early-access-gate'
@@ -16,15 +16,14 @@ import { CloudDashboard } from './cloud-dashboard'
  * environments can't be created without a redeemed code.
  */
 export default function EnvironmentsPage() {
-  const { status } = useRenownAuth()
+  const { state } = useRenownAuthAsync()
   const router = useRouter()
-  const resolving = status === 'loading' || status === 'checking' || status === undefined
 
   useEffect(() => {
-    if (!resolving && status !== 'authorized') router.replace('/cloud')
-  }, [resolving, status, router])
+    if (state === 'unauthenticated') router.replace('/cloud')
+  }, [state, router])
 
-  if (status === 'authorized')
+  if (state === 'authenticated')
     return (
       <EarlyAccessGate>
         <CloudDashboard />

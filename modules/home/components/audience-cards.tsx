@@ -29,7 +29,7 @@ export function AudienceCards() {
       <section className="mx-auto max-w-screen-xl px-6 py-20">
         <h2 className="text-foreground mb-4 text-center text-3xl font-bold">Who it&apos;s for</h2>
         <p className="text-foreground-70 mt-2 mb-8 text-center text-2xl transition-all duration-500 ease-out">
-          Vetra works for everyone — no technical background needed.
+          Vetra works for everyone. No technical background needed.
         </p>
 
         <div className="grid gap-6 lg:grid-cols-3">

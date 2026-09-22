@@ -4,25 +4,32 @@ packages:
 overrides:
   '@codemirror/state': 6.5.2
   '@codemirror/view': 6.36.7
+  # Dedupe the wallet-lib dependency graph (privy/rainbow/wagmi pulled in 5 viem
+  # + 4 zod copies), which sent Turbopack's dev resolver into an HMR churn loop.
+  # viem is all 2.x → force one; zod's 3↔4 major split stays, deduped per-major.
+  viem: 2.52.2
+  'zod@3': 3.25.76
+  'zod@4': 4.4.3
+  # RainbowKit -> cuer@0.0.3 asks for `qr: "~0"`, so it floats to 0.6, whose API
+  # change breaks the WalletConnect QR modal. Hold the last working line.
+  'qr@>=0.6': 0.5.5
 
 allowBuilds:
   '@apollo/protobufjs': true
   '@datadog/pprof': true
+  '@reown/appkit': false
   '@sentry/cli': true
   '@tailwindcss/oxide': true
+  bufferutil: false
   core-js-pure: true
   esbuild: true
+  keccak: false
   protobufjs: true
   sharp: true
   unrs-resolver: true
+  utf-8-validate: false
 
 minimumReleaseAgeExclude:
-  - '@powerhousedao/analytics-engine-browser@6.2.0-dev.11'
-  - '@powerhousedao/analytics-engine-core@6.2.0-dev.11'
-  - '@powerhousedao/reactor-attachments@6.2.0-dev.11'
-  - '@powerhousedao/reactor-browser@6.2.0-dev.11'
-  - '@powerhousedao/reactor-drive@6.2.0-dev.11'
-  - '@powerhousedao/reactor@6.2.0-dev.11'
-  - '@powerhousedao/shared@6.2.0-dev.11'
-  - '@renown/sdk@6.2.0-dev.11'
-  - document-model@6.2.0-dev.11
+  - '@powerhousedao/*'
+  - '@renown/sdk'
+  - document-model

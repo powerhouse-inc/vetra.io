@@ -13,6 +13,7 @@ import {
   Check,
   X,
   Loader2,
+  FileText,
 } from 'lucide-react'
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
@@ -26,7 +27,7 @@ import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtim
 import { partitionPackagesByManifestType } from '@/modules/cloud/lib/module-package-filter'
 import { toServiceImageTag } from '@/modules/cloud/registry/channels'
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
-import { resolveGenericHost } from '@/modules/cloud/lib/env-host'
+import { isTypeAtApex, resolveGenericHost } from '@/modules/cloud/lib/env-host'
 import type {
   CloudEnvironment,
   CloudEnvironmentServiceType,
@@ -67,6 +68,7 @@ const SERVICE_LABELS: Record<CloudEnvironmentServiceType, string> = {
   SWITCHBOARD: 'Powerhouse Switchboard',
   FUSION: 'Powerhouse Fusion',
   CLINT: 'Agent',
+  DOCLING: 'Document Conversion',
 }
 
 const SERVICE_ICONS: Record<
@@ -77,6 +79,7 @@ const SERVICE_ICONS: Record<
   SWITCHBOARD: Server,
   FUSION: Zap,
   CLINT: Bot,
+  DOCLING: FileText,
 }
 
 function ServiceRow({
@@ -573,7 +576,7 @@ export function OverviewTab({
   const [addAgentOpen, setAddAgentOpen] = useState(false)
 
   const state = environment.state
-  const { clintPackages } = useClintPackages({
+  const { clintPackages, isLoading: manifestsLoading } = useClintPackages({
     registry: state.defaultPackageRegistry ?? null,
     packages: state.packages,
   })
@@ -595,6 +598,7 @@ export function OverviewTab({
     SWITCHBOARD: 'switchboard',
     FUSION: 'fusion',
     CLINT: 'agent',
+    DOCLING: 'docling',
   }
 
   const getServiceEnabled = (type: CloudEnvironmentServiceType) =>
@@ -683,7 +687,7 @@ export function OverviewTab({
                   customDomainValid={
                     status?.domainResolves === true && status?.tlsCertValid === true
                   }
-                  isApexService={(state.apexService ?? null) === type}
+                  isApexService={isTypeAtApex(state.services, state.apexService, type)}
                   isEnabled={service?.enabled ?? false}
                   serviceStatus={service?.status ?? 'PROVISIONING'}
                   environmentStatus={state.status}
@@ -744,6 +748,7 @@ export function OverviewTab({
             tenantId={tenantId}
             onAddAgent={() => setAddAgentOpen(true)}
             manifests={clintManifestsByName}
+            manifestsLoading={manifestsLoading}
             runtimeEndpointsByPrefix={clintRuntimeEndpointsByPrefix}
             pods={pods}
             onOpenDetail={onOpenAgentDetail}

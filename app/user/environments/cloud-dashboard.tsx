@@ -16,7 +16,7 @@ import { Button } from '@/modules/shared/components/ui/button'
 import { CloudEnvironments } from './cloud-projects'
 
 export function CloudDashboard() {
-  const environments = useEnvironments()
+  const { environments } = useEnvironments()
   const readyCount = environments.filter((e) => e.state.status === 'READY').length
   const totalPackages = environments.reduce((sum, e) => sum + e.state.packages.length, 0)
 

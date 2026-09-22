@@ -1,6 +1,15 @@
 'use client'
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import type { ReactNode } from 'react'
 import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import { useIsFetching, useIsMutating, useQueryClient } from '@tanstack/react-query'
@@ -25,10 +34,22 @@ interface AppStateValue {
 
 const AppStateContext = createContext<AppStateValue | null>(null)
 
-/** Returns the connected address once authorized, else null. */
+/** Subscribe to browser connectivity changes. Module-level for a stable ref. */
+function subscribeOnline(onChange: () => void): () => void {
+  window.addEventListener('online', onChange)
+  window.addEventListener('offline', onChange)
+  return () => {
+    window.removeEventListener('online', onChange)
+    window.removeEventListener('offline', onChange)
+  }
+}
+
+/** Returns the connected address when a user is present, else null. */
 function useViewerAddress(): string | null {
   const auth = useRenownAuth()
-  return auth.status === 'authorized' ? (auth.address ?? null) : null
+  // User-first: `status` stays "initial" after a reload even with a restored
+  // user, so key off the user (address is set iff a user is present).
+  return auth.address ?? null
 }
 
 /**
@@ -53,8 +74,12 @@ export function AppStateCoordinator({ children }: { children: ReactNode }) {
   const address = useViewerAddress()
 
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null)
-  const [online, setOnline] = useState(() =>
-    typeof navigator !== 'undefined' ? navigator.onLine : true,
+  // External store so SSR + first client render agree (server snapshot = true),
+  // avoiding the false "offline" from Node 21+'s global `navigator` (no onLine).
+  const online = useSyncExternalStore(
+    subscribeOnline,
+    () => navigator.onLine,
+    () => true,
   )
 
   // Aggregate fetching/mutating across only the coordinated queries.
@@ -82,19 +107,12 @@ export function AppStateCoordinator({ children }: { children: ReactNode }) {
     prevActive.current = activeCount
   }, [activeCount])
 
-  // Online/offline tracking (initial value seeded lazily in useState above).
+  // Refresh coordinated data when connectivity is restored. The `online` value
+  // itself is tracked by useSyncExternalStore above.
   useEffect(() => {
-    const goOnline = () => {
-      setOnline(true)
-      refreshAll()
-    }
-    const goOffline = () => setOnline(false)
-    window.addEventListener('online', goOnline)
-    window.addEventListener('offline', goOffline)
-    return () => {
-      window.removeEventListener('online', goOnline)
-      window.removeEventListener('offline', goOffline)
-    }
+    const onOnline = () => refreshAll()
+    window.addEventListener('online', onOnline)
+    return () => window.removeEventListener('online', onOnline)
   }, [refreshAll])
 
   // Been-away refresh: refresh everything when returning after the threshold.

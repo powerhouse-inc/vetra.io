@@ -41,6 +41,7 @@ const SERVICE_LABELS: Record<TenantService, string> = {
   SWITCHBOARD: 'Switchboard',
   CLINT: 'Clint',
   FUSION: 'Fusion',
+  DOCLING: 'Document Conversion',
 }
 
 /** Human-readable relative time (e.g. "2m ago"). Keeps us off date-fns. */
