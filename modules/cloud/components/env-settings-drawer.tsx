@@ -10,6 +10,7 @@ import {
   Globe,
   Info,
   Loader2,
+  Puzzle,
   RefreshCw,
   RotateCcw,
   Trash2,
@@ -19,6 +20,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { useRenown } from '@powerhousedao/reactor-browser'
 
+import { AddonsSection } from '@/modules/cloud/components/addons-section'
 import { AsyncButton } from '@/modules/cloud/components/async-button'
 import { AutoUpdateCard } from '@/modules/cloud/components/auto-update-card'
 import { CustomDomainSection } from '@/modules/cloud/components/custom-domain-section'
@@ -82,15 +84,20 @@ type Props = {
   onRollbackRelease?: () => Promise<string[]>
   /** When unset, the Danger Zone hides the Terminate row. */
   onTerminate?: () => Promise<void>
+  /**
+   * Enable/disable the environment's private document converter (the chart's
+   * `docling` component). When unset the Add-ons tab renders an empty state.
+   */
+  onToggleDocling?: (enabled: boolean) => Promise<void>
 }
 
 const TERMINAL_STATUSES = new Set(['DRAFT', 'TERMINATING', 'DESTROYED', 'ARCHIVED'])
 
 /**
  * Side drawer behind the env hero's gear icon. Holds the rarely-touched
- * admin surfaces — domain config, auto-update, recent activity, and the
- * destructive Terminate / Delete actions — so the main page stays focused
- * on services and packages.
+ * admin surfaces — domain config, auto-update, optional add-on services,
+ * recent activity, and the destructive Terminate / Delete actions — so the
+ * main page stays focused on services and packages.
  */
 export function EnvSettingsDrawer({
   open,
@@ -105,6 +112,7 @@ export function EnvSettingsDrawer({
   onUpdateToLatest,
   onRollbackRelease,
   onTerminate,
+  onToggleDocling,
 }: Props) {
   const state = environment.state
   const envStatus = state.status
@@ -118,7 +126,7 @@ export function EnvSettingsDrawer({
       >
         <SheetHeader className="border-b px-6 py-4">
           <SheetTitle>Environment settings</SheetTitle>
-          <SheetDescription>Domain, updates, activity and admin actions.</SheetDescription>
+          <SheetDescription>Domain, updates, add-ons, activity and admin actions.</SheetDescription>
         </SheetHeader>
 
         <Tabs defaultValue="domain" className="flex flex-1 flex-col overflow-hidden">
@@ -128,6 +136,9 @@ export function EnvSettingsDrawer({
             </TabsTrigger>
             <TabsTrigger value="updates" className="gap-1.5">
               <RefreshCw className="h-3.5 w-3.5" /> Updates
+            </TabsTrigger>
+            <TabsTrigger value="addons" className="gap-1.5">
+              <Puzzle className="h-3.5 w-3.5" /> Add-ons
             </TabsTrigger>
             <TabsTrigger value="activity" className="gap-1.5">
               <Activity className="h-3.5 w-3.5" /> Activity
@@ -170,6 +181,20 @@ export function EnvSettingsDrawer({
               ) : (
                 <p className="text-muted-foreground py-8 text-center text-sm">
                   Updates aren&rsquo;t available for this env right now.
+                </p>
+              )}
+            </TabsContent>
+
+            <TabsContent value="addons" className="mt-0">
+              {onToggleDocling ? (
+                <AddonsSection
+                  services={state.services}
+                  environmentStatus={envStatus}
+                  onToggleDocling={onToggleDocling}
+                />
+              ) : (
+                <p className="text-muted-foreground py-8 text-center text-sm">
+                  Add-ons aren&rsquo;t available for this env right now.
                 </p>
               )}
             </TabsContent>
