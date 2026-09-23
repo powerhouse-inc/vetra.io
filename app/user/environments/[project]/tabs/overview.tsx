@@ -553,6 +553,8 @@ type OverviewTabProps = {
    * Same plumbing as `onOpenServiceDetail`.
    */
   onOpenAgentDetail?: (prefix: string) => void
+  /** Add-ons panel, rendered below the Services card. */
+  addons?: React.ReactNode
 }
 
 export function OverviewTab({
@@ -574,6 +576,7 @@ export function OverviewTab({
   initialAddVersion,
   onOpenServiceDetail,
   onOpenAgentDetail,
+  addons,
 }: OverviewTabProps) {
   const { canSign } = useCanSign()
   const [addAgentOpen, setAddAgentOpen] = useState(false)
@@ -663,11 +666,7 @@ export function OverviewTab({
       )}
 
       {/* b. Services — runtime hosts. Each enabled service can be opened in
-          a per-service drawer (Logs / Metrics / Activity). Below the rows
-          we list the packages those services consume — reactor modules
-          loaded into Switchboard, UI apps loaded into Connect. Packages
-          aren't tied to a specific service in the doc model, so they live
-          in one shared sub-list inside the Services card. */}
+          a per-service drawer (Logs / Metrics / Activity). */}
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
@@ -723,11 +722,14 @@ export function OverviewTab({
               )
             })}
           </div>
+        </CardContent>
+      </Card>
 
-          {/* Installed Packages — shared sub-list under the services. Modules
-              load into Switchboard's reactor; UI apps live in Connect.
-              Each row expands inline to surface that package's declared
-              env vars and secrets. */}
+      {/* Packages. Modules load into Switchboard's reactor; UI apps live in
+          Connect. Each row expands inline to surface that package's declared
+          env vars and secrets. */}
+      <Card>
+        <CardContent className="pt-6">
           <PackagesSection
             tenantId={tenantId}
             registryUrl={state.defaultPackageRegistry ?? 'https://registry.dev.vetra.io'}
@@ -741,6 +743,12 @@ export function OverviewTab({
           />
         </CardContent>
       </Card>
+
+      {addons && (
+        <Card>
+          <CardContent className="pt-6">{addons}</CardContent>
+        </Card>
+      )}
 
       {/* c.5 Agents (CLINT services) */}
       <Card>

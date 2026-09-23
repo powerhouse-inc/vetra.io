@@ -10,9 +10,14 @@ import { Badge } from '@/modules/shared/components/ui/badge'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
 import { TableCell, TableRow } from '@/modules/shared/components/ui/table'
+import { cn } from '@/modules/shared/lib/utils'
 
 export type ConfigRowProps = {
-  entry: Pick<ConfigEntry, 'name' | 'type' | 'description' | 'required'>
+  entry: Pick<ConfigEntry, 'name' | 'type' | 'description' | 'required' | 'default'> & {
+    /** Human-readable label; the key name then shows beneath it. */
+    title?: string
+    placeholder?: string
+  }
   currentValue: string | null
   isSet: boolean
   onSave: (value: string) => Promise<void>
@@ -38,6 +43,7 @@ export function ConfigRow({ entry, currentValue, isSet, onSave, onDelete }: Conf
   const effectiveIsSet = optimisticDraft !== null ? true : isSet
   const effectiveValue = optimisticDraft !== null && isVar ? optimisticDraft : currentValue
   const Icon = entry.type === 'secret' ? KeyRound : Type
+  const label = entry.title ?? entry.name
 
   // Drop the optimistic overlay once the server has caught up.
   useEffect(() => {
@@ -56,10 +62,10 @@ export function ConfigRow({ entry, currentValue, isSet, onSave, onDelete }: Conf
     setEditing(false)
     try {
       await onSave(draft)
-      toast.success(`Updated ${entry.name}`)
+      toast.success(`Updated ${label}`)
     } catch (err) {
       setOptimisticDraft(null) // revert
-      const msg = err instanceof Error ? err.message : `Failed to update ${entry.name}`
+      const msg = err instanceof Error ? err.message : `Failed to update ${label}`
       toast.error(msg)
       throw err instanceof Error ? err : new Error(msg)
     }
@@ -68,9 +74,9 @@ export function ConfigRow({ entry, currentValue, isSet, onSave, onDelete }: Conf
   const handleDelete = async () => {
     try {
       await onDelete()
-      toast.success(`Deleted ${entry.name}`)
+      toast.success(`Deleted ${label}`)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : `Failed to delete ${entry.name}`)
+      toast.error(err instanceof Error ? err.message : `Failed to delete ${label}`)
       throw err
     }
   }
@@ -83,13 +89,16 @@ export function ConfigRow({ entry, currentValue, isSet, onSave, onDelete }: Conf
         <div className="space-y-1">
           <div className="flex items-center gap-2">
             <Icon className="text-muted-foreground h-3.5 w-3.5" />
-            <span className="font-mono text-sm font-medium">{entry.name}</span>
+            <span className={cn('text-sm font-medium', !entry.title && 'font-mono')}>{label}</span>
             {entry.required && (
               <Badge size="xs" variant="destructive">
                 required
               </Badge>
             )}
           </div>
+          {entry.title && (
+            <p className="text-muted-foreground font-mono text-[11px]">{entry.name}</p>
+          )}
           {entry.description && (
             <p className="text-muted-foreground text-xs">{entry.description}</p>
           )}
@@ -109,7 +118,11 @@ export function ConfigRow({ entry, currentValue, isSet, onSave, onDelete }: Conf
               value={draft}
               onChange={(e) => setDraft(e.target.value)}
               className="font-mono text-sm"
-              placeholder={entry.type === 'secret' ? 'Enter new value' : ''}
+              placeholder={
+                entry.type === 'secret'
+                  ? 'Enter new value'
+                  : (entry.placeholder ?? entry.default ?? '')
+              }
             />
             <AsyncButton size="sm" onClickAsync={handleSave} pendingLabel="Saving…">
               Save
@@ -130,6 +143,10 @@ export function ConfigRow({ entry, currentValue, isSet, onSave, onDelete }: Conf
             {isVar ? (
               effectiveIsSet ? (
                 <span className="font-mono text-sm">{effectiveValue}</span>
+              ) : entry.default !== undefined ? (
+                <span className="text-muted-foreground text-xs">
+                  default <span className="font-mono">{entry.default}</span>
+                </span>
               ) : (
                 <span className="text-muted-foreground text-xs italic">not set</span>
               )
