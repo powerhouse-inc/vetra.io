@@ -20,7 +20,11 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { useRenown } from '@powerhousedao/reactor-browser'
 
-import { AddonsSection, type AddonType } from '@/modules/cloud/components/addons-section'
+import {
+  AddonsSection,
+  type AddonId,
+  type AddonStatus,
+} from '@/modules/cloud/components/addons-section'
 import { AsyncButton } from '@/modules/cloud/components/async-button'
 import { AutoUpdateCard } from '@/modules/cloud/components/auto-update-card'
 import { CustomDomainSection } from '@/modules/cloud/components/custom-domain-section'
@@ -84,11 +88,10 @@ type Props = {
   onRollbackRelease?: () => Promise<string[]>
   /** When unset, the Danger Zone hides the Terminate row. */
   onTerminate?: () => Promise<void>
-  /**
-   * Enable/disable one of the environment's add-ons (the chart's `docling` /
-   * `paperless` components). When unset the Add-ons tab renders an empty state.
-   */
-  onToggleAddon?: (type: AddonType, prefix: string, enabled: boolean) => Promise<void>
+  /** Each add-on's state, resolved in the page. */
+  addonStatus?: Record<AddonId, AddonStatus>
+  /** Enable/disable one add-on. When unset the Add-ons tab renders an empty state. */
+  onToggleAddon?: (id: AddonId, enabled: boolean) => Promise<void>
 }
 
 const TERMINAL_STATUSES = new Set(['DRAFT', 'TERMINATING', 'DESTROYED', 'ARCHIVED'])
@@ -112,6 +115,7 @@ export function EnvSettingsDrawer({
   onUpdateToLatest,
   onRollbackRelease,
   onTerminate,
+  addonStatus,
   onToggleAddon,
 }: Props) {
   const state = environment.state
@@ -186,10 +190,10 @@ export function EnvSettingsDrawer({
             </TabsContent>
 
             <TabsContent value="addons" className="mt-0">
-              {onToggleAddon ? (
+              {addonStatus && onToggleAddon ? (
                 <AddonsSection
-                  services={state.services}
                   environmentStatus={envStatus}
+                  status={addonStatus}
                   onToggleAddon={onToggleAddon}
                 />
               ) : (
