@@ -1,16 +1,14 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import {
-  AddonsSection,
-  type AddonId,
-  type AddonStatus,
-} from '@/modules/cloud/components/addons-section'
+import { AddonsSection } from '@/modules/cloud/components/addons-section'
+import type { AddonConfigStore, AddonId, AddonStatus } from '@/modules/cloud/lib/addons'
 import type { CloudEnvironmentStatus } from '@/modules/cloud/types'
 
 type Overrides = {
   environmentStatus?: CloudEnvironmentStatus
   status?: Partial<Record<AddonId, AddonStatus>>
   onToggleAddon?: (id: AddonId, enabled: boolean) => Promise<void>
+  configStore?: AddonConfigStore
 }
 
 const renderSection = (o: Overrides = {}) =>
@@ -24,6 +22,7 @@ const renderSection = (o: Overrides = {}) =>
         ...o.status,
       }}
       onToggleAddon={o.onToggleAddon ?? vi.fn()}
+      configStore={o.configStore}
     />,
   )
 
@@ -77,9 +76,15 @@ describe.each(cases)('AddonsSection — $id', ({ id, name }) => {
   })
 
   it('disables the switch and says why when unavailable', () => {
-    renderSection({ status: { [id]: { enabled: false, unavailable: 'Not right now.' } } })
+    const onToggleAddon = vi.fn()
+    renderSection({
+      status: { [id]: { enabled: false, unavailable: 'Not right now.' } },
+      onToggleAddon,
+    })
     expect(toggle().hasAttribute('disabled')).toBe(true)
     expect(screen.queryByText('Not right now.')).not.toBeNull()
+    fireEvent.click(toggle())
+    expect(onToggleAddon).not.toHaveBeenCalled()
   })
 })
 
@@ -111,16 +116,54 @@ describe('AddonsSection — independence and cost text', () => {
 })
 
 describe('AddonsSection — workflows', () => {
-  // The Connect half sits in CHANGES_PENDING until deployed; unsaid, a user
-  // reads the unchanged Connect as the toggle having failed.
-  it('says the Connect half needs a deploy', () => {
+  // The reactor restarts at once but Connect sits in CHANGES_PENDING until
+  // deployed; unsaid, a user reads the unchanged Connect as a failed toggle.
+  it('says when each half takes effect', () => {
     renderSection()
-    expect(screen.queryByText(/rolls out on your next approve \/ deploy/i)).not.toBeNull()
+    expect(screen.queryByText(/restarts the reactor right away/i)).not.toBeNull()
+    expect(screen.queryByText(/next approve \/ deploy/i)).not.toBeNull()
   })
 
   it('shows the unavailable reason in place of the deploy note', () => {
     renderSection({ status: { workflows: { enabled: false, unavailable: 'Not supported.' } } })
     expect(screen.queryByText('Not supported.')).not.toBeNull()
-    expect(screen.queryByText(/rolls out on your next approve \/ deploy/i)).toBeNull()
+    expect(screen.queryByText(/next approve \/ deploy/i)).toBeNull()
+  })
+})
+
+describe('AddonsSection — settings', () => {
+  const store = (o: Partial<AddonConfigStore> = {}): AddonConfigStore => ({
+    envVars: [],
+    secrets: [],
+    setVar: vi.fn().mockResolvedValue(undefined),
+    setSecret: vi.fn().mockResolvedValue(undefined),
+    deleteVar: vi.fn().mockResolvedValue(undefined),
+    deleteSecret: vi.fn().mockResolvedValue(undefined),
+    ...o,
+  })
+
+  it('shows a settings button only for add-ons that declare settings', () => {
+    renderSection({ configStore: store() })
+    expect(screen.queryByRole('button', { name: /workflows settings/i })).not.toBeNull()
+    expect(screen.queryByRole('button', { name: /document conversion settings/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /document archive settings/i })).toBeNull()
+  })
+
+  it('disables settings until tenant config has loaded', () => {
+    renderSection()
+    expect(
+      screen.getByRole('button', { name: /workflows settings/i }).hasAttribute('disabled'),
+    ).toBe(true)
+  })
+
+  it('lists each setting with its current value or default', async () => {
+    renderSection({
+      configStore: store({ envVars: [{ key: 'PH_WORKFLOWS_RUN_CONCURRENCY', value: '8' }] }),
+    })
+    fireEvent.click(screen.getByRole('button', { name: /workflows settings/i }))
+    await waitFor(() => expect(screen.queryByText('Run concurrency')).not.toBeNull())
+    expect(screen.queryByText('8')).not.toBeNull()
+    expect(screen.queryByText('Secrets encryption key')).not.toBeNull()
+    expect(screen.queryByText('60000')).not.toBeNull()
   })
 })
