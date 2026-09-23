@@ -6,10 +6,10 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
-import { ADDONS, type AddonId, type AddonStatus } from '@/modules/cloud/components/addons-section'
 import { AgentDetailDrawer } from '@/modules/cloud/components/agent-detail-drawer'
 import { EnvActionBar } from '@/modules/cloud/components/env-action-bar'
 import { useDebouncedValue } from '@/modules/cloud/hooks/use-debounced-value'
+import { AddonsSection } from '@/modules/cloud/components/addons-section'
 import { EnvSettingsDrawer } from '@/modules/cloud/components/env-settings-drawer'
 import { ServiceDetailDrawer } from '@/modules/cloud/components/service-detail-drawer'
 import { StatusBadge } from '@/modules/cloud/components/status-badge'
@@ -35,6 +35,12 @@ import {
   withWorkflowsEnabled,
 } from '@/modules/cloud/lib/workflows'
 import { useTenantConfig } from '@/modules/cloud/hooks/use-tenant-config'
+import {
+  ADDONS,
+  type AddonConfigStore,
+  type AddonId,
+  type AddonStatus,
+} from '@/modules/cloud/lib/addons'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   DropdownMenu,
@@ -191,9 +197,23 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
     }
   }
 
-  // Gated on the drawer like the modals do: the Add-ons row is the only reader,
-  // so an unopened drawer shouldn't cost every env visit a tenant-config fetch.
-  const { envVars, setVar } = useTenantConfig(settingsOpen ? tenantId : null)
+  const {
+    envVars,
+    secrets,
+    setVar,
+    setSecret,
+    deleteVar,
+    deleteSecret,
+    isLoaded: tenantConfigLoaded,
+    error: tenantConfigError,
+  } = useTenantConfig(tenantId)
+  const addonConfigStore = useMemo<AddonConfigStore | undefined>(
+    () =>
+      tenantConfigLoaded
+        ? { envVars, secrets, setVar, setSecret, deleteVar, deleteSecret }
+        : undefined,
+    [tenantConfigLoaded, envVars, secrets, setVar, setSecret, deleteVar, deleteSecret],
+  )
   const runtimeConfig = useMemo(
     () => parseRuntimeConfig(state?.runtimeConfig),
     [state?.runtimeConfig],
@@ -205,23 +225,6 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
     reactorWorkflowsEnabled(envVars) && connectWorkflowsEnabled(runtimeConfig)
 
   const { setRuntimeConfig, runtimeConfigSupported } = detail
-  const services = state?.services
-  const addonStatus = useMemo<Record<AddonId, AddonStatus>>(() => {
-    const serviceEnabled = (type: string) =>
-      services?.find((s) => s.type === type)?.enabled ?? false
-    return {
-      docling: { enabled: serviceEnabled('DOCLING') },
-      paperless: { enabled: serviceEnabled('PAPERLESS') },
-      workflows: {
-        enabled: workflowsEnabled,
-        unavailable:
-          runtimeConfigSupported && tenantId
-            ? undefined
-            : 'Unavailable until this environment runs a build that supports runtime config.',
-      },
-    }
-  }, [services, workflowsEnabled, runtimeConfigSupported, tenantId])
-
   // A service add-on is a plain on/off service in the doc model: no version,
   // no size, no ingress. Workflows is the flag pair above.
   const { enableService, disableService } = detail
@@ -233,13 +236,42 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
         else await disableService(service.type, service.prefix)
         return
       }
-      if (id === 'workflows') {
+      const verb = enabled ? 'enable' : 'disable'
+      try {
         await setVar(PH_WORKFLOWS_ENABLED, enabled ? 'true' : 'false')
+      } catch (err) {
+        throw new Error(`Couldn't ${verb} Workflows.`, { cause: err })
+      }
+      // Both writes are idempotent, so a retry finishes a half-applied toggle.
+      try {
         await setRuntimeConfig(withWorkflowsEnabled(runtimeConfig, enabled))
+      } catch (err) {
+        throw new Error(`Workflows were only partly ${verb}d. Retry to finish.`, { cause: err })
       }
     },
     [enableService, disableService, setVar, setRuntimeConfig, runtimeConfig],
   )
+
+  const workflowsUnavailable = !runtimeConfigSupported
+    ? 'Not supported by this environment yet.'
+    : !tenantId
+      ? 'Available once the environment has been deployed.'
+      : tenantConfigError
+        ? "Couldn't load the current setting."
+        : !tenantConfigLoaded
+          ? 'Loading current setting…'
+          : undefined
+
+  const services = state?.services
+  const addonStatus = useMemo<Record<AddonId, AddonStatus>>(() => {
+    const serviceEnabled = (type: string) =>
+      services?.find((s) => s.type === type)?.enabled ?? false
+    return {
+      docling: { enabled: serviceEnabled('DOCLING') },
+      paperless: { enabled: serviceEnabled('PAPERLESS') },
+      workflows: { enabled: workflowsEnabled, unavailable: workflowsUnavailable },
+    }
+  }, [services, workflowsEnabled, workflowsUnavailable])
 
   const { canSign } = useCanSign()
   const { clintPackages, isLoading: manifestsLoading } = useClintPackages({
@@ -418,6 +450,14 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
             initialAddVersion={searchParams.get('version')}
             onOpenServiceDetail={(kind) => drawer.open({ kind: 'service', id: kind }, 'logs')}
             onOpenAgentDetail={(prefix) => drawer.open({ kind: 'agent', id: prefix }, 'logs')}
+            addons={
+              <AddonsSection
+                environmentStatus={state.status}
+                status={addonStatus}
+                onToggleAddon={handleToggleAddon}
+                configStore={addonConfigStore}
+              />
+            }
           />
         </div>
       )}
@@ -506,8 +546,6 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           onUpdateToLatest={detail.updateToLatest}
           onRollbackRelease={detail.rollbackRelease}
           onTerminate={detail.terminate}
-          addonStatus={addonStatus}
-          onToggleAddon={handleToggleAddon}
         />
       )}
     </>

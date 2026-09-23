@@ -29,6 +29,7 @@ export function useTenantConfig(tenantId: string | null) {
   const [secrets, setSecrets] = useState<TenantSecretEntry[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<Error | null>(null)
+  const [loadedFor, setLoadedFor] = useState<string | null>(null)
 
   const refresh = useCallback(async () => {
     if (!tenantId) {
@@ -46,6 +47,7 @@ export function useTenantConfig(tenantId: string | null) {
       setEnvVars(v)
       setSecrets(s)
       setError(null)
+      setLoadedFor(tenantId)
     } catch (err) {
       setError(err instanceof Error ? err : new Error('Failed to load config'))
     } finally {
@@ -102,6 +104,9 @@ export function useTenantConfig(tenantId: string | null) {
     envVars,
     secrets,
     isLoading,
+    // True once the current tenant's config has been fetched; stays true
+    // through later refreshes.
+    isLoaded: tenantId !== null && loadedFor === tenantId,
     error,
     refresh,
     setVar,
