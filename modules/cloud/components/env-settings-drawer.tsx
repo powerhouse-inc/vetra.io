@@ -10,7 +10,6 @@ import {
   Globe,
   Info,
   Loader2,
-  Puzzle,
   RefreshCw,
   RotateCcw,
   Trash2,
@@ -20,11 +19,6 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { useRenown } from '@powerhousedao/reactor-browser'
 
-import {
-  AddonsSection,
-  type AddonId,
-  type AddonStatus,
-} from '@/modules/cloud/components/addons-section'
 import { AsyncButton } from '@/modules/cloud/components/async-button'
 import { AutoUpdateCard } from '@/modules/cloud/components/auto-update-card'
 import { CustomDomainSection } from '@/modules/cloud/components/custom-domain-section'
@@ -88,10 +82,6 @@ type Props = {
   onRollbackRelease?: () => Promise<string[]>
   /** When unset, the Danger Zone hides the Terminate row. */
   onTerminate?: () => Promise<void>
-  /** Each add-on's state, resolved in the page. */
-  addonStatus?: Record<AddonId, AddonStatus>
-  /** Enable/disable one add-on. When unset the Add-ons tab renders an empty state. */
-  onToggleAddon?: (id: AddonId, enabled: boolean) => Promise<void>
 }
 
 const TERMINAL_STATUSES = new Set(['DRAFT', 'TERMINATING', 'DESTROYED', 'ARCHIVED'])
@@ -115,8 +105,6 @@ export function EnvSettingsDrawer({
   onUpdateToLatest,
   onRollbackRelease,
   onTerminate,
-  addonStatus,
-  onToggleAddon,
 }: Props) {
   const state = environment.state
   const envStatus = state.status
@@ -130,7 +118,7 @@ export function EnvSettingsDrawer({
       >
         <SheetHeader className="border-b px-6 py-4">
           <SheetTitle>Environment settings</SheetTitle>
-          <SheetDescription>Domain, updates, add-ons, activity and admin actions.</SheetDescription>
+          <SheetDescription>Domain, updates, activity and admin actions.</SheetDescription>
         </SheetHeader>
 
         <Tabs defaultValue="domain" className="flex flex-1 flex-col overflow-hidden">
@@ -140,9 +128,6 @@ export function EnvSettingsDrawer({
             </TabsTrigger>
             <TabsTrigger value="updates" className="gap-1.5">
               <RefreshCw className="h-3.5 w-3.5" /> Updates
-            </TabsTrigger>
-            <TabsTrigger value="addons" className="gap-1.5">
-              <Puzzle className="h-3.5 w-3.5" /> Add-ons
             </TabsTrigger>
             <TabsTrigger value="activity" className="gap-1.5">
               <Activity className="h-3.5 w-3.5" /> Activity
@@ -185,20 +170,6 @@ export function EnvSettingsDrawer({
               ) : (
                 <p className="text-muted-foreground py-8 text-center text-sm">
                   Updates aren&rsquo;t available for this env right now.
-                </p>
-              )}
-            </TabsContent>
-
-            <TabsContent value="addons" className="mt-0">
-              {addonStatus && onToggleAddon ? (
-                <AddonsSection
-                  environmentStatus={envStatus}
-                  status={addonStatus}
-                  onToggleAddon={onToggleAddon}
-                />
-              ) : (
-                <p className="text-muted-foreground py-8 text-center text-sm">
-                  Add-ons aren&rsquo;t available for this env right now.
                 </p>
               )}
             </TabsContent>

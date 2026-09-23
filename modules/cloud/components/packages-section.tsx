@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, Loader2, Package } from 'lucide-react'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { AddPackageModal } from '@/modules/cloud/components/add-package-modal'
@@ -9,6 +9,7 @@ import { PackageRow } from '@/modules/cloud/components/package-row'
 import type { PackageManifest } from '@/modules/cloud/config/types'
 import { useRegistryManifests } from '@/modules/cloud/hooks/use-registry-search'
 import { useTenantConfig } from '@/modules/cloud/hooks/use-tenant-config'
+import { ADDON_CONFIG_KEYS } from '@/modules/cloud/lib/addons'
 import type { CloudPackage } from '@/modules/cloud/types'
 import {
   Table,
@@ -41,7 +42,7 @@ export type PackagesSectionProps = {
 }
 
 /**
- * Installed Packages section — title, AddPackageModal, the table of
+ * Packages section — title, AddPackageModal, the table of
  * expandable package rows (each row reveals its own env vars + secrets),
  * and a footer "Unused Config" card for tenant keys not declared by any
  * installed package.
@@ -97,8 +98,12 @@ export function PackagesSection({
     return set
   }, [manifests])
 
-  const orphanVars = envVars.filter((v) => !declaredKeyNames.has(v.key))
-  const orphanSecrets = secrets.filter((s) => !declaredKeyNames.has(s.key))
+  const orphanVars = envVars.filter(
+    (v) => !declaredKeyNames.has(v.key) && !ADDON_CONFIG_KEYS.has(v.key),
+  )
+  const orphanSecrets = secrets.filter(
+    (s) => !declaredKeyNames.has(s.key) && !ADDON_CONFIG_KEYS.has(s.key),
+  )
 
   // While manifests are still in-flight we can't yet tell "manifest missing"
   // from "manifest still loading", so the per-row "Could not load" copy is
@@ -106,11 +111,10 @@ export function PackagesSection({
   const manifestsResolved = !manifestsLoading
 
   return (
-    <div className="border-t pt-5">
+    <div>
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <Package className="text-muted-foreground h-4 w-4" />
-          <h3 className="text-sm font-semibold">Installed Packages</h3>
+          <h2 className="text-lg font-semibold">Packages</h2>
           <span className="text-muted-foreground text-xs">Reactor modules &amp; Connect apps</span>
           {(tenantLoading || manifestsLoading) && (
             <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />
