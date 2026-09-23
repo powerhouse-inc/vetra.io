@@ -20,7 +20,7 @@ import { useState } from 'react'
 import { toast } from 'sonner'
 import { useRenown } from '@powerhousedao/reactor-browser'
 
-import { AddonsSection } from '@/modules/cloud/components/addons-section'
+import { AddonsSection, type AddonType } from '@/modules/cloud/components/addons-section'
 import { AsyncButton } from '@/modules/cloud/components/async-button'
 import { AutoUpdateCard } from '@/modules/cloud/components/auto-update-card'
 import { CustomDomainSection } from '@/modules/cloud/components/custom-domain-section'
@@ -85,10 +85,10 @@ type Props = {
   /** When unset, the Danger Zone hides the Terminate row. */
   onTerminate?: () => Promise<void>
   /**
-   * Enable/disable the environment's private document converter (the chart's
-   * `docling` component). When unset the Add-ons tab renders an empty state.
+   * Enable/disable one of the environment's add-ons (the chart's `docling` /
+   * `paperless` components). When unset the Add-ons tab renders an empty state.
    */
-  onToggleDocling?: (enabled: boolean) => Promise<void>
+  onToggleAddon?: (type: AddonType, prefix: string, enabled: boolean) => Promise<void>
 }
 
 const TERMINAL_STATUSES = new Set(['DRAFT', 'TERMINATING', 'DESTROYED', 'ARCHIVED'])
@@ -112,7 +112,7 @@ export function EnvSettingsDrawer({
   onUpdateToLatest,
   onRollbackRelease,
   onTerminate,
-  onToggleDocling,
+  onToggleAddon,
 }: Props) {
   const state = environment.state
   const envStatus = state.status
@@ -186,11 +186,11 @@ export function EnvSettingsDrawer({
             </TabsContent>
 
             <TabsContent value="addons" className="mt-0">
-              {onToggleDocling ? (
+              {onToggleAddon ? (
                 <AddonsSection
                   services={state.services}
                   environmentStatus={envStatus}
-                  onToggleDocling={onToggleDocling}
+                  onToggleAddon={onToggleAddon}
                 />
               ) : (
                 <p className="text-muted-foreground py-8 text-center text-sm">
