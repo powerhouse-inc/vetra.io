@@ -14,6 +14,7 @@ import {
   X,
   Loader2,
   FileText,
+  Archive,
 } from 'lucide-react'
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
@@ -69,6 +70,7 @@ const SERVICE_LABELS: Record<CloudEnvironmentServiceType, string> = {
   FUSION: 'Powerhouse Fusion',
   CLINT: 'Agent',
   DOCLING: 'Document Conversion',
+  PAPERLESS: 'Document Archive',
 }
 
 const SERVICE_ICONS: Record<
@@ -80,6 +82,7 @@ const SERVICE_ICONS: Record<
   FUSION: Zap,
   CLINT: Bot,
   DOCLING: FileText,
+  PAPERLESS: Archive,
 }
 
 function ServiceRow({
@@ -599,6 +602,7 @@ export function OverviewTab({
     FUSION: 'fusion',
     CLINT: 'agent',
     DOCLING: 'docling',
+    PAPERLESS: 'paperless',
   }
 
   const getServiceEnabled = (type: CloudEnvironmentServiceType) =>

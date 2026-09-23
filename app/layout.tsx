@@ -1,5 +1,6 @@
 import { Inter } from 'next/font/google'
 import { headers } from 'next/headers'
+import Script from 'next/script'
 import { CloudAuthBridge } from '@/modules/cloud/components/cloud-auth-bridge'
 import { OpenPanelProvider } from '@/modules/shared/components/openpanel'
 import { AuthRedirect } from '@/modules/shared/components/renown/auth-redirect'
@@ -93,6 +94,14 @@ export default async function RootLayout({
         />
       </head>
       <body className={`${inter.variable} bg-background antialiased`}>
+        {/* Umami analytics. data-domains limits counting to production hosts, so
+            staging, previews and local dev don't pollute the stats. */}
+        <Script
+          src="https://cloud.umami.is/script.js"
+          data-website-id="ec26d14a-3ea5-46ab-b4b4-87733dff7fc3"
+          data-domains="vetra.io,www.vetra.io"
+          strategy="afterInteractive"
+        />
         <AmbientBackground />
         <OpenPanelProvider
           clientId={process.env.OPENPANEL_CLIENT_ID || process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}

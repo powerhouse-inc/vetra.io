@@ -42,6 +42,7 @@ const SERVICE_LABELS: Record<TenantService, string> = {
   CLINT: 'Clint',
   FUSION: 'Fusion',
   DOCLING: 'Document Conversion',
+  PAPERLESS: 'Document Archive',
 }
 
 /** Human-readable relative time (e.g. "2m ago"). Keeps us off date-fns. */
