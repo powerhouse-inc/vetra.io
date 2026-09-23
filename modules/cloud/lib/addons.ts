@@ -30,17 +30,16 @@ export type AddonDefinition = {
   description: string
   /** Shown under the description when the add-on is available. */
   note?: string
-  /** Set when the add-on is a service in the env document. */
-  service?: { type: 'DOCLING' | 'PAPERLESS'; prefix: string }
   /** Settings the add-on exposes; empty hides its settings button. */
   config: AddonConfigField[]
 }
 
-/** An add-on's state, resolved in the page. */
-export type AddonStatus = {
+/** An add-on's current state and its toggle; each add-on has its own hook. */
+export type AddonControl = {
   enabled: boolean
   /** Why the switch can't be used right now; renders it disabled. */
   unavailable?: string
+  toggle: (enabled: boolean) => Promise<void>
 }
 
 /** Tenant config the settings dialog reads and writes. */
@@ -59,7 +58,6 @@ export const DOCLING_ADDON: AddonDefinition = {
   icon: FileText,
   description:
     'Converts PDF, DOCX and images into documents your reactor can index. Runs privately inside this environment — no public URL. Reserves ~2 GiB of memory and converts one document at a time.',
-  service: { type: 'DOCLING', prefix: DOCLING_PREFIX },
   config: [],
 }
 
@@ -69,7 +67,6 @@ export const PAPERLESS_ADDON: AddonDefinition = {
   icon: Archive,
   description:
     'A private Paperless-ngx archive with OCR, wired to your switchboard for paperless-sync. Reserves ~1.5 GiB of memory. Documents stay in this environment; web access arrives with single sign-on.',
-  service: { type: 'PAPERLESS', prefix: PAPERLESS_PREFIX },
   config: [],
 }
 
