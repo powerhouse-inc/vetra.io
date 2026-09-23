@@ -133,7 +133,9 @@ function AddonRow({
               enabled ? 'bg-success/15 dark:bg-success/20' : 'bg-muted',
             )}
           >
-            <FileText className={cn('h-5 w-5', enabled ? 'text-success' : 'text-muted-foreground')} />
+            <FileText
+              className={cn('h-5 w-5', enabled ? 'text-success' : 'text-muted-foreground')}
+            />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2">

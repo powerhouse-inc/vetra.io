@@ -26,17 +26,35 @@ describe.each(cases)('AddonsSection — $type', ({ type, prefix, name }) => {
   const state = () => toggle().getAttribute('data-state')
 
   it('reads OFF when the env has no such service', () => {
-    render(<AddonsSection services={[service('SWITCHBOARD', true)]} environmentStatus="READY" onToggleAddon={vi.fn()} />)
+    render(
+      <AddonsSection
+        services={[service('SWITCHBOARD', true)]}
+        environmentStatus="READY"
+        onToggleAddon={vi.fn()}
+      />,
+    )
     expect(state()).toBe('unchecked')
   })
 
   it('reads ON when the service is enabled', () => {
-    render(<AddonsSection services={[service(type, true)]} environmentStatus="READY" onToggleAddon={vi.fn()} />)
+    render(
+      <AddonsSection
+        services={[service(type, true)]}
+        environmentStatus="READY"
+        onToggleAddon={vi.fn()}
+      />,
+    )
     expect(state()).toBe('checked')
   })
 
   it('reads OFF when the service exists but is switched off', () => {
-    render(<AddonsSection services={[service(type, false)]} environmentStatus="READY" onToggleAddon={vi.fn()} />)
+    render(
+      <AddonsSection
+        services={[service(type, false)]}
+        environmentStatus="READY"
+        onToggleAddon={vi.fn()}
+      />,
+    )
     expect(state()).toBe('unchecked')
   })
 
@@ -49,7 +67,13 @@ describe.each(cases)('AddonsSection — $type', ({ type, prefix, name }) => {
 
   it('calls onToggleAddon(type, prefix, false) when switched off', async () => {
     const onToggleAddon = vi.fn().mockResolvedValue(undefined)
-    render(<AddonsSection services={[service(type, true)]} environmentStatus="READY" onToggleAddon={onToggleAddon} />)
+    render(
+      <AddonsSection
+        services={[service(type, true)]}
+        environmentStatus="READY"
+        onToggleAddon={onToggleAddon}
+      />,
+    )
     fireEvent.click(toggle())
     await waitFor(() => expect(onToggleAddon).toHaveBeenCalledWith(type, prefix, false))
   })
@@ -71,10 +95,20 @@ describe.each(cases)('AddonsSection — $type', ({ type, prefix, name }) => {
 describe('AddonsSection — independence and cost text', () => {
   it('toggling one add-on leaves the other unchanged', async () => {
     const onToggleAddon = vi.fn().mockResolvedValue(undefined)
-    render(<AddonsSection services={[service('DOCLING', true)]} environmentStatus="READY" onToggleAddon={onToggleAddon} />)
+    render(
+      <AddonsSection
+        services={[service('DOCLING', true)]}
+        environmentStatus="READY"
+        onToggleAddon={onToggleAddon}
+      />,
+    )
     fireEvent.click(screen.getByRole('switch', { name: /toggle document archive/i }))
     await waitFor(() => expect(onToggleAddon).toHaveBeenCalledWith('PAPERLESS', 'paperless', true))
-    expect(screen.getByRole('switch', { name: /toggle document conversion/i }).getAttribute('data-state')).toBe('checked')
+    expect(
+      screen
+        .getByRole('switch', { name: /toggle document conversion/i })
+        .getAttribute('data-state'),
+    ).toBe('checked')
   })
 
   it('states each cost up front', () => {

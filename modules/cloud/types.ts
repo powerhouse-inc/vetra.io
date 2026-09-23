@@ -1,10 +1,5 @@
 export type CloudEnvironmentServiceType =
-  | 'CONNECT'
-  | 'SWITCHBOARD'
-  | 'FUSION'
-  | 'CLINT'
-  | 'DOCLING'
-  | 'PAPERLESS'
+  'CONNECT' | 'SWITCHBOARD' | 'FUSION' | 'CLINT' | 'DOCLING' | 'PAPERLESS'
 
 export type ServiceStatus = 'ACTIVE' | 'SUSPENDED' | 'PROVISIONING' | 'BILLING_ISSUE'
 
