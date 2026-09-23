@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { toast } from 'sonner'
 import { AddonsSection } from '@/modules/cloud/components/addons-section'
 import type { AddonConfigStore, AddonId, AddonStatus } from '@/modules/cloud/lib/addons'
 import type { CloudEnvironmentStatus } from '@/modules/cloud/types'
@@ -165,5 +166,47 @@ describe('AddonsSection — settings', () => {
     expect(screen.queryByText('8')).not.toBeNull()
     expect(screen.queryByText('Secrets encryption key')).not.toBeNull()
     expect(screen.queryByText('60000')).not.toBeNull()
+  })
+})
+
+describe('AddonsSection — confirmation', () => {
+  // The toggle only queues a change; a toast on write would sit over the
+  // Approve prompt and claim something that hasn't happened yet.
+  it('confirms only after the change has deployed', async () => {
+    const success = vi.spyOn(toast, 'success')
+    const onToggleAddon = vi.fn().mockResolvedValue(undefined)
+    const status = (enabled: boolean) => ({
+      docling: { enabled: false },
+      paperless: { enabled: false },
+      workflows: { enabled },
+    })
+    const { rerender } = render(
+      <AddonsSection
+        environmentStatus="READY"
+        status={status(false)}
+        onToggleAddon={onToggleAddon}
+      />,
+    )
+    fireEvent.click(screen.getByRole('switch', { name: /toggle workflows/i }))
+    await waitFor(() => expect(onToggleAddon).toHaveBeenCalledWith('workflows', true))
+    for (const environmentStatus of ['CHANGES_PENDING', 'DEPLOYING'] as const) {
+      rerender(
+        <AddonsSection
+          environmentStatus={environmentStatus}
+          status={status(true)}
+          onToggleAddon={onToggleAddon}
+        />,
+      )
+    }
+    expect(success).not.toHaveBeenCalled()
+    rerender(
+      <AddonsSection
+        environmentStatus="READY"
+        status={status(true)}
+        onToggleAddon={onToggleAddon}
+      />,
+    )
+    await waitFor(() => expect(success).toHaveBeenCalledWith('Workflows enabled'))
+    success.mockRestore()
   })
 })
