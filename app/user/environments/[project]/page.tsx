@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
-import type { AddonType } from '@/modules/cloud/components/addons-section'
+import { ADDONS, type AddonId, type AddonStatus } from '@/modules/cloud/components/addons-section'
 import { AgentDetailDrawer } from '@/modules/cloud/components/agent-detail-drawer'
 import { EnvActionBar } from '@/modules/cloud/components/env-action-bar'
 import { useDebouncedValue } from '@/modules/cloud/hooks/use-debounced-value'
@@ -28,6 +28,13 @@ import {
   isTypeAtApex,
   resolveGenericHost,
 } from '@/modules/cloud/lib/env-host'
+import {
+  PH_WORKFLOWS_ENABLED,
+  connectWorkflowsEnabled,
+  reactorWorkflowsEnabled,
+  withWorkflowsEnabled,
+} from '@/modules/cloud/lib/workflows'
+import { useTenantConfig } from '@/modules/cloud/hooks/use-tenant-config'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   DropdownMenu,
@@ -184,15 +191,54 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
     }
   }
 
-  // Add-ons are plain on/off services in the doc model: no version, no size,
-  // no ingress. One generic handler keeps the drawer off the full service API.
+  // Gated on the drawer like the modals do: the Add-ons row is the only reader,
+  // so an unopened drawer shouldn't cost every env visit a tenant-config fetch.
+  const { envVars, setVar } = useTenantConfig(settingsOpen ? tenantId : null)
+  const runtimeConfig = useMemo(
+    () => parseRuntimeConfig(state?.runtimeConfig),
+    [state?.runtimeConfig],
+  )
+
+  // Both halves must be on for workflows to do anything, so a half-configured
+  // env reads OFF — and switching it on writes whichever half is missing.
+  const workflowsEnabled =
+    reactorWorkflowsEnabled(envVars) && connectWorkflowsEnabled(runtimeConfig)
+
+  const { setRuntimeConfig, runtimeConfigSupported } = detail
+  const services = state?.services
+  const addonStatus = useMemo<Record<AddonId, AddonStatus>>(() => {
+    const serviceEnabled = (type: string) =>
+      services?.find((s) => s.type === type)?.enabled ?? false
+    return {
+      docling: { enabled: serviceEnabled('DOCLING') },
+      paperless: { enabled: serviceEnabled('PAPERLESS') },
+      workflows: {
+        enabled: workflowsEnabled,
+        unavailable:
+          runtimeConfigSupported && tenantId
+            ? undefined
+            : 'Unavailable until this environment runs a build that supports runtime config.',
+      },
+    }
+  }, [services, workflowsEnabled, runtimeConfigSupported, tenantId])
+
+  // A service add-on is a plain on/off service in the doc model: no version,
+  // no size, no ingress. Workflows is the flag pair above.
   const { enableService, disableService } = detail
   const handleToggleAddon = useCallback(
-    async (type: AddonType, prefix: string, enabled: boolean) => {
-      if (enabled) await enableService(type, prefix)
-      else await disableService(type, prefix)
+    async (id: AddonId, enabled: boolean) => {
+      const service = ADDONS.find((a) => a.id === id)?.service
+      if (service) {
+        if (enabled) await enableService(service.type, service.prefix)
+        else await disableService(service.type, service.prefix)
+        return
+      }
+      if (id === 'workflows') {
+        await setVar(PH_WORKFLOWS_ENABLED, enabled ? 'true' : 'false')
+        await setRuntimeConfig(withWorkflowsEnabled(runtimeConfig, enabled))
+      }
     },
-    [enableService, disableService],
+    [enableService, disableService, setVar, setRuntimeConfig, runtimeConfig],
   )
 
   const { canSign } = useCanSign()
@@ -398,7 +444,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           backupSchedule={state.backupSchedule ?? null}
           onSaveBackupSchedule={detail.setBackupSchedule}
           backupScheduleSupported={detail.backupScheduleSupported}
-          runtimeConfig={parseRuntimeConfig(state.runtimeConfig)}
+          runtimeConfig={runtimeConfig}
           onSaveRuntimeConfig={detail.setRuntimeConfig}
           runtimeConfigSupported={detail.runtimeConfigSupported}
         />
@@ -460,6 +506,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           onUpdateToLatest={detail.updateToLatest}
           onRollbackRelease={detail.rollbackRelease}
           onTerminate={detail.terminate}
+          addonStatus={addonStatus}
           onToggleAddon={handleToggleAddon}
         />
       )}
