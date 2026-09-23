@@ -341,7 +341,15 @@ export function useEnvironmentDetail(documentId: string) {
             'setRuntimeConfig is not available in this controller version — update vetra-cloud-package.',
           )
         }
-        fn.call(c, { config: config === null ? null : JSON.stringify(config) })
+        const json = config === null ? null : JSON.stringify(config)
+        fn.call(c, { config: json })
+        // A reducer rejection (e.g. a key the package's schema doesn't know
+        // yet) leaves state untouched without throwing, so check it landed.
+        const stored = (c.state.global as { runtimeConfig?: string | null }).runtimeConfig ?? null
+        const expected = json === null || json === '{}' ? null : json
+        if (stored !== expected) {
+          throw new Error('This environment rejected the setting. It may need a platform update.')
+        }
       }),
     [mutate],
   )
