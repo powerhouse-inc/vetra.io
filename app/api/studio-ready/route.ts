@@ -25,6 +25,10 @@ export async function GET(req: Request): Promise<Response> {
       headers: { 'user-agent': 'vetra-waking-readiness' },
     })
     const loc = res.headers.get('location') ?? ''
+    // This route is polled by /studio/waking and only needs status + headers.
+    // Release the response body so undici doesn't retain the socket + buffered
+    // body across requests (an unconsumed fetch body is a server-heap leak).
+    void res.body?.cancel()
     // Ready = the app is actually serving: a 2xx, or a redirect into the app
     // (`/d/<driveId>`). NOT ready = transient 404 / 5xx, or the wake activator's
     // bounce to the bare host root (which means the studio isn't serving yet).
