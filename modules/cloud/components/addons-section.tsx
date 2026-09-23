@@ -1,7 +1,7 @@
 'use client'
 
 import { Settings2 } from 'lucide-react'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { AddonSettingsDialog } from '@/modules/cloud/components/addon-settings-dialog'
@@ -64,6 +64,7 @@ export function AddonsSection({ environmentStatus, status, onToggleAddon, config
             initial={enabled}
             onToggle={unavailable ? undefined : (next) => onToggleAddon(addon.id, next)}
             disabled={disabled}
+            environmentStatus={environmentStatus}
             configStore={configStore}
             note={unavailable ?? addon.note}
           />
@@ -83,19 +84,44 @@ type RowProps = {
   initial: boolean
   onToggle?: (enabled: boolean) => Promise<void>
   disabled: boolean
+  environmentStatus: CloudEnvironmentStatus
   configStore?: AddonConfigStore
   note?: string
 }
 
-function AddonRow({ addon, initial, onToggle, disabled, configStore, note }: RowProps) {
+function AddonRow({
+  addon,
+  initial,
+  onToggle,
+  disabled,
+  environmentStatus,
+  configStore,
+  note,
+}: RowProps) {
   const { label, icon: Icon } = addon
   const { value: enabled, set: setEnabled } = useOptimistic(initial, onToggle ?? noop)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // A toggle only queues a change for Approve / Deploy, so confirm it once the
+  // environment is READY again after leaving it, not when the write returns.
+  const [awaiting, setAwaiting] = useState<{ value: boolean; leftReady: boolean } | null>(null)
+
+  useEffect(() => {
+    if (!awaiting) return
+    if (environmentStatus === 'DEPLOYMENt_FAILED') {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setAwaiting(null)
+    } else if (environmentStatus !== 'READY') {
+      if (!awaiting.leftReady) setAwaiting({ ...awaiting, leftReady: true })
+    } else if (awaiting.leftReady && initial === awaiting.value) {
+      toast.success(`${label} ${awaiting.value ? 'enabled' : 'disabled'}`)
+      setAwaiting(null)
+    }
+  }, [awaiting, environmentStatus, initial, label])
 
   const handleToggle = async (checked: boolean) => {
     try {
       await setEnabled(checked)
-      toast.success(`${label} ${checked ? 'enabled' : 'disabled'}`)
+      setAwaiting({ value: checked, leftReady: false })
     } catch (error) {
       console.error(`Failed to toggle ${label}:`, error)
       toast.error(error instanceof Error ? error.message : `Failed to toggle ${label}`, {
