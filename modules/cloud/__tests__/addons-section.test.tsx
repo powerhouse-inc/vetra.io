@@ -1,109 +1,94 @@
 import { describe, expect, it, vi } from 'vitest'
 import { fireEvent, render, screen, waitFor } from '@testing-library/react'
-import { AddonsSection } from '@/modules/cloud/components/addons-section'
-import type { CloudEnvironmentService } from '@/modules/cloud/types'
+import {
+  AddonsSection,
+  type AddonId,
+  type AddonStatus,
+} from '@/modules/cloud/components/addons-section'
+import type { CloudEnvironmentStatus } from '@/modules/cloud/types'
 
-const service = (
-  type: CloudEnvironmentService['type'],
-  enabled: boolean,
-): CloudEnvironmentService => ({
-  type,
-  prefix: type.toLowerCase(),
-  enabled,
-  url: null,
-  status: 'ACTIVE',
-  version: null,
-  selectedRessource: null,
-})
+type Overrides = {
+  environmentStatus?: CloudEnvironmentStatus
+  status?: Partial<Record<AddonId, AddonStatus>>
+  onToggleAddon?: (id: AddonId, enabled: boolean) => Promise<void>
+}
+
+const renderSection = (o: Overrides = {}) =>
+  render(
+    <AddonsSection
+      environmentStatus={o.environmentStatus ?? 'READY'}
+      status={{
+        docling: { enabled: false },
+        paperless: { enabled: false },
+        workflows: { enabled: false },
+        ...o.status,
+      }}
+      onToggleAddon={o.onToggleAddon ?? vi.fn()}
+    />,
+  )
 
 const cases = [
-  { type: 'DOCLING' as const, prefix: 'docling', name: /toggle document conversion/i },
-  { type: 'PAPERLESS' as const, prefix: 'paperless', name: /toggle document archive/i },
+  { id: 'docling' as const, name: /toggle document conversion/i },
+  { id: 'paperless' as const, name: /toggle document archive/i },
+  { id: 'workflows' as const, name: /toggle workflows/i },
 ]
 
-describe.each(cases)('AddonsSection — $type', ({ type, prefix, name }) => {
+describe.each(cases)('AddonsSection — $id', ({ id, name }) => {
   const toggle = () => screen.getByRole('switch', { name })
   const state = () => toggle().getAttribute('data-state')
 
-  it('reads OFF when the env has no such service', () => {
-    render(
-      <AddonsSection
-        services={[service('SWITCHBOARD', true)]}
-        environmentStatus="READY"
-        onToggleAddon={vi.fn()}
-      />,
-    )
-    expect(state()).toBe('unchecked')
-  })
-
-  it('reads ON when the service is enabled', () => {
-    render(
-      <AddonsSection
-        services={[service(type, true)]}
-        environmentStatus="READY"
-        onToggleAddon={vi.fn()}
-      />,
-    )
+  it('reads ON when its status is enabled', () => {
+    renderSection({ status: { [id]: { enabled: true } } })
     expect(state()).toBe('checked')
   })
 
-  it('reads OFF when the service exists but is switched off', () => {
-    render(
-      <AddonsSection
-        services={[service(type, false)]}
-        environmentStatus="READY"
-        onToggleAddon={vi.fn()}
-      />,
-    )
+  it('reads OFF when its status is disabled', () => {
+    renderSection()
     expect(state()).toBe('unchecked')
   })
 
-  it('calls onToggleAddon(type, prefix, true) when switched on', async () => {
+  it('calls onToggleAddon(id, true) when switched on', async () => {
     const onToggleAddon = vi.fn().mockResolvedValue(undefined)
-    render(<AddonsSection services={[]} environmentStatus="READY" onToggleAddon={onToggleAddon} />)
+    renderSection({ onToggleAddon })
     fireEvent.click(toggle())
-    await waitFor(() => expect(onToggleAddon).toHaveBeenCalledWith(type, prefix, true))
+    await waitFor(() => expect(onToggleAddon).toHaveBeenCalledWith(id, true))
   })
 
-  it('calls onToggleAddon(type, prefix, false) when switched off', async () => {
+  it('calls onToggleAddon(id, false) when switched off', async () => {
     const onToggleAddon = vi.fn().mockResolvedValue(undefined)
-    render(
-      <AddonsSection
-        services={[service(type, true)]}
-        environmentStatus="READY"
-        onToggleAddon={onToggleAddon}
-      />,
-    )
+    renderSection({ status: { [id]: { enabled: true } }, onToggleAddon })
     fireEvent.click(toggle())
-    await waitFor(() => expect(onToggleAddon).toHaveBeenCalledWith(type, prefix, false))
+    await waitFor(() => expect(onToggleAddon).toHaveBeenCalledWith(id, false))
   })
 
+  // The optimistic wrapper must revert, or a failed mutation leaves the switch
+  // showing a state the backend never accepted.
   it('reverts the switch when the mutation rejects', async () => {
     const onToggleAddon = vi.fn().mockRejectedValue(new Error('nope'))
-    render(<AddonsSection services={[]} environmentStatus="READY" onToggleAddon={onToggleAddon} />)
+    renderSection({ onToggleAddon })
     fireEvent.click(toggle())
     await waitFor(() => expect(onToggleAddon).toHaveBeenCalled())
     await waitFor(() => expect(state()).toBe('unchecked'))
   })
 
   it('disables the switch while the environment has no workload', () => {
-    render(<AddonsSection services={[]} environmentStatus="STOPPED" onToggleAddon={vi.fn()} />)
+    renderSection({ environmentStatus: 'STOPPED' })
     expect(toggle().hasAttribute('disabled')).toBe(true)
+  })
+
+  it('disables the switch and says why when unavailable', () => {
+    renderSection({ status: { [id]: { enabled: false, unavailable: 'Not right now.' } } })
+    expect(toggle().hasAttribute('disabled')).toBe(true)
+    expect(screen.queryByText('Not right now.')).not.toBeNull()
   })
 })
 
 describe('AddonsSection — independence and cost text', () => {
   it('toggling one add-on leaves the other unchanged', async () => {
     const onToggleAddon = vi.fn().mockResolvedValue(undefined)
-    render(
-      <AddonsSection
-        services={[service('DOCLING', true)]}
-        environmentStatus="READY"
-        onToggleAddon={onToggleAddon}
-      />,
-    )
+    renderSection({ status: { docling: { enabled: true } }, onToggleAddon })
     fireEvent.click(screen.getByRole('switch', { name: /toggle document archive/i }))
-    await waitFor(() => expect(onToggleAddon).toHaveBeenCalledWith('PAPERLESS', 'paperless', true))
+    await waitFor(() => expect(onToggleAddon).toHaveBeenCalledWith('paperless', true))
     expect(
       screen
         .getByRole('switch', { name: /toggle document conversion/i })
@@ -112,7 +97,7 @@ describe('AddonsSection — independence and cost text', () => {
   })
 
   it('states each cost up front', () => {
-    render(<AddonsSection services={[]} environmentStatus="READY" onToggleAddon={vi.fn()} />)
+    renderSection()
     expect(screen.queryByText(/reserves ~2\s*GiB/i)).not.toBeNull()
     expect(screen.queryByText(/one document at a time/i)).not.toBeNull()
     expect(screen.queryByText(/reserves ~1\.5\s*GiB/i)).not.toBeNull()
@@ -120,7 +105,22 @@ describe('AddonsSection — independence and cost text', () => {
   })
 
   it('shows the unavailable note once, not per add-on', () => {
-    render(<AddonsSection services={[]} environmentStatus="STOPPED" onToggleAddon={vi.fn()} />)
+    renderSection({ environmentStatus: 'STOPPED' })
     expect(screen.getAllByText(/unavailable while the environment is stopped/i)).toHaveLength(1)
+  })
+})
+
+describe('AddonsSection — workflows', () => {
+  // The Connect half sits in CHANGES_PENDING until deployed; unsaid, a user
+  // reads the unchanged Connect as the toggle having failed.
+  it('says the Connect half needs a deploy', () => {
+    renderSection()
+    expect(screen.queryByText(/rolls out on your next approve \/ deploy/i)).not.toBeNull()
+  })
+
+  it('shows the unavailable reason in place of the deploy note', () => {
+    renderSection({ status: { workflows: { enabled: false, unavailable: 'Not supported.' } } })
+    expect(screen.queryByText('Not supported.')).not.toBeNull()
+    expect(screen.queryByText(/rolls out on your next approve \/ deploy/i)).toBeNull()
   })
 })
