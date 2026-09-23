@@ -3,7 +3,7 @@
 import { ArrowLeft, ExternalLink, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
-import { Suspense, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { Suspense, use, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { AgentDetailDrawer } from '@/modules/cloud/components/agent-detail-drawer'
@@ -22,19 +22,16 @@ import { useEnvironmentStatus } from '@/modules/cloud/hooks/use-environment-stat
 import { generateSubdomain } from '@/modules/cloud/subdomain'
 import { getTenantId } from '@/modules/cloud/tenant-id'
 import { resolveGenericHost, isTypeAtApex } from '@/modules/cloud/lib/env-host'
-import {
-  PH_WORKFLOWS_ENABLED,
-  connectWorkflowsEnabled,
-  reactorWorkflowsEnabled,
-  withWorkflowsEnabled,
-} from '@/modules/cloud/lib/workflows'
 import { useTenantConfig } from '@/modules/cloud/hooks/use-tenant-config'
 import {
-  ADDONS,
+  DOCLING_PREFIX,
+  PAPERLESS_PREFIX,
   type AddonConfigStore,
+  type AddonControl,
   type AddonId,
-  type AddonStatus,
 } from '@/modules/cloud/lib/addons'
+import { useServiceAddon } from '@/modules/cloud/hooks/use-service-addon'
+import { useWorkflowsAddon } from '@/modules/cloud/hooks/use-workflows-addon'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   DropdownMenu,
@@ -213,59 +210,33 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
     [state?.runtimeConfig],
   )
 
-  // Both halves must be on for workflows to do anything, so a half-configured
-  // env reads OFF — and switching it on writes whichever half is missing.
-  const workflowsEnabled =
-    reactorWorkflowsEnabled(envVars) && connectWorkflowsEnabled(runtimeConfig)
-
-  const { setRuntimeConfig, runtimeConfigSupported } = detail
-  // A service add-on is a plain on/off service in the doc model: no version,
-  // no size, no ingress. Workflows is the flag pair above.
-  const { enableService, disableService } = detail
-  const handleToggleAddon = useCallback(
-    async (id: AddonId, enabled: boolean) => {
-      const service = ADDONS.find((a) => a.id === id)?.service
-      if (service) {
-        if (enabled) await enableService(service.type, service.prefix)
-        else await disableService(service.type, service.prefix)
-        return
-      }
-      const verb = enabled ? 'enable' : 'disable'
-      try {
-        await setVar(PH_WORKFLOWS_ENABLED, enabled ? 'true' : 'false')
-      } catch (err) {
-        throw new Error(`Couldn't ${verb} Workflows.`, { cause: err })
-      }
-      // Both writes are idempotent, so a retry finishes a half-applied toggle.
-      try {
-        await setRuntimeConfig(withWorkflowsEnabled(runtimeConfig, enabled))
-      } catch (err) {
-        throw new Error(`Workflows were only partly ${verb}d. Retry to finish.`, { cause: err })
-      }
-    },
-    [enableService, disableService, setVar, setRuntimeConfig, runtimeConfig],
-  )
-
-  const workflowsUnavailable = !runtimeConfigSupported
-    ? 'Not supported by this environment yet.'
-    : !tenantId
-      ? 'Available once the environment has been deployed.'
-      : tenantConfigError
-        ? "Couldn't load the current setting."
-        : !tenantConfigLoaded
-          ? 'Loading current setting…'
-          : undefined
-
-  const services = state?.services
-  const addonStatus = useMemo<Record<AddonId, AddonStatus>>(() => {
-    const serviceEnabled = (type: string) =>
-      services?.find((s) => s.type === type)?.enabled ?? false
-    return {
-      docling: { enabled: serviceEnabled('DOCLING') },
-      paperless: { enabled: serviceEnabled('PAPERLESS') },
-      workflows: { enabled: workflowsEnabled, unavailable: workflowsUnavailable },
-    }
-  }, [services, workflowsEnabled, workflowsUnavailable])
+  const { setRuntimeConfig, runtimeConfigSupported, enableService, disableService } = detail
+  const addons: Record<AddonId, AddonControl> = {
+    docling: useServiceAddon({
+      services: state?.services,
+      type: 'DOCLING',
+      prefix: DOCLING_PREFIX,
+      enableService,
+      disableService,
+    }),
+    paperless: useServiceAddon({
+      services: state?.services,
+      type: 'PAPERLESS',
+      prefix: PAPERLESS_PREFIX,
+      enableService,
+      disableService,
+    }),
+    workflows: useWorkflowsAddon({
+      tenantId,
+      envVars,
+      setVar,
+      tenantConfigLoaded,
+      tenantConfigError,
+      runtimeConfig,
+      setRuntimeConfig,
+      runtimeConfigSupported,
+    }),
+  }
 
   const { canSign } = useCanSign()
   const { clintPackages, isLoading: manifestsLoading } = useClintPackages({
@@ -426,8 +397,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
             addons={
               <AddonsSection
                 environmentStatus={state.status}
-                status={addonStatus}
-                onToggleAddon={handleToggleAddon}
+                addons={addons}
                 configStore={addonConfigStore}
               />
             }

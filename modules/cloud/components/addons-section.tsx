@@ -9,9 +9,9 @@ import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
 import {
   ADDONS,
   type AddonConfigStore,
+  type AddonControl,
   type AddonDefinition,
   type AddonId,
-  type AddonStatus,
 } from '@/modules/cloud/lib/addons'
 import type { CloudEnvironmentStatus } from '@/modules/cloud/types'
 import { Badge } from '@/modules/shared/components/ui/badge'
@@ -35,15 +35,14 @@ const noop = async () => {}
 
 type Props = {
   environmentStatus: CloudEnvironmentStatus
-  status: Record<AddonId, AddonStatus>
-  onToggleAddon: (id: AddonId, enabled: boolean) => Promise<void>
+  addons: Record<AddonId, AddonControl>
   /** Tenant config for add-on settings; unset until it has loaded. */
   configStore?: AddonConfigStore
 }
 
 // Kept out of the Services card: every row there has a public URL, a version
 // and a logs drawer, and an add-on has none of those.
-export function AddonsSection({ environmentStatus, status, onToggleAddon, configStore }: Props) {
+export function AddonsSection({ environmentStatus, addons, configStore }: Props) {
   const disabled = NO_WORKLOAD_STATUSES.has(environmentStatus)
 
   return (
@@ -56,13 +55,13 @@ export function AddonsSection({ environmentStatus, status, onToggleAddon, config
       </div>
 
       {ADDONS.map((addon) => {
-        const { enabled, unavailable } = status[addon.id]
+        const { enabled, unavailable, toggle } = addons[addon.id]
         return (
           <AddonRow
             key={addon.id}
             addon={addon}
             initial={enabled}
-            onToggle={unavailable ? undefined : (next) => onToggleAddon(addon.id, next)}
+            onToggle={unavailable ? undefined : toggle}
             disabled={disabled}
             environmentStatus={environmentStatus}
             configStore={configStore}
