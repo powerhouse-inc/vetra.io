@@ -6,7 +6,7 @@ import { useSearchParams } from 'next/navigation'
 import { Suspense, use, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
-import { DOCLING_PREFIX } from '@/modules/cloud/components/addons-section'
+import type { AddonType } from '@/modules/cloud/components/addons-section'
 import { AgentDetailDrawer } from '@/modules/cloud/components/agent-detail-drawer'
 import { EnvActionBar } from '@/modules/cloud/components/env-action-bar'
 import { useDebouncedValue } from '@/modules/cloud/hooks/use-debounced-value'
@@ -178,14 +178,13 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
     }
   }
 
-  // Docling is a plain on/off service in the doc model: no version, no size, no
-  // ingress. Collapsing enable/disable into one boolean here keeps the settings
-  // drawer from taking the whole generic service API for a single switch.
+  // Add-ons are plain on/off services in the doc model: no version, no size,
+  // no ingress. One generic handler keeps the drawer off the full service API.
   const { enableService, disableService } = detail
-  const handleToggleDocling = useCallback(
-    async (enabled: boolean) => {
-      if (enabled) await enableService('DOCLING', DOCLING_PREFIX)
-      else await disableService('DOCLING', DOCLING_PREFIX)
+  const handleToggleAddon = useCallback(
+    async (type: AddonType, prefix: string, enabled: boolean) => {
+      if (enabled) await enableService(type, prefix)
+      else await disableService(type, prefix)
     },
     [enableService, disableService],
   )
@@ -434,7 +433,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           onUpdateToLatest={detail.updateToLatest}
           onRollbackRelease={detail.rollbackRelease}
           onTerminate={detail.terminate}
-          onToggleDocling={handleToggleDocling}
+          onToggleAddon={handleToggleAddon}
         />
       )}
     </>

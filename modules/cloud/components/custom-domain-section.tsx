@@ -38,6 +38,7 @@ const SERVICE_LABELS: Record<TenantService, string> = {
   CLINT: 'Clint',
   FUSION: 'Fusion',
   DOCLING: 'Document Conversion',
+  PAPERLESS: 'Document Archive',
 }
 
 type Props = {
