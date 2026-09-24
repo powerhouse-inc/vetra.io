@@ -3,6 +3,9 @@ import {
   resolveGenericHost,
   effectiveApexType,
   isTypeAtApex,
+  customDomainServiceHost,
+  isPinnedToCustomApex,
+  envHeaderHost,
   type ServiceLike,
 } from '@/modules/cloud/lib/env-host'
 
@@ -84,5 +87,84 @@ describe('CONNECT-only env host resolution (regression)', () => {
     const apexService: string | null = null
     expect(apexService === 'CONNECT').toBe(false) // the old, wrong signal
     expect(isTypeAtApex(connectOnly, apexService, 'CONNECT')).toBe(true) // the correct one
+  })
+})
+
+// ---------------------------------------------------------------------------
+// Parity with the gitops processor (vetra-cloud-package gitops.ts):
+// only routable types (CONNECT/SWITCHBOARD/FUSION/CLINT) take part in the
+// lone-service apex claim, and custom domains follow their own rule.
+// ---------------------------------------------------------------------------
+
+describe('effectiveApexType — non-routable add-ons', () => {
+  it('a DOCLING/PAPERLESS add-on does not take the apex away from a lone CONNECT', () => {
+    expect(effectiveApexType([svc('CONNECT'), svc('DOCLING'), svc('PAPERLESS')], null)).toBe(
+      'CONNECT',
+    )
+  })
+  it('an add-on alone never claims the apex', () => {
+    expect(effectiveApexType([svc('DOCLING')], null)).toBeNull()
+  })
+})
+
+describe('customDomainServiceHost', () => {
+  const two = [svc('CONNECT', true, 'app'), svc('SWITCHBOARD', true, 'api')]
+
+  it('non-apex: fixed connect./switchboard. prefixes, not the service prefix', () => {
+    expect(customDomainServiceHost(two, null, 'kv.example', 'CONNECT')).toBe('connect.kv.example')
+    expect(customDomainServiceHost(two, null, 'kv.example', 'SWITCHBOARD')).toBe(
+      'switchboard.kv.example',
+    )
+  })
+  it('the bare domain only for an explicitly pinned service', () => {
+    expect(customDomainServiceHost(two, 'CONNECT', 'kv.example', 'CONNECT')).toBe('kv.example')
+    expect(customDomainServiceHost(two, 'CONNECT', 'kv.example', 'SWITCHBOARD')).toBe(
+      'switchboard.kv.example',
+    )
+  })
+  it('no lone-service auto-claim for custom domains', () => {
+    expect(customDomainServiceHost([svc('CONNECT')], null, 'kv.example', 'CONNECT')).toBe(
+      'connect.kv.example',
+    )
+  })
+  it('null for types the chart renders no custom ingress for, or disabled/absent services', () => {
+    expect(customDomainServiceHost([svc('FUSION')], null, 'kv.example', 'FUSION')).toBeNull()
+    expect(
+      customDomainServiceHost([svc('CONNECT', false)], null, 'kv.example', 'CONNECT'),
+    ).toBeNull()
+    expect(customDomainServiceHost(two, null, null, 'CONNECT')).toBeNull()
+  })
+})
+
+describe('isPinnedToCustomApex', () => {
+  it('true only for the enabled service pinned at the custom domain', () => {
+    const s = [svc('CONNECT'), svc('SWITCHBOARD')]
+    expect(isPinnedToCustomApex(s, 'CONNECT', 'kv.example', 'CONNECT')).toBe(true)
+    expect(isPinnedToCustomApex(s, 'CONNECT', 'kv.example', 'SWITCHBOARD')).toBe(false)
+    expect(isPinnedToCustomApex(s, 'CONNECT', null, 'CONNECT')).toBe(false)
+  })
+})
+
+describe('envHeaderHost', () => {
+  const base = { subdomain: 'light-colt-c497cfbd', baseDomain: 'vetra.io' }
+  it('shows nothing when no service owns an apex (two services, no pin)', () => {
+    expect(
+      envHeaderHost({ ...base, services: [svc('CONNECT'), svc('SWITCHBOARD')], apexService: null }),
+    ).toBeNull()
+  })
+  it('shows the generic apex when one service owns it', () => {
+    expect(envHeaderHost({ ...base, services: [svc('CONNECT')], apexService: null })).toBe(
+      'light-colt-c497cfbd.vetra.io',
+    )
+  })
+  it('prefers the custom domain when a service is pinned there', () => {
+    expect(
+      envHeaderHost({
+        ...base,
+        services: [svc('CONNECT'), svc('SWITCHBOARD')],
+        apexService: 'CONNECT',
+        customDomain: 'kv.example',
+      }),
+    ).toBe('kv.example')
   })
 })
