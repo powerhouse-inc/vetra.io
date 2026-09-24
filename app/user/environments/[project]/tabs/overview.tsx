@@ -28,7 +28,12 @@ import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtim
 import { partitionPackagesByManifestType } from '@/modules/cloud/lib/module-package-filter'
 import { toServiceImageTag } from '@/modules/cloud/registry/channels'
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
-import { isTypeAtApex, resolveGenericHost } from '@/modules/cloud/lib/env-host'
+import {
+  customDomainServiceHost,
+  isPinnedToCustomApex,
+  isTypeAtApex,
+  resolveGenericHost,
+} from '@/modules/cloud/lib/env-host'
 import type {
   CloudEnvironment,
   CloudEnvironmentServiceType,
@@ -85,11 +90,26 @@ const SERVICE_ICONS: Record<
   PAPERLESS: Archive,
 }
 
+/** Label for one custom-domain check (DNS or TLS) — see the Domain card. */
+function domainCheckLabel(
+  loading: boolean,
+  status: { updatedAt: string } | null | undefined,
+  value: boolean | null | undefined,
+  yes: string,
+  no: string,
+): string {
+  if (loading) return '...'
+  if (!status) return 'Unknown'
+  if (value === null || value === undefined) return 'Checking...'
+  return value ? yes : no
+}
+
 function ServiceRow({
   serviceType,
   prefix,
   subdomain,
-  customDomain,
+  customHost,
+  customHostPinned,
   customDomainValid,
   isApexService,
   isEnabled: serverIsEnabled,
@@ -106,9 +126,15 @@ function ServiceRow({
   serviceType: CloudEnvironmentServiceType
   prefix: string
   subdomain: string | null
-  customDomain?: string | null
+  /** The host this service answers on under the custom domain (see
+   *  customDomainServiceHost), or null when there is none. */
+  customHost?: string | null
+  /** The service is pinned to the bare custom domain: the chart then renders
+   *  NO generic host for it, so the custom host is the only address. */
+  customHostPinned?: boolean
+  /** DNS + TLS for the custom domain were checked and are green. */
   customDomainValid?: boolean
-  /** Whether this service is pinned to the apex of the custom domain. */
+  /** Whether this service owns the generic apex (`<subdomain>.vetra.io`). */
   isApexService?: boolean
   isEnabled: boolean
   serviceStatus: string
@@ -139,12 +165,10 @@ function ServiceRow({
     isApexService ?? false,
     'vetra.io',
   )
+  // Custom host once DNS + TLS are verified — or always when pinned to the
+  // custom apex, because then there is no generic host to fall back to.
   const customServiceUrl =
-    customDomain && customDomainValid !== false
-      ? isApexService
-        ? customDomain
-        : `${prefix}.${customDomain}`
-      : null
+    customHost && (customDomainValid === true || customHostPinned) ? customHost : null
   const serviceUrl = customServiceUrl ?? defaultUrl
 
   const { value: isEnabled, set: toggleEnabled } = useOptimistic(serverIsEnabled, onToggle)
@@ -609,6 +633,11 @@ export function OverviewTab({
     state.services.find((s) => s.type === type)
 
   const hasCustomDomain = state.customDomain?.enabled ?? false
+  const activeCustomDomain = hasCustomDomain ? (state.customDomain?.domain ?? null) : null
+  // The hosts the backend actually renders under the custom domain (and checks).
+  const customDomainHosts = (['CONNECT', 'SWITCHBOARD'] as const)
+    .map((t) => customDomainServiceHost(state.services, state.apexService, activeCustomDomain, t))
+    .filter((h): h is string => !!h)
 
   return (
     <div className="space-y-6">
@@ -623,38 +652,48 @@ export function OverviewTab({
               <span className="text-sm font-medium">Domain</span>
             </div>
             <div className="mt-2 space-y-1">
+              {/* Three states per check: null = the watcher has not produced a
+                  verdict yet (e.g. right after a deploy), true/false = checked.
+                  No status row at all is "Unknown", never "No"/"Invalid". */}
               <p className="text-muted-foreground text-xs">
                 Resolves:{' '}
                 <span className="text-foreground font-medium">
-                  {statusLoading
-                    ? '...'
-                    : status?.domainResolves === null
-                      ? 'Checking...'
-                      : status?.domainResolves
-                        ? 'Yes'
-                        : 'No'}
+                  {domainCheckLabel(statusLoading, status, status?.domainResolves, 'Yes', 'No')}
                 </span>
               </p>
               <p className="text-muted-foreground flex items-center gap-1 text-xs">
                 TLS:{' '}
-                {status?.tlsCertValid ? (
+                {statusLoading || !status || status.tlsCertValid === null ? (
+                  <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />
+                ) : status.tlsCertValid ? (
                   <ShieldCheck className="h-3 w-3 text-[#04c161]" />
                 ) : (
                   <ShieldOff className="h-3 w-3 text-[#ea4335]" />
                 )}
                 <span className="text-foreground font-medium">
-                  {statusLoading
-                    ? '...'
-                    : status?.tlsCertValid === null
-                      ? 'Checking...'
-                      : status?.tlsCertValid
-                        ? 'Valid'
-                        : 'Invalid'}
+                  {domainCheckLabel(
+                    statusLoading,
+                    status,
+                    status?.tlsCertValid,
+                    'Valid',
+                    'Invalid',
+                  )}
                 </span>
               </p>
               {status?.tlsCertExpiresAt && (
                 <p className="text-muted-foreground text-xs">
                   Expires: {new Date(status.tlsCertExpiresAt).toLocaleDateString()}
+                </p>
+              )}
+              {customDomainHosts.length > 0 && (
+                <p className="text-muted-foreground text-xs">
+                  Hosts:{' '}
+                  <span className="text-foreground font-mono">{customDomainHosts.join(', ')}</span>
+                </p>
+              )}
+              {status?.updatedAt && (
+                <p className="text-muted-foreground/70 text-xs">
+                  Checked {new Date(status.updatedAt).toLocaleTimeString()}
                 </p>
               )}
             </div>
@@ -687,7 +726,18 @@ export function OverviewTab({
                   serviceType={type}
                   prefix={service?.prefix ?? defaultPrefixes[type]}
                   subdomain={subdomain}
-                  customDomain={state.customDomain?.enabled ? state.customDomain.domain : null}
+                  customHost={customDomainServiceHost(
+                    state.services,
+                    state.apexService,
+                    activeCustomDomain,
+                    type,
+                  )}
+                  customHostPinned={isPinnedToCustomApex(
+                    state.services,
+                    state.apexService,
+                    activeCustomDomain,
+                    type,
+                  )}
                   customDomainValid={
                     status?.domainResolves === true && status?.tlsCertValid === true
                   }
