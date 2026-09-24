@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
+import { customDomainDnsRecords } from '@/modules/cloud/lib/env-host'
 import type { CloudEnvironment, TenantService } from '@/modules/cloud/types'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Checkbox } from '@/modules/shared/components/ui/checkbox'
@@ -83,7 +84,13 @@ export function CustomDomainSection({
     (apexInput || null) === (apexService ?? null)
   const [dnsResults, setDnsResults] = useState<Record<string, boolean | null>>({})
   const [isVerifying, setIsVerifying] = useState(false)
-  const records = customDomain?.dnsRecords ?? []
+  // Derived from what the chart serves (saved domain + saved apex), not read
+  // from the document's stored dnsRecords — see customDomainDnsRecords.
+  const records = customDomainDnsRecords(
+    enabledServices.map((type) => ({ type, enabled: true })),
+    apexService,
+    customDomain?.enabled ? customDomain.domain : null,
+  )
   const domainIsOwned = isOwnedDomain(domainInput || customDomain?.domain)
 
   const { value: enabled, set: setEnabledOptimistic } = useOptimistic(
@@ -209,6 +216,14 @@ export function CustomDomainSection({
             DNS is managed automatically for <span className="font-mono">.vetra.io</span> domains —
             nothing to configure on your side.
           </p>
+          {records.length > 0 && (
+            <p className="text-muted-foreground text-xs">
+              Served at:{' '}
+              <span className="text-foreground font-mono">
+                {records.map((r) => r.host).join(', ')}
+              </span>
+            </p>
+          )}
         </div>
       )}
 

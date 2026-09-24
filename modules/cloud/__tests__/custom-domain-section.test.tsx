@@ -60,3 +60,42 @@ describe('CustomDomainSection', () => {
     expect((screen.getByLabelText(/apex/i) as HTMLSelectElement).value).toBe('CONNECT')
   })
 })
+
+describe('CustomDomainSection — DNS', () => {
+  /* The stored dnsRecords listed every enabled service by its own prefix
+     (add-ons included) and missed a pinned apex; the UI now derives them from
+     the hosts the chart actually serves. */
+  it('lists one A record per served host for an external domain', () => {
+    render(
+      <CustomDomainSection
+        customDomain={{
+          enabled: true,
+          domain: 'kv.example',
+          dnsRecords: [{ type: 'A', host: 'docling.kv.example', value: '1.2.3.4' }],
+        }}
+        apexService="CONNECT"
+        enabledServices={['CONNECT', 'SWITCHBOARD']}
+        onSetCustomDomain={vi.fn()}
+      />,
+    )
+    expect(screen.queryByText('kv.example', { selector: 'td' })).not.toBeNull()
+    expect(screen.queryByText('switchboard.kv.example')).not.toBeNull()
+    expect(screen.queryByText('docling.kv.example')).toBeNull()
+  })
+
+  it('names the auto-managed hosts for a .vetra.io domain', () => {
+    render(
+      <CustomDomainSection
+        customDomain={{ enabled: true, domain: 'knowledge-vault.vetra.io', dnsRecords: [] }}
+        apexService={null}
+        enabledServices={['CONNECT', 'SWITCHBOARD']}
+        onSetCustomDomain={vi.fn()}
+      />,
+    )
+    expect(
+      screen.queryByText(
+        /connect\.knowledge-vault\.vetra\.io, switchboard\.knowledge-vault\.vetra\.io/,
+      ),
+    ).not.toBeNull()
+  })
+})
