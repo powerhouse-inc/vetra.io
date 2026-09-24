@@ -21,7 +21,13 @@ import { useEnvironmentDetail } from '@/modules/cloud/hooks/use-environment-deta
 import { useEnvironmentStatus } from '@/modules/cloud/hooks/use-environment-status'
 import { generateSubdomain } from '@/modules/cloud/subdomain'
 import { getTenantId } from '@/modules/cloud/tenant-id'
-import { resolveGenericHost, isTypeAtApex } from '@/modules/cloud/lib/env-host'
+import {
+  customDomainServiceHost,
+  envHeaderHost,
+  isPinnedToCustomApex,
+  isTypeAtApex,
+  resolveGenericHost,
+} from '@/modules/cloud/lib/env-host'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   DropdownMenu,
@@ -226,6 +232,23 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
 
   // Build visit URLs from enabled services
   const enabledServices = state?.services.filter((s) => s.enabled) ?? []
+  const customDomain = state?.customDomain?.enabled ? (state.customDomain.domain ?? null) : null
+  const customDomainVerified =
+    envStatus?.domainResolves === true && envStatus?.tlsCertValid === true
+  // Same rule as the Overview service cards: the custom host once DNS + TLS are
+  // verified, or always when pinned to the custom apex (no generic host then).
+  const visitHost = (svc: { type: string; prefix: string }) => {
+    const services = state?.services ?? []
+    const custom = customDomainServiceHost(services, state?.apexService, customDomain, svc.type)
+    const pinned = isPinnedToCustomApex(services, state?.apexService, customDomain, svc.type)
+    if (custom && (customDomainVerified || pinned)) return custom
+    return resolveGenericHost(
+      subdomain ?? '',
+      svc.prefix,
+      isTypeAtApex(services, state?.apexService, svc.type),
+      baseDomain,
+    )
+  }
 
   return (
     <>
@@ -256,7 +279,16 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
               </div>
               {subdomain && (
                 <p className="text-muted-foreground truncate font-mono text-xs">
-                  {subdomain}.{baseDomain}
+                  {/* A real bare host only when one exists (custom apex pin or a
+                      lone routable service); with several services there is no
+                      bare host, so show the subdomain as a label, not an address. */}
+                  {envHeaderHost({
+                    subdomain,
+                    baseDomain,
+                    services: state?.services ?? [],
+                    apexService: state?.apexService,
+                    customDomain: customDomain,
+                  }) ?? subdomain}
                 </p>
               )}
             </div>
@@ -294,12 +326,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
                       return (
                         <DropdownMenuItem key={svc.type} asChild>
                           <a
-                            href={`https://${resolveGenericHost(
-                              subdomain,
-                              svc.prefix,
-                              isTypeAtApex(state?.services ?? [], state?.apexService, svc.type),
-                              baseDomain,
-                            )}${path}`}
+                            href={`https://${visitHost(svc)}${path}`}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
