@@ -126,3 +126,30 @@ export function envHeaderHost(env: {
   }
   return null
 }
+
+/**
+ * The cluster ingress load balancer every custom-domain host must point at —
+ * MIRRORS vetra-cloud-package document-models/.../reducers/utils.ts LB_IP. The
+ * bare (apex) domain needs an A record (a CNAME isn't allowed there), so the IP
+ * is surfaced rather than a hostname.
+ */
+export const INGRESS_IP = '138.199.129.93'
+
+/**
+ * DNS records the user must create for a custom domain: one A record per host
+ * the chart actually serves (see customDomainServiceHost). Derived here instead
+ * of read from the document's `customDomain.dnsRecords`, which the reducer
+ * fills from every enabled service's own prefix (add-ons included, pinned apex
+ * missing) — changing that reducer would alter the replayed state of existing
+ * documents, while nothing but this UI reads the stored list.
+ */
+export function customDomainDnsRecords(
+  services: ServiceLike[],
+  apexService: string | null | undefined,
+  customDomain: string | null | undefined,
+): Array<{ type: 'A'; host: string; value: string }> {
+  return ['CONNECT', 'SWITCHBOARD']
+    .map((type) => customDomainServiceHost(services, apexService, customDomain, type))
+    .filter((host): host is string => !!host)
+    .map((host) => ({ type: 'A' as const, host, value: INGRESS_IP }))
+}
