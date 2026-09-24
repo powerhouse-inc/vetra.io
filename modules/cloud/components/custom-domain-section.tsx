@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
@@ -70,6 +70,17 @@ export function CustomDomainSection({
 }: Props) {
   const [domainInput, setDomainInput] = useState(customDomain?.domain ?? '')
   const [apexInput, setApexInput] = useState<TenantService | ''>(apexService ?? '')
+  // Re-seed when the saved values change (another tab, the drawer reopening on
+  // a fresh doc); useState alone kept the first render's values forever.
+  useEffect(() => {
+    setDomainInput(customDomain?.domain ?? '')
+  }, [customDomain?.domain])
+  useEffect(() => {
+    setApexInput(apexService ?? '')
+  }, [apexService])
+  const unchanged =
+    domainInput.trim() === (customDomain?.domain ?? '') &&
+    (apexInput || null) === (apexService ?? null)
   const [dnsResults, setDnsResults] = useState<Record<string, boolean | null>>({})
   const [isVerifying, setIsVerifying] = useState(false)
   const records = customDomain?.dnsRecords ?? []
@@ -156,7 +167,7 @@ export function CustomDomainSection({
             <Button
               size="sm"
               onClick={() => void handleSaveDomain()}
-              disabled={!domainInput.trim() || domainInput === customDomain?.domain}
+              disabled={!domainInput.trim() || unchanged}
             >
               Save
             </Button>
