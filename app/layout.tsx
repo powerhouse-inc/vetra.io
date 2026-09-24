@@ -104,6 +104,9 @@ export default async function RootLayout({
           src="https://cloud.umami.is/script.js"
           data-website-id="ec26d14a-3ea5-46ab-b4b4-87733dff7fc3"
           data-domains="vetra.io,www.vetra.io"
+          data-do-not-track="true"
+          data-exclude-search="true"
+          data-performance="true"
           strategy="afterInteractive"
         />
         <Script
@@ -111,6 +114,9 @@ export default async function RootLayout({
           src="https://umami.monitoring.vetra.io/script.js"
           data-website-id="d8200a7b-948f-475b-a00f-736acbf4b513"
           data-domains="vetra.io,www.vetra.io"
+          data-do-not-track="true"
+          data-exclude-search="true"
+          data-performance="true"
           strategy="afterInteractive"
         />
         <AmbientBackground />
