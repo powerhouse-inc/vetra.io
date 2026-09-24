@@ -6,6 +6,8 @@ import {
   customDomainServiceHost,
   isPinnedToCustomApex,
   envHeaderHost,
+  customDomainDnsRecords,
+  INGRESS_IP,
   type ServiceLike,
 } from '@/modules/cloud/lib/env-host'
 
@@ -166,5 +168,33 @@ describe('envHeaderHost', () => {
         customDomain: 'kv.example',
       }),
     ).toBe('kv.example')
+  })
+})
+
+describe('customDomainDnsRecords', () => {
+  it('one A record per served host — fixed prefixes, no add-ons, no FUSION', () => {
+    const s = [
+      svc('CONNECT', true, 'app'),
+      svc('SWITCHBOARD', true, 'api'),
+      svc('FUSION'),
+      svc('DOCLING'),
+      svc('PAPERLESS'),
+      svc('CLINT', true, 'vetra-agent'),
+    ]
+    expect(customDomainDnsRecords(s, null, 'kv.example')).toEqual([
+      { type: 'A', host: 'connect.kv.example', value: INGRESS_IP },
+      { type: 'A', host: 'switchboard.kv.example', value: INGRESS_IP },
+    ])
+  })
+  it('the bare domain for a pinned service', () => {
+    const s = [svc('CONNECT'), svc('SWITCHBOARD')]
+    expect(customDomainDnsRecords(s, 'CONNECT', 'kv.example').map((r) => r.host)).toEqual([
+      'kv.example',
+      'switchboard.kv.example',
+    ])
+  })
+  it('nothing without a domain or without routable services', () => {
+    expect(customDomainDnsRecords([svc('CONNECT')], null, null)).toEqual([])
+    expect(customDomainDnsRecords([svc('DOCLING')], null, 'kv.example')).toEqual([])
   })
 })
