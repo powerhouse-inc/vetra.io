@@ -95,10 +95,21 @@ export default async function RootLayout({
       </head>
       <body className={`${inter.variable} bg-background antialiased`}>
         {/* Umami analytics. data-domains limits counting to production hosts, so
-            staging, previews and local dev don't pollute the stats. */}
+            staging, previews and local dev don't pollute the stats. Two
+            instances while we move off Umami Cloud: each script tracks page
+            views on its own; drop the cloud one once the self-hosted history
+            is long enough. */}
         <Script
+          id="umami-cloud"
           src="https://cloud.umami.is/script.js"
           data-website-id="ec26d14a-3ea5-46ab-b4b4-87733dff7fc3"
+          data-domains="vetra.io,www.vetra.io"
+          strategy="afterInteractive"
+        />
+        <Script
+          id="umami-selfhosted"
+          src="https://umami.monitoring.vetra.io/script.js"
+          data-website-id="d8200a7b-948f-475b-a00f-736acbf4b513"
           data-domains="vetra.io,www.vetra.io"
           strategy="afterInteractive"
         />
