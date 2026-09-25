@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from '@/modules/shared/components/ui/form'
 import { Input } from '@/modules/shared/components/ui/input'
+import { defaultPackageRegistry } from '@/modules/cloud/switchboard-url'
 
 const schema = z.object({
   name: z.string().min(1, 'Name is required'),
@@ -89,7 +90,7 @@ function NewEnvironmentFormInner({
           label: values.name,
           subdomain,
           baseDomain: 'vetra.io',
-          defaultPackageRegistry: 'https://registry.dev.vetra.io',
+          defaultPackageRegistry: defaultPackageRegistry(),
           enabledServices: [{ type: 'CONNECT', prefix: 'connect' }],
         })
         onCreated?.(documentId)
