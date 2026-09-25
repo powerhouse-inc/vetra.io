@@ -45,6 +45,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/modules/shared/compo
 import { Input } from '@/modules/shared/components/ui/input'
 import { Switch } from '@/modules/shared/components/ui/switch'
 import { cn } from '@/shared/lib/utils'
+import { defaultPackageRegistry } from '@/modules/cloud/switchboard-url'
 
 // ---------------------------------------------------------------------------
 // Helper: StatusDot
@@ -782,7 +783,7 @@ export function OverviewTab({
         <CardContent className="pt-6">
           <PackagesSection
             tenantId={tenantId}
-            registryUrl={state.defaultPackageRegistry ?? 'https://registry.dev.vetra.io'}
+            registryUrl={state.defaultPackageRegistry ?? defaultPackageRegistry()}
             installedPackages={state.packages}
             modulePackages={modulePackages}
             onAddPackage={addPackage}
@@ -836,7 +837,7 @@ export function OverviewTab({
           open={addAgentOpen}
           onOpenChange={setAddAgentOpen}
           env={environment}
-          registryUrl={state.defaultPackageRegistry ?? 'https://registry.dev.vetra.io'}
+          registryUrl={state.defaultPackageRegistry ?? defaultPackageRegistry()}
           tenantId={tenantId}
           installedPackages={state.packages}
           onSubmit={async ({ packageName, version, prefix, clintConfig }) => {
