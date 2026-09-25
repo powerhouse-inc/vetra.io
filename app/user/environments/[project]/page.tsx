@@ -48,6 +48,7 @@ import {
 import { HeroCard } from '@/modules/shared/components/ui/card'
 
 import { InlineEditableTitle, OverviewTab } from './tabs/overview'
+import { defaultPackageRegistry } from '@/modules/cloud/switchboard-url'
 
 // ---------------------------------------------------------------------------
 // EnvironmentDetail — single-column env page; no env-level tabs. Per-service
@@ -159,13 +160,14 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [environment, detail.setGenericSubdomain])
 
-  // Auto-heal: set defaultPackageRegistry if missing
+  // Auto-heal: set defaultPackageRegistry if missing — to this deployment's
+  // registry, never a hardcoded one (prod must not land on the dev registry).
   const registryHealedRef = useRef(false)
   useEffect(() => {
     if (!environment || registryHealedRef.current) return
     if (environment.state.defaultPackageRegistry === null) {
       registryHealedRef.current = true
-      void detail.setDefaultPackageRegistry('https://registry.dev.vetra.io')
+      void detail.setDefaultPackageRegistry(defaultPackageRegistry())
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [environment, detail.setDefaultPackageRegistry])
