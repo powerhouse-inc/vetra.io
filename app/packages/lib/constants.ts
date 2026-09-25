@@ -1,3 +1,4 @@
+import { defaultPackageRegistry } from '@/modules/cloud/switchboard-url'
 import Fuse from 'fuse.js'
 import { type PackageEntry, type PackageModuleType } from './types'
 
@@ -9,7 +10,8 @@ export const packageModuleTypes: PackageModuleType[] = [
   'processors',
 ]
 
-export const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || 'https://registry.dev.vetra.io'
+// The package browser lists this deployment's registry (prod → registry.vetra.io).
+export const REGISTRY_URL = process.env.NEXT_PUBLIC_REGISTRY_URL || defaultPackageRegistry()
 
 const searchKeys = [
   'registryName',
