@@ -15,6 +15,7 @@ import {
   Loader2,
   FileText,
   Archive,
+  Box,
 } from 'lucide-react'
 import { useCallback, useMemo, useState, useRef, useEffect } from 'react'
 import { toast } from 'sonner'
@@ -77,6 +78,7 @@ const SERVICE_LABELS: Record<CloudEnvironmentServiceType, string> = {
   CLINT: 'Agent',
   DOCLING: 'Document Conversion',
   PAPERLESS: 'Document Archive',
+  SPECKLE: '3D Models',
 }
 
 const SERVICE_ICONS: Record<
@@ -89,6 +91,7 @@ const SERVICE_ICONS: Record<
   CLINT: Bot,
   DOCLING: FileText,
   PAPERLESS: Archive,
+  SPECKLE: Box,
 }
 
 /** Label for one custom-domain check (DNS or TLS) — see the Domain card. */
@@ -631,6 +634,7 @@ export function OverviewTab({
     CLINT: 'agent',
     DOCLING: 'docling',
     PAPERLESS: 'paperless',
+    SPECKLE: 'speckle',
   }
 
   const getServiceEnabled = (type: CloudEnvironmentServiceType) =>
