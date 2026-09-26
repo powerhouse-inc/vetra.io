@@ -17,6 +17,8 @@ export type ConfigRowProps = {
     /** Human-readable label; the key name then shows beneath it. */
     title?: string
     placeholder?: string
+    /** Returns why a value can't be saved, or undefined when it is fine. */
+    validate?: (value: string) => string | undefined
   }
   currentValue: string | null
   isSet: boolean
@@ -57,6 +59,11 @@ export function ConfigRow({ entry, currentValue, isSet, onSave, onDelete }: Conf
     if (draft.trim().length === 0) {
       toast.error('Value cannot be empty')
       throw new Error('Value cannot be empty')
+    }
+    const invalid = entry.validate?.(draft)
+    if (invalid) {
+      toast.error(invalid)
+      throw new Error(invalid)
     }
     setOptimisticDraft(draft)
     setEditing(false)
