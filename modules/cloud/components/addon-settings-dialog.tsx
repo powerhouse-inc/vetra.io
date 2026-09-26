@@ -33,9 +33,7 @@ export function AddonSettingsDialog({ addon, store, open, onOpenChange }: Props)
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>{addon.label} settings</DialogTitle>
-          <DialogDescription>
-            {addon.settingsNote ?? 'Saving a change restarts the reactor.'}
-          </DialogDescription>
+          <DialogDescription>Saving a change restarts the reactor.</DialogDescription>
         </DialogHeader>
         <Table>
           <TableHeader>
