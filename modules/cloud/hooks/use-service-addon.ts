@@ -16,7 +16,6 @@ type Params = {
   /** The add-on's web UI, for add-ons that serve one. */
   href?: string
   hrefLabel?: string
-  hrefHint?: string
 }
 
 // An add-on that is a plain on/off service in the env document: no version,
@@ -29,7 +28,6 @@ export function useServiceAddon({
   disableService,
   href,
   hrefLabel,
-  hrefHint,
 }: Params): AddonControl {
   const enabled = services?.find((s) => s.type === type)?.enabled ?? false
 
@@ -41,5 +39,5 @@ export function useServiceAddon({
     [type, prefix, enableService, disableService],
   )
 
-  return { enabled, toggle, href, hrefLabel, hrefHint }
+  return { enabled, toggle, href, hrefLabel }
 }

@@ -247,7 +247,6 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
         ? `https://${resolveGenericHost(subdomain, SPECKLE_PREFIX, false, baseDomain)}`
         : undefined,
       hrefLabel: 'Open Speckle',
-      hrefHint: 'Sign in with your admin email',
     }),
     workflows: useWorkflowsAddon({
       tenantId,
