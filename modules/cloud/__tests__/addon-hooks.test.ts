@@ -47,6 +47,45 @@ describe('useServiceAddon', () => {
   })
 })
 
+describe('useServiceAddon — SPECKLE', () => {
+  const href = 'https://tall-duck-ab12-speckle.vetra.io'
+  const setup = (services: CloudEnvironmentService[]) => {
+    const enableService = vi.fn().mockResolvedValue(undefined)
+    const disableService = vi.fn().mockResolvedValue(undefined)
+    const { result } = renderHook(() =>
+      useServiceAddon({
+        services,
+        type: 'SPECKLE',
+        prefix: 'speckle',
+        enableService,
+        disableService,
+        href,
+        hrefLabel: 'Open Speckle',
+      }),
+    )
+    return { result, enableService, disableService }
+  }
+
+  it('reads its own service only', () => {
+    expect(setup([service('PAPERLESS', true)]).result.current.enabled).toBe(false)
+    expect(setup([service('SPECKLE', true)]).result.current.enabled).toBe(true)
+  })
+
+  it('enables and disables SPECKLE by type and prefix', async () => {
+    const { result, enableService, disableService } = setup([])
+    await result.current.toggle(true)
+    expect(enableService).toHaveBeenCalledWith('SPECKLE', 'speckle')
+    await result.current.toggle(false)
+    expect(disableService).toHaveBeenCalledWith('SPECKLE', 'speckle')
+  })
+
+  it('passes its link through', () => {
+    const { result } = setup([service('SPECKLE', true)])
+    expect(result.current.href).toBe(href)
+    expect(result.current.hrefLabel).toBe('Open Speckle')
+  })
+})
+
 describe('useWorkflowsAddon', () => {
   const setup = (o: Partial<Parameters<typeof useWorkflowsAddon>[0]> = {}) => {
     const params = {
