@@ -40,6 +40,7 @@ const SERVICE_LABELS: Record<TenantService, string> = {
   FUSION: 'Fusion',
   DOCLING: 'Document Conversion',
   PAPERLESS: 'Document Archive',
+  SPECKLE: '3D Models',
 }
 
 type Props = {

@@ -1,4 +1,4 @@
-import { Archive, FileText, Workflow } from 'lucide-react'
+import { Archive, Box, FileText, Workflow } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
 import type { ConfigEntryType } from '../config/types'
@@ -19,8 +19,9 @@ export type AddonConfigField = {
 /** Prefixes the gitops reconciler expects. */
 export const DOCLING_PREFIX = 'docling'
 export const PAPERLESS_PREFIX = 'paperless'
+export const SPECKLE_PREFIX = 'speckle'
 
-export type AddonId = 'docling' | 'paperless' | 'workflows'
+export type AddonId = 'docling' | 'paperless' | 'speckle' | 'workflows'
 
 export type AddonDefinition = {
   id: AddonId
@@ -40,6 +41,10 @@ export type AddonControl = {
   /** Why the switch can't be used right now; renders it disabled. */
   unavailable?: string
   toggle: (enabled: boolean) => Promise<void>
+  /** Where the add-on's own web UI answers; shown as a link while it is enabled. */
+  href?: string
+  /** The link's text; defaults to "Open". */
+  hrefLabel?: string
 }
 
 /** Tenant config the settings dialog reads and writes. */
@@ -67,6 +72,15 @@ export const PAPERLESS_ADDON: AddonDefinition = {
   icon: Archive,
   description:
     'A private Paperless-ngx archive with OCR, wired to your switchboard for paperless-sync. Reserves ~1.5 GiB of memory. Documents stay in this environment; web access arrives with single sign-on.',
+  config: [],
+}
+
+export const SPECKLE_ADDON: AddonDefinition = {
+  id: 'speckle',
+  label: '3D Models (Speckle)',
+  icon: Box,
+  description:
+    'Runs a private Speckle server (~2 GiB) for CAD connectors (Archicad, Revit, Rhino) and installs the Speckle package so models sync into your drive. Sign in with your Renown account.',
   config: [],
 }
 
@@ -146,7 +160,12 @@ export const WORKFLOWS_ADDON: AddonDefinition = {
 }
 
 /** The add-ons, in display order. */
-export const ADDONS: readonly AddonDefinition[] = [DOCLING_ADDON, PAPERLESS_ADDON, WORKFLOWS_ADDON]
+export const ADDONS: readonly AddonDefinition[] = [
+  DOCLING_ADDON,
+  PAPERLESS_ADDON,
+  SPECKLE_ADDON,
+  WORKFLOWS_ADDON,
+]
 
 /** Keys managed from the Add-ons panel rather than by an installed package. */
 export const ADDON_CONFIG_KEYS = new Set<string>([

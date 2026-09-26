@@ -43,6 +43,7 @@ const SERVICE_LABELS: Record<TenantService, string> = {
   FUSION: 'Fusion',
   DOCLING: 'Document Conversion',
   PAPERLESS: 'Document Archive',
+  SPECKLE: '3D Models',
 }
 
 /** Human-readable relative time (e.g. "2m ago"). Keeps us off date-fns. */

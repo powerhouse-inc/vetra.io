@@ -5,22 +5,29 @@ import { useCallback } from 'react'
 import type { AddonControl } from '../lib/addons'
 import type { CloudEnvironmentService } from '../types'
 
+type ServiceAddonType = 'DOCLING' | 'PAPERLESS' | 'SPECKLE'
+
 type Params = {
   services: CloudEnvironmentService[] | undefined
-  type: 'DOCLING' | 'PAPERLESS'
+  type: ServiceAddonType
   prefix: string
-  enableService: (type: 'DOCLING' | 'PAPERLESS', prefix: string) => Promise<void>
-  disableService: (type: 'DOCLING' | 'PAPERLESS', prefix: string) => Promise<void>
+  enableService: (type: ServiceAddonType, prefix: string) => Promise<void>
+  disableService: (type: ServiceAddonType, prefix: string) => Promise<void>
+  /** The add-on's web UI, for add-ons that serve one. */
+  href?: string
+  hrefLabel?: string
 }
 
 // An add-on that is a plain on/off service in the env document: no version,
-// no size, no ingress.
+// no size, and at most its own fixed host (href).
 export function useServiceAddon({
   services,
   type,
   prefix,
   enableService,
   disableService,
+  href,
+  hrefLabel,
 }: Params): AddonControl {
   const enabled = services?.find((s) => s.type === type)?.enabled ?? false
 
@@ -32,5 +39,5 @@ export function useServiceAddon({
     [type, prefix, enableService, disableService],
   )
 
-  return { enabled, toggle }
+  return { enabled, toggle, href, hrefLabel }
 }
