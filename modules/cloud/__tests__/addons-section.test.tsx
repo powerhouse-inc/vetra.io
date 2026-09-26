@@ -1,8 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fireEvent, render, screen, waitFor } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { toast } from 'sonner'
 import { AddonsSection } from '@/modules/cloud/components/addons-section'
-import type { AddonConfigStore, AddonControl, AddonId } from '@/modules/cloud/lib/addons'
+import {
+  ADDON_CONFIG_KEYS,
+  type AddonConfigStore,
+  type AddonControl,
+  type AddonId,
+} from '@/modules/cloud/lib/addons'
 import type { CloudEnvironmentStatus } from '@/modules/cloud/types'
 
 type Overrides = {
@@ -136,6 +141,15 @@ describe('AddonsSection — links', () => {
     expect(link()?.getAttribute('rel')).toMatch(/noopener/)
   })
 
+  it('shows the sign-in hint only while enabled', () => {
+    const speckle = { href, hrefLabel: 'Open Speckle', hrefHint: 'Sign in with your admin email' }
+    const { unmount } = renderSection({ addons: { speckle: { ...speckle, enabled: true } } })
+    expect(screen.queryByText('Sign in with your admin email')).not.toBeNull()
+    unmount()
+    renderSection({ addons: { speckle } })
+    expect(screen.queryByText('Sign in with your admin email')).toBeNull()
+  })
+
   it('shows no link while it is disabled', () => {
     renderSection({ addons: { speckle: { enabled: false, href, hrefLabel: 'Open Speckle' } } })
     expect(link()).toBeNull()
@@ -189,7 +203,7 @@ describe('AddonsSection — settings', () => {
     expect(screen.queryByRole('button', { name: /workflows settings/i })).not.toBeNull()
     expect(screen.queryByRole('button', { name: /document conversion settings/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /document archive settings/i })).toBeNull()
-    expect(screen.queryByRole('button', { name: /3d models \(speckle\) settings/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /3d models \(speckle\) settings/i })).not.toBeNull()
   })
 
   it('disables settings until tenant config has loaded', () => {
@@ -228,5 +242,136 @@ describe('AddonsSection — confirmation', () => {
     rerender(<AddonsSection environmentStatus="READY" addons={addons(true)} />)
     await waitFor(() => expect(success).toHaveBeenCalledWith('Workflows enabled'))
     success.mockRestore()
+  })
+})
+
+describe('AddonsSection — Speckle admin account', () => {
+  const store = (o: Partial<AddonConfigStore> = {}): AddonConfigStore => ({
+    envVars: [],
+    secrets: [],
+    setVar: vi.fn().mockResolvedValue(undefined),
+    setSecret: vi.fn().mockResolvedValue(undefined),
+    deleteVar: vi.fn().mockResolvedValue(undefined),
+    deleteSecret: vi.fn().mockResolvedValue(undefined),
+    ...o,
+  })
+  const complete = () =>
+    store({
+      envVars: [{ key: 'SPECKLE_ADMIN_EMAIL', value: 'owner@example.com' }],
+      secrets: [{ key: 'SPECKLE_ADMIN_PASSWORD' }],
+    })
+  const dialogTitle = () => screen.queryByText('3D Models (Speckle) settings')
+  const cta = () => screen.queryByRole('button', { name: /set admin account/i })
+  const row = (title: string) => within(screen.getByText(title).closest('tr')!)
+  const openSettings = async () => {
+    fireEvent.click(screen.getByRole('button', { name: /3d models \(speckle\) settings/i }))
+    await waitFor(() => expect(dialogTitle()).not.toBeNull())
+  }
+  const enter = (title: string, value: string) => {
+    fireEvent.click(row(title).getByRole('button', { name: /^set$/i }))
+    fireEvent.change(row(title).getByRole('textbox'), { target: { value } })
+    fireEvent.click(row(title).getByRole('button', { name: /^save$/i }))
+  }
+
+  it('says the server is invite-only', () => {
+    renderSection()
+    expect(screen.queryByText(/invite-only; your admin account is created/i)).not.toBeNull()
+  })
+
+  it('hides its keys from the Packages section', () => {
+    expect(ADDON_CONFIG_KEYS.has('SPECKLE_ADMIN_EMAIL')).toBe(true)
+    expect(ADDON_CONFIG_KEYS.has('SPECKLE_ADMIN_PASSWORD')).toBe(true)
+  })
+
+  it('lists the admin email as a var and the password as a secret, both required', async () => {
+    renderSection({ configStore: store() })
+    await openSettings()
+    expect(row('Admin email').queryByText('var')).not.toBeNull()
+    expect(row('Admin email').queryByText('required')).not.toBeNull()
+    expect(row('Admin password').queryByText('secret')).not.toBeNull()
+    expect(row('Admin password').queryByText('required')).not.toBeNull()
+    expect(
+      screen.queryByText(/changing it here does not update an existing account/i),
+    ).not.toBeNull()
+    expect(screen.queryByText(/created from these when the server first starts/i)).not.toBeNull()
+  })
+
+  it('rejects an invalid email and saves a valid one', async () => {
+    const s = store()
+    renderSection({ configStore: s })
+    await openSettings()
+    enter('Admin email', 'not-an-email')
+    await waitFor(() => expect(row('Admin email').queryByRole('textbox')).not.toBeNull())
+    expect(s.setVar).not.toHaveBeenCalled()
+    fireEvent.change(row('Admin email').getByRole('textbox'), {
+      target: { value: 'owner@example.com' },
+    })
+    fireEvent.click(row('Admin email').getByRole('button', { name: /^save$/i }))
+    await waitFor(() =>
+      expect(s.setVar).toHaveBeenCalledWith('SPECKLE_ADMIN_EMAIL', 'owner@example.com'),
+    )
+  })
+
+  it('rejects a password shorter than 12 characters', async () => {
+    const s = store()
+    renderSection({ configStore: s })
+    await openSettings()
+    const password = () => row('Admin password').getByPlaceholderText('Enter new value')
+    fireEvent.click(row('Admin password').getByRole('button', { name: /^set$/i }))
+    fireEvent.change(password(), { target: { value: 'short' } })
+    fireEvent.click(row('Admin password').getByRole('button', { name: /^save$/i }))
+    await waitFor(() => expect(password()).not.toBeNull())
+    expect(s.setSecret).not.toHaveBeenCalled()
+    fireEvent.change(password(), { target: { value: 'long-enough-pass' } })
+    fireEvent.click(row('Admin password').getByRole('button', { name: /^save$/i }))
+    await waitFor(() =>
+      expect(s.setSecret).toHaveBeenCalledWith('SPECKLE_ADMIN_PASSWORD', 'long-enough-pass'),
+    )
+  })
+
+  it('opens its settings when switched on without an admin account', async () => {
+    const onToggle = vi.fn().mockResolvedValue(undefined)
+    renderSection({ addons: { speckle: { toggle: onToggle } }, configStore: store() })
+    fireEvent.click(screen.getByRole('switch', { name: /toggle 3d models/i }))
+    await waitFor(() => expect(onToggle).toHaveBeenCalledWith(true))
+    await waitFor(() => expect(dialogTitle()).not.toBeNull())
+  })
+
+  it('does not open its settings when the admin account is set', async () => {
+    const onToggle = vi.fn().mockResolvedValue(undefined)
+    renderSection({ addons: { speckle: { toggle: onToggle } }, configStore: complete() })
+    fireEvent.click(screen.getByRole('switch', { name: /toggle 3d models/i }))
+    await waitFor(() => expect(onToggle).toHaveBeenCalledWith(true))
+    expect(dialogTitle()).toBeNull()
+  })
+
+  it('offers "Set admin account" while on and incomplete', async () => {
+    renderSection({ addons: { speckle: { enabled: true } }, configStore: store() })
+    expect(cta()).not.toBeNull()
+    fireEvent.click(cta()!)
+    await waitFor(() => expect(dialogTitle()).not.toBeNull())
+  })
+
+  it('offers no call to action when off, complete, or before config loads', () => {
+    const { unmount: a } = renderSection({ configStore: store() })
+    expect(cta()).toBeNull()
+    a()
+    const { unmount: b } = renderSection({
+      addons: { speckle: { enabled: true } },
+      configStore: complete(),
+    })
+    expect(cta()).toBeNull()
+    b()
+    renderSection({ addons: { speckle: { enabled: true } } })
+    expect(cta()).toBeNull()
+  })
+
+  // Workflows also has a required setting but no setupLabel: its flow is unchanged.
+  it('leaves add-ons without a setup label alone', async () => {
+    const onToggle = vi.fn().mockResolvedValue(undefined)
+    renderSection({ addons: { workflows: { toggle: onToggle } }, configStore: store() })
+    fireEvent.click(screen.getByRole('switch', { name: /toggle workflows/i }))
+    await waitFor(() => expect(onToggle).toHaveBeenCalledWith(true))
+    expect(screen.queryByText('Workflows settings')).toBeNull()
   })
 })

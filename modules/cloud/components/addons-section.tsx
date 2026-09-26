@@ -55,7 +55,7 @@ export function AddonsSection({ environmentStatus, addons, configStore }: Props)
       </div>
 
       {ADDONS.map((addon) => {
-        const { enabled, unavailable, toggle, href, hrefLabel } = addons[addon.id]
+        const { enabled, unavailable, toggle, href, hrefLabel, hrefHint } = addons[addon.id]
         return (
           <AddonRow
             key={addon.id}
@@ -68,6 +68,7 @@ export function AddonsSection({ environmentStatus, addons, configStore }: Props)
             note={unavailable ?? addon.note}
             href={href}
             hrefLabel={hrefLabel}
+            hrefHint={hrefHint}
           />
         )
       })}
@@ -90,6 +91,17 @@ type RowProps = {
   note?: string
   href?: string
   hrefLabel?: string
+  hrefHint?: string
+}
+
+/** Whether a required setting has no value yet; false until config has loaded. */
+function missingRequired(addon: AddonDefinition, store: AddonConfigStore | undefined) {
+  if (!store) return false
+  return addon.config.some(
+    (f) =>
+      f.required &&
+      !(f.type === 'secret' ? store.secrets : store.envVars).some((e) => e.key === f.name),
+  )
 }
 
 function AddonRow({
@@ -102,6 +114,7 @@ function AddonRow({
   note,
   href,
   hrefLabel,
+  hrefHint,
 }: RowProps) {
   const { label, icon: Icon } = addon
   const { value: enabled, set: setEnabled } = useOptimistic(initial, onToggle ?? noop)
@@ -127,6 +140,7 @@ function AddonRow({
     try {
       await setEnabled(checked)
       setAwaiting({ value: checked, leftReady: false })
+      if (checked && addon.setupLabel && missingRequired(addon, configStore)) setSettingsOpen(true)
     } catch (error) {
       console.error(`Failed to toggle ${label}:`, error)
       toast.error(error instanceof Error ? error.message : `Failed to toggle ${label}`, {
@@ -172,15 +186,28 @@ function AddonRow({
             {/* Follows the saved state, not the optimistic switch: the host
                 only exists once the change is deployed. */}
             {href && initial && (
-              <a
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-primary mt-1 inline-flex items-center gap-1 text-xs font-medium hover:underline"
+              <p className="mt-1 flex flex-wrap items-center gap-x-2 text-xs">
+                <a
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-primary inline-flex items-center gap-1 font-medium hover:underline"
+                >
+                  {hrefLabel ?? 'Open'}
+                  <ExternalLink className="h-3 w-3" />
+                </a>
+                {hrefHint && <span className="text-muted-foreground">{hrefHint}</span>}
+              </p>
+            )}
+            {addon.setupLabel && enabled && missingRequired(addon, configStore) && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="mt-2 h-7 text-xs"
+                onClick={() => setSettingsOpen(true)}
               >
-                {hrefLabel ?? 'Open'}
-                <ExternalLink className="h-3 w-3" />
-              </a>
+                {addon.setupLabel}
+              </Button>
             )}
           </div>
         </div>

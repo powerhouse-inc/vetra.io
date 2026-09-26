@@ -14,6 +14,8 @@ export type AddonConfigField = {
   default?: string
   placeholder?: string
   required?: boolean
+  /** Returns why a value can't be saved, or undefined when it is fine. */
+  validate?: (value: string) => string | undefined
 }
 
 /** Prefixes the gitops reconciler expects. */
@@ -33,6 +35,14 @@ export type AddonDefinition = {
   note?: string
   /** Settings the add-on exposes; empty hides its settings button. */
   config: AddonConfigField[]
+  /** What saving a setting does, under the settings dialog's title. */
+  settingsNote?: string
+  /**
+   * Label of a call to action shown on the card while the add-on is on but a
+   * required setting is missing. Setting it also opens the settings dialog
+   * when the add-on is switched on without them.
+   */
+  setupLabel?: string
 }
 
 /** An add-on's current state and its toggle; each add-on has its own hook. */
@@ -45,6 +55,8 @@ export type AddonControl = {
   href?: string
   /** The link's text; defaults to "Open". */
   hrefLabel?: string
+  /** A short hint beside the link. */
+  hrefHint?: string
 }
 
 /** Tenant config the settings dialog reads and writes. */
@@ -80,8 +92,31 @@ export const SPECKLE_ADDON: AddonDefinition = {
   label: '3D Models (Speckle)',
   icon: Box,
   description:
-    'Runs a private Speckle server (~2 GiB) for CAD connectors (Archicad, Revit, Rhino) and installs the Speckle package so models sync into your drive.',
-  config: [],
+    'Runs a private Speckle server (~2 GiB) for CAD connectors (Archicad, Revit, Rhino) and installs the Speckle package so models sync into your drive. Invite-only; your admin account is created from the credentials you set here.',
+  settingsNote: 'Your Speckle admin account is created from these when the server first starts.',
+  setupLabel: 'Set admin account',
+  config: [
+    {
+      name: 'SPECKLE_ADMIN_EMAIL',
+      type: 'var',
+      title: 'Admin email',
+      description: 'The email you sign in to Speckle with. Invite everyone else from there.',
+      placeholder: 'you@example.com',
+      required: true,
+      validate: (value) =>
+        /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim()) ? undefined : 'Enter a valid email address',
+    },
+    {
+      name: 'SPECKLE_ADMIN_PASSWORD',
+      type: 'secret',
+      title: 'Admin password',
+      description:
+        'Sets the initial password of your Speckle admin account. Change it later in Speckle; changing it here does not update an existing account.',
+      required: true,
+      validate: (value) =>
+        value.length >= 12 ? undefined : 'The password needs at least 12 characters',
+    },
+  ],
 }
 
 export const WORKFLOWS_ADDON: AddonDefinition = {
