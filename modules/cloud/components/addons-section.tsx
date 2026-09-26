@@ -1,6 +1,6 @@
 'use client'
 
-import { Settings2 } from 'lucide-react'
+import { ExternalLink, Settings2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -50,12 +50,12 @@ export function AddonsSection({ environmentStatus, addons, configStore }: Props)
       <div>
         <h2 className="text-lg font-semibold">Add-ons</h2>
         <p className="text-muted-foreground text-xs">
-          Optional capabilities that run inside this environment. They have no public URL.
+          Optional capabilities that run inside this environment. Most have no public URL.
         </p>
       </div>
 
       {ADDONS.map((addon) => {
-        const { enabled, unavailable, toggle } = addons[addon.id]
+        const { enabled, unavailable, toggle, href, hrefLabel } = addons[addon.id]
         return (
           <AddonRow
             key={addon.id}
@@ -66,6 +66,8 @@ export function AddonsSection({ environmentStatus, addons, configStore }: Props)
             environmentStatus={environmentStatus}
             configStore={configStore}
             note={unavailable ?? addon.note}
+            href={href}
+            hrefLabel={hrefLabel}
           />
         )
       })}
@@ -86,6 +88,8 @@ type RowProps = {
   environmentStatus: CloudEnvironmentStatus
   configStore?: AddonConfigStore
   note?: string
+  href?: string
+  hrefLabel?: string
 }
 
 function AddonRow({
@@ -96,6 +100,8 @@ function AddonRow({
   environmentStatus,
   configStore,
   note,
+  href,
+  hrefLabel,
 }: RowProps) {
   const { label, icon: Icon } = addon
   const { value: enabled, set: setEnabled } = useOptimistic(initial, onToggle ?? noop)
@@ -163,6 +169,19 @@ function AddonRow({
             </div>
             <p className="text-muted-foreground mt-1 text-xs">{addon.description}</p>
             {note && <p className="text-muted-foreground/70 mt-1 text-xs">{note}</p>}
+            {/* Follows the saved state, not the optimistic switch: the host
+                only exists once the change is deployed. */}
+            {href && initial && (
+              <a
+                href={href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary mt-1 inline-flex items-center gap-1 text-xs font-medium hover:underline"
+              >
+                {hrefLabel ?? 'Open'}
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
           </div>
         </div>
         <div className="flex shrink-0 items-center gap-2">
