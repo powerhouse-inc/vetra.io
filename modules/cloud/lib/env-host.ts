@@ -23,8 +23,9 @@ export function resolveGenericHost(
 /**
  * Service types that render an Ingress and can therefore own the apex —
  * MIRRORS vetra-cloud-package shared/apex.ts APEX_CAPABLE_TYPES. Add-ons such
- * as DOCLING / PAPERLESS have no ingress and must not count, or switching one
- * on would "move" a lone service off the bare subdomain in the UI only.
+ * as DOCLING / PAPERLESS have no ingress, and SPECKLE always answers on its own
+ * `<subdomain>-speckle` host, so none of them may count, or switching one on
+ * would "move" a lone service off the bare subdomain in the UI only.
  */
 export const APEX_CAPABLE_TYPES: readonly string[] = ['CONNECT', 'SWITCHBOARD', 'FUSION', 'CLINT']
 
