@@ -80,7 +80,7 @@ export const SPECKLE_ADDON: AddonDefinition = {
   label: '3D Models (Speckle)',
   icon: Box,
   description:
-    'Runs a private Speckle server (~2 GiB) for CAD connectors (Archicad, Revit, Rhino) and installs the Speckle package so models sync into your drive.',
+    'Runs a private Speckle server (~2 GiB) for CAD connectors (Archicad, Revit, Rhino) and installs the Speckle package so models sync into your drive. Sign in with your Renown account.',
   config: [],
 }
 
