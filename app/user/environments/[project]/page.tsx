@@ -32,6 +32,7 @@ import { useTenantConfig } from '@/modules/cloud/hooks/use-tenant-config'
 import {
   DOCLING_PREFIX,
   PAPERLESS_PREFIX,
+  SPECKLE_PREFIX,
   type AddonConfigStore,
   type AddonControl,
   type AddonId,
@@ -219,6 +220,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   )
 
   const { setRuntimeConfig, runtimeConfigSupported, enableService, disableService } = detail
+  const baseDomain = state?.genericBaseDomain ?? 'vetra.io'
   const addons: Record<AddonId, AddonControl> = {
     docling: useServiceAddon({
       services: state?.services,
@@ -233,6 +235,18 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
       prefix: PAPERLESS_PREFIX,
       enableService,
       disableService,
+    }),
+    speckle: useServiceAddon({
+      services: state?.services,
+      type: 'SPECKLE',
+      prefix: SPECKLE_PREFIX,
+      enableService,
+      disableService,
+      // Never at the apex: the chart always serves Speckle on its own host.
+      href: subdomain
+        ? `https://${resolveGenericHost(subdomain, SPECKLE_PREFIX, false, baseDomain)}`
+        : undefined,
+      hrefLabel: 'Open Speckle',
     }),
     workflows: useWorkflowsAddon({
       tenantId,
@@ -279,7 +293,6 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   }
 
   const displayName = state?.label || environment?.name || 'Environment'
-  const baseDomain = state?.genericBaseDomain ?? 'vetra.io'
 
   // Build visit URLs from enabled services
   const enabledServices = state?.services.filter((s) => s.enabled) ?? []
