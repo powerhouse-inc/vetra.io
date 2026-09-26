@@ -20,6 +20,7 @@ const control = (o: Partial<AddonControl> = {}): AddonControl => ({
 const addonsFrom = (o: Overrides['addons'] = {}): Record<AddonId, AddonControl> => ({
   docling: control(o.docling),
   paperless: control(o.paperless),
+  speckle: control(o.speckle),
   workflows: control(o.workflows),
 })
 
@@ -35,6 +36,7 @@ const renderSection = (o: Overrides = {}) =>
 const cases = [
   { id: 'docling' as const, name: /toggle document conversion/i },
   { id: 'paperless' as const, name: /toggle document archive/i },
+  { id: 'speckle' as const, name: /toggle 3d models \(speckle\)/i },
   { id: 'workflows' as const, name: /toggle workflows/i },
 ]
 
@@ -114,11 +116,44 @@ describe('AddonsSection — independence and cost text', () => {
     expect(screen.queryByText(/one document at a time/i)).not.toBeNull()
     expect(screen.queryByText(/reserves ~1\.5\s*GiB/i)).not.toBeNull()
     expect(screen.queryByText(/single sign-on/i)).not.toBeNull()
+    expect(screen.queryByText(/private speckle server \(~2\s*GiB\)/i)).not.toBeNull()
   })
 
   it('shows the unavailable note once, not per add-on', () => {
     renderSection({ environmentStatus: 'STOPPED' })
     expect(screen.getAllByText(/unavailable while the environment is stopped/i)).toHaveLength(1)
+  })
+})
+
+describe('AddonsSection — links', () => {
+  const href = 'https://tall-duck-ab12-speckle.vetra.io'
+  const link = () => screen.queryByRole('link', { name: /open speckle/i })
+
+  it('links to the add-on while it is enabled', () => {
+    renderSection({ addons: { speckle: { enabled: true, href, hrefLabel: 'Open Speckle' } } })
+    expect(link()?.getAttribute('href')).toBe(href)
+    expect(link()?.getAttribute('target')).toBe('_blank')
+    expect(link()?.getAttribute('rel')).toMatch(/noopener/)
+  })
+
+  it('shows no link while it is disabled', () => {
+    renderSection({ addons: { speckle: { enabled: false, href, hrefLabel: 'Open Speckle' } } })
+    expect(link()).toBeNull()
+  })
+
+  // The host only exists once the change is deployed, so an optimistic switch
+  // must not surface a link to it.
+  it('shows no link right after switching on', async () => {
+    const onToggle = vi.fn().mockResolvedValue(undefined)
+    renderSection({ addons: { speckle: { href, hrefLabel: 'Open Speckle', toggle: onToggle } } })
+    fireEvent.click(screen.getByRole('switch', { name: /toggle 3d models/i }))
+    await waitFor(() => expect(onToggle).toHaveBeenCalledWith(true))
+    expect(link()).toBeNull()
+  })
+
+  it('adds no link to add-ons without an href', () => {
+    renderSection({ addons: { docling: { enabled: true }, paperless: { enabled: true } } })
+    expect(screen.queryAllByRole('link')).toHaveLength(0)
   })
 })
 
@@ -154,6 +189,7 @@ describe('AddonsSection — settings', () => {
     expect(screen.queryByRole('button', { name: /workflows settings/i })).not.toBeNull()
     expect(screen.queryByRole('button', { name: /document conversion settings/i })).toBeNull()
     expect(screen.queryByRole('button', { name: /document archive settings/i })).toBeNull()
+    expect(screen.queryByRole('button', { name: /3d models \(speckle\) settings/i })).toBeNull()
   })
 
   it('disables settings until tenant config has loaded', () => {
