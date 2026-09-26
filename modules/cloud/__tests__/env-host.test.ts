@@ -106,6 +106,18 @@ describe('effectiveApexType — non-routable add-ons', () => {
   })
   it('an add-on alone never claims the apex', () => {
     expect(effectiveApexType([svc('DOCLING')], null)).toBeNull()
+    expect(effectiveApexType([svc('SPECKLE')], null)).toBeNull()
+  })
+  it('SPECKLE does not take the apex away from a lone CLINT studio', () => {
+    const s = [svc('CLINT'), svc('SPECKLE')]
+    expect(effectiveApexType(s, null)).toBe('CLINT')
+    expect(isTypeAtApex(s, null, 'CLINT')).toBe(true)
+    expect(isTypeAtApex(s, null, 'SPECKLE')).toBe(false)
+  })
+  it('SPECKLE answers on its own flattened host', () => {
+    expect(resolveGenericHost('tall-duck-ab12', 'speckle', false, 'vetra.io')).toBe(
+      'tall-duck-ab12-speckle.vetra.io',
+    )
   })
 })
 
@@ -179,6 +191,7 @@ describe('customDomainDnsRecords', () => {
       svc('FUSION'),
       svc('DOCLING'),
       svc('PAPERLESS'),
+      svc('SPECKLE'),
       svc('CLINT', true, 'vetra-agent'),
     ]
     expect(customDomainDnsRecords(s, null, 'kv.example')).toEqual([
