@@ -5,7 +5,6 @@ import { LoginMethod } from '@renown/sdk/wallet'
 import { Loader2, Wallet } from 'lucide-react'
 import { useState } from 'react'
 import { useLoginModal } from '@/modules/shared/components/renown/login-modal-context'
-import { walletAdapters } from '@/modules/shared/config/wallet-adapters'
 import {
   Dialog,
   DialogContent,
@@ -19,7 +18,7 @@ import {
 export function RenownLoginModal() {
   const { open, closeLogin } = useLoginModal()
   const { login, pending, status, error } = useRenownAuth()
-  const methods = useRenownLoginMethods(walletAdapters())
+  const methods = useRenownLoginMethods()
 
   const busy = pending || status === 'loading' || status === 'checking'
 
