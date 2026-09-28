@@ -10,6 +10,7 @@ import type { PackageManifest } from '@/modules/cloud/config/types'
 import { useRegistryManifests } from '@/modules/cloud/hooks/use-registry-search'
 import { useTenantConfig } from '@/modules/cloud/hooks/use-tenant-config'
 import { ADDON_CONFIG_KEYS } from '@/modules/cloud/lib/addons'
+import { MANAGED_SECRET_KEYS } from '@/modules/cloud/config/managed'
 import type { CloudPackage } from '@/modules/cloud/types'
 import {
   Table,
@@ -102,7 +103,10 @@ export function PackagesSection({
     (v) => !declaredKeyNames.has(v.key) && !ADDON_CONFIG_KEYS.has(v.key),
   )
   const orphanSecrets = secrets.filter(
-    (s) => !declaredKeyNames.has(s.key) && !ADDON_CONFIG_KEYS.has(s.key),
+    (s) =>
+      !declaredKeyNames.has(s.key) &&
+      !ADDON_CONFIG_KEYS.has(s.key) &&
+      !MANAGED_SECRET_KEYS.has(s.key),
   )
 
   // While manifests are still in-flight we can't yet tell "manifest missing"
