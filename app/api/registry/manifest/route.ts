@@ -1,4 +1,5 @@
 import { type NextRequest, NextResponse } from 'next/server'
+import { withoutManagedConfig } from '@/modules/cloud/config/managed'
 
 export const dynamic = 'force-dynamic'
 
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
     // = "./ph-pirate-agent.png") against the package's CDN root so the
     // browser can fetch them without knowing the registry layout.
     const resolved = resolveManifestAssets(manifest, cdnUrl)
-    return NextResponse.json(resolved)
+    return NextResponse.json(withoutManagedConfig(resolved))
   } catch (error) {
     console.error('Registry manifest API error:', error)
     return NextResponse.json({ error: 'Failed to fetch manifest' }, { status: 500 })
