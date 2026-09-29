@@ -39,7 +39,7 @@ export const envSchema = z.object({
   // Package registry a newly-created Vetra Studio publishes/installs against
   // (stamped as the env's defaultPackageRegistry + the CLINT config registry).
   // Per-deployment so prod studios use the prod registry and staging uses dev.
-  // Falls back to the bundled default (registry.dev.vetra.io) when unset.
+  // Falls back to the bundled default (registry.vetra.io, prod) when unset.
   NEXT_PUBLIC_STUDIO_REGISTRY: z
     .url({ error: 'Must be a valid URL for the studio package registry.' })
     .optional(),
