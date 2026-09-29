@@ -3,7 +3,8 @@ import { defaultPackageRegistry, studioRegistry } from '@/modules/cloud/switchbo
 
 /*
   Every new environment (projects as well as studios) takes its package
-  registry from the deployment: prod → registry.vetra.io, staging → dev. The
+  registry from the deployment: prod → registry.vetra.io, staging → dev (set
+  explicitly). Unset falls back to prod. The
   project flow used to hardcode the dev registry, which put 25 prod tenants on
   it; its auto-heal even wrote the dev registry into prod environments.
 */
@@ -25,8 +26,13 @@ describe('defaultPackageRegistry', () => {
     expect(defaultPackageRegistry()).toBe('https://registry.vetra.io')
   })
 
-  it('falls back to the dev registry when unset (staging, local)', () => {
+  it('falls back to the prod registry when unset, so no deployment can stamp dev by accident', () => {
     setEnv(undefined)
+    expect(defaultPackageRegistry()).toBe('https://registry.vetra.io')
+  })
+
+  it('uses the dev registry only when a deployment asks for it (staging)', () => {
+    setEnv('https://registry.dev.vetra.io')
     expect(defaultPackageRegistry()).toBe('https://registry.dev.vetra.io')
   })
 

@@ -21,7 +21,7 @@ export const STUDIO_AGENT_SIZE: CloudResourceSize = 'VETRA_AGENT_XXL'
 export const STUDIO_SERVICE_COMMAND = 'vetra'
 // The studio package registry is now per-deployment: see `studioRegistry()` in
 // modules/cloud/switchboard-url.ts (NEXT_PUBLIC_STUDIO_REGISTRY, default
-// registry.dev.vetra.io). prod sets it to registry.vetra.io.
+// registry.vetra.io). staging sets it to registry.dev.vetra.io.
 export const STUDIO_BASE_DOMAIN = 'vetra.io'
 export const STUDIO_ENV_LABEL = 'Vetra Studio'
 /** Non-secret env baked into every freshly-provisioned studio's CLINT agent. */
