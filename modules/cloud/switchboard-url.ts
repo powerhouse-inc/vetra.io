@@ -20,11 +20,12 @@ export function cloudSwitchboardUrl(): string {
  * to: prod → registry.vetra.io, staging → the dev registry. Set per deployment
  * via NEXT_PUBLIC_STUDIO_REGISTRY (named for studios, where it started; it now
  * covers every new environment). Read at call time (runtime __ENV on the
- * client, process.env on the server), defaulting to the dev registry so
- * staging/local behaviour is unchanged when unset.
+ * client, process.env on the server). Unset falls back to the PROD registry, so
+ * no deployment can stamp registry.dev.vetra.io on an environment by accident;
+ * staging sets the dev registry explicitly.
  */
 export function defaultPackageRegistry(): string {
-  return readEnv('NEXT_PUBLIC_STUDIO_REGISTRY') || 'https://registry.dev.vetra.io'
+  return readEnv('NEXT_PUBLIC_STUDIO_REGISTRY') || 'https://registry.vetra.io'
 }
 
 /** Package registry a newly-created Vetra Studio publishes/installs against. */
