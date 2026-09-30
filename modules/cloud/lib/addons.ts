@@ -62,7 +62,7 @@ export const DOCLING_ADDON: AddonDefinition = {
   label: 'Document Conversion',
   icon: FileText,
   description:
-    'Converts PDF, DOCX and images into documents your reactor can index. Runs privately inside this environment — no public URL. Reserves ~2 GiB of memory and converts one document at a time.',
+    'Converts PDF, DOCX and images into documents your reactor can index, and powers the Docling blocks in Workflows. Runs privately inside this environment — no public URL. Reserves ~2 GiB of memory and converts one document at a time.',
   config: [],
 }
 
