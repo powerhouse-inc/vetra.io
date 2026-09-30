@@ -93,5 +93,5 @@ export function PackageCard(props: {
 }
 
 function PurpleHighlighter(props: { textToHighlight: string; searchWords: string[] }) {
-  return <Highlighter {...props} highlightClassName="bg-purple-30" />
+  return <Highlighter {...props} autoEscape highlightClassName="bg-purple-30" />
 }

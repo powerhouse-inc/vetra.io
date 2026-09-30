@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { packagesShowUrl } from '../search-params'
+import { packagesPageUrl, packagesShowUrl } from '../search-params'
 
 describe('packagesShowUrl', () => {
   it('sets the show param with no other params', () => {
@@ -27,5 +27,26 @@ describe('packagesShowUrl', () => {
     expect(packagesShowUrl('recommended', { search: undefined, show: 'bogus' })).toBe(
       '/packages?show=recommended',
     )
+  })
+})
+
+describe('packagesShowUrl page handling', () => {
+  it('resets the page when switching views', () => {
+    expect(packagesShowUrl('all', { search: 'billing', page: '3' })).toBe(
+      '/packages?search=billing&show=all',
+    )
+  })
+})
+
+describe('packagesPageUrl', () => {
+  it('sets the page and preserves other params', () => {
+    expect(
+      packagesPageUrl(2, { categories: ['finance', 'analytics'], show: 'all', page: '5' }),
+    ).toBe('/packages?categories=finance&categories=analytics&show=all&page=2')
+  })
+
+  it('drops the page param for the first page', () => {
+    expect(packagesPageUrl(1, { search: 'billing', page: '2' })).toBe('/packages?search=billing')
+    expect(packagesPageUrl(1)).toBe('/packages')
   })
 })

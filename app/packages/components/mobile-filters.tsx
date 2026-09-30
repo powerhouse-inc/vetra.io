@@ -35,6 +35,7 @@ export function MobileFilters(props: {
     setFilters((prev) => ({
       ...prev,
       [key]: [...new Set([...(prev[key] ?? []), value])],
+      page: null,
     })).catch(console.error)
   }
 
@@ -45,6 +46,7 @@ export function MobileFilters(props: {
     setFilters((prev) => ({
       ...prev,
       [key]: [...new Set(prev[key]?.filter((v) => v !== value))],
+      page: null,
     })).catch(console.error)
   }
 

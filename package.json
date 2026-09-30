@@ -76,7 +76,6 @@
     "document-model": "6.2.3-dev.28",
     "embla-carousel-react": "^8.6.0",
     "framer-motion": "^12.38.0",
-    "fuse.js": "^7.3.0",
     "graphql": "^16.11.0",
     "graphql-request": "^7.2.0",
     "graphql-ws": "^6.0.6",

@@ -1,13 +1,14 @@
 'use client'
 
-import { useQueryState } from 'nuqs'
+import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs'
 import { Search as SearchIcon } from 'lucide-react'
 import { Input } from '@/modules/shared/components/ui/input'
 
 export function Search() {
-  const [searchText, setSearchText] = useQueryState('search', {
-    shallow: false,
-  })
+  const [{ search: searchText }, setParams] = useQueryStates(
+    { search: parseAsString, page: parseAsInteger },
+    { shallow: false },
+  )
 
   return (
     <div className="relative">
@@ -19,7 +20,7 @@ export function Search() {
         aria-label="Search packages"
         value={searchText ?? ''}
         onChange={(e) => {
-          setSearchText(e.currentTarget.value).catch(console.error)
+          setParams({ search: e.currentTarget.value, page: null }).catch(console.error)
         }}
       />
     </div>
