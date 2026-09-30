@@ -17,6 +17,8 @@ interface PackageListProps {
     searchWords: string[]
     recommended?: boolean
   }[]
+  /** Matches across every page; defaults to this page's count. */
+  total?: number
 }
 
 type SortKey = 'name' | 'category' | 'publisher' | 'modules'
@@ -45,7 +47,7 @@ function getModuleBreakdown(m: Manifest) {
   return parts
 }
 
-export function PackageList({ results }: PackageListProps) {
+export function PackageList({ results, total = results.length }: PackageListProps) {
   const [view, setView] = useState<'grid' | 'table'>('grid')
   const [sortKey, setSortKey] = useState<SortKey>('name')
   const [sortDir, setSortDir] = useState<SortDir>('asc')
@@ -86,7 +88,7 @@ export function PackageList({ results }: PackageListProps) {
     <div>
       <div className="mb-4 flex items-center justify-between">
         <p className="text-muted-foreground text-sm">
-          {results.length} package{results.length !== 1 ? 's' : ''}
+          {total} package{total !== 1 ? 's' : ''}
         </p>
         <div className="border-muted flex rounded-lg border-[0.5px] p-0.5">
           <Button

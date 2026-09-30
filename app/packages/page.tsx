@@ -1,4 +1,3 @@
-import { type PackageInfo } from '@powerhousedao/shared'
 import { type SearchParams } from 'nuqs/server'
 import { Search as SearchIcon } from 'lucide-react'
 import {
@@ -11,16 +10,17 @@ import {
 } from '@/modules/shared/components/ui/breadcrumb'
 import Link from 'next/link'
 import { Button } from '@/modules/shared/components/ui/button'
-import { loadSearchParams, packagesShowUrl } from './lib/search-params'
+import { loadSearchParams, packagesPageUrl, packagesShowUrl } from './lib/search-params'
 import { recommendedNames } from './lib/recommended'
 import { Filters } from './components/filters'
 import { MobileFilters } from './components/mobile-filters'
-import { fuse, packageModuleTypes, REGISTRY_URL } from './lib/constants'
-import { map, unique, filter, isTruthy } from 'remeda'
-import { filterEntries, getSearchWords } from './lib/utils'
-import { type PackageEntry } from './lib/types'
+import { packageModuleTypes } from './lib/constants'
+import { listPackages, npmName } from './lib/registry'
 import { PackageList } from './components/package-list'
+import { PackagePagination } from './components/package-pagination'
 import { CreatePackageModal } from './components/create-package-modal'
+
+const PAGE_SIZE = 30
 
 export const metadata: unknown = {
   title: 'Vetra Packages',
@@ -61,37 +61,38 @@ type PageProps = {
 
 export default async function PackagesPage({ searchParams }: PageProps) {
   const raw = await searchParams
-  const { search, show, ...filters } = await loadSearchParams(searchParams)
+  const { search, show, page, moduleTypes, categories, publisherNames } =
+    await loadSearchParams(searchParams)
   const recommended = recommendedNames()
   const effectiveShow = recommended.size > 0 ? (show ?? 'recommended') : 'all'
-  const packagesRes = await fetch(`${REGISTRY_URL}/packages`, {
-    next: { revalidate: 30 },
-  })
-  const allPackages = (await packagesRes.json()) as PackageInfo[]
-  const packages =
-    effectiveShow === 'recommended'
-      ? filter(allPackages, (p) => recommended.has(p.name.toLowerCase()))
-      : allPackages
-  const entries = filter(
-    map(packages, (p) => ({ registryName: p.name, manifest: p.manifest })),
-    (e): e is PackageEntry => isTruthy(e.manifest),
+  const currentPage = Math.max(page ?? 1, 1)
+  const result = await listPackages(
+    {
+      search,
+      names: effectiveShow === 'recommended' ? [...recommended] : null,
+      categories,
+      publishers: publisherNames,
+      moduleTypes,
+      limit: PAGE_SIZE,
+      offset: (currentPage - 1) * PAGE_SIZE,
+    },
+    { detail: 'full', init: { next: { revalidate: 30 } } },
   )
-  const categoryOptions = unique(
-    filter(
-      map(entries, (e) => e.manifest.category),
-      isTruthy,
-    ),
+  const results = result.items.flatMap((p) =>
+    p.manifest
+      ? [
+          {
+            manifest: p.manifest,
+            registryName: npmName(p),
+            searchWords: search ? [search] : [],
+            recommended: recommended.has(p.name.toLowerCase()),
+          },
+        ]
+      : [],
   )
-  const publisherNameOptions = unique(
-    filter(
-      map(entries, (e) => e.manifest.publisher?.name),
-      isTruthy,
-    ),
-  )
-  const filteredEntries = filterEntries(entries, filters)
-  fuse.setCollection(filteredEntries)
-
-  const searchResult = fuse.search(search ?? '')
+  const categoryOptions = result.facets.categories
+  const publisherNameOptions = result.facets.publishers
+  const pageCount = Math.ceil(result.total / PAGE_SIZE)
 
   return (
     <div className="container mx-auto mt-20 max-w-screen-xl space-y-8 px-6 py-8">
@@ -153,10 +154,15 @@ export default async function PackagesPage({ searchParams }: PageProps) {
 
         {/* Package Grid */}
         <div className="lg:col-span-3">
-          {searchResult.length === 0 ? (
+          {results.length === 0 ? (
             <div className="text-muted-foreground flex flex-col items-center justify-center gap-3 py-20">
               <SearchIcon className="size-10 opacity-50" />
               <p className="text-sm">No packages match the current filters</p>
+              {result.total > 0 && (
+                <Button asChild variant="outline" size="sm">
+                  <Link href={packagesPageUrl(1, raw)}>Back to the first page</Link>
+                </Button>
+              )}
               {effectiveShow === 'recommended' && (
                 <Button asChild variant="outline" size="sm">
                   <Link href={packagesShowUrl('all', raw)}>Show all packages</Link>
@@ -164,14 +170,10 @@ export default async function PackagesPage({ searchParams }: PageProps) {
               )}
             </div>
           ) : (
-            <PackageList
-              results={searchResult.map(({ item, matches }) => ({
-                manifest: item.manifest,
-                registryName: item.registryName,
-                searchWords: getSearchWords(matches),
-                recommended: recommended.has(item.registryName.toLowerCase()),
-              }))}
-            />
+            <div className="space-y-6">
+              <PackageList results={results} total={result.total} />
+              <PackagePagination page={currentPage} pageCount={pageCount} raw={raw} />
+            </div>
           )}
         </div>
       </div>
