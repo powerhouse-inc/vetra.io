@@ -1,8 +1,8 @@
 'use client'
 
 import { type Manifest } from '@powerhousedao/shared'
-import { ArrowDown, ArrowUp, ArrowUpDown, LayoutGrid, List, Star } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { LayoutGrid, List, Star } from 'lucide-react'
+import { useState } from 'react'
 import { capitalCase } from 'change-case'
 import Link from 'next/link'
 import { Button } from '@/modules/shared/components/ui/button'
@@ -20,9 +20,6 @@ interface PackageListProps {
   /** Matches across every page; defaults to this page's count. */
   total?: number
 }
-
-type SortKey = 'name' | 'category' | 'publisher' | 'modules'
-type SortDir = 'asc' | 'desc'
 
 function getModuleCount(m: Manifest) {
   return (
@@ -49,40 +46,6 @@ function getModuleBreakdown(m: Manifest) {
 
 export function PackageList({ results, total = results.length }: PackageListProps) {
   const [view, setView] = useState<'grid' | 'table'>('grid')
-  const [sortKey, setSortKey] = useState<SortKey>('name')
-  const [sortDir, setSortDir] = useState<SortDir>('asc')
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((d) => (d === 'asc' ? 'desc' : 'asc'))
-    } else {
-      setSortKey(key)
-      setSortDir('asc')
-    }
-  }
-
-  const sorted = useMemo(() => {
-    const copy = [...results]
-    copy.sort((a, b) => {
-      let cmp = 0
-      switch (sortKey) {
-        case 'name':
-          cmp = (a.manifest.name || a.registryName).localeCompare(b.manifest.name || b.registryName)
-          break
-        case 'category':
-          cmp = (a.manifest.category ?? '').localeCompare(b.manifest.category ?? '')
-          break
-        case 'publisher':
-          cmp = (a.manifest.publisher?.name ?? '').localeCompare(b.manifest.publisher?.name ?? '')
-          break
-        case 'modules':
-          cmp = getModuleCount(a.manifest) - getModuleCount(b.manifest)
-          break
-      }
-      return sortDir === 'asc' ? cmp : -cmp
-    })
-    return copy
-  }, [results, sortKey, sortDir])
 
   return (
     <div>
@@ -129,50 +92,15 @@ export function PackageList({ results, total = results.length }: PackageListProp
           <table className="w-full">
             <thead>
               <tr className="bg-accent/50 border-muted border-b-[0.5px] text-xs">
-                <SortHeader
-                  label="Package"
-                  sortKey="name"
-                  currentKey={sortKey}
-                  dir={sortDir}
-                  onSort={toggleSort}
-                />
-                <SortHeader
-                  label="Description"
-                  sortKey="name"
-                  currentKey=""
-                  dir={sortDir}
-                  onSort={() => {}}
-                  className="hidden lg:table-cell"
-                  sortable={false}
-                />
-                <SortHeader
-                  label="Category"
-                  sortKey="category"
-                  currentKey={sortKey}
-                  dir={sortDir}
-                  onSort={toggleSort}
-                  className="hidden sm:table-cell"
-                />
-                <SortHeader
-                  label="Publisher"
-                  sortKey="publisher"
-                  currentKey={sortKey}
-                  dir={sortDir}
-                  onSort={toggleSort}
-                  className="hidden md:table-cell"
-                />
-                <SortHeader
-                  label="Modules"
-                  sortKey="modules"
-                  currentKey={sortKey}
-                  dir={sortDir}
-                  onSort={toggleSort}
-                  className="text-right"
-                />
+                <HeaderCell label="Package" />
+                <HeaderCell label="Description" className="hidden lg:table-cell" />
+                <HeaderCell label="Category" className="hidden sm:table-cell" />
+                <HeaderCell label="Publisher" className="hidden md:table-cell" />
+                <HeaderCell label="Modules" className="text-right" />
               </tr>
             </thead>
             <tbody className="text-sm">
-              {sorted.map(({ manifest, registryName, recommended }, i) => {
+              {results.map(({ manifest, registryName, recommended }, i) => {
                 const catStyle = getCategoryStyle(manifest.category)
                 const count = getModuleCount(manifest)
                 return (
@@ -234,43 +162,11 @@ export function PackageList({ results, total = results.length }: PackageListProp
   )
 }
 
-function SortHeader(props: {
-  label: string
-  sortKey: SortKey
-  currentKey: string
-  dir: SortDir
-  onSort: (key: SortKey) => void
-  className?: string
-  sortable?: boolean
-}) {
-  const { label, sortKey, currentKey, dir, onSort, className, sortable = true } = props
-  const isActive = sortKey === currentKey
-
-  if (!sortable) {
-    return (
-      <th className={cn('text-muted-foreground px-4 py-3 text-left font-medium', className)}>
-        {label}
-      </th>
-    )
-  }
-
+// Rows keep the registry's order: a page can't be sorted against the pages around it
+function HeaderCell({ label, className }: { label: string; className?: string }) {
   return (
     <th className={cn('text-muted-foreground px-4 py-3 text-left font-medium', className)}>
-      <button
-        className="hover:text-foreground inline-flex items-center gap-1 transition-colors"
-        onClick={() => onSort(sortKey)}
-      >
-        {label}
-        {isActive ? (
-          dir === 'asc' ? (
-            <ArrowUp className="size-3" />
-          ) : (
-            <ArrowDown className="size-3" />
-          )
-        ) : (
-          <ArrowUpDown className="size-3 opacity-40" />
-        )}
-      </button>
+      {label}
     </th>
   )
 }
