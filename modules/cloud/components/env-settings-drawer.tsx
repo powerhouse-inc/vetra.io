@@ -28,6 +28,7 @@ import { loadEnvironmentController } from '@/modules/cloud/controller'
 import { getAuthToken, resetEnvironment } from '@/modules/cloud/graphql'
 import { useAsyncAction } from '@/modules/cloud/hooks/use-async-action'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
+import { apexCandidateServices, apexServiceForCustomDomain } from '@/modules/cloud/lib/env-host'
 import { useEnvironmentEvents } from '@/modules/cloud/hooks/use-environment-events'
 import type {
   AutoUpdateChannel,
@@ -145,16 +146,8 @@ export function EnvSettingsDrawer({
               </div>
               <CustomDomainSection
                 customDomain={state.customDomain}
-                apexService={
-                  state.apexService === 'CONNECT' || state.apexService === 'SWITCHBOARD'
-                    ? state.apexService
-                    : null
-                }
-                enabledServices={
-                  state.services
-                    .filter((s) => s.enabled && (s.type === 'CONNECT' || s.type === 'SWITCHBOARD'))
-                    .map((s) => s.type) as TenantService[]
-                }
+                apexService={apexServiceForCustomDomain(state.apexService)}
+                enabledServices={apexCandidateServices(state.services)}
                 onSetCustomDomain={onSetCustomDomain}
               />
             </TabsContent>

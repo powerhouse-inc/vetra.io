@@ -28,6 +28,16 @@ export type ClintEndpoint = {
   status?: 'enabled' | 'disabled'
 }
 
+/** FUSION app config (doc state `fusion`, set via SET_FUSION_CONFIG). */
+export type CloudFusionConfig = {
+  /** Harbor repository on cr.vetra.io, without tag (the service version is the tag). */
+  image: string | null
+  env: CloudServiceEnv[]
+  /** Follow the newest Harbor tag matching autoUpdateTagPattern (default `^sha-[0-9a-f]{7,40}$`). */
+  autoUpdate: boolean
+  autoUpdateTagPattern: string | null
+}
+
 export type CloudServiceClintConfig = {
   package: CloudPackage
   env: CloudServiceEnv[]
@@ -102,6 +112,8 @@ export type CloudEnvironmentState = {
    * null (or undefined on envs created before the field existed) = off.
    */
   autoUpdateChannel?: AutoUpdateChannel | null
+  /** FUSION app config; undefined on docs created before the field existed. */
+  fusion?: CloudFusionConfig | null
   /**
    * Recurring database backup intent. The frontend writes this via
    * SET_BACKUP_SCHEDULE; a backend job runner reads it and fires

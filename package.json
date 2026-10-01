@@ -28,7 +28,7 @@
     "@powerhousedao/reactor-browser": "6.2.3-dev.28",
     "@powerhousedao/shared": "6.2.3-dev.28",
     "@powerhousedao/vetra-builder-package": "https://registry.dev.vetra.io/@powerhousedao/vetra-builder-package/-/vetra-builder-package-5.2.0-dev.66.tgz",
-    "@powerhousedao/vetra-cloud-package": "https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.41.tgz",
+    "@powerhousedao/vetra-cloud-package": "https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.47.tgz",
     "@privy-io/react-auth": "^3.25.0",
     "@radix-ui/react-accordion": "^1.2.11",
     "@radix-ui/react-alert-dialog": "^1.1.14",
