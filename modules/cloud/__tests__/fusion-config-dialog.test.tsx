@@ -60,9 +60,7 @@ describe('FusionConfigDialog', () => {
 
   it('blocks images outside cr.vetra.io', async () => {
     const onSubmit = vi.fn(async () => {})
-    render(
-      <FusionConfigDialog open onOpenChange={() => {}} config={null} onSubmit={onSubmit} />,
-    )
+    render(<FusionConfigDialog open onOpenChange={() => {}} config={null} onSubmit={onSubmit} />)
     fireEvent.change(screen.getByLabelText(/^image$/i), { target: { value: 'docker.io/x/y' } })
     fireEvent.click(screen.getByRole('button', { name: /save/i }))
     expect(await screen.findByText(/must be a repository on cr\.vetra\.io/)).toBeTruthy()

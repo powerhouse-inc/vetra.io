@@ -48,7 +48,9 @@ export function FusionConfigDialog({ open, onOpenChange, config, onSubmit }: Pro
   const save = async () => {
     const repo = image.trim()
     if (!IMAGE_RE.test(repo)) {
-      setError('Image must be a repository on cr.vetra.io without a tag, e.g. cr.vetra.io/<project>/<app>')
+      setError(
+        'Image must be a repository on cr.vetra.io without a tag, e.g. cr.vetra.io/<project>/<app>',
+      )
       return
     }
     const badSecret = env.find((e) => e.isSecret && e.name.trim().startsWith('NEXT_PUBLIC_'))

@@ -3,7 +3,8 @@ const PLATFORM_IMAGES: Record<string, string> = {
   SWITCHBOARD: 'powerhouse-inc-powerhouse/switchboard',
 }
 
-const FUSION_IMAGE = /^cr\.vetra\.io\/([a-z0-9]+(?:[._-][a-z0-9]+)*(?:\/[a-z0-9]+(?:[._-][a-z0-9]+)*)+)$/
+const FUSION_IMAGE =
+  /^cr\.vetra\.io\/([a-z0-9]+(?:[._-][a-z0-9]+)*(?:\/[a-z0-9]+(?:[._-][a-z0-9]+)*)+)$/
 
 export type TagsTarget = { imagePath: string; fusion: boolean } | { error: string }
 

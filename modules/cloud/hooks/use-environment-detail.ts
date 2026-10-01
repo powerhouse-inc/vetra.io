@@ -27,6 +27,7 @@ import type {
   BackupCadence,
   CloudEnvironment,
   CloudEnvironmentServiceType,
+  CloudFusionConfig,
   CloudResourceSize,
   CloudServiceClintConfig,
   TenantService,
@@ -242,6 +243,22 @@ export function useEnvironmentDetail(documentId: string) {
       mutate((c) => c.setServiceConfig({ prefix, config })),
     [mutate],
   )
+  const setFusionConfig = useCallback(
+    (config: CloudFusionConfig) =>
+      mutate((c) =>
+        c.setFusionConfig({
+          image: config.image,
+          env: config.env.map((e) => ({
+            name: e.name,
+            value: e.value ?? null,
+            isSecret: e.isSecret ?? null,
+          })),
+          autoUpdate: config.autoUpdate,
+          autoUpdateTagPattern: config.autoUpdateTagPattern,
+        }),
+      ),
+    [mutate],
+  )
   const setServiceSize = useCallback(
     (prefix: string, size: CloudResourceSize) => mutate((c) => c.setServiceSize({ prefix, size })),
     [mutate],
@@ -401,6 +418,7 @@ export function useEnvironmentDetail(documentId: string) {
     disableService,
     toggleServiceEnabled,
     setServiceConfig,
+    setFusionConfig,
     setServiceSize,
     addPackage,
     removePackage,

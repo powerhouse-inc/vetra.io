@@ -431,6 +431,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
             addPackage={detail.addPackage}
             removePackage={detail.removePackage}
             setServiceVersion={detail.setServiceVersion}
+            setFusionConfig={detail.setFusionConfig}
             setPackageVersion={detail.setPackageVersion}
             initialAddPackage={searchParams.get('addPackage')}
             initialAddVersion={searchParams.get('version')}
