@@ -85,7 +85,7 @@ export default async function PackagesPage({ searchParams }: PageProps) {
             manifest: p.manifest,
             registryName: npmName(p),
             searchWords: search ? [search] : [],
-            recommended: recommended.has(p.name.toLowerCase()),
+            recommended: recommended.has(npmName(p).toLowerCase()),
           },
         ]
       : [],
