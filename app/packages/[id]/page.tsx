@@ -26,7 +26,7 @@ import { Card, CardContent } from '@/modules/shared/components/ui/card'
 import { REGISTRY_URL } from '../lib/constants'
 import { isRecommended } from '../lib/recommended'
 import { getCategoryStyle } from '../lib/category-colors'
-import { getPackageManifest, getPackageRegistryData } from '../lib/registry'
+import { getPackageManifest, getPackageRegistryData, npmName } from '../lib/registry'
 import { CopyCommand } from '../components/copy-command'
 import { VersionList } from '../components/version-list'
 import { SourceViewer } from '../components/source-viewer'
@@ -231,7 +231,7 @@ export default async function PackageDetailPage({ params, searchParams }: Packag
                   {activeTag}
                 </Badge>
               )}
-              {isRecommended(pkg.name) && (
+              {isRecommended(npmName(pkg)) && (
                 <Badge className="gap-1 text-xs">
                   <Star className="size-3" />
                   Powerhouse Recommended
