@@ -2,6 +2,7 @@
 
 import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
 import {
+  Boxes,
   Check,
   Cloud,
   Copy,
@@ -130,9 +131,18 @@ function RenownButton() {
             asChild
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
           >
-            <Link href="/user/products">
+            <Link href="/user">
+              <Boxes className="h-4 w-4" />
+              Apps
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            asChild
+            className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
+          >
+            <Link href="/user/studio">
               <Layers className="h-4 w-4" />
-              Products
+              Studio
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem
