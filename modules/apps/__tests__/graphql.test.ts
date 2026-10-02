@@ -5,6 +5,9 @@ import {
   appsGql,
   describeAppsError,
   describeCreateAppError,
+  fetchApp,
+  fetchMyApps,
+  resetOptionalAppFields,
   isAppsError,
   toAppsError,
   type FetchLike,
@@ -147,5 +150,51 @@ describe('describeCreateAppError', () => {
 
   it('falls back to the generic copy', () => {
     expect(describeCreateAppError(new AppsApiError('UNKNOWN', 'raw'), 'a/b')).toBe('raw')
+  })
+})
+
+describe('optional App fields', () => {
+  it('retries without identityExpiresAt when the schema lacks it, then remembers', async () => {
+    resetOptionalAppFields()
+    const bodies: string[] = []
+    const fetchImpl = vi.fn<FetchLike>((_url, init) => {
+      const body = init.body as string
+      bodies.push(body)
+      if (body.includes('identityExpiresAt')) {
+        return Promise.resolve(
+          jsonResponse(
+            { errors: [{ message: 'Cannot query field "identityExpiresAt" on type "App".' }] },
+            400,
+          ),
+        )
+      }
+      return Promise.resolve(jsonResponse({ data: { myApps: [] } }))
+    })
+    expect(await fetchMyApps(null, fetchImpl)).toEqual([])
+    expect(bodies).toHaveLength(2)
+    expect(bodies[1]).not.toContain('identityExpiresAt')
+    await fetchMyApps(null, fetchImpl)
+    expect(bodies).toHaveLength(3)
+    expect(bodies[2]).not.toContain('identityExpiresAt')
+  })
+
+  it('keeps a real APPS_UNAVAILABLE error when the retry also fails', async () => {
+    resetOptionalAppFields()
+    const fetchImpl: FetchLike = () =>
+      Promise.resolve(
+        jsonResponse(
+          { errors: [{ message: 'Cannot query field "myApps" on type "Query".' }] },
+          400,
+        ),
+      )
+    const err = await fetchMyApps(null, fetchImpl).catch((e: unknown) => e)
+    expect(isAppsError(err, 'APPS_UNAVAILABLE')).toBe(true)
+  })
+
+  it('requests identityExpiresAt when supported', async () => {
+    resetOptionalAppFields()
+    const fetchImpl = vi.fn<FetchLike>(() => Promise.resolve(jsonResponse({ data: { app: null } })))
+    await fetchApp('a1', null, fetchImpl)
+    expect(fetchImpl.mock.calls[0][1].body as string).toContain('identityExpiresAt')
   })
 })

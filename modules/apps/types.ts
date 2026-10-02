@@ -70,6 +70,11 @@ export type App = {
   harborProject: string
   identityDid: string
   renownAuthorizeUrl: string
+  /**
+   * When the Renown delegation for the deploy identity expires (ISO date).
+   * Optional: older backends don't serve the field.
+   */
+  identityExpiresAt?: string | null
   productionUrls: AppUrls
   previews: AppPreview[]
   latestDeployment: AppDeployment | null

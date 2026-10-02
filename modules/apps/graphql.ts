@@ -166,20 +166,60 @@ const APP_FIELDS = `id slug name ownerAddress status
   latestDeployment { ${DEPLOYMENT_FIELDS} }
   createdAt updatedAt`
 
+/** App fields newer backends add; dropped (once per page load) when the schema rejects them. */
+const OPTIONAL_APP_FIELDS = ['identityExpiresAt'] as const
+let optionalAppFieldsSupported: boolean | null = null
+
+/** Test hook: forget what the backend supports. */
+export function resetOptionalAppFields(): void {
+  optionalAppFieldsSupported = null
+}
+
+/**
+ * Run an App-returning operation with the optional fields selected, falling
+ * back to the base selection when the schema rejects exactly those fields.
+ * Validation fails before execution, so retrying a mutation is safe.
+ */
+async function withAppFields<T>(run: (fields: string) => Promise<T>): Promise<T> {
+  if (optionalAppFieldsSupported === false) return run(APP_FIELDS)
+  try {
+    const result = await run(`${APP_FIELDS} ${OPTIONAL_APP_FIELDS.join(' ')}`)
+    optionalAppFieldsSupported = true
+    return result
+  } catch (err) {
+    const rejectsOptional =
+      err instanceof AppsApiError &&
+      err.code === 'APPS_UNAVAILABLE' &&
+      OPTIONAL_APP_FIELDS.some((f) => err.message.includes(`"${f}"`))
+    if (!rejectsOptional) throw err
+    optionalAppFieldsSupported = false
+    return run(APP_FIELDS)
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
 
-export async function fetchMyApps(token: string | null): Promise<App[]> {
-  const data = await appsGql<{ myApps: App[] }>(`query { myApps { ${APP_FIELDS} } }`, {}, token)
+export async function fetchMyApps(token: string | null, fetchImpl?: FetchLike): Promise<App[]> {
+  const data = await withAppFields((fields) =>
+    appsGql<{ myApps: App[] }>(`query { myApps { ${fields} } }`, {}, token, fetchImpl),
+  )
   return data.myApps
 }
 
-export async function fetchApp(id: string, token: string | null): Promise<App | null> {
-  const data = await appsGql<{ app: App | null }>(
-    `query ($id: ID!) { app(id: $id) { ${APP_FIELDS} } }`,
-    { id },
-    token,
+export async function fetchApp(
+  id: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<App | null> {
+  const data = await withAppFields((fields) =>
+    appsGql<{ app: App | null }>(
+      `query ($id: ID!) { app(id: $id) { ${fields} } }`,
+      { id },
+      token,
+      fetchImpl,
+    ),
   )
   return data.app
 }
@@ -258,19 +298,23 @@ export async function connectGithubDeploy(
 }
 
 export async function createApp(input: CreateAppInput, token: string | null): Promise<App> {
-  const data = await appsGql<{ createApp: App }>(
-    `mutation ($input: CreateAppInput!) { createApp(input: $input) { ${APP_FIELDS} } }`,
-    { input },
-    token,
+  const data = await withAppFields((fields) =>
+    appsGql<{ createApp: App }>(
+      `mutation ($input: CreateAppInput!) { createApp(input: $input) { ${fields} } }`,
+      { input },
+      token,
+    ),
   )
   return data.createApp
 }
 
 export async function confirmAppIdentity(appId: string, token: string | null): Promise<App> {
-  const data = await appsGql<{ confirmAppIdentity: App }>(
-    `mutation ($appId: ID!) { confirmAppIdentity(appId: $appId) { ${APP_FIELDS} } }`,
-    { appId },
-    token,
+  const data = await withAppFields((fields) =>
+    appsGql<{ confirmAppIdentity: App }>(
+      `mutation ($appId: ID!) { confirmAppIdentity(appId: $appId) { ${fields} } }`,
+      { appId },
+      token,
+    ),
   )
   return data.confirmAppIdentity
 }
@@ -280,10 +324,12 @@ export async function updateApp(
   input: UpdateAppInput,
   token: string | null,
 ): Promise<App> {
-  const data = await appsGql<{ updateApp: App }>(
-    `mutation ($appId: ID!, $input: UpdateAppInput!) { updateApp(appId: $appId, input: $input) { ${APP_FIELDS} } }`,
-    { appId, input },
-    token,
+  const data = await withAppFields((fields) =>
+    appsGql<{ updateApp: App }>(
+      `mutation ($appId: ID!, $input: UpdateAppInput!) { updateApp(appId: $appId, input: $input) { ${fields} } }`,
+      { appId, input },
+      token,
+    ),
   )
   return data.updateApp
 }
