@@ -9,6 +9,7 @@ import {
   Github,
   Loader2,
   RefreshCw,
+  Trash2,
   Unplug,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -26,7 +27,14 @@ import {
   useConfirmAppIdentity,
   useGithubDeployAppInfo,
 } from '../hooks/use-apps'
-import { appHeadlineStatus, githubRepoUrl, primaryUrl, refLabel } from '../lib/status'
+import {
+  appHeadlineStatus,
+  githubRepoUrl,
+  isAppReadOnly,
+  primaryUrl,
+  refLabel,
+} from '../lib/status'
+import { formatTimestamp } from '../lib/time'
 import { timeAgo } from '../lib/time'
 import type { App } from '../types'
 import { AppAvatar } from './app-avatar'
@@ -45,7 +53,7 @@ function Banner({
   children,
   actions,
 }: {
-  tone: 'warning' | 'danger'
+  tone: 'warning' | 'danger' | 'neutral'
   icon: typeof Fingerprint
   title: string
   children: React.ReactNode
@@ -57,12 +65,18 @@ function Banner({
       className={
         tone === 'warning'
           ? 'border-warning/40 bg-warning/10 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center'
-          : 'border-destructive/40 bg-destructive/10 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center'
+          : tone === 'danger'
+            ? 'border-destructive/40 bg-destructive/10 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center'
+            : 'border-border bg-muted/50 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center'
       }
     >
       <Icon
         className={
-          tone === 'warning' ? 'text-warning h-5 w-5 shrink-0' : 'text-destructive h-5 w-5 shrink-0'
+          tone === 'warning'
+            ? 'text-warning h-5 w-5 shrink-0'
+            : tone === 'danger'
+              ? 'text-destructive h-5 w-5 shrink-0'
+              : 'text-muted-foreground h-5 w-5 shrink-0'
         }
         aria-hidden
       />
@@ -107,7 +121,7 @@ function Header({ app }: { app: App }) {
           )}
         </div>
       </div>
-      {url && (
+      {url && !isAppReadOnly(app) && (
         <Button asChild size="lg" className="shrink-0">
           <a href={url} target="_blank" rel="noopener noreferrer">
             Visit
@@ -133,7 +147,10 @@ export function AppDetail({ appId }: { appId: string }) {
   const app = appQuery.data
 
   const tabParam = params.get('tab')
-  const tab: Tab = TABS.includes(tabParam as Tab) ? (tabParam as Tab) : 'overview'
+  const readOnly = app ? isAppReadOnly(app) : false
+  // A deleted app is read-only: no Settings tab, no actions.
+  const visibleTabs: readonly Tab[] = readOnly ? TABS.filter((t) => t !== 'settings') : TABS
+  const tab: Tab = visibleTabs.includes(tabParam as Tab) ? (tabParam as Tab) : 'overview'
 
   const deployments = useMemo(
     () =>
@@ -251,6 +268,13 @@ export function AppDetail({ appId }: { appId: string }) {
           </Banner>
         )}
 
+        {readOnly && (
+          <Banner tone="neutral" icon={Trash2} title="This app was deleted">
+            Deleted {formatTimestamp(app.updatedAt)}. You can see it because you are an admin; its
+            history is read-only.
+          </Banner>
+        )}
+
         {app.status === 'DISCONNECTED' && (
           <Banner
             tone="danger"
@@ -275,7 +299,7 @@ export function AppDetail({ appId }: { appId: string }) {
 
       <Tabs value={tab} onValueChange={setTab} className="gap-8">
         <TabsList className="border-border h-auto w-full justify-start gap-6 rounded-none border-b bg-transparent p-0">
-          {TABS.map((t) => (
+          {visibleTabs.map((t) => (
             <TabsTrigger
               key={t}
               value={t}
@@ -307,9 +331,11 @@ export function AppDetail({ appId }: { appId: string }) {
             error={deploymentsQuery.error}
           />
         </TabsContent>
-        <TabsContent value="settings">
-          <AppSettings app={app} onAuthorize={authorize} />
-        </TabsContent>
+        {!readOnly && (
+          <TabsContent value="settings">
+            <AppSettings app={app} onAuthorize={authorize} />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   )

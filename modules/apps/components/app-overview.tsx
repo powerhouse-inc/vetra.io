@@ -20,6 +20,7 @@ import {
   displayHost,
   githubCommitUrl,
   githubRepoUrl,
+  isAppReadOnly,
   primaryUrl,
   refLabel,
   shortSha,
@@ -195,18 +196,21 @@ function DeploymentMeta({ deployment, repo }: { deployment: AppDeployment; repo:
 }
 
 function ProductionCard({ app, deployment }: { app: App; deployment: AppDeployment | null }) {
+  const readOnly = isAppReadOnly(app)
   const url = primaryUrl(app.productionUrls)
   const meta = deploymentStatusMeta(deployment?.status)
   return (
     <section className="space-y-4" aria-labelledby="production-heading">
       <SectionTitle
         action={
-          <Button asChild variant="ghost" size="sm">
-            <Link href={`/user/environments/${app.productionEnvironmentId}`}>
-              <Settings2 className="h-4 w-4" />
-              Environment
-            </Link>
-          </Button>
+          readOnly ? null : (
+            <Button asChild variant="ghost" size="sm">
+              <Link href={`/user/environments/${app.productionEnvironmentId}`}>
+                <Settings2 className="h-4 w-4" />
+                Environment
+              </Link>
+            </Button>
+          )
         }
       >
         <span id="production-heading" className="flex items-center gap-2">
@@ -227,7 +231,7 @@ function ProductionCard({ app, deployment }: { app: App; deployment: AppDeployme
             </p>
           )}
           <UrlList urls={app.productionUrls} />
-          {url && (
+          {url && !readOnly && (
             <Button asChild className="self-start">
               <a href={url} target="_blank" rel="noopener noreferrer">
                 Visit
@@ -365,7 +369,9 @@ export function AppOverview({
     deployments.find((d) => d.kind === 'PRODUCTION') ??
     (app.latestDeployment?.kind === 'PRODUCTION' ? app.latestDeployment : null)
   const hasDeployments = deployments.length > 0 || !!app.latestDeployment
+  const readOnly = isAppReadOnly(app)
   const showChecklist =
+    !readOnly &&
     app.status !== 'DISCONNECTED' &&
     (app.status === 'PENDING_IDENTITY' || (deploymentsLoaded && !hasDeployments))
 
@@ -375,7 +381,7 @@ export function AppOverview({
         <GettingStarted app={app} hasDeployments={hasDeployments} onAuthorize={onAuthorize} />
       )}
       <ProductionCard app={app} deployment={production} />
-      <PreviewsSection app={app} />
+      {!readOnly && <PreviewsSection app={app} />}
     </div>
   )
 }

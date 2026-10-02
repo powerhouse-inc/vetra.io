@@ -143,3 +143,8 @@ export function displayHost(url: string | null | undefined): string {
   if (!url) return ''
   return url.replace(/^https?:\/\//, '').replace(/\/$/, '')
 }
+
+/** A soft-deleted app (visible to admins only) is shown read-only: no actions at all. */
+export function isAppReadOnly(app: Pick<App, 'status'>): boolean {
+  return app.status === 'DELETED'
+}

@@ -39,6 +39,7 @@ import {
   deploymentStatusMeta,
   githubCommitUrl,
   githubPullUrl,
+  isAppReadOnly,
   refLabel,
   shortSha,
 } from '../lib/status'
@@ -178,6 +179,7 @@ export function AppDeployments({
     (d) => d.kind === 'PRODUCTION' && d.status === 'READY',
   )?.id
   const repo = app.repository.fullName
+  const readOnly = isAppReadOnly(app)
 
   if (isPending) {
     return (
@@ -222,7 +224,7 @@ export function AppDeployments({
           </TableHeader>
           <TableBody>
             {deployments.map((d) => {
-              const rollbackable = canRollback(d) && d.id !== liveProductionId
+              const rollbackable = !readOnly && canRollback(d) && d.id !== liveProductionId
               return (
                 <TableRow key={d.id} className="border-border">
                   <TableCell className="pl-4 align-top">

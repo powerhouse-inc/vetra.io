@@ -10,6 +10,7 @@ import {
   deploymentsPollInterval,
   displayHost,
   githubCommitUrl,
+  isAppReadOnly,
   isDeploymentInFlight,
   primaryUrl,
   refLabel,
@@ -153,5 +154,14 @@ describe('DELETED apps', () => {
         previews: [],
       }),
     ).toBe(false)
+  })
+})
+
+describe('isAppReadOnly', () => {
+  it('locks every action on a deleted app only', () => {
+    expect(isAppReadOnly({ status: 'DELETED' })).toBe(true)
+    expect(isAppReadOnly({ status: 'ACTIVE' })).toBe(false)
+    expect(isAppReadOnly({ status: 'DISCONNECTED' })).toBe(false)
+    expect(isAppReadOnly({ status: 'PENDING_IDENTITY' })).toBe(false)
   })
 })
