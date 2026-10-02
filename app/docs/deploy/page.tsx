@@ -117,7 +117,7 @@ function C({ children }: { children: React.ReactNode }) {
 
 function DataTable({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
   return (
-    <div className="overflow-x-auto rounded-xl border">
+    <div className="overflow-x-auto rounded-xl border border-border">
       <table className="w-full text-left text-sm">
         <thead className="bg-muted/50">
           <tr>
@@ -128,7 +128,7 @@ function DataTable({ head, rows }: { head: string[]; rows: React.ReactNode[][] }
             ))}
           </tr>
         </thead>
-        <tbody className="divide-y">
+        <tbody className="divide-y divide-border">
           {rows.map((row, i) => (
             <tr key={i}>
               {row.map((cell, j) => (
@@ -146,7 +146,7 @@ function DataTable({ head, rows }: { head: string[]; rows: React.ReactNode[][] }
 
 function Steps({ items }: { items: Array<{ title: string; body: React.ReactNode }> }) {
   return (
-    <ol className="relative space-y-6 border-l pl-8">
+    <ol className="relative space-y-6 border-l pl-8 border-border">
       {items.map((item, i) => (
         <li key={item.title} className="relative">
           <span className="bg-foreground text-background absolute top-0 -left-[45px] flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold">
@@ -162,7 +162,7 @@ function Steps({ items }: { items: Array<{ title: string; body: React.ReactNode 
 
 function Problem({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-card rounded-xl border p-5">
+    <div className="bg-card rounded-xl border p-5 border-border">
       <p className="font-medium">{title}</p>
       <div className="text-foreground/80 mt-2 space-y-2 text-sm leading-6">{children}</div>
     </div>
@@ -459,7 +459,7 @@ export default function DeployGuidePage() {
             </div>
           </Section>
 
-          <footer className="flex flex-col items-start gap-4 border-t pt-8 sm:flex-row sm:items-center sm:justify-between">
+          <footer className="flex flex-col items-start gap-4 border-t pt-8 sm:flex-row sm:items-center sm:justify-between border-border">
             <p className="text-muted-foreground text-sm">Ready? It takes about two minutes.</p>
             <Button asChild>
               <Link href="/user/apps/new">

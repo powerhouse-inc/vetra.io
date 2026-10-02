@@ -30,7 +30,7 @@ const NODES: Node[] = [
  */
 export function DeployDiagram() {
   return (
-    <figure className="bg-card overflow-hidden rounded-2xl border p-4 shadow-sm sm:p-6">
+    <figure className="bg-card border-border overflow-hidden rounded-2xl border p-4 shadow-sm sm:p-6">
       <ol className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
         {NODES.map((node, i) => (
           <li
@@ -38,7 +38,7 @@ export function DeployDiagram() {
             className={
               node.accent
                 ? 'border-primary/50 bg-primary/5 relative flex gap-3 rounded-xl border p-4'
-                : 'bg-background relative flex gap-3 rounded-xl border p-4'
+                : 'bg-background border-border relative flex gap-3 rounded-xl border p-4'
             }
           >
             <span

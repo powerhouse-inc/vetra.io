@@ -63,7 +63,7 @@ function ChecklistItem({
     <li className="flex gap-4">
       <span
         className={cn(
-          'mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border',
+          'border-border mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded-full border',
           done ? 'bg-primary border-primary text-primary-foreground' : 'text-muted-foreground',
         )}
       >
@@ -75,7 +75,7 @@ function ChecklistItem({
         <span className="sr-only">{done ? 'Done' : 'To do'}</span>
       </span>
       <div className="min-w-0 flex-1 space-y-3 pb-1">
-        <p className={cn('font-medium', done && 'text-muted-foreground line-through')}>{title}</p>
+        <p className={cn('font-medium', done && 'text-muted-foreground')}>{title}</p>
         {!done && children}
       </div>
     </li>
@@ -94,7 +94,7 @@ export function GettingStarted({
 }) {
   const identityDone = app.status !== 'PENDING_IDENTITY'
   return (
-    <section className="bg-card rounded-2xl border p-6 shadow-sm sm:p-8">
+    <section className="bg-card border-border rounded-2xl border p-6 shadow-sm sm:p-8">
       <div className="mb-6 space-y-1">
         <h2 className="text-lg font-semibold">Finish setting up {app.name}</h2>
         <p className="text-muted-foreground text-sm">
@@ -124,8 +124,8 @@ export function GettingStarted({
 /** Decorative browser frame around the production host — the App's "screenshot". */
 function BrowserFrame({ app, url, live }: { app: App; url: string | null; live: boolean }) {
   return (
-    <div className="bg-muted/40 flex flex-col overflow-hidden rounded-xl border">
-      <div className="bg-background/80 flex items-center gap-2 border-b px-3 py-2">
+    <div className="bg-muted/40 border-border flex flex-col overflow-hidden rounded-xl border">
+      <div className="bg-background/80 border-border flex items-center gap-2 border-b px-3 py-2">
         <span className="flex gap-1.5" aria-hidden>
           <span className="h-2.5 w-2.5 rounded-full bg-[#ff5f57]" />
           <span className="h-2.5 w-2.5 rounded-full bg-[#febc2e]" />
@@ -214,7 +214,7 @@ function ProductionCard({ app, deployment }: { app: App; deployment: AppDeployme
           <StatusPill meta={meta} />
         </span>
       </SectionTitle>
-      <div className="bg-card grid gap-6 rounded-2xl border p-4 shadow-sm sm:p-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
+      <div className="bg-card border-border grid gap-6 rounded-2xl border p-4 shadow-sm sm:p-6 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
         <BrowserFrame app={app} url={url} live={deployment?.status === 'READY'} />
         <div className="flex min-w-0 flex-col gap-5">
           {deployment ? (
@@ -313,12 +313,12 @@ function PreviewsSection({ app }: { app: App }) {
         <span id="previews-heading">Previews</span>
       </SectionTitle>
       {!app.previewsEnabled ? (
-        <div className="text-muted-foreground rounded-xl border border-dashed px-5 py-6 text-sm">
+        <div className="text-muted-foreground border-border rounded-xl border border-dashed px-5 py-6 text-sm">
           Previews are turned off. Enable them in Settings to get an environment for every pull
           request.
         </div>
       ) : app.previews.length === 0 ? (
-        <div className="flex flex-col items-start gap-3 rounded-xl border border-dashed px-5 py-6 text-sm sm:flex-row sm:items-center">
+        <div className="border-border flex flex-col items-start gap-3 rounded-xl border border-dashed px-5 py-6 text-sm sm:flex-row sm:items-center">
           <GitPullRequest className="text-muted-foreground h-5 w-5 shrink-0" aria-hidden />
           <p className="text-muted-foreground flex-1">
             Open a pull request in{' '}
@@ -337,7 +337,7 @@ function PreviewsSection({ app }: { app: App }) {
           </Button>
         </div>
       ) : (
-        <ul className="bg-card divide-y rounded-xl border shadow-sm">
+        <ul className="bg-card border-border divide-border divide-y rounded-xl border shadow-sm">
           {[...app.previews]
             .sort((a, b) => b.prNumber - a.prNumber)
             .map((p) => (

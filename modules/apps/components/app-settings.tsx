@@ -94,7 +94,7 @@ function SettingsCard({
       className={
         danger
           ? 'border-destructive/40 bg-card overflow-hidden rounded-2xl border shadow-sm'
-          : 'bg-card overflow-hidden rounded-2xl border shadow-sm'
+          : 'bg-card border-border overflow-hidden rounded-2xl border shadow-sm'
       }
     >
       <div className="space-y-5 p-6">
@@ -108,8 +108,8 @@ function SettingsCard({
         <div
           className={
             danger
-              ? 'bg-destructive/5 flex items-center justify-end gap-3 border-t px-6 py-3'
-              : 'bg-muted/40 flex items-center justify-end gap-3 border-t px-6 py-3'
+              ? 'bg-destructive/5 border-border flex items-center justify-end gap-3 border-t px-6 py-3'
+              : 'bg-muted/40 border-border flex items-center justify-end gap-3 border-t px-6 py-3'
           }
         >
           {footer}
@@ -188,13 +188,13 @@ function GeneralAndPreviews({ app }: { app: App }) {
             </p>
           </div>
         </div>
-        <div className="space-y-1 border-t pt-5">
+        <div className="border-border space-y-1 border-t pt-5">
           <h4 className="text-sm font-semibold">Preview environments</h4>
           <p className="text-muted-foreground text-sm">
             One slim environment per pull request, without secrets, deleted when the PR closes.
           </p>
         </div>
-        <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+        <div className="border-border flex items-center justify-between gap-4 rounded-lg border p-4">
           <div className="space-y-0.5">
             <Label htmlFor="settings-previews">Deploy pull requests</Label>
             <p className="text-muted-foreground text-xs">Fork pull requests never get previews.</p>
@@ -337,7 +337,7 @@ function DangerZone({ app }: { app: App }) {
             aria-label="App name"
             autoComplete="off"
           />
-          <label className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm">
+          <label className="border-border flex cursor-pointer items-start gap-3 rounded-lg border p-3 text-sm">
             <Checkbox
               checked={deleteEnvironments}
               onCheckedChange={(v) => setDeleteEnvironments(v === true)}

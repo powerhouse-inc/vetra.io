@@ -274,7 +274,7 @@ export function AppDetail({ appId }: { appId: string }) {
       </div>
 
       <Tabs value={tab} onValueChange={setTab} className="gap-8">
-        <TabsList className="h-auto w-full justify-start gap-6 rounded-none border-b bg-transparent p-0">
+        <TabsList className="border-border h-auto w-full justify-start gap-6 rounded-none border-b bg-transparent p-0">
           {TABS.map((t) => (
             <TabsTrigger
               key={t}

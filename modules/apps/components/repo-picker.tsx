@@ -37,7 +37,7 @@ function ConnectGithub({
   authorizeUrl?: string
 }) {
   return (
-    <div className="flex flex-col items-center gap-5 rounded-xl border border-dashed px-6 py-10 text-center">
+    <div className="border-border flex flex-col items-center gap-5 rounded-xl border border-dashed px-6 py-10 text-center">
       <span className="bg-foreground text-background flex h-12 w-12 items-center justify-center rounded-2xl">
         <Github className="h-6 w-6" aria-hidden />
       </span>
@@ -117,8 +117,8 @@ function RepoList({
   const visible = useMemo(() => filterRepos(repos.data ?? [], query), [repos.data, query])
 
   return (
-    <div className="overflow-hidden rounded-xl border">
-      <div className="relative border-b">
+    <div className="border-border overflow-hidden rounded-xl border">
+      <div className="border-border relative border-b">
         <Search
           className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
           aria-hidden
@@ -145,7 +145,7 @@ function RepoList({
           {query ? `No repository matches “${query}”.` : 'Vetra Deploy cannot see any repository.'}
         </p>
       ) : (
-        <ul className="max-h-96 divide-y overflow-y-auto" aria-label="Repositories">
+        <ul className="divide-border max-h-96 divide-y overflow-y-auto" aria-label="Repositories">
           {visible.map((repo) => (
             <li key={repo.id}>
               <button

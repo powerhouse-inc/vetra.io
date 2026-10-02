@@ -18,7 +18,7 @@ const isStandalone = (env: CloudEnvironment) => !isAppEnvironment(env)
 
 function AppCardSkeleton() {
   return (
-    <div className="bg-card rounded-xl border p-5 shadow-sm" aria-hidden>
+    <div className="bg-card border-border rounded-xl border p-5 shadow-sm" aria-hidden>
       <div className="flex items-start gap-3">
         <div className="bg-muted h-10 w-10 animate-pulse rounded-xl" />
         <div className="flex-1 space-y-2">
@@ -27,7 +27,7 @@ function AppCardSkeleton() {
         </div>
       </div>
       <div className="bg-muted mt-5 h-3 w-1/3 animate-pulse rounded" />
-      <div className="mt-5 border-t pt-3">
+      <div className="border-border mt-5 border-t pt-3">
         <div className="bg-muted h-3 w-3/4 animate-pulse rounded" />
       </div>
     </div>
@@ -38,7 +38,7 @@ function NewAppTile() {
   return (
     <Link
       href="/user/apps/new"
-      className="text-muted-foreground hover:border-primary/50 hover:text-foreground focus-visible:ring-ring flex min-h-[176px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
+      className="text-muted-foreground border-border hover:border-primary/50 hover:text-foreground focus-visible:ring-ring flex min-h-[176px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-5 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none"
     >
       <span className="bg-muted flex h-10 w-10 items-center justify-center rounded-xl">
         <Plus className="h-5 w-5" aria-hidden />
@@ -111,7 +111,7 @@ function StudioCard() {
   return (
     <Link
       href="/user/studio"
-      className="group bg-card hover:border-primary/40 focus-visible:ring-ring flex flex-col gap-4 rounded-xl border p-5 shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none sm:flex-row sm:items-center"
+      className="group bg-card border-border hover:border-primary/40 focus-visible:ring-ring flex flex-col gap-4 rounded-xl border p-5 shadow-sm transition-colors focus-visible:ring-2 focus-visible:outline-none sm:flex-row sm:items-center"
     >
       <span className="bg-purple/15 text-purple flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
         <Sparkles className="h-5 w-5" aria-hidden />

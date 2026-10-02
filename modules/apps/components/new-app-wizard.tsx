@@ -101,7 +101,7 @@ function StepCard({
   children: React.ReactNode
 }) {
   return (
-    <section className="bg-card rounded-2xl border p-6 shadow-sm sm:p-8">
+    <section className="bg-card border-border rounded-2xl border p-6 shadow-sm sm:p-8">
       <div className="mb-6 space-y-1.5">
         <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
         {description && <p className="text-muted-foreground text-sm">{description}</p>}
@@ -239,7 +239,7 @@ function ConfigureStep({
                 <label
                   key={opt.mode}
                   className={cn(
-                    'relative flex cursor-pointer gap-3 rounded-xl border p-4 transition-colors',
+                    'border-border relative flex cursor-pointer gap-3 rounded-xl border p-4 transition-colors',
                     checked
                       ? 'border-primary bg-primary/5 ring-primary/20 ring-2'
                       : 'hover:bg-accent/50',
@@ -291,7 +291,7 @@ function ConfigureStep({
           )}
         </fieldset>
 
-        <div className="flex items-center justify-between gap-3 border-t pt-6">
+        <div className="border-border flex items-center justify-between gap-3 border-t pt-6">
           <Button type="button" variant="ghost" onClick={onBack}>
             <ArrowLeft className="h-4 w-4" />
             Back
@@ -340,7 +340,7 @@ function IdentityStep({ app, onSkip }: { app: App; onSkip: () => void }) {
           </div>
         </div>
 
-        <div className="flex flex-col-reverse items-stretch justify-between gap-3 border-t pt-6 sm:flex-row sm:items-center">
+        <div className="border-border flex flex-col-reverse items-stretch justify-between gap-3 border-t pt-6 sm:flex-row sm:items-center">
           <Button variant="ghost" onClick={onSkip}>
             Do this later
           </Button>
@@ -376,7 +376,7 @@ function DeploysStep({ app }: { app: App }) {
           </p>
         )}
         <SetupDeploys app={app} />
-        <div className="flex justify-end border-t pt-6">
+        <div className="border-border flex justify-end border-t pt-6">
           <Button asChild>
             <Link href={`/user/apps/${app.id}`}>
               Go to {app.name}

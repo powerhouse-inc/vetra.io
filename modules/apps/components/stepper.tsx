@@ -20,7 +20,7 @@ export function Stepper({ steps, current }: { steps: readonly StepDef[]; current
               >
                 <span
                   className={cn(
-                    'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors',
+                    'border-border flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-xs font-semibold transition-colors',
                     done && 'bg-primary border-primary text-primary-foreground',
                     active && 'border-primary text-primary ring-primary/20 ring-4',
                     !done && !active && 'text-muted-foreground',

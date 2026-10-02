@@ -24,7 +24,7 @@ const STEPS = [
 /** First-run hero for the Apps home: the three-step flow and the CTA. */
 export function AppsEmptyState() {
   return (
-    <section className="bg-card relative overflow-hidden rounded-2xl border px-6 py-12 shadow-sm sm:px-10">
+    <section className="bg-card border-border relative overflow-hidden rounded-2xl border px-6 py-12 shadow-sm sm:px-10">
       <div
         aria-hidden
         className="bg-primary/10 pointer-events-none absolute -top-24 left-1/2 h-64 w-[36rem] -translate-x-1/2 rounded-full blur-3xl"
@@ -45,7 +45,10 @@ export function AppsEmptyState() {
 
       <ol className="relative mx-auto mt-10 grid max-w-4xl gap-4 sm:grid-cols-3">
         {STEPS.map((step, i) => (
-          <li key={step.title} className="bg-background/60 relative rounded-xl border p-5">
+          <li
+            key={step.title}
+            className="bg-background/60 border-border relative rounded-xl border p-5"
+          >
             <div className="flex items-center gap-3">
               <span className="bg-foreground text-background flex h-9 w-9 items-center justify-center rounded-lg">
                 <step.icon className="h-4 w-4" aria-hidden />

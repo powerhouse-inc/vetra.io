@@ -18,7 +18,7 @@ export function AppCard({ app }: { app: App }) {
   const previewCount = app.previews.length
 
   return (
-    <article className="group bg-card hover:border-primary/40 relative flex flex-col rounded-xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
+    <article className="group bg-card border-border hover:border-primary/40 relative flex flex-col rounded-xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start gap-3">
         <AppAvatar name={app.name} seed={app.id} />
         <div className="min-w-0 flex-1">
@@ -57,7 +57,7 @@ export function AppCard({ app }: { app: App }) {
         )}
       </div>
 
-      <div className="text-muted-foreground mt-4 flex items-center justify-between gap-3 border-t pt-3 text-xs">
+      <div className="text-muted-foreground border-border mt-4 flex items-center justify-between gap-3 border-t pt-3 text-xs">
         {latest ? (
           <span
             className="flex min-w-0 items-center gap-2"

@@ -192,7 +192,7 @@ export function AppDeployments({
   }
   if (deployments.length === 0) {
     return (
-      <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
+      <div className="border-border flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
         <History className="text-muted-foreground h-8 w-8" aria-hidden />
         <p className="font-medium">No deployments yet</p>
         <p className="text-muted-foreground max-w-sm text-sm">
@@ -204,10 +204,10 @@ export function AppDeployments({
 
   return (
     <>
-      <div className="bg-card overflow-x-auto rounded-xl border shadow-sm">
+      <div className="bg-card border-border overflow-x-auto rounded-xl border shadow-sm">
         <Table>
-          <TableHeader>
-            <TableRow>
+          <TableHeader className="[&_tr]:border-border">
+            <TableRow className="border-border">
               <TableHead className="pl-4">Status</TableHead>
               <TableHead>Deployment</TableHead>
               <TableHead>Commit</TableHead>
@@ -224,7 +224,7 @@ export function AppDeployments({
             {deployments.map((d) => {
               const rollbackable = canRollback(d) && d.id !== liveProductionId
               return (
-                <TableRow key={d.id}>
+                <TableRow key={d.id} className="border-border">
                   <TableCell className="pl-4 align-top">
                     <StatusInline meta={deploymentStatusMeta(d.status)} />
                     {d.error && (

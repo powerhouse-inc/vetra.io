@@ -19,7 +19,7 @@ export function UrlList({ urls, className }: { urls: AppUrls; className?: string
     return <p className="text-muted-foreground text-sm">No public URLs yet.</p>
   }
   return (
-    <ul className={cn('divide-y rounded-lg border', className)}>
+    <ul className={cn('border-border divide-border divide-y rounded-lg border', className)}>
       {rows.map((row) => {
         const url = urls[row.key] as string
         return (
