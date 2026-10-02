@@ -22,6 +22,11 @@ function env(key: string): string {
   return process.env[key] ?? ''
 }
 
+/** Cloud switchboard GraphQL endpoint (runtime env → build env → prod default). */
+export function getCloudEndpoint(): string {
+  return getEndpoint()
+}
+
 function getEndpoint() {
   return (
     env('NEXT_PUBLIC_CLOUD_SWITCHBOARD_URL') ||
@@ -105,8 +110,13 @@ async function gql<T>(
   // Surface auth/transport failures as proper errors. Without this the
   // response body is blank-ish for 401/403, `json.data` ends up undefined,
   // and callers crash later with "Cannot read properties of undefined".
+  // GraphQL validation errors (e.g. "Cannot query field" on an older schema)
+  // come back as HTTP 400 *with* a JSON `errors` body — surface that message so
+  // callers can tell a schema mismatch from a real transport failure.
   if (!res.ok) {
-    throw new Error(`GraphQL request failed: ${res.status} ${res.statusText}`)
+    const body = (await res.json().catch(() => null)) as GqlResponse<T> | null
+    const message = body?.errors?.[0]?.message
+    throw new Error(message ?? `GraphQL request failed: ${res.status} ${res.statusText}`)
   }
 
   const json = (await res.json()) as GqlResponse<T>
@@ -254,6 +264,13 @@ export type EnvironmentSummary = {
   packages?: Array<{ registry: string | null; name: string; version: string | null }>
   /** Configured services (type + prefix + enabled), for the card's service list + Visit link. */
   services?: Array<{ type: string; prefix: string | null; enabled: boolean }>
+  /**
+   * Vetra App link (read-model columns `app_id`/`app_role`/`pr_number`).
+   * Absent on backends that predate Vetra Apps — treat missing as standalone.
+   */
+  appId?: string | null
+  appRole?: 'PRODUCTION' | 'PREVIEW' | null
+  prNumber?: number | null
 }
 
 export type Viewer = {
@@ -380,14 +397,7 @@ export async function rollbackEnvironmentRelease(
   return data.rollbackEnvironmentRelease.updatedEnvironments
 }
 
-export async function fetchMyEnvironments(
-  scope: ListScope = 'MINE',
-  token?: string | null,
-): Promise<EnvironmentSummary[]> {
-  const data = await gql<{ myEnvironments: EnvironmentSummary[] }>(
-    `query ($scope: ListScope!) {
-      myEnvironments(scope: $scope) {
-        id
+const MY_ENVIRONMENTS_BASE_FIELDS = `id
         name
         subdomain
         tenantId
@@ -397,13 +407,53 @@ export async function fetchMyEnvironments(
         createdBy
         studioInstanceId
         packages { registry name version }
-        services { type prefix enabled }
+        services { type prefix enabled }`
+const MY_ENVIRONMENTS_APP_FIELDS = `appId appRole prNumber`
+
+/**
+ * Whether the backend knows the Vetra App link fields on `myEnvironments`.
+ * `null` = not probed yet. Flips to `false` the first time the server rejects
+ * them ("Cannot query field"), so older switchboards keep working with one
+ * extra round-trip per page load instead of a broken env list.
+ */
+let myEnvironmentsHasAppFields: boolean | null = null
+
+/** True when a GraphQL error says a selected field does not exist on the schema. */
+export function isUnknownFieldError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err)
+  return /Cannot query field/i.test(message)
+}
+
+export async function fetchMyEnvironments(
+  scope: ListScope = 'MINE',
+  token?: string | null,
+): Promise<EnvironmentSummary[]> {
+  const run = async (withAppFields: boolean) => {
+    const fields = withAppFields
+      ? `${MY_ENVIRONMENTS_BASE_FIELDS}\n        ${MY_ENVIRONMENTS_APP_FIELDS}`
+      : MY_ENVIRONMENTS_BASE_FIELDS
+    const data = await gql<{ myEnvironments: EnvironmentSummary[] }>(
+      `query ($scope: ListScope!) {
+      myEnvironments(scope: $scope) {
+        ${fields}
       }
     }`,
-    { scope },
-    token,
-  )
-  return data.myEnvironments
+      { scope },
+      token,
+    )
+    return data.myEnvironments
+  }
+
+  if (myEnvironmentsHasAppFields === false) return run(false)
+  try {
+    const result = await run(true)
+    myEnvironmentsHasAppFields = true
+    return result
+  } catch (err) {
+    if (!isUnknownFieldError(err)) throw err
+    myEnvironmentsHasAppFields = false
+    return run(false)
+  }
 }
 
 // ---------------------------------------------------------------------------

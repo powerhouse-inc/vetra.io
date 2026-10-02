@@ -113,6 +113,9 @@ function summaryToCloudEnvironment(summary: EnvironmentSummary): CloudEnvironmen
       status: (summary.status ?? 'DRAFT') as CloudEnvironment['state']['status'],
       studioInstanceId: summary.studioInstanceId ?? null,
     },
+    app: summary.appId
+      ? { appId: summary.appId, role: summary.appRole ?? null, prNumber: summary.prNumber ?? null }
+      : null,
   }
 }
 

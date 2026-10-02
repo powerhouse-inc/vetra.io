@@ -59,7 +59,7 @@ export function StudioProductsGrid() {
 
   return (
     <div className="mx-auto mt-24 max-w-screen-xl px-6 pb-16">
-      <h1 className="mb-6 text-2xl font-semibold">Products</h1>
+      <h1 className="mb-6 text-2xl font-semibold">Studio</h1>
 
       {showEmptyState ? (
         <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
