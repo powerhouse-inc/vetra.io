@@ -4,6 +4,7 @@ import {
   AppsApiError,
   appsGql,
   describeAppsError,
+  describeCreateAppError,
   isAppsError,
   toAppsError,
   type FetchLike,
@@ -128,5 +129,23 @@ describe('describeAppsError', () => {
     expect(describeAppsError(new AppsApiError('GITHUB_NOT_CONNECTED', 'x'))).toMatch(/GitHub/)
     expect(describeAppsError(new AppsApiError('UNKNOWN', 'raw message'))).toBe('raw message')
     expect(describeAppsError(new Error('plain'))).toBe('plain')
+  })
+})
+
+describe('describeCreateAppError', () => {
+  it('explains a repo the user cannot access', () => {
+    const msg = describeCreateAppError(new AppsApiError('FORBIDDEN', 'forbidden'), 'acme/site')
+    expect(msg).toMatch(/acme\/site/)
+    expect(msg).toMatch(/access/)
+  })
+
+  it('asks to reconnect GitHub when the user token is gone', () => {
+    expect(
+      describeCreateAppError(new AppsApiError('GITHUB_NOT_CONNECTED', 'x'), 'acme/site'),
+    ).toMatch(/Reconnect GitHub/)
+  })
+
+  it('falls back to the generic copy', () => {
+    expect(describeCreateAppError(new AppsApiError('UNKNOWN', 'raw'), 'a/b')).toBe('raw')
   })
 })

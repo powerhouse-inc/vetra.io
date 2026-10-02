@@ -84,7 +84,7 @@ export function describeAppsError(err: unknown): string {
     case 'NOT_FOUND':
       return 'This app no longer exists.'
     case 'GITHUB_NOT_CONNECTED':
-      return 'Connect your GitHub account to Vetra Deploy first.'
+      return 'Your GitHub connection expired or is missing. Reconnect GitHub and try again.'
     case 'APP_NOT_ACTIVE':
       return 'Authorize the app identity on Renown before deploying.'
     case 'PREVIEWS_DISABLED':
@@ -98,6 +98,17 @@ export function describeAppsError(err: unknown): string {
     default:
       return err.message
   }
+}
+
+/** createApp-specific copy: FORBIDDEN there means the user can't access the repo on GitHub. */
+export function describeCreateAppError(err: unknown, repoFullName: string): string {
+  if (isAppsError(err, 'FORBIDDEN')) {
+    return `Your GitHub account doesn't have access to ${repoFullName}. Ask a repository admin for access, or pick another repository.`
+  }
+  if (isAppsError(err, 'GITHUB_NOT_CONNECTED')) {
+    return 'Your GitHub authorization expired. Reconnect GitHub, then create the app again.'
+  }
+  return describeAppsError(err)
 }
 
 export function isAppsError(err: unknown, code: AppsErrorCode): boolean {
