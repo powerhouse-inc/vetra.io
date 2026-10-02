@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { isAppEnvironment, splitEnvironments } from '@/modules/apps/lib/split'
+import { activeAppIds, isAppEnvironment, splitEnvironments } from '@/modules/apps/lib/split'
 import type { CloudEnvironmentAppLink } from '@/modules/cloud/types'
 
 const env = (id: string, app?: CloudEnvironmentAppLink | null) => ({ id, app })
@@ -25,5 +25,31 @@ describe('splitEnvironments (Apps home)', () => {
 
   it('ignores an empty appId', () => {
     expect(isAppEnvironment(env('x', { appId: '', role: null, prNumber: null }))).toBe(false)
+  })
+})
+
+describe('splitEnvironments with the live app list', () => {
+  const prod = env('prod', { appId: 'app-1', role: 'PRODUCTION', prNumber: null })
+  const kept = env('kept', { appId: 'gone', role: 'PRODUCTION', prNumber: null })
+  const preview = env('pr', { appId: 'app-1', role: 'PREVIEW', prNumber: 3 })
+
+  it('treats envs of apps missing from myApps as standalone', () => {
+    const { standalone, appOwned } = splitEnvironments(
+      [prod, kept, preview],
+      activeAppIds([{ id: 'app-1', status: 'ACTIVE' }]),
+    )
+    expect(standalone.map((e) => e.id)).toEqual(['kept'])
+    expect(appOwned.map((e) => e.id)).toEqual(['prod', 'pr'])
+  })
+
+  it('treats envs of DELETED apps as standalone', () => {
+    const ids = activeAppIds([{ id: 'app-1', status: 'DELETED' }])
+    expect(isAppEnvironment(prod, ids)).toBe(false)
+    expect(splitEnvironments([prod], ids).standalone).toHaveLength(1)
+  })
+
+  it('falls back to appId presence while the app list is unknown', () => {
+    expect(isAppEnvironment(kept, null)).toBe(true)
+    expect(activeAppIds(undefined)).toBeNull()
   })
 })
