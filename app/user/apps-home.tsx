@@ -6,15 +6,11 @@ import Link from 'next/link'
 import { AppCard } from '@/modules/apps/components/app-card'
 import { AppsEmptyState } from '@/modules/apps/components/apps-empty-state'
 import { describeAppsError, isAppsError } from '@/modules/apps/graphql'
-import { useMyApps } from '@/modules/apps/hooks/use-apps'
-import { isAppEnvironment } from '@/modules/apps/lib/split'
-import type { CloudEnvironment } from '@/modules/cloud/types'
+import { useMyApps, useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
 import { Alert, AlertDescription, AlertTitle } from '@/modules/shared/components/ui/alert'
 import { Button } from '@/modules/shared/components/ui/button'
 
 import { CloudEnvironments } from './environments/cloud-projects'
-
-const isStandalone = (env: CloudEnvironment) => !isAppEnvironment(env)
 
 function AppCardSkeleton() {
   return (
@@ -132,6 +128,7 @@ function StudioCard() {
 
 /** `/user` — Apps first, then standalone environments, then Studio. */
 export function AppsHome() {
+  const { isStandalone } = useStandaloneEnvFilter()
   return (
     <main className="mx-auto mt-20 max-w-screen-xl space-y-12 px-6 py-8">
       <section className="space-y-6">

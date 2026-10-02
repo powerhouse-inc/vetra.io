@@ -2,7 +2,7 @@
 
 import { useDid, useRenown } from '@powerhousedao/reactor-browser'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useRef } from 'react'
+import { useCallback, useMemo, useRef } from 'react'
 
 import { getAuthToken } from '@/modules/cloud/graphql'
 import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
@@ -21,7 +21,10 @@ import {
   rollbackApp,
   updateApp,
   AppsApiError,
+  isAppsError,
 } from '../graphql'
+import { activeAppIds, isAppEnvironment } from '../lib/split'
+import type { CloudEnvironment } from '@/modules/cloud/types'
 import { appPollInterval, appsPollInterval, deploymentsPollInterval } from '../lib/status'
 import type {
   App,
@@ -61,6 +64,23 @@ export function useMyApps() {
     retry: retryUnlessFinal,
     refetchInterval: (query) => appsPollInterval(query.state.data),
   })
+}
+
+/**
+ * Live App ids for splitting env lists, plus a ready-made standalone predicate.
+ * No apps subgraph on the server → every env is standalone; app list still
+ * loading or failing → fall back to `appId` presence.
+ */
+export function useStandaloneEnvFilter() {
+  const { data, error } = useMyApps()
+  const unavailable = isAppsError(error, 'APPS_UNAVAILABLE')
+  return useMemo(() => {
+    const appIds = unavailable ? new Set<string>() : activeAppIds(data)
+    return {
+      appIds,
+      isStandalone: (env: Pick<CloudEnvironment, 'app'>) => !isAppEnvironment(env, appIds),
+    }
+  }, [data, unavailable])
 }
 
 export function useApp(id: string) {

@@ -30,8 +30,7 @@ import {
 import { cn } from '@/shared/lib/utils'
 
 import { describeAppsError } from '../graphql'
-import { useCreateApp } from '../hooks/use-apps'
-import { isAppEnvironment } from '../lib/split'
+import { useCreateApp, useStandaloneEnvFilter } from '../hooks/use-apps'
 import type { App, GithubRepo } from '../types'
 import { CopyButton } from './copy-button'
 import { RepoPicker } from './repo-picker'
@@ -139,9 +138,10 @@ function ConfigureStep({
 }) {
   const { viewer } = useViewer()
   const { environments, isPending: envsPending } = useEnvironments('MINE', viewer?.address ?? null)
+  const { isStandalone } = useStandaloneEnvFilter()
   const standalone = useMemo(
-    () => environments.filter((e) => !isAppEnvironment(e) && !e.state.studioInstanceId),
-    [environments],
+    () => environments.filter((e) => isStandalone(e) && !e.state.studioInstanceId),
+    [environments, isStandalone],
   )
   const createApp = useCreateApp()
 

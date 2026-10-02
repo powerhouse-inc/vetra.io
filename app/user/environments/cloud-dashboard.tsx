@@ -3,9 +3,9 @@
 import { Boxes, Plus } from 'lucide-react'
 import Link from 'next/link'
 
-import { isAppEnvironment, splitEnvironments } from '@/modules/apps/lib/split'
+import { useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
+import { splitEnvironments } from '@/modules/apps/lib/split'
 import { useEnvironments } from '@/modules/cloud/hooks/use-environment'
-import type { CloudEnvironment } from '@/modules/cloud/types'
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -17,11 +17,13 @@ import {
 import { Button } from '@/modules/shared/components/ui/button'
 import { CloudEnvironments } from './cloud-projects'
 
-const isStandalone = (env: CloudEnvironment) => !isAppEnvironment(env)
-
 export function CloudDashboard() {
   // Envs managed by an App (production + previews) live on their App's page.
-  const { standalone: environments, appOwned } = splitEnvironments(useEnvironments().environments)
+  const { appIds, isStandalone } = useStandaloneEnvFilter()
+  const { standalone: environments, appOwned } = splitEnvironments(
+    useEnvironments().environments,
+    appIds,
+  )
   const readyCount = environments.filter((e) => e.state.status === 'READY').length
   const totalPackages = environments.reduce((sum, e) => sum + e.state.packages.length, 0)
 
