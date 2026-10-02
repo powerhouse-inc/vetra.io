@@ -18,7 +18,7 @@ const NODES: Node[] = [
   {
     icon: Rocket,
     title: 'Vetra deploy',
-    caption: 'deployApp pins the exact versions',
+    caption: 'pins the exact versions on the env',
     accent: true,
   },
   { icon: Layers, title: 'Environments', caption: 'production, or the PR preview' },

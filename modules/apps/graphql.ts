@@ -372,7 +372,10 @@ export async function rollbackApp(
   return data.rollbackApp
 }
 
-/** Manual deploy (owner/admin). CI calls this with the App identity token. */
+/**
+ * Manual deploy (owner/admin). CI (vetra-deploy-action) does not use GraphQL:
+ * it calls the HTTP routes `apps/ci/*` on the vetra switchboard.
+ */
 export async function deployApp(
   input: DeployAppInput,
   token: string | null,
@@ -386,8 +389,9 @@ export async function deployApp(
 }
 
 /**
- * Push-only Harbor robot for the App's project. Used by CI (vetra-deploy-action);
- * the UI never calls it. The result carries a secret: never cache or log it.
+ * Push-only Harbor robot for the App's project. The UI never calls it, and CI
+ * uses the HTTP route `apps/ci/registry-credentials` instead. The result
+ * carries a secret: never cache or log it.
  */
 export async function fetchAppRegistryCredentials(
   appId: string,
