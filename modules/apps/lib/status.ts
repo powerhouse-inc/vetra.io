@@ -32,6 +32,7 @@ const APP_STATUS_META: Record<AppStatus, StatusMeta> = {
   PENDING_IDENTITY: { label: 'Needs authorization', tone: 'warning', active: false },
   ACTIVE: { label: 'Active', tone: 'success', active: false },
   DISCONNECTED: { label: 'Disconnected', tone: 'danger', active: false },
+  DELETED: { label: 'Deleted', tone: 'neutral', active: false },
 }
 
 export function appStatusMeta(status: AppStatus): StatusMeta {
@@ -79,9 +80,9 @@ export function deploymentsPollInterval(
 }
 
 export function appPollInterval(
-  app: Pick<App, 'latestDeployment' | 'previews'> | null | undefined,
+  app: (Pick<App, 'latestDeployment' | 'previews'> & { status?: App['status'] }) | null | undefined,
 ): number | false {
-  if (!app) return false
+  if (!app || app.status === 'DELETED') return false
   if (isDeploymentInFlight(app.latestDeployment?.status)) return IN_FLIGHT_POLL_MS
   if (app.previews.some((p) => isDeploymentInFlight(p.status))) return IN_FLIGHT_POLL_MS
   return false

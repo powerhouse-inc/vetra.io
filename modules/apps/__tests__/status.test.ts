@@ -135,3 +135,23 @@ describe('git + url helpers', () => {
     expect(displayHost('https://foo-connect.vetra.io/')).toBe('foo-connect.vetra.io')
   })
 })
+
+describe('DELETED apps', () => {
+  it('has its own neutral headline', () => {
+    expect(appHeadlineStatus({ status: 'DELETED', latestDeployment: deployment() })).toEqual({
+      label: 'Deleted',
+      tone: 'neutral',
+      active: false,
+    })
+  })
+
+  it('never polls a deleted app', () => {
+    expect(
+      appPollInterval({
+        status: 'DELETED',
+        latestDeployment: deployment({ status: 'DEPLOYING' }),
+        previews: [],
+      }),
+    ).toBe(false)
+  })
+})

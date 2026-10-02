@@ -3,7 +3,8 @@
  * Field names and nullability mirror the GraphQL schema exactly.
  */
 
-export type AppStatus = 'PENDING_IDENTITY' | 'ACTIVE' | 'DISCONNECTED'
+/** DELETED = soft-deleted; only admins can still read such an app via `app(id)`. */
+export type AppStatus = 'PENDING_IDENTITY' | 'ACTIVE' | 'DISCONNECTED' | 'DELETED'
 export type AppDeploymentKind = 'PRODUCTION' | 'PREVIEW'
 export type AppDeploymentStatus = 'PENDING' | 'DEPLOYING' | 'READY' | 'FAILED' | 'SUPERSEDED'
 
