@@ -2,9 +2,13 @@ import { cn } from '@/shared/lib/utils'
 
 /** Stable 0–359 hue from a string, so an App keeps its colour everywhere. */
 export function hueFor(seed: string): number {
-  let h = 0
-  for (let i = 0; i < seed.length; i++) h = (h * 31 + seed.charCodeAt(i)) % 360
-  return h
+  // FNV-1a: similar ids (app-1, app-2) still land far apart on the wheel.
+  let h = 0x811c9dc5
+  for (let i = 0; i < seed.length; i++) {
+    h ^= seed.charCodeAt(i)
+    h = Math.imul(h, 0x01000193)
+  }
+  return (h >>> 0) % 360
 }
 
 /** Monogram tile with a deterministic gradient — the App's visual identity. */
