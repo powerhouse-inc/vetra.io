@@ -1,6 +1,11 @@
 import { describe, expect, it } from 'vitest'
 
-import { activeAppIds, isAppEnvironment, splitEnvironments } from '@/modules/apps/lib/split'
+import {
+  activeAppIds,
+  attachableEnvironments,
+  isAppEnvironment,
+  splitEnvironments,
+} from '@/modules/apps/lib/split'
 import type { CloudEnvironmentAppLink } from '@/modules/cloud/types'
 
 const env = (id: string, app?: CloudEnvironmentAppLink | null) => ({ id, app })
@@ -51,5 +56,29 @@ describe('splitEnvironments with the live app list', () => {
   it('falls back to appId presence while the app list is unknown', () => {
     expect(isAppEnvironment(kept, null)).toBe(true)
     expect(activeAppIds(undefined)).toBeNull()
+  })
+})
+
+describe('attachableEnvironments (new-app "use existing")', () => {
+  const studio = (id: string) => ({ id, app: null, state: { studioInstanceId: 'studio-1' } })
+  const plain = (id: string, app: CloudEnvironmentAppLink | null = null) => ({
+    id,
+    app,
+    state: { studioInstanceId: null },
+  })
+
+  it('offers only envs with no app link at all and no studio', () => {
+    const kept = plain('kept-from-deleted-app', {
+      appId: 'deleted',
+      role: 'PRODUCTION',
+      prNumber: null,
+    })
+    const result = attachableEnvironments([
+      plain('free'),
+      kept,
+      studio('studio-env'),
+      plain('also-free'),
+    ])
+    expect(result.map((e) => e.id)).toEqual(['free', 'also-free'])
   })
 })

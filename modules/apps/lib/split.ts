@@ -44,3 +44,14 @@ export function splitEnvironments<T extends Pick<CloudEnvironment, 'app'>>(
   for (const env of envs) (isAppEnvironment(env, appIds) ? appOwned : standalone).push(env)
   return { standalone, appOwned }
 }
+
+/**
+ * Environments the new-app flow may attach as production: no app link at all
+ * (a kept production env of a deleted app still carries its appId and is
+ * rejected by createApp) and not a Studio environment.
+ */
+export function attachableEnvironments<
+  T extends Pick<CloudEnvironment, 'app'> & { state: { studioInstanceId?: string | null } },
+>(envs: readonly T[]): T[] {
+  return envs.filter((e) => !e.app?.appId && !e.state.studioInstanceId)
+}

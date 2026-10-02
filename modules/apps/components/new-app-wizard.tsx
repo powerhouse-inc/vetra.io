@@ -30,7 +30,8 @@ import {
 import { cn } from '@/shared/lib/utils'
 
 import { describeCreateAppError, isAppsError } from '../graphql'
-import { useCreateApp, useStandaloneEnvFilter } from '../hooks/use-apps'
+import { useCreateApp } from '../hooks/use-apps'
+import { attachableEnvironments } from '../lib/split'
 import type { App, GithubRepo } from '../types'
 import { CopyButton } from './copy-button'
 import { ReconnectGithub } from './reconnect-github'
@@ -140,11 +141,9 @@ function ConfigureStep({
 }) {
   const { viewer } = useViewer()
   const { environments, isPending: envsPending } = useEnvironments('MINE', viewer?.address ?? null)
-  const { isStandalone } = useStandaloneEnvFilter()
-  const standalone = useMemo(
-    () => environments.filter((e) => isStandalone(e) && !e.state.studioInstanceId),
-    [environments, isStandalone],
-  )
+  // Only envs with no app link at all: createApp rejects any env still
+  // carrying an appId, including the kept production env of a deleted app.
+  const standalone = useMemo(() => attachableEnvironments(environments), [environments])
   const createApp = useCreateApp()
 
   const nameError = draft.name.trim() ? null : 'Give your app a name'
