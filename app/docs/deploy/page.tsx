@@ -243,7 +243,7 @@ export default function DeployGuidePage() {
                 },
                 {
                   title: 'Authorize the deploy identity',
-                  body: 'Your app gets its own Renown identity. Approve it once on Renown; from then on GitHub Actions in that repository can deploy on your behalf, and nothing else can.',
+                  body: 'Your app gets its own Renown identity. Approve it on Renown; for the next year GitHub Actions in that repository can deploy on your behalf, and nothing else can. vetra.io reminds you 30 days before it expires.',
                 },
                 {
                   title: `Add ${WORKFLOW_PATH}`,
@@ -439,6 +439,15 @@ export default function DeployGuidePage() {
                   vetra.io, choose <strong>Authorize on Renown</strong>, sign, then{' '}
                   <strong>Check again</strong>. The exchange also refuses refs other than the
                   production branch, <C>v*</C> tags and pull requests.
+                </p>
+              </Problem>
+              <Problem title="IDENTITY_EXPIRED: deploy identity expired">
+                <p>
+                  The Renown authorization of the app&apos;s deploy identity is valid for a year.
+                  Once it lapses the action fails with <C>IDENTITY_EXPIRED</C> and CI deploys
+                  pause; what is already running keeps running. Open the app on vetra.io, choose{' '}
+                  <strong>Re-authorize</strong>, sign on Renown, and re-run the failed workflow.
+                  The app page warns you 30 days ahead.
                 </p>
               </Problem>
               <Problem title="Publish fails with 403 on the registry">
