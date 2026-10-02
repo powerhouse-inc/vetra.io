@@ -10,6 +10,7 @@ import {
   deploymentsPollInterval,
   displayHost,
   githubCommitUrl,
+  identityState,
   isAppReadOnly,
   isDeploymentInFlight,
   primaryUrl,
@@ -163,5 +164,75 @@ describe('isAppReadOnly', () => {
     expect(isAppReadOnly({ status: 'ACTIVE' })).toBe(false)
     expect(isAppReadOnly({ status: 'DISCONNECTED' })).toBe(false)
     expect(isAppReadOnly({ status: 'PENDING_IDENTITY' })).toBe(false)
+  })
+})
+
+describe('identityState', () => {
+  const now = new Date('2026-10-02T00:00:00Z')
+  const days = (n: number) => new Date(now.getTime() + n * 86_400_000).toISOString()
+
+  it('is valid with more than 30 days left', () => {
+    expect(
+      identityState(
+        { status: 'ACTIVE', identityExpiresAt: days(200), latestDeployment: null },
+        now,
+      ),
+    ).toEqual({
+      kind: 'valid',
+      expiresAt: days(200),
+      daysLeft: 200,
+    })
+  })
+
+  it('warns when fewer than 30 days are left', () => {
+    expect(
+      identityState({ status: 'ACTIVE', identityExpiresAt: days(12), latestDeployment: null }, now)
+        .kind,
+    ).toBe('expiring')
+    expect(
+      identityState({ status: 'ACTIVE', identityExpiresAt: days(30), latestDeployment: null }, now)
+        .kind,
+    ).toBe('valid')
+  })
+
+  it('is expired when the date passed', () => {
+    expect(
+      identityState({ status: 'ACTIVE', identityExpiresAt: days(-1), latestDeployment: null }, now)
+        .kind,
+    ).toBe('expired')
+  })
+
+  it('treats PENDING_IDENTITY after having been active as expired', () => {
+    expect(
+      identityState(
+        { status: 'PENDING_IDENTITY', identityExpiresAt: days(-3), latestDeployment: null },
+        now,
+      ).kind,
+    ).toBe('expired')
+    expect(
+      identityState(
+        { status: 'PENDING_IDENTITY', identityExpiresAt: null, latestDeployment: deployment() },
+        now,
+      ).kind,
+    ).toBe('expired')
+  })
+
+  it('is pending for a never-authorized app', () => {
+    expect(
+      identityState(
+        { status: 'PENDING_IDENTITY', identityExpiresAt: null, latestDeployment: null },
+        now,
+      ).kind,
+    ).toBe('pending')
+  })
+
+  it('tolerates backends without the field', () => {
+    expect(identityState({ status: 'ACTIVE', latestDeployment: null }, now)).toEqual({
+      kind: 'unknown',
+    })
+    expect(
+      identityState({ status: 'DELETED', identityExpiresAt: days(1), latestDeployment: null }, now)
+        .kind,
+    ).toBe('unknown')
   })
 })

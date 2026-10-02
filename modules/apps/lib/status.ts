@@ -148,3 +148,47 @@ export function displayHost(url: string | null | undefined): string {
 export function isAppReadOnly(app: Pick<App, 'status'>): boolean {
   return app.status === 'DELETED'
 }
+
+// ---------------------------------------------------------------------------
+// Deploy identity lifetime
+// ---------------------------------------------------------------------------
+
+/** Warn this many days before the deploy identity's delegation expires. */
+export const IDENTITY_WARN_DAYS = 30
+
+const DAY_MS = 86_400_000
+
+export type IdentityState =
+  /** Never authorized yet (new app). */
+  | { kind: 'pending' }
+  /** Authorized; `daysLeft` ≥ IDENTITY_WARN_DAYS. */
+  | { kind: 'valid'; expiresAt: string; daysLeft: number }
+  /** Authorized but expiring soon. */
+  | { kind: 'expiring'; expiresAt: string; daysLeft: number }
+  /** Was authorized, now expired: CI deploys are paused until re-authorized. */
+  | { kind: 'expired'; expiresAt: string | null }
+  /** No expiry known (older backend) or not applicable (deleted app). */
+  | { kind: 'unknown' }
+
+export function identityState(
+  app: Pick<App, 'status' | 'latestDeployment'> & { identityExpiresAt?: string | null },
+  now: Date = new Date(),
+): IdentityState {
+  if (app.status === 'DELETED') return { kind: 'unknown' }
+  const expiresAt = app.identityExpiresAt ?? null
+  const expiryMs = expiresAt ? new Date(expiresAt).getTime() : NaN
+  const hasExpiry = !Number.isNaN(expiryMs)
+
+  if (app.status === 'PENDING_IDENTITY') {
+    // Had a delegation (an expiry date, or it already deployed) → it lapsed.
+    if (hasExpiry || app.latestDeployment) return { kind: 'expired', expiresAt }
+    return { kind: 'pending' }
+  }
+  if (!hasExpiry || !expiresAt) return { kind: 'unknown' }
+  const msLeft = expiryMs - now.getTime()
+  if (msLeft <= 0) return { kind: 'expired', expiresAt }
+  const daysLeft = Math.floor(msLeft / DAY_MS)
+  return daysLeft < IDENTITY_WARN_DAYS
+    ? { kind: 'expiring', expiresAt, daysLeft }
+    : { kind: 'valid', expiresAt, daysLeft }
+}
