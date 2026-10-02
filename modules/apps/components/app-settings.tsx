@@ -23,7 +23,8 @@ import { Switch } from '@/modules/shared/components/ui/switch'
 
 import { describeAppsError } from '../graphql'
 import { useDeleteApp, useUpdateApp } from '../hooks/use-apps'
-import { appStatusMeta } from '../lib/status'
+import { appStatusMeta, identityState } from '../lib/status'
+import { formatDate } from '../lib/time'
 import type { App, UpdateAppInput } from '../types'
 import { CopyButton } from './copy-button'
 import { SetupDeploys } from './setup-deploys'
@@ -253,15 +254,22 @@ function GeneralAndPreviews({ app }: { app: App }) {
 }
 
 function IdentityCard({ app, onAuthorize }: { app: App; onAuthorize: () => void }) {
+  const identity = identityState(app)
+  const label =
+    identity.kind === 'pending'
+      ? 'Authorize on Renown'
+      : identity.kind === 'unknown' && app.status !== 'PENDING_IDENTITY'
+        ? null
+        : 'Re-authorize'
   return (
     <SettingsCard
       title="Deploy identity"
       description="The Renown identity GitHub Actions use to publish and deploy this app."
       footer={
-        app.status === 'PENDING_IDENTITY' ? (
-          <Button onClick={onAuthorize}>
+        label ? (
+          <Button onClick={onAuthorize} variant={identity.kind === 'valid' ? 'outline' : 'default'}>
             <Fingerprint className="h-4 w-4" />
-            Authorize on Renown
+            {label}
           </Button>
         ) : undefined
       }
@@ -274,6 +282,23 @@ function IdentityCard({ app, onAuthorize }: { app: App; onAuthorize: () => void 
         </div>
       </div>
       <dl className="text-muted-foreground grid grid-cols-[auto_1fr] gap-x-4 gap-y-1 text-xs">
+        {identity.kind === 'valid' || identity.kind === 'expiring' ? (
+          <>
+            <dt>Valid until</dt>
+            <dd className={identity.kind === 'expiring' ? 'text-warning' : 'text-foreground'}>
+              {formatDate(identity.expiresAt)}
+              {identity.kind === 'expiring' &&
+                ` (${identity.daysLeft} day${identity.daysLeft === 1 ? '' : 's'} left)`}
+            </dd>
+          </>
+        ) : identity.kind === 'expired' ? (
+          <>
+            <dt>Expired</dt>
+            <dd className="text-destructive">
+              {identity.expiresAt ? formatDate(identity.expiresAt) : 'yes'} · CI deploys are paused
+            </dd>
+          </>
+        ) : null}
         <dt>App id</dt>
         <dd className="text-foreground truncate font-mono">{app.id}</dd>
         <dt>Image project</dt>

@@ -30,11 +30,12 @@ import {
 import {
   appHeadlineStatus,
   githubRepoUrl,
+  identityState,
   isAppReadOnly,
   primaryUrl,
   refLabel,
 } from '../lib/status'
-import { formatTimestamp } from '../lib/time'
+import { formatDate, formatTimestamp } from '../lib/time'
 import { timeAgo } from '../lib/time'
 import type { App } from '../types'
 import { AppAvatar } from './app-avatar'
@@ -90,6 +91,7 @@ function Banner({
 }
 
 function Header({ app }: { app: App }) {
+  const identity = identityState(app)
   const url = primaryUrl(app.productionUrls)
   const latest = app.latestDeployment
   return (
@@ -117,6 +119,19 @@ function Header({ app }: { app: App }) {
           {latest && (
             <span>
               Last deploy {timeAgo(latest.createdAt)} from {refLabel(latest.gitRef)}
+            </span>
+          )}
+          {(identity.kind === 'valid' || identity.kind === 'expiring') && (
+            <span
+              className={
+                identity.kind === 'expiring'
+                  ? 'text-warning inline-flex items-center gap-1.5'
+                  : 'inline-flex items-center gap-1.5'
+              }
+              title={formatTimestamp(identity.expiresAt)}
+            >
+              <Fingerprint className="h-4 w-4" aria-hidden />
+              Deploy identity valid until {formatDate(identity.expiresAt)}
             </span>
           )}
         </div>
@@ -148,6 +163,7 @@ export function AppDetail({ appId }: { appId: string }) {
 
   const tabParam = params.get('tab')
   const readOnly = app ? isAppReadOnly(app) : false
+  const identity = app ? identityState(app) : ({ kind: 'unknown' } as const)
   // A deleted app is read-only: no Settings tab, no actions.
   const visibleTabs: readonly Tab[] = readOnly ? TABS.filter((t) => t !== 'settings') : TABS
   const tab: Tab = visibleTabs.includes(tabParam as Tab) ? (tabParam as Tab) : 'overview'
@@ -196,9 +212,33 @@ export function AppDetail({ appId }: { appId: string }) {
     router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
 
+  // renownAuthorizeUrl returns to this page with ?identity=1 → confirmAppIdentity.
   const authorize = () => {
     if (app) window.location.assign(app.renownAuthorizeUrl)
   }
+
+  const identityActions = (label: string, withCheck = true) => (
+    <>
+      <Button size="sm" onClick={authorize}>
+        {label}
+      </Button>
+      {withCheck && (
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={() => runConfirm()}
+          disabled={confirm.isPending}
+        >
+          {confirm.isPending ? (
+            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+          ) : (
+            <RefreshCw className="h-3.5 w-3.5" />
+          )}
+          Check again
+        </Button>
+      )}
+    </>
+  )
 
   if (appQuery.isPending) {
     return (
@@ -238,33 +278,39 @@ export function AppDetail({ appId }: { appId: string }) {
         </Link>
         <Header app={app} />
 
-        {app.status === 'PENDING_IDENTITY' && (
+        {identity.kind === 'pending' && (
           <Banner
             tone="warning"
             icon={Fingerprint}
             title="Authorize the deploy identity"
-            actions={
-              <>
-                <Button size="sm" onClick={authorize}>
-                  Authorize on Renown
-                </Button>
-                <Button
-                  size="sm"
-                  variant="outline"
-                  onClick={() => runConfirm()}
-                  disabled={confirm.isPending}
-                >
-                  {confirm.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : (
-                    <RefreshCw className="h-3.5 w-3.5" />
-                  )}
-                  Check again
-                </Button>
-              </>
-            }
+            actions={identityActions('Authorize on Renown')}
           >
             GitHub Actions cannot deploy until you approve this app&apos;s Renown identity once.
+          </Banner>
+        )}
+
+        {identity.kind === 'expired' && (
+          <Banner
+            tone="danger"
+            icon={Fingerprint}
+            title="Deploy identity expired — CI deploys are paused"
+            actions={identityActions('Re-authorize')}
+          >
+            {identity.expiresAt ? `It expired on ${formatDate(identity.expiresAt)}. ` : ''}
+            Re-authorize it on Renown (one signature) and pushes deploy again. Production keeps
+            running meanwhile.
+          </Banner>
+        )}
+
+        {identity.kind === 'expiring' && (
+          <Banner
+            tone="warning"
+            icon={Fingerprint}
+            title={`Deploy identity expires in ${identity.daysLeft} day${identity.daysLeft === 1 ? '' : 's'}`}
+            actions={identityActions('Re-authorize', false)}
+          >
+            Valid until {formatDate(identity.expiresAt)}. Re-authorize now so CI deploys don&apos;t
+            pause.
           </Banner>
         )}
 

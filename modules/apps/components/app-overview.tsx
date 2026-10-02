@@ -20,6 +20,7 @@ import {
   displayHost,
   githubCommitUrl,
   githubRepoUrl,
+  identityState,
   isAppReadOnly,
   primaryUrl,
   refLabel,
@@ -373,7 +374,8 @@ export function AppOverview({
   const showChecklist =
     !readOnly &&
     app.status !== 'DISCONNECTED' &&
-    (app.status === 'PENDING_IDENTITY' || (deploymentsLoaded && !hasDeployments))
+    // Expired identities get the page banner; the checklist is for first-time setup.
+    (identityState(app).kind === 'pending' || (deploymentsLoaded && !hasDeployments))
 
   return (
     <div className="space-y-10">
