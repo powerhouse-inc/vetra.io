@@ -21,6 +21,7 @@ import {
   useMyGithubDeployInstallations,
 } from '../hooks/use-apps'
 import type { GithubDeployInstallation, GithubRepo } from '../types'
+import { GithubFlowLink } from './github-flow-link'
 import { ReconnectGithub } from './reconnect-github'
 
 /** Case-insensitive substring match on the repo's full name. Exported for tests. */
@@ -51,17 +52,17 @@ function ConnectGithub({
         </p>
       </div>
       <Button asChild size="lg" disabled={!installUrl}>
-        <a href={installUrl}>
+        <GithubFlowLink url={installUrl}>
           <Github className="h-4 w-4" />
           Install Vetra Deploy
-        </a>
+        </GithubFlowLink>
       </Button>
       {authorizeUrl && (
         <p className="text-muted-foreground text-sm">
           Already installed?{' '}
-          <a href={authorizeUrl} className="text-primary font-medium hover:underline">
+          <GithubFlowLink url={authorizeUrl} className="text-primary font-medium hover:underline">
             Authorize your GitHub account
-          </a>
+          </GithubFlowLink>
         </p>
       )}
     </div>
@@ -233,13 +234,13 @@ export function RepoPicker({
           onChange={onInstallationChange}
         />
         {info.data?.installUrl && (
-          <a
-            href={info.data.installUrl}
+          <GithubFlowLink
+            url={info.data.installUrl}
             className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 text-sm"
           >
             <Plus className="h-3.5 w-3.5" aria-hidden />
             Add account or repositories
-          </a>
+          </GithubFlowLink>
         )}
       </div>
       {effectiveId && (

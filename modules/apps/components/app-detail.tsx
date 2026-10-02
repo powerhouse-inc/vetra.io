@@ -42,6 +42,7 @@ import { AppAvatar } from './app-avatar'
 import { AppDeployments } from './app-deployments'
 import { AppOverview } from './app-overview'
 import { AppSettings } from './app-settings'
+import { GithubFlowLink } from './github-flow-link'
 import { StatusPill } from './status'
 
 const TABS = ['overview', 'deployments', 'settings'] as const
@@ -329,10 +330,10 @@ export function AppDetail({ appId }: { appId: string }) {
             actions={
               githubInfo.data?.installUrl ? (
                 <Button size="sm" variant="outline" asChild>
-                  <a href={githubInfo.data.installUrl}>
+                  <GithubFlowLink url={githubInfo.data.installUrl}>
                     <Github className="h-3.5 w-3.5" />
                     Reconnect
-                  </a>
+                  </GithubFlowLink>
                 </Button>
               ) : undefined
             }
