@@ -1,10 +1,12 @@
-import { StudioProductsGrid } from '@/modules/cloud/studio/components/studio-products-grid'
 import { EarlyAccessGate } from '@/modules/invites/early-access-gate'
 
-export default function UserProductsPage() {
+import { AppsHome } from './apps-home'
+
+/** Logged-in home: Vetra Apps, standalone environments and a link to Studio. */
+export default function UserHomePage() {
   return (
     <EarlyAccessGate>
-      <StudioProductsGrid />
+      <AppsHome />
     </EarlyAccessGate>
   )
 }
