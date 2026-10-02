@@ -184,6 +184,20 @@ export type ReleaseHistoryEntry = {
   releaseUrl: string | null
 }
 
+/** Role of an environment inside a Vetra App (read model `app_role`). */
+export type AppEnvironmentRole = 'PRODUCTION' | 'PREVIEW'
+
+/**
+ * Link from an environment to the Vetra App that manages it. Present only when
+ * the backend exposes `appId` on `myEnvironments` AND the env belongs to an
+ * App; standalone envs (and older backends) leave it undefined/null.
+ */
+export type CloudEnvironmentAppLink = {
+  appId: string
+  role: AppEnvironmentRole | null
+  prNumber: number | null
+}
+
 export type CloudEnvironment = {
   id: string
   name: string
@@ -192,6 +206,7 @@ export type CloudEnvironment = {
   lastModifiedAtUtcIso: string
   revision: number
   state: CloudEnvironmentState
+  app?: CloudEnvironmentAppLink | null
 }
 
 // Observability types (from vetra-cloud-observability subgraph)
