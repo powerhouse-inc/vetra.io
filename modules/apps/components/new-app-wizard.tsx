@@ -29,10 +29,11 @@ import {
 } from '@/modules/shared/components/ui/select'
 import { cn } from '@/shared/lib/utils'
 
-import { describeAppsError } from '../graphql'
+import { describeCreateAppError, isAppsError } from '../graphql'
 import { useCreateApp, useStandaloneEnvFilter } from '../hooks/use-apps'
 import type { App, GithubRepo } from '../types'
 import { CopyButton } from './copy-button'
+import { ReconnectGithub } from './reconnect-github'
 import { RepoPicker } from './repo-picker'
 import { SetupDeploys } from './setup-deploys'
 import { Stepper } from './stepper'
@@ -169,7 +170,7 @@ function ConfigureStep({
           toast.success(`${app.name} created`)
           onCreated(app)
         },
-        onError: (err) => toast.error(describeAppsError(err)),
+        onError: (err) => toast.error(describeCreateAppError(err, draft.repo.fullName)),
       },
     )
   }
@@ -181,6 +182,18 @@ function ConfigureStep({
     >
       <form onSubmit={submit} className="space-y-6" noValidate>
         <RepoChip repo={draft.repo} onChange={onBack} />
+
+        {isAppsError(createApp.error, 'GITHUB_NOT_CONNECTED') && (
+          <ReconnectGithub message="Your GitHub authorization expired. Reconnect, then create the app again." />
+        )}
+        {isAppsError(createApp.error, 'FORBIDDEN') && (
+          <p
+            role="alert"
+            className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm"
+          >
+            {describeCreateAppError(createApp.error, draft.repo.fullName)}
+          </p>
+        )}
 
         <div className="grid gap-5 sm:grid-cols-2">
           <div className="space-y-2">

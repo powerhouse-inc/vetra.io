@@ -14,13 +14,14 @@ import {
   SelectValue,
 } from '@/modules/shared/components/ui/select'
 
-import { describeAppsError } from '../graphql'
+import { describeAppsError, isAppsError } from '../graphql'
 import {
   useGithubDeployAppInfo,
   useGithubDeployRepositories,
   useMyGithubDeployInstallations,
 } from '../hooks/use-apps'
 import type { GithubDeployInstallation, GithubRepo } from '../types'
+import { ReconnectGithub } from './reconnect-github'
 
 /** Case-insensitive substring match on the repo's full name. Exported for tests. */
 export function filterRepos(repos: readonly GithubRepo[], query: string): GithubRepo[] {
@@ -136,6 +137,8 @@ function RepoList({
           <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
           Loading repositories…
         </div>
+      ) : isAppsError(repos.error, 'GITHUB_NOT_CONNECTED') ? (
+        <ReconnectGithub className="m-4" />
       ) : repos.error ? (
         <p className="text-destructive px-4 py-8 text-center text-sm">
           {describeAppsError(repos.error)}
@@ -200,6 +203,10 @@ export function RepoPicker({
         Checking your GitHub connection…
       </div>
     )
+  }
+
+  if (isAppsError(installations.error, 'GITHUB_NOT_CONNECTED')) {
+    return <ReconnectGithub />
   }
 
   if (installations.error) {
