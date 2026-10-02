@@ -34,6 +34,7 @@ import { useCreateApp, useStandaloneEnvFilter } from '../hooks/use-apps'
 import type { App, GithubRepo } from '../types'
 import { CopyButton } from './copy-button'
 import { ReconnectGithub } from './reconnect-github'
+import { APP_NAME_MAX } from './app-settings'
 import { RepoPicker } from './repo-picker'
 import { SetupDeploys } from './setup-deploys'
 import { Stepper } from './stepper'
@@ -203,7 +204,7 @@ function ConfigureStep({
               value={draft.name}
               onChange={(e) => update({ name: e.target.value })}
               aria-invalid={!!nameError}
-              maxLength={64}
+              maxLength={APP_NAME_MAX}
               autoFocus
             />
           </div>

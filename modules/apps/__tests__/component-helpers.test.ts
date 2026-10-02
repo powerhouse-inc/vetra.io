@@ -58,5 +58,16 @@ describe('diffSettings', () => {
     expect(diffSettings(app, { ...form, previewLimit: '0' })).toBeNull()
     expect(diffSettings(app, { ...form, previewTtlDays: '2.5' })).toBeNull()
     expect(diffSettings(app, { ...form, previewTtlDays: '365' })).toBeNull()
+    expect(diffSettings(app, { ...form, previewLimit: '21' })).toBeNull()
+    expect(diffSettings(app, { ...form, previewTtlDays: '91' })).toBeNull()
+  })
+
+  it('matches the backend bounds (previews 1-20, TTL 1-90 days, name 1-100 chars)', () => {
+    expect(diffSettings(app, { ...form, previewLimit: '20', previewTtlDays: '90' })).toEqual({
+      previewLimit: 20,
+      previewTtlDays: 90,
+    })
+    expect(diffSettings(app, { ...form, name: 'x'.repeat(100) })).toEqual({ name: 'x'.repeat(100) })
+    expect(diffSettings(app, { ...form, name: 'x'.repeat(101) })).toBeNull()
   })
 })

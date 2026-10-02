@@ -29,8 +29,10 @@ import { CopyButton } from './copy-button'
 import { SetupDeploys } from './setup-deploys'
 import { StatusPill } from './status'
 
+// Mirror the vetra-apps subgraph's updateApp validation.
 export const PREVIEW_LIMIT_RANGE = { min: 1, max: 20 } as const
 export const PREVIEW_TTL_RANGE = { min: 1, max: 90 } as const
+export const APP_NAME_MAX = 100
 
 type FormState = {
   name: string
@@ -63,7 +65,14 @@ function intInRange(value: string, range: { min: number; max: number }): number 
 export function diffSettings(app: App, form: FormState): UpdateAppInput | null {
   const limit = intInRange(form.previewLimit, PREVIEW_LIMIT_RANGE)
   const ttl = intInRange(form.previewTtlDays, PREVIEW_TTL_RANGE)
-  if (!form.name.trim() || !form.productionBranch.trim() || limit === null || ttl === null) {
+  const name = form.name.trim()
+  if (
+    !name ||
+    name.length > APP_NAME_MAX ||
+    !form.productionBranch.trim() ||
+    limit === null ||
+    ttl === null
+  ) {
     return null
   }
   const patch: UpdateAppInput = {}
@@ -169,7 +178,7 @@ function GeneralAndPreviews({ app }: { app: App }) {
             <Input
               id="settings-name"
               value={form.name}
-              maxLength={64}
+              maxLength={APP_NAME_MAX}
               onChange={(e) => set({ name: e.target.value })}
               aria-invalid={!form.name.trim()}
             />
@@ -300,7 +309,7 @@ function DangerZone({ app }: { app: App }) {
     <SettingsCard
       danger
       title="Delete app"
-      description="Stops deploys from GitHub and removes the app with its deployment history."
+      description="Stops deploys from GitHub and removes the app from your account."
       footer={
         <Button variant="destructive" onClick={() => setOpen(true)}>
           <Trash2 className="h-4 w-4" />
@@ -309,9 +318,9 @@ function DangerZone({ app }: { app: App }) {
       }
     >
       <p className="text-muted-foreground text-sm">
-        The repository and its workflow file are not touched. Remove{' '}
-        <code className="font-mono text-xs">.github/workflows/vetra.yml</code> yourself if you no
-        longer need it.
+        Its images in the Vetra registry are kept. The repository and its workflow file are not
+        touched; remove <code className="font-mono text-xs">.github/workflows/vetra.yml</code>{' '}
+        yourself if you no longer need it.
       </p>
       <AlertDialog
         open={open}
@@ -346,8 +355,8 @@ function DangerZone({ app }: { app: App }) {
             <span className="space-y-0.5">
               <span className="block font-medium">Also delete its environments</span>
               <span className="text-muted-foreground block text-xs">
-                Unchecked, the production environment and its data are kept as a standalone
-                environment.
+                Unchecked, production keeps running as a standalone environment with its data, but
+                CI deploys stop. Registry images are kept either way.
               </span>
             </span>
           </label>
