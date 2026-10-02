@@ -8,6 +8,13 @@
  */
 export const GITHUB_STATE_KEY = 'vetra-apps:github-oauth-state'
 
+/**
+ * Set when the callback restarted the authorize flow itself (GitHub returns
+ * from an *install* without our `state`, or without a code at all). Allows
+ * exactly one automatic retry per tab, so a bad link can't loop.
+ */
+export const GITHUB_REAUTH_KEY = 'vetra-apps:github-reauth'
+
 type StateStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>
 
 function randomHex(bytes = 16): string {

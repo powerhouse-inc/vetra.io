@@ -10,8 +10,8 @@ import { useOpenLogin } from '@/modules/shared/components/renown/login-modal-con
 import { Button } from '@/modules/shared/components/ui/button'
 
 import { describeAppsError } from '../graphql'
-import { useConnectGithubDeploy } from '../hooks/use-apps'
-import { consumeGithubState } from '../lib/github-state'
+import { useConnectGithubDeploy, useGithubDeployAppInfo } from '../hooks/use-apps'
+import { consumeGithubState, GITHUB_REAUTH_KEY, startGithubFlow } from '../lib/github-state'
 
 /** How long to wait for the Renown session before offering an explicit sign-in. */
 export const CALLBACK_AUTH_TIMEOUT_MS = 10_000
@@ -22,6 +22,25 @@ const FOREIGN_STATE: Failure = {
   title: 'GitHub link not recognised',
   message: "This GitHub link wasn't started from this browser — start again.",
   action: 'Start again',
+}
+
+/** True once per tab: marks that we restarted the authorize flow ourselves. */
+function claimReauthorize(): boolean {
+  try {
+    if (window.sessionStorage.getItem(GITHUB_REAUTH_KEY)) return false
+    window.sessionStorage.setItem(GITHUB_REAUTH_KEY, '1')
+    return true
+  } catch {
+    return false
+  }
+}
+
+function clearReauthorize(): void {
+  try {
+    window.sessionStorage.removeItem(GITHUB_REAUTH_KEY)
+  } catch {
+    /* storage blocked */
+  }
 }
 
 function readNonceMatch(state: string | null): boolean {
@@ -38,6 +57,11 @@ function readNonceMatch(state: string | null): boolean {
  * `state` matches the nonce this browser stored before leaving for GitHub
  * (login-CSRF protection), and only once. Then the new-app flow resumes and
  * restores its draft from sessionStorage.
+ *
+ * Installing the app on GitHub returns here without our `state` (and sometimes
+ * without a code). Such a code is never used; instead the authorize flow is
+ * restarted once with a fresh state. GitHub answers it immediately for an
+ * installed app, so install → repo list is one uninterrupted round-trip.
  */
 export function GithubCallback() {
   const params = useSearchParams()
@@ -45,6 +69,8 @@ export function GithubCallback() {
   const { state: authState } = useRenownAuthAsync()
   const openLogin = useOpenLogin()
   const connect = useConnectGithubDeploy()
+  const appInfo = useGithubDeployAppInfo()
+  const authorizeUrl = appInfo.data?.authorizeUrl
   const [failure, setFailure] = useState<Failure | null>(null)
   const [needsSignIn, setNeedsSignIn] = useState(false)
   // OAuth codes are single-use: never send one twice (StrictMode, re-renders).
@@ -55,19 +81,23 @@ export function GithubCallback() {
 
   useEffect(() => {
     if (!authenticated || handled.current) return
-    handled.current = true
-    if (!code) {
-      // Installed without the OAuth step: nothing to exchange.
-      router.replace('/user/apps/new')
-      return
-    }
-    // Checked (and the nonce burned) only now, so a sign-in that reloads the
-    // page doesn't lose it.
-    if (!readNonceMatch(state)) {
+    // Checked (and the nonce burned) only after sign-in, so a sign-in that
+    // reloads the page doesn't lose it.
+    const matches = code ? readNonceMatch(state) : false
+    if (!code || !matches) {
+      // Never exchange a code we didn't start. Restart the authorize flow once.
+      if (!authorizeUrl) return // wait for the app info
+      handled.current = true
+      if (claimReauthorize()) {
+        startGithubFlow(authorizeUrl)
+        return
+      }
       // eslint-disable-next-line react-hooks/set-state-in-effect -- one-shot outcome of the redirect
       setFailure(FOREIGN_STATE)
       return
     }
+    handled.current = true
+    clearReauthorize()
     connect.mutate(code, {
       onSuccess: () => router.replace('/user/apps/new'),
       onError: (err) =>
@@ -77,7 +107,7 @@ export function GithubCallback() {
           action: 'Back to new app',
         }),
     })
-  }, [authenticated, code, state, connect, router])
+  }, [authenticated, code, state, connect, router, authorizeUrl])
 
   // Don't spin forever if the Renown session never shows up.
   useEffect(() => {
