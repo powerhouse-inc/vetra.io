@@ -35,11 +35,18 @@ import type {
   GithubRepo,
   UpdateAppInput,
 } from '../types'
+import { waitForToken } from '../lib/token'
 import { appsKeys } from './keys'
 
 /** Don't hammer a switchboard that lacks the subgraph or rejects the caller. */
-function retryUnlessFinal(failureCount: number, error: Error): boolean {
-  if (error instanceof AppsApiError && error.code !== 'NETWORK' && error.code !== 'UNKNOWN') {
+export function retryUnlessFinal(failureCount: number, error: Error): boolean {
+  if (
+    error instanceof AppsApiError &&
+    error.code !== 'NETWORK' &&
+    error.code !== 'UNKNOWN' &&
+    // Right after a GitHub/Renown redirect the session can't mint a token yet.
+    error.code !== 'UNAUTHENTICATED'
+  ) {
     return false
   }
   return failureCount < 2
@@ -51,7 +58,7 @@ function useTokenResolver(): () => Promise<string | null> {
   const ref = useRef(renown)
   // eslint-disable-next-line react-hooks/refs
   ref.current = renown
-  return useCallback(() => getAuthToken(ref.current), [])
+  return useCallback(() => waitForToken(() => getAuthToken(ref.current)), [])
 }
 
 // ---------------------------------------------------------------------------
