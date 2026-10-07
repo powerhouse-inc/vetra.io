@@ -23,12 +23,14 @@ import {
 } from '../hooks/use-publisher-mutations'
 import type { PublisherLicenseType } from '../types'
 
+// Mirrors TemplateServiceType in the app-license-type document model. Anything not in
+// that enum is rejected by the reducer's input validation, which surfaces as a raw
+// schema error rather than a sentence a publisher can act on — so it is never offered.
 export const SERVICE_TYPES = [
   { value: 'CONNECT', label: 'CONNECT' },
   { value: 'SWITCHBOARD', label: 'SWITCHBOARD' },
-  { value: 'FUSION', label: 'FUSION' },
-  // Selectable in the document model but refused by the subgraph. Listed, not hidden,
-  // so a refusal that comes from elsewhere is explicable.
+  // In the enum, so the licensing API accepts it, but the provisioner cannot build it yet.
+  // Listed rather than hidden so a refusal that comes from elsewhere is explicable.
   { value: 'CLINT', label: 'CLINT — not provisionable yet' },
 ] as const
 

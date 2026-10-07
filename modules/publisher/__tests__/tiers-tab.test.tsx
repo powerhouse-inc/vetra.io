@@ -204,20 +204,32 @@ describe('TierDetail', () => {
     expect(screen.getAllByText(/cannot be removed/i).length).toBe(3)
   })
 
+  // TemplateServiceType in the app-license-type document model. A value outside this set
+  // is refused by the reducer with a raw schema error, so offering one is a defect.
+  const MODEL_SERVICE_TYPES = ['CONNECT', 'SWITCHBOARD', 'CLINT']
+
+  it('offers exactly the service types the licence model accepts', () => {
+    types = [tier()]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    const select = screen.getByLabelText('Service type') as HTMLSelectElement
+    expect(Array.from(select.options).map((o) => o.value)).toEqual(MODEL_SERVICE_TYPES)
+  })
+
   it('lists CLINT in the service select, flagged, and blocks adding it', () => {
     types = [tier()]
     render(<TiersTab appId="a1" />)
     openEdit()
     const select = screen.getByLabelText('Service type') as HTMLSelectElement
     const labels = Array.from(select.options).map((o) => o.textContent)
-    expect(labels).toEqual(['CONNECT', 'SWITCHBOARD', 'FUSION', 'CLINT — not provisionable yet'])
+    expect(labels).toEqual(['CONNECT', 'SWITCHBOARD', 'CLINT — not provisionable yet'])
     const add = screen.getByRole('button', { name: /add service/i }) as HTMLButtonElement
     expect(add.disabled).toBe(false)
     fireEvent.change(select, { target: { value: 'CLINT' } })
     expect(add.disabled).toBe(true)
     fireEvent.click(add)
     expect(addService).not.toHaveBeenCalled()
-    fireEvent.change(select, { target: { value: 'FUSION' } })
+    fireEvent.change(select, { target: { value: 'SWITCHBOARD' } })
     expect(add.disabled).toBe(false)
   })
 

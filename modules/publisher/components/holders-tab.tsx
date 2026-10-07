@@ -25,7 +25,9 @@ import type { PublisherLicense } from '../types'
 import { GrantDialog } from './grant-dialog'
 import { StatusPill } from './status'
 
-const FILTERS = ['ALL', 'ISSUED', 'ACTIVE', 'EXPIRED', 'REVOKED'] as const
+// Mirrors LicenseStatus in the app-owner-license document model. A status missing here
+// makes those licences reachable only under ALL.
+const FILTERS = ['ALL', 'ISSUED', 'ACTIVE', 'EXPIRED', 'REVOKED', 'REPLACED'] as const
 
 const fmtDate = (s: string | null) => (s ? new Date(s).toLocaleDateString() : '—')
 
@@ -139,6 +141,13 @@ export function HoldersTab({ appId }: { appId: string }) {
         // Grant needs the full licence list to warn about duplicates; say why it is unavailable.
         <p role="alert" className="text-destructive text-sm">
           Granting is unavailable until existing licences load: {describePublisherError(all.error)}
+        </p>
+      )}
+      {types.error && (
+        // Without tiers the Tier column falls back to raw ids. Say so, rather than
+        // leaving the publisher to read UUIDs and assume that is the tier's name.
+        <p role="alert" className="text-destructive text-sm">
+          Tier names are unavailable, so the Tier column shows ids: {describePublisherError(types.error)}
         </p>
       )}
 

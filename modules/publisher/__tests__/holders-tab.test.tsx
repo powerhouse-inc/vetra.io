@@ -9,6 +9,7 @@ const toastSuccess = vi.fn()
 const licenseQueries: Array<string | null> = []
 let licenses: Array<Record<string, unknown>> = []
 let tiers: unknown[] = []
+let tiersError: Error | null = null
 let allError: Error | null = null
 let allPending = false
 
@@ -23,7 +24,7 @@ vi.mock('../hooks/use-publisher', () => ({
     if (status === null && allPending) return { data: undefined, isPending: true, error: null }
     return { data: status ? licenses.filter((l) => l.status === status) : licenses, isPending: false, error: null }
   },
-  usePublisherLicenseTypes: () => ({ data: tiers, isPending: false }),
+  usePublisherLicenseTypes: () => ({ data: tiersError ? undefined : tiers, isPending: false, error: tiersError }),
 }))
 vi.mock('../hooks/use-publisher-mutations', () => ({
   useIssueGrant: () => ({ mutateAsync: issueGrant, isPending: false }),
@@ -75,6 +76,7 @@ const tier = (over: Record<string, unknown> = {}) => ({
 beforeEach(() => {
   allError = null
   allPending = false
+  tiersError = null
   cleanup()
   licenses = []
   tiers = [tier()]
@@ -311,5 +313,26 @@ describe('HoldersTab', () => {
     expect(grant.disabled).toBe(true)
     expect(grant.title).toMatch(/loading/i)
     expect(screen.queryByText(/granting is unavailable/i)).toBeNull()
+  })
+})
+
+describe('HoldersTab degraded reads', () => {
+  it('says tier names failed to load instead of silently showing raw ids', () => {
+    tiersError = new Error('tiers are temporarily unavailable')
+    licenses = [
+      { id: 'l1', user: 'did:key:z6Mk', licenseTypeId: 'lt-9', status: 'ACTIVE', start: null, end: null, environmentId: null },
+    ]
+    render(<HoldersTab appId="a1" />)
+    expect(screen.getByText(/tier names are unavailable/i).textContent).toContain('tiers are temporarily unavailable')
+    // the id is still shown, but it is now labelled as an id rather than passing for a name
+    expect(screen.getByText('lt-9')).toBeTruthy()
+  })
+
+  it('offers every licence status the model can produce', () => {
+    render(<HoldersTab appId="a1" />)
+    const select = screen.getByLabelText('Status filter') as HTMLSelectElement
+    expect(Array.from(select.options).map((o) => o.value).filter(Boolean)).toEqual([
+      'ALL', 'ISSUED', 'ACTIVE', 'EXPIRED', 'REVOKED', 'REPLACED',
+    ])
   })
 })

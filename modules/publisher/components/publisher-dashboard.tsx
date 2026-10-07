@@ -25,8 +25,14 @@ export default function PublisherDashboard() {
   const list = apps.data ?? []
   const [selected, setSelected] = useState<string | null>(null)
   // Derived, so appId is always a member of the list: a stale selection (app removed,
-  // wallet switched) falls back to the first app instead of leaving the tabs on a dead id.
-  const appId = list.find((a) => a.id === selected)?.id ?? list[0]?.id ?? null
+  // wallet switched) falls back to a default instead of leaving the tabs on a dead id.
+  // The default prefers an ACTIVE app: every publisher resolver refuses an app whose
+  // status is not ACTIVE, so defaulting to a freshly registered PENDING_IDENTITY app
+  // would error all three tabs at once — and with a single app there is no picker to
+  // escape with.
+  const fallback = list.find((a) => a.status === 'ACTIVE') ?? list[0]
+  const current = list.find((a) => a.id === selected) ?? fallback
+  const appId = current?.id ?? null
 
   const tab = useMemo<TabKey>(() => {
     const raw = params.get('tab')
@@ -81,9 +87,23 @@ export default function PublisherDashboard() {
         <Select value={appId ?? undefined} onValueChange={setSelected}>
           <SelectTrigger className="w-72"><SelectValue placeholder="Choose an app" /></SelectTrigger>
           <SelectContent>
-            {list.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+            {list.map((a) => (
+              <SelectItem key={a.id} value={a.id}>
+                {a.status === 'ACTIVE' ? a.name : `${a.name} — ${a.status.toLowerCase().replace(/_/g, ' ')}`}
+              </SelectItem>
+            ))}
           </SelectContent>
         </Select>
+      )}
+
+      {current && current.status !== 'ACTIVE' && (
+        <Alert variant="destructive">
+          <AlertTitle>Licensing is unavailable for {current.name}</AlertTitle>
+          <AlertDescription>
+            This app is {current.status.toLowerCase().replace(/_/g, ' ')}. Licensing needs an app whose identity
+            delegation is active, so tiers, holders and environments cannot be managed until it is.
+          </AlertDescription>
+        </Alert>
       )}
 
       <Tabs value={tab} onValueChange={setTab}>

@@ -5,6 +5,7 @@ import {
   describePublisherError,
   isPublisherError,
   PublisherApiError,
+  retryPublisher,
   type FetchLike,
 } from '../graphql'
 
@@ -193,5 +194,38 @@ describe('server message journey (publisherGql -> describePublisherError)', () =
   it('does not swap in our copy when a coded message mentions "Unknown argument"', async () => {
     const msg = 'Unknown argument "x" rejected'
     expect(await journey(msg, 'INVALID_INPUT')).toBe(msg)
+  })
+})
+
+
+describe('retryPublisher', () => {
+  // Retrying a coded refusal cannot change the answer: the server already decided.
+  // It only burns the user's time and, were it ever wired to a mutation, could
+  // double-apply a grant.
+  const coded = (code: string) => new PublisherApiError(code as never, 'refused', 200)
+
+  it('never retries a coded refusal, however early the failure', () => {
+    for (const code of ['UNAUTHENTICATED', 'UNKNOWN_APP', 'INVALID_INPUT', 'APP_IDENTITY_INACTIVE', 'LICENSING_DISABLED']) {
+      expect(retryPublisher(0, coded(code))).toBe(false)
+      expect(retryPublisher(1, coded(code))).toBe(false)
+    }
+  })
+
+  it('retries a transport failure twice, then gives up', () => {
+    const net = new PublisherApiError('NETWORK', 'offline', null)
+    expect(retryPublisher(0, net)).toBe(true)
+    expect(retryPublisher(1, net)).toBe(true)
+    expect(retryPublisher(2, net)).toBe(false)
+  })
+
+  it('retries UNKNOWN, which is the uncoded case, under the same cap', () => {
+    const unknown = new PublisherApiError('UNKNOWN', '???', 500)
+    expect(retryPublisher(0, unknown)).toBe(true)
+    expect(retryPublisher(2, unknown)).toBe(false)
+  })
+
+  it('retries a non-publisher error under the same cap', () => {
+    expect(retryPublisher(0, new Error('boom'))).toBe(true)
+    expect(retryPublisher(2, new Error('boom'))).toBe(false)
   })
 })
