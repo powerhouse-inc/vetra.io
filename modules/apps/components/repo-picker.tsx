@@ -219,6 +219,18 @@ export function RepoPicker({
     )
   }
 
+  // Without installUrl the Install button is an anchor with no href: it looks
+  // enabled and does nothing when clicked. That happens whenever the server has
+  // no GitHub App configured, so say why instead of rendering a dead button.
+  if (list.length === 0 && info.error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>GitHub deployment is unavailable</AlertTitle>
+        <AlertDescription>{describeAppsError(info.error)}</AlertDescription>
+      </Alert>
+    )
+  }
+
   if (list.length === 0) {
     return (
       <ConnectGithub installUrl={info.data?.installUrl} authorizeUrl={info.data?.authorizeUrl} />
