@@ -35,6 +35,12 @@ import type { PublisherLicenseType } from '../types'
 export const SERVICE_TYPES = [
   { value: 'CONNECT', label: 'CONNECT' },
   { value: 'SWITCHBOARD', label: 'SWITCHBOARD' },
+  // The Knowledge Vault shape is FUSION + SWITCHBOARD; DOCLING and friends are
+  // the extra services an app can ask for.
+  { value: 'FUSION', label: 'FUSION — your app image' },
+  { value: 'DOCLING', label: 'DOCLING' },
+  { value: 'PAPERLESS', label: 'PAPERLESS' },
+  { value: 'SPECKLE', label: 'SPECKLE' },
   // In the enum, so the licensing API accepts it, but the provisioner cannot build it yet.
   // Listed rather than hidden so a refusal that comes from elsewhere is explicable.
   { value: 'CLINT', label: 'CLINT — not provisionable yet' },

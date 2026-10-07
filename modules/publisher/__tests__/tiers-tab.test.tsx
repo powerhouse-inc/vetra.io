@@ -256,7 +256,15 @@ describe('TierDetail', () => {
 
   // TemplateServiceType in the app-license-type document model. A value outside this set
   // is refused by the reducer with a raw schema error, so offering one is a defect.
-  const MODEL_SERVICE_TYPES = ['CONNECT', 'SWITCHBOARD', 'CLINT']
+  const MODEL_SERVICE_TYPES = [
+    'CONNECT',
+    'SWITCHBOARD',
+    'FUSION',
+    'DOCLING',
+    'PAPERLESS',
+    'SPECKLE',
+    'CLINT',
+  ]
 
   it('offers exactly the service types the licence model accepts', () => {
     types = [tier()]
@@ -272,7 +280,15 @@ describe('TierDetail', () => {
     openEdit()
     const select = screen.getByLabelText('Service type') as HTMLSelectElement
     const labels = Array.from(select.options).map((o) => o.textContent)
-    expect(labels).toEqual(['CONNECT', 'SWITCHBOARD', 'CLINT — not provisionable yet'])
+    expect(labels).toEqual([
+      'CONNECT',
+      'SWITCHBOARD',
+      'FUSION — your app image',
+      'DOCLING',
+      'PAPERLESS',
+      'SPECKLE',
+      'CLINT — not provisionable yet',
+    ])
     const add = screen.getByRole('button', { name: /add service/i }) as HTMLButtonElement
     expect(add.disabled).toBe(false)
     fireEvent.change(select, { target: { value: 'CLINT' } })

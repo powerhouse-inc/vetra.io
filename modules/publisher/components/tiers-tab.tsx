@@ -140,9 +140,9 @@ export function TiersTab({ appId }: { appId: string }) {
             the tier and replace it.
           </p>
           <p className="text-muted-foreground text-sm">
-            Service types: CONNECT, SWITCHBOARD and CLINT. CLINT is not provisionable yet — the
-            licensing API accepts it, but the provisioner cannot build it, so a licence carrying it
-            will not get an environment.
+            Services: CONNECT, SWITCHBOARD, FUSION (your app image), DOCLING, PAPERLESS and SPECKLE.
+            CLINT is not provisionable yet — the licensing API accepts it, but the provisioner
+            cannot build it, so a licence carrying it will not get an environment.
           </p>
         </div>
         <CreateTierDialog appId={appId} />
