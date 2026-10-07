@@ -486,8 +486,8 @@ function PackagesSection({
             <SelectContent>
               {/* Newest first: the version a publisher wants is almost always the newest. */}
               {[...versionsFor].reverse().map((v) => (
-                <SelectItem key={v} value={v}>
-                  {v}
+                <SelectItem key={v.version} value={v.version}>
+                  {v.version}
                 </SelectItem>
               ))}
             </SelectContent>

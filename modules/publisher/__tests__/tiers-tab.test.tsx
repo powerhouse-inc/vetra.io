@@ -15,6 +15,8 @@ const toastError = vi.fn()
 const toastSuccess = vi.fn()
 let types: unknown[] = []
 let artifacts: unknown[] = []
+/** An artifact version as the API returns it: the version and what CI published. */
+const ver = (version: string) => ({ version, reference: `cr.vetra.io/p/img:${version}` })
 
 vi.mock('sonner', () => ({
   toast: {
@@ -357,7 +359,14 @@ describe('TierDetail', () => {
     const msg = 'Package @acme/x is already in this template'
     addPackage.mockRejectedValue(new Error(msg))
     types = [tier({ id: 'lt-4' })]
-    artifacts = [{ kind: 'PACKAGE', name: '@acme/x', versions: ['1.0.0', '1.2.3'], channels: [] }]
+    artifacts = [
+      {
+        kind: 'PACKAGE',
+        name: '@acme/x',
+        versions: [ver('1.0.0'), ver('1.2.3')],
+        channels: [],
+      },
+    ]
     render(<TiersTab appId="a1" />)
     openEdit()
     fireEvent.change(screen.getByLabelText('Package'), { target: { value: '@acme/x' } })
@@ -485,9 +494,14 @@ describe('TierDetail', () => {
 describe('TierDetail: picking artifacts instead of typing them', () => {
   const withImages = () => {
     artifacts = [
-      { kind: 'FUSION_IMAGE', name: 'dtbau-psb', versions: ['1.0.0', '1.1.0'], channels: [] },
-      { kind: 'FUSION_IMAGE', name: 'dtbau-backup', versions: ['2.0.0'], channels: [] },
-      { kind: 'PACKAGE', name: '@acme/pkg', versions: ['9.9.9'], channels: [] },
+      {
+        kind: 'FUSION_IMAGE',
+        name: 'dtbau-psb',
+        versions: [ver('1.0.0'), ver('1.1.0')],
+        channels: [],
+      },
+      { kind: 'FUSION_IMAGE', name: 'dtbau-backup', versions: [ver('2.0.0')], channels: [] },
+      { kind: 'PACKAGE', name: '@acme/pkg', versions: [ver('9.9.9')], channels: [] },
     ]
   }
 

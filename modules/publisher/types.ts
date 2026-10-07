@@ -15,7 +15,7 @@ export type PublisherAppArtifact = {
   kind: 'PACKAGE' | 'FUSION_IMAGE'
   name: string
   /** Newest last, as the document stores them. */
-  versions: string[]
+  versions: { version: string; reference: string }[]
   channels: { channel: string; version: string }[]
 }
 export type PublisherTemplatePackage = {

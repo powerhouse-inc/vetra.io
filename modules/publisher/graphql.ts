@@ -191,7 +191,7 @@ export async function fetchLicenseTypes(
   return data.vetraPublisher.licenseTypes
 }
 
-const ARTIFACT_FIELDS = `kind name versions channels { channel version }`
+const ARTIFACT_FIELDS = `kind name versions { version reference } channels { channel version }`
 
 /**
  * The artifacts this app has published. An app that has published nothing
