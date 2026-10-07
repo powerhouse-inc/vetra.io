@@ -42,6 +42,11 @@ export const PRIVATE_NAV_ITEMS: NavItem[] = [
     href: '/user/packages',
     isActive: (p) => p.includes('/user/packages'),
   },
+  {
+    label: 'Licensing',
+    href: '/user/publisher',
+    isActive: (p) => p.startsWith('/user/publisher'),
+  },
 ]
 
 export const NAVBAR_CONFIGS: Record<string, NavbarConfig> = {
@@ -61,6 +66,11 @@ export const NAVBAR_CONFIGS: Record<string, NavbarConfig> = {
         label: 'Packages',
         href: '/user/packages',
         isActive: (currentPath) => currentPath.includes('/user/packages'),
+      },
+      {
+        label: 'Licensing',
+        href: '/user/publisher',
+        isActive: (currentPath) => currentPath.startsWith('/user/publisher'),
       },
       {
         label: 'Builders',

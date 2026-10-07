@@ -1,0 +1,92 @@
+'use client'
+
+import React, { useMemo, useState } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
+import { Loader2 } from 'lucide-react'
+import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
+import { useMyApps } from '../hooks/use-publisher'
+import { describePublisherError } from '../graphql'
+import { TiersTab } from './tiers-tab'
+import { HoldersTab } from './holders-tab'
+import { EnvironmentsTab } from './environments-tab'
+
+const TABS = ['tiers', 'holders', 'environments'] as const
+type TabKey = (typeof TABS)[number]
+
+export default function PublisherDashboard() {
+  const apps = useMyApps()
+  const router = useRouter()
+  const pathname = usePathname()
+  const params = useSearchParams()
+
+  const list = apps.data ?? []
+  const [selected, setSelected] = useState<string | null>(null)
+  const appId = selected ?? list[0]?.id ?? null
+
+  const tab = useMemo<TabKey>(() => {
+    const raw = params.get('tab')
+    return (TABS as readonly string[]).includes(raw ?? '') ? (raw as TabKey) : 'tiers'
+  }, [params])
+
+  const setTab = (next: string) => {
+    const qs = new URLSearchParams(params.toString())
+    if (next === 'tiers') qs.delete('tab')
+    else qs.set('tab', next)
+    const s = qs.toString()
+    router.replace(s ? `${pathname}?${s}` : pathname, { scroll: false })
+  }
+
+  if (apps.isPending) {
+    return (
+      <div className="text-muted-foreground flex items-center gap-2 py-16">
+        <Loader2 className="h-4 w-4 animate-spin" /> Loading your apps…
+      </div>
+    )
+  }
+
+  if (apps.error) {
+    return (
+      <Alert variant="destructive">
+        <AlertTitle>Could not load your apps</AlertTitle>
+        <AlertDescription>{describePublisherError(apps.error)}</AlertDescription>
+      </Alert>
+    )
+  }
+
+  if (list.length === 0) {
+    return (
+      <div className="border-border rounded-xl border border-dashed p-10 text-center">
+        <h2 className="text-lg font-semibold">No apps yet</h2>
+        <p className="text-muted-foreground mt-2 text-sm">
+          Licensing is managed per app. Register an app first, then come back to define tiers and grant licences.
+        </p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-6">
+      {list.length > 1 && (
+        <Select value={appId ?? undefined} onValueChange={setSelected}>
+          <SelectTrigger className="w-72"><SelectValue placeholder="Choose an app" /></SelectTrigger>
+          <SelectContent>
+            {list.map((a) => <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      )}
+
+      <Tabs value={tab} onValueChange={setTab}>
+        <TabsList>
+          <TabsTrigger value="tiers">Tiers</TabsTrigger>
+          <TabsTrigger value="holders">Holders</TabsTrigger>
+          <TabsTrigger value="environments">Environments</TabsTrigger>
+        </TabsList>
+        <TabsContent value="tiers">{appId && <TiersTab appId={appId} />}</TabsContent>
+        <TabsContent value="holders">{appId && <HoldersTab appId={appId} />}</TabsContent>
+        <TabsContent value="environments">{appId && <EnvironmentsTab appId={appId} />}</TabsContent>
+      </Tabs>
+    </div>
+  )
+}
