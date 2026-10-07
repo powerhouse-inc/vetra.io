@@ -154,3 +154,22 @@ export function customDomainDnsRecords(
     .filter((host): host is string => !!host)
     .map((host) => ({ type: 'A' as const, host, value: INGRESS_IP }))
 }
+
+/** Service types that can serve the custom-domain apex (an ingress the chart renders for them). */
+const CUSTOM_DOMAIN_APEX_TYPES = ['CONNECT', 'SWITCHBOARD', 'FUSION'] as const
+export type CustomDomainApexService = (typeof CUSTOM_DOMAIN_APEX_TYPES)[number]
+
+export function apexServiceForCustomDomain(
+  type: string | null | undefined,
+): CustomDomainApexService | null {
+  return (CUSTOM_DOMAIN_APEX_TYPES as readonly string[]).includes(type ?? '')
+    ? (type as CustomDomainApexService)
+    : null
+}
+
+/** Enabled services eligible for the custom-domain apex, in display order. */
+export function apexCandidateServices(
+  services: ReadonlyArray<{ type: string; enabled: boolean }>,
+): CustomDomainApexService[] {
+  return CUSTOM_DOMAIN_APEX_TYPES.filter((t) => services.some((s) => s.enabled && s.type === t))
+}

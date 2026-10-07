@@ -18,15 +18,27 @@ function parseChallenge(
   return { realm, service, scope }
 }
 
-async function listTags(image: string, token?: string): Promise<Response> {
+export type HarborCredentials = { username: string; password: string }
+
+async function listTags(image: string, authorization?: string): Promise<Response> {
   const url = `${REGISTRY_BASE}/v2/${image}/tags/list`
-  const init: RequestInit = token ? { headers: { authorization: `Bearer ${token}` } } : {}
+  const init: RequestInit = authorization ? { headers: { authorization } } : {}
   return fetch(url, init)
 }
 
-export async function fetchHarborTags(image: string): Promise<string[]> {
+/**
+ * List an image's tags. Public projects work anonymously (token challenge);
+ * private ones (FUSION apps) need `creds` — a read-only Harbor robot.
+ */
+export async function fetchHarborTags(
+  image: string,
+  creds?: HarborCredentials | null,
+): Promise<string[]> {
   try {
-    const first = await listTags(image)
+    const basic = creds
+      ? `Basic ${Buffer.from(`${creds.username}:${creds.password}`).toString('base64')}`
+      : undefined
+    const first = await listTags(image, basic)
 
     if (first.ok) {
       const data = (await first.json()) as TagsListResponse
@@ -59,7 +71,7 @@ export async function fetchHarborTags(image: string): Promise<string[]> {
       return []
     }
 
-    const retry = await listTags(image, token)
+    const retry = await listTags(image, `Bearer ${token}`)
     if (!retry.ok) {
       console.warn(`[harbor] retry after token returned ${retry.status}`)
       return []

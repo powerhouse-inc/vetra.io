@@ -205,10 +205,25 @@ const EMPTY_COPY: Record<VisibleScope, string> = {
 
 const ADMIN_SCOPE_OPTIONS: VisibleScope[] = ['MINE', 'ALL']
 
-export function CloudEnvironments() {
+export function CloudEnvironments({
+  filter,
+  emptyCopy,
+  compactEmpty = false,
+}: {
+  /** Keep only matching envs (e.g. standalone ones on the Apps home). */
+  filter?: (env: CloudEnvironment) => boolean
+  /** Override the empty-state copy. */
+  emptyCopy?: string
+  /** Render the empty state as a slim dashed row (for secondary sections). */
+  compactEmpty?: boolean
+} = {}) {
   const [scope, setScope] = useState<VisibleScope>('MINE')
   const { viewer } = useViewer()
-  const { environments, isPending } = useEnvironments(scope, viewer?.address ?? null)
+  const { environments: allEnvironments, isPending } = useEnvironments(
+    scope,
+    viewer?.address ?? null,
+  )
+  const environments = filter ? allEnvironments.filter(filter) : allEnvironments
   const isAdmin = viewer?.isAdmin ?? false
 
   return (
@@ -241,12 +256,17 @@ export function CloudEnvironments() {
           <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
           <p className="text-muted-foreground text-sm">Loading environments…</p>
         </div>
+      ) : environments.length === 0 && compactEmpty ? (
+        <div className="text-muted-foreground flex items-center gap-3 rounded-xl border border-dashed px-5 py-4 text-sm">
+          <Server className="h-4 w-4 shrink-0" aria-hidden />
+          {emptyCopy ?? EMPTY_COPY[scope]}
+        </div>
       ) : environments.length === 0 ? (
         <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4 py-12">
           <Server className="text-muted-foreground h-12 w-12" />
           <div className="text-center">
             <h3 className="text-lg font-semibold">No environments yet</h3>
-            <p className="text-muted-foreground text-sm">{EMPTY_COPY[scope]}</p>
+            <p className="text-muted-foreground text-sm">{emptyCopy ?? EMPTY_COPY[scope]}</p>
           </div>
         </div>
       ) : (

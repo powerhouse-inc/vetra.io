@@ -1,3 +1,5 @@
+import Link from 'next/link'
+
 import { BookMeetingModal } from './book-meeting-modal'
 
 export function CloudLandingCTA() {
@@ -17,7 +19,11 @@ export function CloudLandingCTA() {
             or explore our{' '}
             <a href="#faq" className="text-primary hover:underline">
               frequently asked questions
-            </a>
+            </a>{' '}
+            and the{' '}
+            <Link href="/docs/deploy" className="text-primary hover:underline">
+              git push deploy guide
+            </Link>
           </p>
         </div>
       </div>

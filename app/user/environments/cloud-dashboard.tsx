@@ -1,8 +1,10 @@
 'use client'
 
-import { Plus } from 'lucide-react'
+import { Boxes, Plus } from 'lucide-react'
 import Link from 'next/link'
 
+import { useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
+import { splitEnvironments } from '@/modules/apps/lib/split'
 import { useEnvironments } from '@/modules/cloud/hooks/use-environment'
 import {
   Breadcrumb,
@@ -16,7 +18,12 @@ import { Button } from '@/modules/shared/components/ui/button'
 import { CloudEnvironments } from './cloud-projects'
 
 export function CloudDashboard() {
-  const { environments } = useEnvironments()
+  // Envs managed by an App (production + previews) live on their App's page.
+  const { appIds, isStandalone } = useStandaloneEnvFilter()
+  const { standalone: environments, appOwned } = splitEnvironments(
+    useEnvironments().environments,
+    appIds,
+  )
   const readyCount = environments.filter((e) => e.state.status === 'READY').length
   const totalPackages = environments.reduce((sum, e) => sum + e.state.packages.length, 0)
 
@@ -62,7 +69,18 @@ export function CloudDashboard() {
         </div>
       )}
 
-      <CloudEnvironments />
+      {appOwned.length > 0 && (
+        <p className="text-muted-foreground flex items-center gap-2 text-sm">
+          <Boxes className="h-4 w-4" aria-hidden />
+          {appOwned.length} environment{appOwned.length === 1 ? ' is' : 's are'} managed by your
+          apps.
+          <Link href="/user" className="text-primary hover:underline">
+            View apps
+          </Link>
+        </p>
+      )}
+
+      <CloudEnvironments filter={isStandalone} />
     </main>
   )
 }

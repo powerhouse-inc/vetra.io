@@ -24,7 +24,9 @@ import { PackagesSection } from '@/modules/cloud/components/packages-section'
 import { AgentsSection } from '@/modules/cloud/components/agents-section'
 import { AddAgentModal } from '@/modules/cloud/components/add-agent-modal'
 import { ServiceSizePopover } from '@/modules/cloud/components/service-size-popover'
+import { FusionConfigDialog } from '@/modules/cloud/components/fusion-config-dialog'
 import { useClintPackages } from '@/modules/cloud/hooks/use-clint-packages'
+import { useTenantConfig } from '@/modules/cloud/hooks/use-tenant-config'
 import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtime-endpoints'
 import { partitionPackagesByManifestType } from '@/modules/cloud/lib/module-package-filter'
 import { toServiceImageTag } from '@/modules/cloud/registry/channels'
@@ -126,6 +128,8 @@ function ServiceRow({
   onSetVersion,
   onResize,
   onOpenDetail,
+  onConfigure,
+  tagsImage,
 }: {
   serviceType: CloudEnvironmentServiceType
   prefix: string
@@ -153,6 +157,10 @@ function ServiceRow({
    *  drawer (logs / metrics / activity). Only meaningful while the service is
    *  enabled — disabled services have nothing to observe. */
   onOpenDetail?: () => void
+  /** FUSION: opens the app config dialog (image, env, auto-deploy). */
+  onConfigure?: () => void
+  /** FUSION: the image whose Harbor tags the version picker lists. */
+  tagsImage?: string | null
 }) {
   const [showVersionPicker, setShowVersionPicker] = useState(false)
   const [tags, setTags] = useState<string[]>([])
@@ -207,7 +215,10 @@ function ServiceRow({
     setShowVersionPicker(true)
     setTagsLoading(true)
     try {
-      const res = await fetch(`/api/registry/tags?service=${encodeURIComponent(serviceType)}`)
+      const imageParam = tagsImage ? `&image=${encodeURIComponent(tagsImage)}` : ''
+      const res = await fetch(
+        `/api/registry/tags?service=${encodeURIComponent(serviceType)}${imageParam}`,
+      )
       if (res.ok) {
         const data = (await res.json()) as {
           tags: string[]
@@ -320,6 +331,18 @@ function ServiceRow({
             doesn't shift the row. Buttons that only make sense while enabled
             are still gated, but their place is held. */}
         <div className="flex min-w-44 items-center justify-end gap-2">
+          {onConfigure && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onConfigure}
+              aria-label={`Configure ${label}`}
+              className={cn(!isEnabled && 'pointer-events-none invisible')}
+              tabIndex={isEnabled ? undefined : -1}
+            >
+              Configure
+            </Button>
+          )}
           {onOpenDetail && (
             <Button
               variant="outline"
@@ -567,6 +590,7 @@ type OverviewTabProps = {
   addPackage: (name: string, version?: string) => Promise<void>
   removePackage: (name: string) => Promise<void>
   setServiceVersion?: (type: CloudEnvironmentServiceType, version: string) => Promise<void>
+  setFusionConfig?: (config: import('@/modules/cloud/types').CloudFusionConfig) => Promise<void>
   setPackageVersion?: (packageName: string, version: string) => Promise<void>
   initialAddPackage?: string | null
   initialAddVersion?: string | null
@@ -599,6 +623,7 @@ export function OverviewTab({
   addPackage,
   removePackage,
   setServiceVersion,
+  setFusionConfig,
   setPackageVersion,
   initialAddPackage,
   initialAddVersion,
@@ -608,6 +633,8 @@ export function OverviewTab({
 }: OverviewTabProps) {
   const { canSign } = useCanSign()
   const [addAgentOpen, setAddAgentOpen] = useState(false)
+  const [fusionConfigOpen, setFusionConfigOpen] = useState(false)
+  const { setSecret: setTenantSecret } = useTenantConfig(tenantId)
 
   const state = environment.state
   const { clintPackages, isLoading: manifestsLoading } = useClintPackages({
@@ -747,6 +774,12 @@ export function OverviewTab({
                   }
                   isApexService={isTypeAtApex(state.services, state.apexService, type)}
                   isEnabled={service?.enabled ?? false}
+                  onConfigure={
+                    type === 'FUSION' && setFusionConfig
+                      ? () => setFusionConfigOpen(true)
+                      : undefined
+                  }
+                  tagsImage={type === 'FUSION' ? (state.fusion?.image ?? null) : undefined}
                   serviceStatus={service?.status ?? 'PROVISIONING'}
                   environmentStatus={state.status}
                   currentVersion={service?.version ?? null}
@@ -836,6 +869,23 @@ export function OverviewTab({
           />
         </CardContent>
       </Card>
+      {setFusionConfig && (
+        <FusionConfigDialog
+          open={fusionConfigOpen}
+          onOpenChange={setFusionConfigOpen}
+          config={state.fusion ?? null}
+          onSubmit={async (config, secrets) => {
+            if (secrets.length > 0) {
+              if (!tenantId) {
+                throw new Error('Cannot store secrets: the environment is not provisioned yet.')
+              }
+              for (const sec of secrets) await setTenantSecret(sec.name, sec.value)
+            }
+            await setFusionConfig(config)
+            toast.success('Fusion app updated')
+          }}
+        />
+      )}
       {canSign && (
         <AddAgentModal
           open={addAgentOpen}
