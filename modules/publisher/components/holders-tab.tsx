@@ -125,11 +125,22 @@ export function HoldersTab({ appId }: { appId: string }) {
             ))}
           </SelectContent>
         </Select>
-        <Button size="sm" onClick={() => setGrantOpen(true)} disabled={all.data === undefined}>
+        <Button
+          size="sm"
+          onClick={() => setGrantOpen(true)}
+          disabled={all.data === undefined}
+          title={all.isPending ? 'Loading existing licences…' : undefined}
+        >
           <Plus className="h-4 w-4" />
           Grant licence
         </Button>
       </div>
+      {all.error && (
+        // Grant needs the full licence list to warn about duplicates; say why it is unavailable.
+        <p role="alert" className="text-destructive text-sm">
+          Granting is unavailable until existing licences load: {describePublisherError(all.error)}
+        </p>
+      )}
 
       {shown.isPending ? (
         <div className="text-muted-foreground flex items-center justify-center gap-2 py-16 text-sm">

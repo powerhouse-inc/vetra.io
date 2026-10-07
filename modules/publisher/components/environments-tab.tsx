@@ -1,7 +1,6 @@
 'use client'
 
 import { Loader2 } from 'lucide-react'
-import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table'
 import { describePublisherError } from '../graphql'
 import { usePublisherEnvironments } from '../hooks/use-publisher'
@@ -17,25 +16,21 @@ export function EnvironmentsTab({ appId }: { appId: string }) {
 
   if (envs.isPending) {
     return (
-      <div className="text-muted-foreground flex items-center gap-2 py-10">
-        <Loader2 className="h-4 w-4 animate-spin" /> Loading environments…
+      <div className="text-muted-foreground flex items-center justify-center gap-2 py-16 text-sm">
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        Loading environments…
       </div>
     )
   }
   if (envs.error) {
-    return (
-      <Alert variant="destructive">
-        <AlertTitle>Could not load environments</AlertTitle>
-        <AlertDescription>{describePublisherError(envs.error)}</AlertDescription>
-      </Alert>
-    )
+    return <p className="text-destructive py-10 text-center text-sm">{describePublisherError(envs.error)}</p>
   }
   const rows = envs.data ?? []
   if (rows.length === 0) {
     return (
-      <div className="border-border rounded-xl border border-dashed p-10 text-center">
-        <h3 className="font-medium">No environments yet</h3>
-        <p className="text-muted-foreground mt-2 text-sm">
+      <div className="border-border flex flex-col items-center gap-2 rounded-xl border border-dashed py-16 text-center">
+        <p className="font-medium">No environments yet</p>
+        <p className="text-muted-foreground max-w-sm text-sm">
           Environments appear shortly after a licence becomes active — provisioning runs on a timer, so it is not
           instant. This list refreshes automatically.
         </p>

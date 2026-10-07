@@ -9,6 +9,8 @@ const toastSuccess = vi.fn()
 const licenseQueries: Array<string | null> = []
 let licenses: Array<Record<string, unknown>> = []
 let tiers: unknown[] = []
+let allError: Error | null = null
+let allPending = false
 
 vi.mock('sonner', () => ({
   toast: { error: (...a: unknown[]) => toastError(...a), success: (...a: unknown[]) => toastSuccess(...a) },
@@ -17,6 +19,8 @@ vi.mock('../hooks/use-publisher', () => ({
   // Honours the status argument like the real query, so a filter genuinely hides rows.
   usePublisherLicenses: (_appId: string, status: string | null) => {
     licenseQueries.push(status)
+    if (status === null && allError) return { data: undefined, isPending: false, error: allError }
+    if (status === null && allPending) return { data: undefined, isPending: true, error: null }
     return { data: status ? licenses.filter((l) => l.status === status) : licenses, isPending: false, error: null }
   },
   usePublisherLicenseTypes: () => ({ data: tiers, isPending: false }),
@@ -69,6 +73,8 @@ const tier = (over: Record<string, unknown> = {}) => ({
 })
 
 beforeEach(() => {
+  allError = null
+  allPending = false
   cleanup()
   licenses = []
   tiers = [tier()]
@@ -289,5 +295,21 @@ describe('HoldersTab', () => {
   it('renders an empty state when nobody holds a licence', () => {
     render(<HoldersTab appId="a1" />)
     expect(screen.getByText(/no licences/i)).toBeTruthy()
+  })
+
+  it('explains why Grant is disabled when the full licence list fails to load', () => {
+    allError = new Error('permission denied for app a1')
+    render(<HoldersTab appId="a1" />)
+    expect((screen.getByRole('button', { name: /grant licence/i }) as HTMLButtonElement).disabled).toBe(true)
+    expect(screen.getByText(/granting is unavailable/i).textContent).toContain('permission denied for app a1')
+  })
+
+  it('gives a loading reason, not an error, while the full list is still loading', () => {
+    allPending = true
+    render(<HoldersTab appId="a1" />)
+    const grant = screen.getByRole('button', { name: /grant licence/i }) as HTMLButtonElement
+    expect(grant.disabled).toBe(true)
+    expect(grant.title).toMatch(/loading/i)
+    expect(screen.queryByText(/granting is unavailable/i)).toBeNull()
   })
 })
