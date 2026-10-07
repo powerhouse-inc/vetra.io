@@ -1,4 +1,10 @@
 import { getCloudEndpoint } from '@/modules/cloud/graphql'
+import type {
+  PublisherApp,
+  PublisherLicense,
+  PublisherLicenseType,
+  AppUserEnvironment,
+} from './types'
 
 export type FetchLike = (input: string, init: RequestInit) => Promise<Response>
 
@@ -133,4 +139,73 @@ export function describePublisherError(err: unknown): string {
 export function retryPublisher(failureCount: number, error: unknown): boolean {
   if (isPublisherError(error) && !['NETWORK', 'UNKNOWN'].includes(error.code)) return false
   return failureCount < 2
+}
+
+// ---------------------------------------------------------------------------
+// Queries. Every field except myApps takes an appId which the SERVER authorises
+// against apps.owner_address; fetchers pass it through and never filter.
+// myApps deliberately takes NO argument: it is derived from the caller's wallet.
+// ---------------------------------------------------------------------------
+
+const APP_FIELDS = `id name status`
+const TYPE_FIELDS = `id kind label status validityDays templateHash
+  services { id type prefix }
+  packages { id packageName version }`
+const LICENSE_FIELDS = `id user licenseTypeId status start end environmentId`
+const ENV_FIELDS = `appId user environmentId licenseId templateHash`
+
+export async function fetchMyApps(
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<PublisherApp[]> {
+  const data = await publisherGql<{ vetraPublisher: { myApps: PublisherApp[] } }>(
+    `query { vetraPublisher { myApps { ${APP_FIELDS} } } }`,
+    {},
+    token,
+    fetchImpl,
+  )
+  return data.vetraPublisher.myApps
+}
+
+export async function fetchLicenseTypes(
+  appId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<PublisherLicenseType[]> {
+  const data = await publisherGql<{ vetraPublisher: { licenseTypes: PublisherLicenseType[] } }>(
+    `query ($appId: String!) { vetraPublisher { licenseTypes(appId: $appId) { ${TYPE_FIELDS} } } }`,
+    { appId },
+    token,
+    fetchImpl,
+  )
+  return data.vetraPublisher.licenseTypes
+}
+
+export async function fetchLicenses(
+  appId: string,
+  status: string | null,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<PublisherLicense[]> {
+  const data = await publisherGql<{ vetraPublisher: { licenses: PublisherLicense[] } }>(
+    `query ($appId: String!, $status: String) { vetraPublisher { licenses(appId: $appId, status: $status) { ${LICENSE_FIELDS} } } }`,
+    { appId, status },
+    token,
+    fetchImpl,
+  )
+  return data.vetraPublisher.licenses
+}
+
+export async function fetchEnvironments(
+  appId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppUserEnvironment[]> {
+  const data = await publisherGql<{ vetraPublisher: { environments: AppUserEnvironment[] } }>(
+    `query ($appId: String!) { vetraPublisher { environments(appId: $appId) { ${ENV_FIELDS} } } }`,
+    { appId },
+    token,
+    fetchImpl,
+  )
+  return data.vetraPublisher.environments
 }
