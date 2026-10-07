@@ -78,7 +78,7 @@ beforeEach(() => {
 
 const openGrant = () => fireEvent.click(screen.getByRole('button', { name: /grant/i }))
 const typeAddress = (v: string) => fireEvent.change(screen.getByLabelText(/address/i), { target: { value: v } })
-const WARNING = /already holds an active licence/i
+const WARNING = /already holds an active or pending licence/i
 
 describe('HoldersTab', () => {
   it('warns before granting a SECOND licence to an address that already holds one', async () => {
@@ -120,6 +120,15 @@ describe('HoldersTab', () => {
     openGrant()
     typeAddress(HOLDER)
     expect(await screen.findByText(WARNING)).toBeTruthy()
+  })
+
+  it('warns for an address whose licence is still ISSUED (keeper has not activated it yet)', async () => {
+    licenses = [lic({ status: 'ISSUED', environmentId: null })]
+    render(<HoldersTab appId="a1" />)
+    openGrant()
+    typeAddress(HOLDER)
+    expect(await screen.findByText(WARNING)).toBeTruthy()
+    expect(screen.getByText(/not deterministic/i)).toBeTruthy()
   })
 
   it('does NOT warn for an address holding only a revoked licence', async () => {

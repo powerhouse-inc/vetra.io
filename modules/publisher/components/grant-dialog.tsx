@@ -30,13 +30,15 @@ const schema = z.object({
 type Values = z.infer<typeof schema>
 
 /**
- * True when `address` already holds an ACTIVE licence. Case-insensitive: wallets hand
+ * True when `address` already holds an ACTIVE licence, or an ISSUED one that the
+ * provisioning keeper is about to activate (otherwise a second grant inside that
+ * window would draw no warning). Case-insensitive: wallets hand
  * us checksummed addresses while the server stores them lowercased.
  */
 export function holdsActiveLicense(licenses: PublisherLicense[], address: string): boolean {
   const wanted = address.trim().toLowerCase()
   if (!wanted) return false
-  return licenses.some((l) => l.status === 'ACTIVE' && l.user.toLowerCase() === wanted)
+  return licenses.some((l) => (l.status === 'ACTIVE' || l.status === 'ISSUED') && l.user.toLowerCase() === wanted)
 }
 
 type Props = {
@@ -120,10 +122,11 @@ export function GrantDialog({ appId, licenses, types, open, onOpenChange }: Prop
             />
             {duplicate && (
               <Alert variant="destructive">
-                <AlertTitle>This address already holds an active licence</AlertTitle>
+                <AlertTitle>This address already holds an active or pending licence</AlertTitle>
                 <AlertDescription>
-                  Granting a second one does not replace the first. Which one applies is not deterministic — revoke the
-                  existing licence first if you mean to change their tier.
+                  A pending licence becomes active on the next provisioning tick. Granting another is allowed but does not
+                  replace it, and which one applies is not deterministic — revoke the existing licence first if you mean
+                  to change their tier.
                 </AlertDescription>
               </Alert>
             )}
