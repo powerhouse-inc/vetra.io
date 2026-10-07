@@ -182,6 +182,19 @@ describe('TiersTab', () => {
   })
 })
 
+describe('per-row CLINT flag', () => {
+  it('flags a CLINT service on its own row and not on rows without one', () => {
+    types = [
+      tier({ id: 'c', label: 'Has clint', services: [{ id: 's1', type: 'CLINT', prefix: null }] }),
+      tier({ id: 'n', label: 'No clint', services: [{ id: 's2', type: 'CONNECT', prefix: null }] }),
+    ]
+    render(<TiersTab appId="a1" />)
+    const row = (n: string) => screen.getByText(n).closest('tr') as HTMLElement
+    expect(within(row('Has clint')).getByText(/CLINT \(not provisionable\)/)).toBeTruthy()
+    expect(within(row('No clint')).queryByText(/not provisionable/i)).toBeNull()
+  })
+})
+
 describe('TierDetail', () => {
   it('repeats the append-only warning beside BOTH the service and the package forms', () => {
     types = [tier()]
@@ -253,6 +266,29 @@ describe('TierDetail', () => {
     fireEvent.change(screen.getByLabelText('Label'), { target: { value: 'Pro Plus' } })
     fireEvent.click(screen.getByRole('button', { name: /save details/i }))
     await waitFor(() => expect(setDetails).toHaveBeenCalledWith({ licenseTypeId: 'lt-5', label: 'Pro Plus' }))
+  })
+
+  it('clearing the label is blocked, explained, and never reports a false success', () => {
+    types = [tier({ id: 'lt-5', label: 'Pro' })]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    expect(screen.getByText(/replaced but not cleared/i)).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Label'), { target: { value: '' } })
+    const save = screen.getByRole('button', { name: /save details/i }) as HTMLButtonElement
+    expect(save.disabled).toBe(true)
+    fireEvent.click(save)
+    expect(setDetails).not.toHaveBeenCalled()
+    expect(toastSuccess).not.toHaveBeenCalled()
+    // replacing it is fine
+    fireEvent.change(screen.getByLabelText('Label'), { target: { value: 'Pro 2' } })
+    expect(save.disabled).toBe(false)
+  })
+
+  it('Save details is disabled when nothing changed (no no-op success)', () => {
+    types = [tier()]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    expect((screen.getByRole('button', { name: /save details/i }) as HTMLButtonElement).disabled).toBe(true)
   })
 
   it('clearing validity sends null, not an omitted key', async () => {

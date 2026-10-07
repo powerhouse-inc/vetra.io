@@ -56,17 +56,26 @@ function DetailsSection({ appId, tier }: { appId: string; tier: PublisherLicense
   const [days, setDays] = useState(tier.validityDays == null ? '' : String(tier.validityDays))
   const daysValid = days.trim() === '' || (/^\d+$/.test(days.trim()) && Number(days) > 0)
 
-  const save = () => {
-    // Omit unchanged keys: the server tells "leave alone" from "clear" by key presence.
-    const input: { licenseTypeId: string; kind?: string; label?: string | null; validityDays?: number | null } = {
-      licenseTypeId: tier.id,
-    }
-    if (kind.trim() !== (tier.kind ?? '')) input.kind = kind.trim()
-    if (label.trim() !== (tier.label ?? '')) input.label = label.trim() || null
-    if (days.trim() !== (tier.validityDays == null ? '' : String(tier.validityDays)))
-      input.validityDays = days.trim() ? Number(days) : null
-    return run(() => setDetails.mutateAsync(input), 'Tier details saved')
+  // The server ignores an empty label (the reducer only assigns a truthy one), so
+  // clearing it would report success while changing nothing. Block the attempt.
+  const labelCleared = label.trim() === '' && (tier.label ?? '') !== ''
+
+  // Omit unchanged keys: the server tells "leave alone" from "clear" by key presence.
+  // This is safe ONLY because the backend's `setLicenseTypeDetails` resolver
+  // (subgraphs/vetra-licensing/publisher-resolvers.ts in vetra-cloud-package) carries the
+  // tier's current validityDays when that key is absent. The reducer always assigns it,
+  // so if that resolver ever passes its input straight through, omitting validityDays
+  // here would silently wipe the validity period. No test in this repo would notice.
+  const input: { licenseTypeId: string; kind?: string; label?: string | null; validityDays?: number | null } = {
+    licenseTypeId: tier.id,
   }
+  if (kind.trim() !== (tier.kind ?? '')) input.kind = kind.trim()
+  if (label.trim() !== (tier.label ?? '')) input.label = label.trim() || null
+  if (days.trim() !== (tier.validityDays == null ? '' : String(tier.validityDays)))
+    input.validityDays = days.trim() ? Number(days) : null
+  const unchanged = Object.keys(input).length === 1
+
+  const save = () => run(() => setDetails.mutateAsync(input), 'Tier details saved')
 
   return (
     <section className="space-y-3">
@@ -79,13 +88,15 @@ function DetailsSection({ appId, tier }: { appId: string; tier: PublisherLicense
         <div className="space-y-1">
           <Label htmlFor="tier-label">Label</Label>
           <Input id="tier-label" value={label} onChange={(e) => setLabel(e.target.value)} />
+          <p className="text-muted-foreground text-xs">A label can be replaced but not cleared.</p>
         </div>
         <div className="space-y-1">
           <Label htmlFor="tier-days">Validity (days)</Label>
           <Input id="tier-days" inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} />
         </div>
       </div>
-      <Button size="sm" disabled={!kind.trim() || !daysValid || setDetails.isPending} onClick={save}>
+      <Button size="sm" disabled={!kind.trim() || !daysValid || labelCleared || unchanged || setDetails.isPending}
+        onClick={save}>
         {setDetails.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
         Save details
       </Button>
