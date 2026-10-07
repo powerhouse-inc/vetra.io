@@ -49,18 +49,27 @@ export function isPublisherError(
   return err instanceof PublisherApiError && (code === undefined || err.code === code)
 }
 
+/**
+ * Map a GraphQL error (or a bare HTTP status) onto a PublisherApiError.
+ * Precedence: a recognised extensions.code is authoritative; the schema-mismatch
+ * regex is only a heuristic for a server too old to send codes; then 401.
+ * The message is trimmed, so "verbatim" means trimmed-verbatim.
+ */
 export function toPublisherError(
   gqlError: { message?: string; extensions?: { code?: unknown } } | undefined,
   status: number | null,
 ): PublisherApiError {
   const message = (gqlError?.message ?? '').trim() || 'Request failed'
+  const raw = gqlError?.extensions?.code
+  if (typeof raw === 'string' && KNOWN_CODES.has(raw)) {
+    return new PublisherApiError(raw as PublisherErrorCode, message, status)
+  }
   if (/Cannot query field|Unknown type|Unknown argument/i.test(message)) {
     return new PublisherApiError('PUBLISHER_UNAVAILABLE', message, status)
   }
-  const raw = gqlError?.extensions?.code
-  const code =
-    typeof raw === 'string' && KNOWN_CODES.has(raw) ? (raw as PublisherErrorCode) : 'UNKNOWN'
-  return new PublisherApiError(code, message, status)
+  // Only 401 maps: 403 is not "signed out", so routing to sign-in would be wrong.
+  if (status === 401) return new PublisherApiError('UNAUTHENTICATED', message, status)
+  return new PublisherApiError('UNKNOWN', message, status)
 }
 
 export async function publisherGql<T>(
@@ -115,7 +124,12 @@ export function describePublisherError(err: unknown): string {
   return 'Something went wrong.'
 }
 
-/** Retry only transport-level failures; a coded refusal will not change on retry. */
+/**
+ * Retry policy for QUERIES only. Retrying UNKNOWN is safe today because React
+ * Query's useMutation defaults to retry: 0 and the mutation hooks never pass this
+ * policy; wiring it into a mutation could double-apply a grant.
+ * Retry only transport-level failures; a coded refusal will not change on retry.
+ */
 export function retryPublisher(failureCount: number, error: unknown): boolean {
   if (isPublisherError(error) && !['NETWORK', 'UNKNOWN'].includes(error.code)) return false
   return failureCount < 2

@@ -30,7 +30,9 @@ describe('publisherGql', () => {
     const fetchImpl = vi.fn(async () =>
       jsonResponse({ errors: [{ message: 'no such app', extensions: { code: 'UNKNOWN_APP' } }] }),
     ) as unknown as FetchLike
-    const err = await publisherGql('{ ok }', undefined, 't', fetchImpl).catch((e) => e)
+    const err = await publisherGql('{ ok }', undefined, 't', fetchImpl).catch(
+      (e: unknown) => e as PublisherApiError,
+    )
     expect(isPublisherError(err, 'UNKNOWN_APP')).toBe(true)
     expect((err as PublisherApiError).message).toBe('no such app')
   })
@@ -39,7 +41,9 @@ describe('publisherGql', () => {
     const fetchImpl = vi.fn(async () => {
       throw new Error('offline')
     }) as unknown as FetchLike
-    const err = await publisherGql('{ ok }', undefined, 't', fetchImpl).catch((e) => e)
+    const err = await publisherGql('{ ok }', undefined, 't', fetchImpl).catch(
+      (e: unknown) => e as PublisherApiError,
+    )
     expect(isPublisherError(err, 'NETWORK')).toBe(true)
   })
 
@@ -49,7 +53,9 @@ describe('publisherGql', () => {
         errors: [{ message: 'Cannot query field "vetraPublisher" on type "Query".' }],
       }),
     ) as unknown as FetchLike
-    const err = await publisherGql('{ ok }', undefined, 't', fetchImpl).catch((e) => e)
+    const err = await publisherGql('{ ok }', undefined, 't', fetchImpl).catch(
+      (e: unknown) => e as PublisherApiError,
+    )
     expect(isPublisherError(err, 'PUBLISHER_UNAVAILABLE')).toBe(true)
   })
 })
@@ -109,5 +115,83 @@ describe('describePublisherError', () => {
 
   it('falls back to the message for a non-PublisherApiError', () => {
     expect(describePublisherError(new Error('plain'))).toBe('plain')
+  })
+})
+
+describe('publisherGql response handling', () => {
+  const run = (res: () => Response): Promise<PublisherApiError> =>
+    publisherGql('{ ok }', undefined, 't', (async () => res()) as unknown as FetchLike).then(
+      () => {
+        throw new Error('expected publisherGql to reject')
+      },
+      (e: unknown) => e as PublisherApiError,
+    )
+
+  it('maps a non-OK status with no body to UNKNOWN, keeping the status', async () => {
+    const err = await run(() => new Response('', { status: 502 }))
+    expect(isPublisherError(err, 'UNKNOWN')).toBe(true)
+    expect(err.status).toBe(502)
+  })
+
+  it('maps a 401 with no body to UNAUTHENTICATED', async () => {
+    const err = await run(() => new Response('unauthorized', { status: 401 }))
+    expect(isPublisherError(err, 'UNAUTHENTICATED')).toBe(true)
+  })
+
+  it('leaves a 403 with no body as UNKNOWN', async () => {
+    expect(isPublisherError(await run(() => new Response('', { status: 403 })), 'UNKNOWN')).toBe(
+      true,
+    )
+  })
+
+  it('survives an HTML body', async () => {
+    const err = await run(() => new Response('<html>bad gateway</html>', { status: 200 }))
+    expect(isPublisherError(err, 'UNKNOWN')).toBe(true)
+    expect(err.message).toBe('Empty response')
+  })
+
+  it('treats data: null as an empty response', async () => {
+    const err = await run(() => jsonResponse({ data: null }))
+    expect(isPublisherError(err, 'UNKNOWN')).toBe(true)
+    expect(err.message).toBe('Empty response')
+  })
+
+  it('lets errors[0] win over a present data', async () => {
+    const err = await run(() =>
+      jsonResponse({
+        data: { ok: 1 },
+        errors: [{ message: 'nope', extensions: { code: 'INVALID_INPUT' } }],
+      }),
+    )
+    expect(isPublisherError(err, 'INVALID_INPUT')).toBe(true)
+  })
+
+  it('lets a recognised code beat the schema-mismatch heuristic', () => {
+    const err = toPublisherError(
+      { message: 'Unknown argument "x" rejected', extensions: { code: 'INVALID_INPUT' } },
+      200,
+    )
+    expect(err.code).toBe('INVALID_INPUT')
+  })
+})
+
+describe('server message journey (publisherGql -> describePublisherError)', () => {
+  const journey = async (message: string, code: string) => {
+    const fetchImpl = (async () =>
+      jsonResponse({ errors: [{ message, extensions: { code } }] })) as unknown as FetchLike
+    const err = await publisherGql('mutation { x }', undefined, 't', fetchImpl).catch(
+      (e: unknown) => e as PublisherApiError,
+    )
+    return describePublisherError(err)
+  }
+
+  it('shows the publisher the exact server sentence', async () => {
+    const msg = 'ADD_TEMPLATE_SERVICE rejected: a service of that type already exists'
+    expect(await journey(msg, 'INVALID_INPUT')).toBe(msg)
+  })
+
+  it('does not swap in our copy when a coded message mentions "Unknown argument"', async () => {
+    const msg = 'Unknown argument "x" rejected'
+    expect(await journey(msg, 'INVALID_INPUT')).toBe(msg)
   })
 })
