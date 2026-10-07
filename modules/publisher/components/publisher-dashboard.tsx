@@ -2,7 +2,8 @@
 
 import React, { useMemo, useState } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { Loader2 } from 'lucide-react'
+import { Loader2, RefreshCw } from 'lucide-react'
+import { Button } from '@/shared/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
@@ -23,7 +24,9 @@ export default function PublisherDashboard() {
 
   const list = apps.data ?? []
   const [selected, setSelected] = useState<string | null>(null)
-  const appId = selected ?? list[0]?.id ?? null
+  // Derived, so appId is always a member of the list: a stale selection (app removed,
+  // wallet switched) falls back to the first app instead of leaving the tabs on a dead id.
+  const appId = list.find((a) => a.id === selected)?.id ?? list[0]?.id ?? null
 
   const tab = useMemo<TabKey>(() => {
     const raw = params.get('tab')
@@ -50,7 +53,13 @@ export default function PublisherDashboard() {
     return (
       <Alert variant="destructive">
         <AlertTitle>Could not load your apps</AlertTitle>
-        <AlertDescription>{describePublisherError(apps.error)}</AlertDescription>
+        <AlertDescription className="flex flex-wrap items-center gap-3">
+          {describePublisherError(apps.error)}
+          <Button size="sm" variant="outline" onClick={() => void apps.refetch()} disabled={apps.isRefetching}>
+            <RefreshCw className={apps.isRefetching ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
+            Retry
+          </Button>
+        </AlertDescription>
       </Alert>
     )
   }
