@@ -7,6 +7,7 @@ import { getAuthToken } from '@/modules/cloud/graphql'
 import { waitForToken } from '@/modules/apps/lib/token'
 import {
   fetchMyApps,
+  fetchAppArtifacts,
   fetchLicenseTypes,
   fetchLicenses,
   fetchEnvironments,
@@ -14,6 +15,7 @@ import {
 } from '../graphql'
 import type {
   PublisherApp,
+  PublisherAppArtifact,
   PublisherLicense,
   PublisherLicenseType,
   AppUserEnvironment,
@@ -54,6 +56,20 @@ export function usePublisherLicenseTypes(appId: string | null) {
   return useAuthedQuery<PublisherLicenseType[]>(
     publisherKeys.types(appId ?? '', keyDid),
     (token) => fetchLicenseTypes(appId ?? '', token),
+    { retry: retryPublisher, enabled: !!did && !!appId },
+  )
+}
+
+/**
+ * Artifacts this app has published, for the template builder's selects. An app
+ * that has published nothing yields an empty list, which the builder explains
+ * rather than rendering as an empty dropdown.
+ */
+export function usePublisherAppArtifacts(appId: string | null) {
+  const { did, keyDid } = useViewerDid()
+  return useAuthedQuery<PublisherAppArtifact[]>(
+    publisherKeys.artifacts(appId ?? '', keyDid),
+    async (token) => (await fetchAppArtifacts(appId ?? '', token)) ?? [],
     { retry: retryPublisher, enabled: !!did && !!appId },
   )
 }

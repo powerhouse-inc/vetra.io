@@ -136,8 +136,8 @@ export function TiersTab({ appId }: { appId: string }) {
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <p className="text-muted-foreground text-sm">
-            Tiers are append-only: a service or package added by mistake cannot be removed — retire
-            the tier and replace it.
+            Services and packages can be added or removed at any time. Changes apply to licences
+            issued from here on.
           </p>
           <p className="text-muted-foreground text-sm">
             Services: CONNECT, SWITCHBOARD, FUSION (your app image), DOCLING, PAPERLESS and SPECKLE.

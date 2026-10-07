@@ -7,6 +7,7 @@ export const publisherKeys = {
   all: ['publisher'] as const,
   apps: (did: string) => ['publisher', 'apps', did] as const,
   types: (appId: string, did: string) => ['publisher', 'types', appId, did] as const,
+  artifacts: (appId: string, did: string) => ['publisher', 'artifacts', appId, did] as const,
   licenses: (appId: string, status: string | null, did: string) =>
     ['publisher', 'licenses', appId, status ?? 'ALL', did] as const,
   /** Prefix of every status/DID variant of one app's licence lists, for invalidation. */

@@ -1,6 +1,7 @@
 import { getCloudEndpoint } from '@/modules/cloud/graphql'
 import type {
   PublisherApp,
+  PublisherAppArtifact,
   PublisherLicense,
   PublisherLicenseType,
   AppUserEnvironment,
@@ -10,6 +11,7 @@ import type {
   AddLicenseTypeServiceInput,
   AddLicenseTypePackageInput,
   IssueGrantInput,
+  RemoveLicenseTypeEntryInput,
   RevokeLicenseInput,
 } from './types'
 
@@ -157,7 +159,7 @@ export function retryPublisher(failureCount: number, error: unknown): boolean {
 const APP_FIELDS = `id name status`
 const TYPE_FIELDS = `id kind label status validityDays templateHash
   size baseDomain packageRegistry
-  services { id type prefix }
+  services { id type prefix artifactName artifactChannel }
   packages { id packageName version }`
 const LICENSE_FIELDS = `id user licenseTypeId status start end environmentId`
 const ENV_FIELDS = `appId user environmentId licenseId templateHash`
@@ -187,6 +189,29 @@ export async function fetchLicenseTypes(
     fetchImpl,
   )
   return data.vetraPublisher.licenseTypes
+}
+
+const ARTIFACT_FIELDS = `kind name versions channels { channel version }`
+
+/**
+ * The artifacts this app has published. An app that has published nothing
+ * returns an empty list — the builder says so rather than showing an empty
+ * dropdown, which is the failure mode that makes a form feel broken.
+ */
+export async function fetchAppArtifacts(
+  appId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<PublisherAppArtifact[]> {
+  const data = await publisherGql<{
+    vetraPublisher: { appArtifacts: PublisherAppArtifact[] }
+  }>(
+    `query ($appId: String!) { vetraPublisher { appArtifacts(appId: $appId) { ${ARTIFACT_FIELDS} } } }`,
+    { appId },
+    token,
+    fetchImpl,
+  )
+  return data.vetraPublisher.appArtifacts
 }
 
 export async function fetchLicenses(
@@ -294,6 +319,34 @@ export const addLicenseTypeService = (
     'addLicenseTypeService',
     '($input: AddLicenseTypeServiceInput!)',
     'addLicenseTypeService(input: $input)',
+    { input },
+    token,
+    fetchImpl,
+  )
+
+export const removeLicenseTypeService = (
+  input: RemoveLicenseTypeEntryInput,
+  token: string | null,
+  fetchImpl?: FetchLike,
+) =>
+  mutate<boolean>(
+    'removeLicenseTypeService',
+    '($input: RemoveLicenseTypeEntryInput!)',
+    'removeLicenseTypeService(input: $input)',
+    { input },
+    token,
+    fetchImpl,
+  )
+
+export const removeLicenseTypePackage = (
+  input: RemoveLicenseTypeEntryInput,
+  token: string | null,
+  fetchImpl?: FetchLike,
+) =>
+  mutate<boolean>(
+    'removeLicenseTypePackage',
+    '($input: RemoveLicenseTypeEntryInput!)',
+    'removeLicenseTypePackage(input: $input)',
     { input },
     token,
     fetchImpl,

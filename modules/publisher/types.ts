@@ -1,6 +1,23 @@
 export type PublisherApp = { id: string; name: string; status: string }
 
-export type PublisherTemplateService = { id: string; type: string; prefix: string | null }
+export type PublisherTemplateService = {
+  id: string
+  type: string
+  prefix: string | null
+  /** The app artifact a FUSION service runs; null for every other type. */
+  artifactName: string | null
+  /** DEV | STAGING | LATEST — which published version the service follows. */
+  artifactChannel: string | null
+}
+
+/** One artifact the app has published, as the builder offers it. */
+export type PublisherAppArtifact = {
+  kind: 'PACKAGE' | 'FUSION_IMAGE'
+  name: string
+  /** Newest last, as the document stores them. */
+  versions: string[]
+  channels: { channel: string; version: string }[]
+}
 export type PublisherTemplatePackage = {
   id: string
   packageName: string | null
@@ -69,7 +86,12 @@ export type AddLicenseTypeServiceInput = {
   licenseTypeId: string
   type: string
   prefix?: string | null
+  /** Only a FUSION service may name an artifact; the server refuses the rest. */
+  artifactName?: string | null
+  /** Defaults to LATEST when an artifact is named. */
+  artifactChannel?: string | null
 }
+export type RemoveLicenseTypeEntryInput = { licenseTypeId: string; id: string }
 export type AddLicenseTypePackageInput = {
   licenseTypeId: string
   packageName: string

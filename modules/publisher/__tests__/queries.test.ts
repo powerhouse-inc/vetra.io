@@ -74,7 +74,13 @@ describe('publisher query fetchers', () => {
       'services',
       'packages',
     ])
-    expect(topLevelFields(selectionOf(sel, 'services'))).toEqual(['id', 'type', 'prefix'])
+    expect(topLevelFields(selectionOf(sel, 'services'))).toEqual([
+      'id',
+      'type',
+      'prefix',
+      'artifactName',
+      'artifactChannel',
+    ])
     expect(topLevelFields(selectionOf(sel, 'packages'))).toEqual(['id', 'packageName', 'version'])
   })
 

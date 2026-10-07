@@ -8,6 +8,7 @@ import type {
   SetLicenseTypeTemplateInput,
   AddLicenseTypeServiceInput,
   AddLicenseTypePackageInput,
+  RemoveLicenseTypeEntryInput,
   IssueGrantInput,
   RevokeLicenseInput,
 } from '../types'
@@ -70,6 +71,14 @@ export const useAddLicenseTypeService = (appId: string) =>
 export const useAddLicenseTypePackage = (appId: string) =>
   useTierMutation<AddLicenseTypePackageInput, boolean>(appId, (v, t) =>
     api.addLicenseTypePackage(v, t),
+  )
+export const useRemoveLicenseTypeService = (appId: string) =>
+  useTierMutation<RemoveLicenseTypeEntryInput, boolean>(appId, (v, t) =>
+    api.removeLicenseTypeService(v, t),
+  )
+export const useRemoveLicenseTypePackage = (appId: string) =>
+  useTierMutation<RemoveLicenseTypeEntryInput, boolean>(appId, (v, t) =>
+    api.removeLicenseTypePackage(v, t),
   )
 export const usePublishLicenseType = (appId: string) =>
   useTierMutation<string, boolean>(appId, (id, t) => api.publishLicenseType(id, t))

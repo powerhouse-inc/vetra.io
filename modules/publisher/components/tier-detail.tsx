@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/shared/components/ui/button'
 import {
@@ -24,10 +24,13 @@ import { describePublisherError } from '../graphql'
 import {
   useAddLicenseTypePackage,
   useAddLicenseTypeService,
+  useRemoveLicenseTypePackage,
+  useRemoveLicenseTypeService,
   useSetLicenseTypeDetails,
   useSetLicenseTypeTemplate,
 } from '../hooks/use-publisher-mutations'
-import type { PublisherLicenseType } from '../types'
+import { usePublisherAppArtifacts } from '../hooks/use-publisher'
+import type { PublisherAppArtifact, PublisherLicenseType, PublisherTemplateService } from '../types'
 
 // Mirrors TemplateServiceType in the app-license-type document model. Anything not in
 // that enum is rejected by the reducer's input validation, which surfaces as a raw
@@ -48,8 +51,50 @@ export const SERVICE_TYPES = [
 
 export const NOT_PROVISIONABLE = new Set(['CLINT'])
 
-export const APPEND_ONLY_WARNING =
-  'Services and packages cannot be removed once added. To undo a mistake, retire this tier and create a replacement.'
+export const CHANNELS = [
+  { value: 'LATEST', label: 'Latest release' },
+  { value: 'STAGING', label: 'Staging builds' },
+  { value: 'DEV', label: 'Dev builds' },
+] as const
+
+export type ChannelValue = (typeof CHANNELS)[number]['value']
+
+export const NO_IMAGES_YET =
+  'This app has not published a FUSION image yet. Run the Vetra deploy workflow once, then pick the image here.'
+
+export const NO_PACKAGES_YET =
+  'This app has not published a package yet. Run the Vetra deploy workflow once, then pick the package here.'
+
+const CHANNEL_LABEL: Record<string, string> = Object.fromEntries(
+  CHANNELS.map((c) => [c.value, c.label.toLowerCase()]),
+)
+
+/** One service as a phrase: "dtbau-psb at psb, following latest release". */
+export function describeService(s: PublisherTemplateService): string {
+  const where = s.prefix ? ` at ${s.prefix}` : ''
+  if (!s.artifactName) return `${s.type}${where}`
+  const follows = s.artifactChannel
+    ? `, following ${CHANNEL_LABEL[s.artifactChannel] ?? s.artifactChannel}`
+    : ''
+  return `${s.artifactName}${where}${follows}`
+}
+
+/**
+ * The whole tier as one sentence, so a publisher can check it without reading
+ * the form back to themselves.
+ */
+export function describeTier(tier: PublisherLicenseType): string {
+  if (tier.services.length === 0)
+    return 'No services yet — a tier needs at least one to be published.'
+  const services = tier.services.map(describeService).join(', ')
+  const packages = tier.packages
+    .map((p) =>
+      p.packageName ? (p.version ? `${p.packageName}@${p.version}` : p.packageName) : null,
+    )
+    .filter((x): x is string => x !== null)
+  const withPackages = packages.length > 0 ? `, with ${packages.join(' and ')} installed` : ''
+  return `${services}${withPackages}.`
+}
 
 /** Runs a mutation; failures show the server's sentence verbatim. */
 async function run(fn: () => Promise<unknown>, ok: string): Promise<boolean> {
@@ -184,17 +229,46 @@ function TemplateSection({ appId, tier }: { appId: string; tier: PublisherLicens
   )
 }
 
-function ServicesSection({ appId, tier }: { appId: string; tier: PublisherLicenseType }) {
+function ServicesSection({
+  appId,
+  tier,
+  artifacts,
+  artifactsLoading,
+}: {
+  appId: string
+  tier: PublisherLicenseType
+  artifacts: PublisherAppArtifact[]
+  artifactsLoading: boolean
+}) {
   const addService = useAddLicenseTypeService(appId)
+  const removeService = useRemoveLicenseTypeService(appId)
   const [type, setType] = useState('CONNECT')
   const [prefix, setPrefix] = useState('')
+  const [artifactName, setArtifactName] = useState('')
+  const [channel, setChannel] = useState<ChannelValue>('LATEST')
+
+  const images = artifacts.filter((a) => a.kind === 'FUSION_IMAGE')
+  // Only a FUSION service runs the app's own image; the server refuses the rest,
+  // so the image row is only shown where it can be accepted.
+  const wantsArtifact = type === 'FUSION'
+  const noImages = wantsArtifact && !artifactsLoading && images.length === 0
 
   const submit = async () => {
     const ok = await run(
-      () => addService.mutateAsync({ licenseTypeId: tier.id, type, prefix: prefix.trim() || null }),
+      () =>
+        addService.mutateAsync({
+          licenseTypeId: tier.id,
+          type,
+          prefix: prefix.trim() || null,
+          artifactName: wantsArtifact && artifactName ? artifactName : null,
+          artifactChannel: wantsArtifact && artifactName ? channel : null,
+        }),
       'Service added',
     )
-    if (ok) setPrefix('')
+    if (ok) {
+      setPrefix('')
+      setArtifactName('')
+    }
   }
 
   return (
@@ -207,15 +281,29 @@ function ServicesSection({ appId, tier }: { appId: string; tier: PublisherLicens
       ) : (
         <ul className="space-y-1 text-sm">
           {tier.services.map((s) => (
-            <li key={s.id} className="font-mono text-xs">
-              {s.type}
-              {s.prefix ? ` (${s.prefix})` : ''}
-              {NOT_PROVISIONABLE.has(s.type) ? ' — not provisionable yet' : ''}
+            <li key={s.id} className="flex items-center justify-between gap-2">
+              <span className="font-mono text-xs">
+                {describeService(s)}
+                {NOT_PROVISIONABLE.has(s.type) ? ' — not provisionable yet' : ''}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-label={`Remove ${s.type} service`}
+                disabled={removeService.isPending}
+                onClick={() =>
+                  void run(
+                    () => removeService.mutateAsync({ licenseTypeId: tier.id, id: s.id }),
+                    'Service removed',
+                  )
+                }
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </li>
           ))}
         </ul>
       )}
-      <p className="text-muted-foreground text-xs">{APPEND_ONLY_WARNING}</p>
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
           <Label>Service type</Label>
@@ -232,27 +320,92 @@ function ServicesSection({ appId, tier }: { appId: string; tier: PublisherLicens
             </SelectContent>
           </Select>
         </div>
+
+        {wantsArtifact && (
+          <>
+            <div className="space-y-1">
+              <Label>Image</Label>
+              <Select
+                value={artifactName}
+                onValueChange={(v) => {
+                  setArtifactName(v)
+                  // The image names the service, so it is the obvious prefix.
+                  if (!prefix.trim()) setPrefix(v)
+                }}
+                disabled={images.length === 0}
+              >
+                <SelectTrigger className="w-56" aria-label="Image">
+                  <SelectValue placeholder={artifactsLoading ? 'Loading…' : 'Pick an image'} />
+                </SelectTrigger>
+                <SelectContent>
+                  {images.map((a) => (
+                    <SelectItem key={a.name} value={a.name}>
+                      {a.name}
+                      {a.versions.length > 0 ? ` (${a.versions.length} published)` : ''}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <Label>Follows</Label>
+              <Select
+                value={channel}
+                onValueChange={(v) => setChannel(v as ChannelValue)}
+                disabled={!artifactName}
+              >
+                <SelectTrigger className="w-40" aria-label="Follows">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {CHANNELS.map((c) => (
+                    <SelectItem key={c.value} value={c.value}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </>
+        )}
+
         <div className="space-y-1">
           <Label htmlFor="svc-prefix">Prefix (optional)</Label>
           <Input id="svc-prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
         </div>
         <Button
           size="sm"
-          disabled={NOT_PROVISIONABLE.has(type) || addService.isPending}
+          disabled={NOT_PROVISIONABLE.has(type) || noImages || addService.isPending}
           onClick={submit}
         >
           {addService.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           Add service
         </Button>
       </div>
+      {noImages && <p className="text-muted-foreground text-xs">{NO_IMAGES_YET}</p>}
     </section>
   )
 }
 
-function PackagesSection({ appId, tier }: { appId: string; tier: PublisherLicenseType }) {
+function PackagesSection({
+  appId,
+  tier,
+  artifacts,
+  artifactsLoading,
+}: {
+  appId: string
+  tier: PublisherLicenseType
+  artifacts: PublisherAppArtifact[]
+  artifactsLoading: boolean
+}) {
   const addPackage = useAddLicenseTypePackage(appId)
+  const removePackage = useRemoveLicenseTypePackage(appId)
   const [name, setName] = useState('')
   const [version, setVersion] = useState('')
+
+  const published = artifacts.filter((a) => a.kind === 'PACKAGE')
+  const noPackages = !artifactsLoading && published.length === 0
+  const versionsFor = published.find((a) => a.name === name)?.versions ?? []
 
   const submit = async () => {
     const ok = await run(
@@ -278,28 +431,74 @@ function PackagesSection({ appId, tier }: { appId: string; tier: PublisherLicens
       ) : (
         <ul className="space-y-1">
           {tier.packages.map((p) => (
-            <li key={p.id} className="font-mono text-xs">
-              {p.packageName ?? '—'}
-              {p.version ? `@${p.version}` : ''}
+            <li key={p.id} className="flex items-center justify-between gap-2">
+              <span className="font-mono text-xs">
+                {p.packageName ?? '—'}
+                {p.version ? `@${p.version}` : ''}
+              </span>
+              <Button
+                size="sm"
+                variant="ghost"
+                aria-label={`Remove ${p.packageName ?? 'package'}`}
+                disabled={removePackage.isPending}
+                onClick={() =>
+                  void run(
+                    () => removePackage.mutateAsync({ licenseTypeId: tier.id, id: p.id }),
+                    'Package removed',
+                  )
+                }
+              >
+                <Trash2 className="h-4 w-4" />
+              </Button>
             </li>
           ))}
         </ul>
       )}
-      <p className="text-muted-foreground text-xs">{APPEND_ONLY_WARNING}</p>
       <div className="flex flex-wrap items-end gap-3">
         <div className="space-y-1">
-          <Label htmlFor="pkg-name">Package name</Label>
-          <Input id="pkg-name" value={name} onChange={(e) => setName(e.target.value)} />
+          <Label>Package</Label>
+          <Select
+            value={name}
+            onValueChange={(v) => {
+              setName(v)
+              setVersion('')
+            }}
+            disabled={published.length === 0}
+          >
+            <SelectTrigger className="w-64" aria-label="Package">
+              <SelectValue placeholder={artifactsLoading ? 'Loading…' : 'Pick a package'} />
+            </SelectTrigger>
+            <SelectContent>
+              {published.map((a) => (
+                <SelectItem key={a.name} value={a.name}>
+                  {a.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <div className="space-y-1">
-          <Label htmlFor="pkg-version">Version (optional)</Label>
-          <Input id="pkg-version" value={version} onChange={(e) => setVersion(e.target.value)} />
+          <Label>Version</Label>
+          <Select value={version} onValueChange={setVersion} disabled={!name}>
+            <SelectTrigger className="w-48" aria-label="Version">
+              <SelectValue placeholder="Latest" />
+            </SelectTrigger>
+            <SelectContent>
+              {/* Newest first: the version a publisher wants is almost always the newest. */}
+              {[...versionsFor].reverse().map((v) => (
+                <SelectItem key={v} value={v}>
+                  {v}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
         <Button size="sm" disabled={!name.trim() || addPackage.isPending} onClick={submit}>
           {addPackage.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           Add package
         </Button>
       </div>
+      {noPackages && <p className="text-muted-foreground text-xs">{NO_PACKAGES_YET}</p>}
     </section>
   )
 }
@@ -313,6 +512,7 @@ export function TierDetail({
   tier: PublisherLicenseType | null
   onClose: () => void
 }) {
+  const artifacts = usePublisherAppArtifacts(tier ? appId : null)
   return (
     <Dialog open={!!tier} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
@@ -324,10 +524,23 @@ export function TierDetail({
         </DialogHeader>
         {tier && (
           <div className="space-y-6">
+            <p className="bg-muted rounded-md px-3 py-2 text-sm" data-testid="tier-summary">
+              {describeTier(tier)}
+            </p>
             <DetailsSection appId={appId} tier={tier} />
             <TemplateSection key={tier.id} appId={appId} tier={tier} />
-            <ServicesSection appId={appId} tier={tier} />
-            <PackagesSection appId={appId} tier={tier} />
+            <ServicesSection
+              appId={appId}
+              tier={tier}
+              artifacts={artifacts.data ?? []}
+              artifactsLoading={artifacts.isLoading}
+            />
+            <PackagesSection
+              appId={appId}
+              tier={tier}
+              artifacts={artifacts.data ?? []}
+              artifactsLoading={artifacts.isLoading}
+            />
           </div>
         )}
       </DialogContent>

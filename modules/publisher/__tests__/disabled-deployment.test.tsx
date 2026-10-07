@@ -16,6 +16,7 @@ vi.mock('sonner', () => ({
   toast: { error: (...a: unknown[]) => toastError(...a), success: vi.fn() },
 }))
 vi.mock('../hooks/use-publisher', () => ({
+  usePublisherAppArtifacts: () => ({ data: [], isLoading: false, error: null }),
   usePublisherLicenses: () => ({
     data: [
       {

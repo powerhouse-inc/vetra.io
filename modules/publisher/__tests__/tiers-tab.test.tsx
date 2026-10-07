@@ -9,9 +9,12 @@ const setDetails = vi.fn()
 const setTemplate = vi.fn()
 const addService = vi.fn()
 const addPackage = vi.fn()
+const removeService = vi.fn()
+const removePackage = vi.fn()
 const toastError = vi.fn()
 const toastSuccess = vi.fn()
 let types: unknown[] = []
+let artifacts: unknown[] = []
 
 vi.mock('sonner', () => ({
   toast: {
@@ -21,6 +24,7 @@ vi.mock('sonner', () => ({
 }))
 vi.mock('../hooks/use-publisher', () => ({
   usePublisherLicenseTypes: () => ({ data: types, isPending: false, error: null }),
+  usePublisherAppArtifacts: () => ({ data: artifacts, isLoading: false, error: null }),
 }))
 vi.mock('../hooks/use-publisher-mutations', () => ({
   useCreateLicenseType: () => ({ mutateAsync: create, isPending: false }),
@@ -28,28 +32,46 @@ vi.mock('../hooks/use-publisher-mutations', () => ({
   useSetLicenseTypeTemplate: () => ({ mutateAsync: setTemplate, isPending: false }),
   useAddLicenseTypeService: () => ({ mutateAsync: addService, isPending: false }),
   useAddLicenseTypePackage: () => ({ mutateAsync: addPackage, isPending: false }),
+  useRemoveLicenseTypeService: () => ({ mutateAsync: removeService, isPending: false }),
+  useRemoveLicenseTypePackage: () => ({ mutateAsync: removePackage, isPending: false }),
   usePublishLicenseType: () => ({ mutateAsync: publish, isPending: false }),
   useRetireLicenseType: () => ({ mutateAsync: retire, isPending: false }),
 }))
 vi.mock('@/shared/components/ui/select', () => ({
   // Native stand-in: Radix Select is not drivable in jsdom. Keeps value/onValueChange wiring real.
+  // The label comes from the SelectTrigger the component actually renders, so
+  // each select is addressable by its own name rather than all answering to one.
   Select: ({
     value,
     onValueChange,
     children,
+    disabled,
   }: {
     value?: string
     onValueChange: (v: string) => void
     children: React.ReactNode
-  }) => (
-    <select
-      aria-label="Service type"
-      value={value ?? ''}
-      onChange={(e) => onValueChange(e.target.value)}
-    >
-      {children}
-    </select>
-  ),
+    disabled?: boolean
+  }) => {
+    let label = 'Select'
+    React.Children.forEach(children, (child) => {
+      if (
+        React.isValidElement(child) &&
+        typeof (child.props as Record<string, unknown>)['aria-label'] === 'string'
+      ) {
+        label = (child.props as Record<string, string>)['aria-label']
+      }
+    })
+    return (
+      <select
+        aria-label={label}
+        value={value ?? ''}
+        disabled={disabled}
+        onChange={(e) => onValueChange(e.target.value)}
+      >
+        {children}
+      </select>
+    )
+  },
   SelectTrigger: () => null,
   SelectValue: () => null,
   SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
@@ -78,6 +100,7 @@ const tier = (over: Record<string, unknown> = {}) => ({
 beforeEach(() => {
   cleanup()
   types = []
+  artifacts = []
   for (const m of [
     publish,
     retire,
@@ -86,6 +109,8 @@ beforeEach(() => {
     setTemplate,
     addService,
     addPackage,
+    removeService,
+    removePackage,
     toastError,
     toastSuccess,
   ])
@@ -95,10 +120,11 @@ beforeEach(() => {
 const openEdit = () => fireEvent.click(screen.getByRole('button', { name: /edit/i }))
 
 describe('TiersTab', () => {
-  it('says tiers are append-only where a publisher would otherwise be surprised', () => {
+  it('no longer claims tiers are append-only, now that entries can be removed', () => {
     types = [tier()]
     render(<TiersTab appId="a1" />)
-    expect(screen.getByText(/cannot be removed/i)).toBeTruthy()
+    expect(screen.queryByText(/cannot be removed/i)).toBeNull()
+    expect(screen.getByText(/can be added or removed at any time/i)).toBeTruthy()
   })
 
   it('lists CLINT but marks it as not provisionable', () => {
@@ -250,8 +276,7 @@ describe('TierDetail', () => {
     types = [tier()]
     render(<TiersTab appId="a1" />)
     openEdit()
-    // one in the tab note + one under services + one under packages
-    expect(screen.getAllByText(/cannot be removed/i).length).toBe(3)
+    expect(screen.queryByText(/cannot be removed/i)).toBeNull()
   })
 
   // TemplateServiceType in the app-license-type document model. A value outside this set
@@ -312,6 +337,9 @@ describe('TierDetail', () => {
         licenseTypeId: 'lt-3',
         type: 'SWITCHBOARD',
         prefix: 'api',
+        // not a FUSION service, so it names no image
+        artifactName: null,
+        artifactChannel: null,
       }),
     )
   })
@@ -329,10 +357,11 @@ describe('TierDetail', () => {
     const msg = 'Package @acme/x is already in this template'
     addPackage.mockRejectedValue(new Error(msg))
     types = [tier({ id: 'lt-4' })]
+    artifacts = [{ kind: 'PACKAGE', name: '@acme/x', versions: ['1.0.0', '1.2.3'], channels: [] }]
     render(<TiersTab appId="a1" />)
     openEdit()
-    fireEvent.change(screen.getByLabelText(/package name/i), { target: { value: '@acme/x' } })
-    fireEvent.change(screen.getByLabelText(/version/i), { target: { value: '1.2.3' } })
+    fireEvent.change(screen.getByLabelText('Package'), { target: { value: '@acme/x' } })
+    fireEvent.change(screen.getByLabelText('Version'), { target: { value: '1.2.3' } })
     fireEvent.click(screen.getByRole('button', { name: /add package/i }))
     await waitFor(() =>
       expect(addPackage).toHaveBeenCalledWith({
@@ -450,5 +479,130 @@ describe('TierDetail', () => {
     openEdit()
     expect(screen.queryByText(/keep its current value/i)).toBeNull()
     expect(screen.getByText(/replaces all three/i)).toBeTruthy()
+  })
+})
+
+describe('TierDetail: picking artifacts instead of typing them', () => {
+  const withImages = () => {
+    artifacts = [
+      { kind: 'FUSION_IMAGE', name: 'dtbau-psb', versions: ['1.0.0', '1.1.0'], channels: [] },
+      { kind: 'FUSION_IMAGE', name: 'dtbau-backup', versions: ['2.0.0'], channels: [] },
+      { kind: 'PACKAGE', name: '@acme/pkg', versions: ['9.9.9'], channels: [] },
+    ]
+  }
+
+  it('offers the image select only for FUSION, listing only this app images', () => {
+    withImages()
+    types = [tier()]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    // a non-FUSION type has no image to run, and the server refuses one
+    expect(screen.queryByLabelText('Image')).toBeNull()
+
+    fireEvent.change(screen.getByLabelText('Service type'), { target: { value: 'FUSION' } })
+    const images = screen.getByLabelText('Image') as HTMLSelectElement
+    expect(Array.from(images.options).map((o) => o.value)).toEqual(['dtbau-psb', 'dtbau-backup'])
+  })
+
+  it('sends the picked image and channel, defaulting the prefix to the image name', async () => {
+    withImages()
+    addService.mockResolvedValue(true)
+    types = [tier({ id: 'lt-9' })]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    fireEvent.change(screen.getByLabelText('Service type'), { target: { value: 'FUSION' } })
+    fireEvent.change(screen.getByLabelText('Image'), { target: { value: 'dtbau-psb' } })
+    fireEvent.click(screen.getByRole('button', { name: /add service/i }))
+
+    await waitFor(() =>
+      expect(addService).toHaveBeenCalledWith({
+        licenseTypeId: 'lt-9',
+        type: 'FUSION',
+        prefix: 'dtbau-psb',
+        artifactName: 'dtbau-psb',
+        artifactChannel: 'LATEST',
+      }),
+    )
+  })
+
+  it('carries a chosen channel instead of the default', async () => {
+    withImages()
+    addService.mockResolvedValue(true)
+    types = [tier({ id: 'lt-9' })]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    fireEvent.change(screen.getByLabelText('Service type'), { target: { value: 'FUSION' } })
+    fireEvent.change(screen.getByLabelText('Image'), { target: { value: 'dtbau-psb' } })
+    fireEvent.change(screen.getByLabelText('Follows'), { target: { value: 'STAGING' } })
+    fireEvent.click(screen.getByRole('button', { name: /add service/i }))
+
+    await waitFor(() =>
+      expect(addService).toHaveBeenCalledWith(
+        expect.objectContaining({ artifactChannel: 'STAGING' }),
+      ),
+    )
+  })
+
+  // An empty dropdown with no explanation is the failure mode that makes a form
+  // feel broken. Say why, and do not let the publisher submit a FUSION service
+  // that cannot name an image.
+  it('explains an app that has published nothing, instead of an empty dropdown', () => {
+    artifacts = []
+    types = [tier()]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    fireEvent.change(screen.getByLabelText('Service type'), { target: { value: 'FUSION' } })
+
+    expect(screen.getByText(/has not published a FUSION image yet/i)).toBeTruthy()
+    expect(
+      (screen.getByRole('button', { name: /add service/i }) as HTMLButtonElement).disabled,
+    ).toBe(true)
+  })
+
+  it('removes a service the publisher added by mistake', async () => {
+    removeService.mockResolvedValue(true)
+    types = [
+      tier({
+        id: 'lt-5',
+        services: [
+          { id: 's-1', type: 'CONNECT', prefix: 'c', artifactName: null, artifactChannel: null },
+        ],
+      }),
+    ]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    fireEvent.click(screen.getByRole('button', { name: /remove connect service/i }))
+    await waitFor(() =>
+      expect(removeService).toHaveBeenCalledWith({ licenseTypeId: 'lt-5', id: 's-1' }),
+    )
+  })
+
+  it('reads the tier back as a sentence', () => {
+    types = [
+      tier({
+        services: [
+          {
+            id: 's-1',
+            type: 'SWITCHBOARD',
+            prefix: 'api',
+            artifactName: null,
+            artifactChannel: null,
+          },
+          {
+            id: 's-2',
+            type: 'FUSION',
+            prefix: 'psb',
+            artifactName: 'dtbau-psb',
+            artifactChannel: 'LATEST',
+          },
+        ],
+        packages: [{ id: 'p-1', packageName: 'dtbau-package', version: null }],
+      }),
+    ]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    expect(screen.getByTestId('tier-summary').textContent).toBe(
+      'SWITCHBOARD at api, dtbau-psb at psb, following latest release, with dtbau-package installed.',
+    )
   })
 })
