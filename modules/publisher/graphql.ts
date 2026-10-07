@@ -4,6 +4,13 @@ import type {
   PublisherLicense,
   PublisherLicenseType,
   AppUserEnvironment,
+  CreateLicenseTypeInput,
+  SetLicenseTypeDetailsInput,
+  SetLicenseTypeTemplateInput,
+  AddLicenseTypeServiceInput,
+  AddLicenseTypePackageInput,
+  IssueGrantInput,
+  RevokeLicenseInput,
 } from './types'
 
 export type FetchLike = (input: string, init: RequestInit) => Promise<Response>
@@ -209,3 +216,56 @@ export async function fetchEnvironments(
   )
   return data.vetraPublisher.environments
 }
+
+// ---------------------------------------------------------------------------
+// Mutations. Input objects are passed straight through as the `input` variable:
+// a key the caller omits stays absent from the JSON body ("leave unchanged") and
+// a key set to null is sent as null ("clear"). Do not normalise, default or strip
+// them. No retry or swallowing here; the UI layer decides how to react to
+// INVALID_INPUT and friends.
+// ---------------------------------------------------------------------------
+
+async function mutate<T>(
+  field: string,
+  args: string,
+  call: string,
+  variables: Record<string, unknown>,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<T> {
+  const data = await publisherGql<{ vetraPublisher: Record<string, T> }>(
+    `mutation ${args} { vetraPublisher { ${call} } }`,
+    variables,
+    token,
+    fetchImpl,
+  )
+  return data.vetraPublisher[field]
+}
+
+export const createLicenseType = (input: CreateLicenseTypeInput, token: string | null, fetchImpl?: FetchLike) =>
+  mutate<string>('createLicenseType', '($input: CreateLicenseTypeInput!)', 'createLicenseType(input: $input)', { input }, token, fetchImpl)
+
+export const setLicenseTypeDetails = (input: SetLicenseTypeDetailsInput, token: string | null, fetchImpl?: FetchLike) =>
+  mutate<boolean>('setLicenseTypeDetails', '($input: SetLicenseTypeDetailsInput!)', 'setLicenseTypeDetails(input: $input)', { input }, token, fetchImpl)
+
+export const setLicenseTypeTemplate = (input: SetLicenseTypeTemplateInput, token: string | null, fetchImpl?: FetchLike) =>
+  mutate<boolean>('setLicenseTypeTemplate', '($input: SetLicenseTypeTemplateInput!)', 'setLicenseTypeTemplate(input: $input)', { input }, token, fetchImpl)
+
+export const addLicenseTypeService = (input: AddLicenseTypeServiceInput, token: string | null, fetchImpl?: FetchLike) =>
+  mutate<boolean>('addLicenseTypeService', '($input: AddLicenseTypeServiceInput!)', 'addLicenseTypeService(input: $input)', { input }, token, fetchImpl)
+
+export const addLicenseTypePackage = (input: AddLicenseTypePackageInput, token: string | null, fetchImpl?: FetchLike) =>
+  mutate<boolean>('addLicenseTypePackage', '($input: AddLicenseTypePackageInput!)', 'addLicenseTypePackage(input: $input)', { input }, token, fetchImpl)
+
+// publish/retire take a bare licenseTypeId argument, not an input object.
+export const publishLicenseType = (licenseTypeId: string, token: string | null, fetchImpl?: FetchLike) =>
+  mutate<boolean>('publishLicenseType', '($licenseTypeId: String!)', 'publishLicenseType(licenseTypeId: $licenseTypeId)', { licenseTypeId }, token, fetchImpl)
+
+export const retireLicenseType = (licenseTypeId: string, token: string | null, fetchImpl?: FetchLike) =>
+  mutate<boolean>('retireLicenseType', '($licenseTypeId: String!)', 'retireLicenseType(licenseTypeId: $licenseTypeId)', { licenseTypeId }, token, fetchImpl)
+
+export const issueGrant = (input: IssueGrantInput, token: string | null, fetchImpl?: FetchLike) =>
+  mutate<string>('issueGrant', '($input: IssueGrantInput!)', 'issueGrant(input: $input)', { input }, token, fetchImpl)
+
+export const revokeLicense = (input: RevokeLicenseInput, token: string | null, fetchImpl?: FetchLike) =>
+  mutate<boolean>('revokeLicense', '($input: RevokeLicenseInput!)', 'revokeLicense(input: $input)', { input }, token, fetchImpl)
