@@ -41,7 +41,7 @@ describe('publisher mutation fetchers', () => {
     const { calls, fetchImpl } = ok('setLicenseTypeDetails')
     expect(await setLicenseTypeDetails({ licenseTypeId: 'lt-1', label: 'New name' }, 't', fetchImpl)).toBe(true)
     expect(calls[0].query).toContain('setLicenseTypeDetails(input: $input)')
-    expect(calls[0].query).toContain('SetLicenseTypeDetailsInput!')
+    expect(calls[0].query).toMatch(/mutation[^{]*\$input: SetLicenseTypeDetailsInput!/)
     expect(inputKeys(calls[0])).not.toContain('app')
     expect(inputKeys(calls[0])).not.toContain('appId')
   })
@@ -63,7 +63,7 @@ describe('publisher mutation fetchers', () => {
     const input = { licenseTypeId: 'lt-1', size: 'M', baseDomain: 'x.example', packageRegistry: null }
     expect(await setLicenseTypeTemplate(input, 't', fetchImpl)).toBe(true)
     expect(calls[0].query).toContain('setLicenseTypeTemplate(input: $input)')
-    expect(calls[0].query).toContain('SetLicenseTypeTemplateInput!')
+    expect(calls[0].query).toMatch(/mutation[^{]*\$input: SetLicenseTypeTemplateInput!/)
     expect(calls[0].variables.input).toEqual(input)
   })
 
@@ -71,7 +71,7 @@ describe('publisher mutation fetchers', () => {
     const { calls, fetchImpl } = ok('addLicenseTypeService')
     expect(await addLicenseTypeService({ licenseTypeId: 'lt-1', type: 'CONNECT', prefix: null }, 't', fetchImpl)).toBe(true)
     expect(calls[0].query).toContain('addLicenseTypeService(input: $input)')
-    expect(calls[0].query).toContain('AddLicenseTypeServiceInput!')
+    expect(calls[0].query).toMatch(/mutation[^{]*\$input: AddLicenseTypeServiceInput!/)
     expect(calls[0].variables.input).toEqual({ licenseTypeId: 'lt-1', type: 'CONNECT', prefix: null })
   })
 
@@ -80,7 +80,7 @@ describe('publisher mutation fetchers', () => {
     const input = { licenseTypeId: 'lt-1', packageName: '@acme/pkg', version: '1.2.3' }
     expect(await addLicenseTypePackage(input, 't', fetchImpl)).toBe(true)
     expect(calls[0].query).toContain('addLicenseTypePackage(input: $input)')
-    expect(calls[0].query).toContain('AddLicenseTypePackageInput!')
+    expect(calls[0].query).toMatch(/mutation[^{]*\$input: AddLicenseTypePackageInput!/)
     expect(calls[0].variables.input).toEqual(input)
   })
 
@@ -88,13 +88,14 @@ describe('publisher mutation fetchers', () => {
     const { calls, fetchImpl } = ok('publishLicenseType')
     expect(await publishLicenseType('lt-1', 't', fetchImpl)).toBe(true)
     expect(calls[0].query).toContain('publishLicenseType(licenseTypeId: $licenseTypeId)')
-    expect(calls[0].query).toContain('$licenseTypeId: String!')
+    expect(calls[0].query).toMatch(/mutation[^{]*\$licenseTypeId: String!/)
     expect(calls[0].variables).toEqual({ licenseTypeId: 'lt-1' })
   })
 
   it('retireLicenseType takes a bare id argument and calls retire, not publish', async () => {
     const { calls, fetchImpl } = ok('retireLicenseType')
     expect(await retireLicenseType('lt-1', 't', fetchImpl)).toBe(true)
+    expect(calls[0].query).toMatch(/mutation[^{]*\$licenseTypeId: String!/)
     expect(calls[0].query).toContain('retireLicenseType(licenseTypeId: $licenseTypeId)')
     expect(calls[0].query).not.toContain('publishLicenseType')
     expect(calls[0].variables).toEqual({ licenseTypeId: 'lt-1' })
@@ -105,7 +106,7 @@ describe('publisher mutation fetchers', () => {
     const input = { appId: 'a1', licenseTypeId: 'lt-1', user: '0xabc' }
     expect(await issueGrant(input, 't', fetchImpl)).toBe('lic-3')
     expect(calls[0].query).toContain('issueGrant(input: $input)')
-    expect(calls[0].query).toContain('IssueGrantInput!')
+    expect(calls[0].query).toMatch(/mutation[^{]*\$input: IssueGrantInput!/)
     expect(calls[0].variables.input).toEqual(input)
   })
 
@@ -113,7 +114,7 @@ describe('publisher mutation fetchers', () => {
     const { calls, fetchImpl } = ok('revokeLicense')
     expect(await revokeLicense({ licenseId: 'lic-3', reason: 'non-payment' }, 't', fetchImpl)).toBe(true)
     expect(calls[0].query).toContain('revokeLicense(input: $input)')
-    expect(calls[0].query).toContain('RevokeLicenseInput!')
+    expect(calls[0].query).toMatch(/mutation[^{]*\$input: RevokeLicenseInput!/)
     expect(calls[0].variables.input).toEqual({ licenseId: 'lic-3', reason: 'non-payment' })
     expect(inputKeys(calls[0])).not.toContain('appId')
   })
