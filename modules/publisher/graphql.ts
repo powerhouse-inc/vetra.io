@@ -156,6 +156,7 @@ export function retryPublisher(failureCount: number, error: unknown): boolean {
 
 const APP_FIELDS = `id name status`
 const TYPE_FIELDS = `id kind label status validityDays templateHash
+  size baseDomain packageRegistry
   services { id type prefix }
   packages { id packageName version }`
 const LICENSE_FIELDS = `id user licenseTypeId status start end environmentId`

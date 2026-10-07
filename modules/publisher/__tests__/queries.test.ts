@@ -62,7 +62,8 @@ describe('publisher query fetchers', () => {
     expect(calls[0].query).toContain('licenseTypes(appId: $appId)')
     const sel = selectionOf(calls[0].query, 'licenseTypes')
     expect(topLevelFields(sel)).toEqual([
-      'id', 'kind', 'label', 'status', 'validityDays', 'templateHash', 'services', 'packages',
+      'id', 'kind', 'label', 'status', 'validityDays', 'templateHash',
+      'size', 'baseDomain', 'packageRegistry', 'services', 'packages',
     ])
     expect(topLevelFields(selectionOf(sel, 'services'))).toEqual(['id', 'type', 'prefix'])
     expect(topLevelFields(selectionOf(sel, 'packages'))).toEqual(['id', 'packageName', 'version'])

@@ -43,7 +43,7 @@ import { TiersTab } from '../components/tiers-tab'
 
 const tier = (over: Record<string, unknown> = {}) => ({
   id: 'lt-1', kind: 'PRO', label: 'Pro', status: 'DRAFT', validityDays: 365,
-  templateHash: 'h', services: [], packages: [], ...over,
+  templateHash: 'h', size: null, baseDomain: null, packageRegistry: null, services: [], packages: [], ...over,
 })
 
 beforeEach(() => {
@@ -265,13 +265,52 @@ describe('TierDetail', () => {
     await waitFor(() => expect(setDetails).toHaveBeenCalledWith({ licenseTypeId: 'lt-5', validityDays: null }))
   })
 
-  it('saves template fields that were filled in and leaves the rest out', async () => {
-    setTemplate.mockResolvedValue(true)
-    types = [tier({ id: 'lt-6' })]
+  const fullTemplate = { size: 'M', baseDomain: 'example.org', packageRegistry: 'https://reg.example.org' }
+
+  it('prefills the template inputs from the tier', () => {
+    types = [tier({ id: 'lt-6', ...fullTemplate })]
     render(<TiersTab appId="a1" />)
     openEdit()
-    fireEvent.change(screen.getByLabelText(/base domain/i), { target: { value: 'example.org' } })
-    fireEvent.click(screen.getByRole('button', { name: /save template/i }))
-    await waitFor(() => expect(setTemplate).toHaveBeenCalledWith({ licenseTypeId: 'lt-6', baseDomain: 'example.org' }))
+    expect((screen.getByLabelText('Size') as HTMLInputElement).value).toBe('M')
+    expect((screen.getByLabelText(/base domain/i) as HTMLInputElement).value).toBe('example.org')
+    expect((screen.getByLabelText(/package registry/i) as HTMLInputElement).value).toBe('https://reg.example.org')
   })
+
+  it('editing ONE template field sends the other two with their ORIGINAL values (SET_TEMPLATE is a full replace)', async () => {
+    setTemplate.mockResolvedValue(true)
+    types = [tier({ id: 'lt-6', ...fullTemplate })]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    fireEvent.change(screen.getByLabelText('Size'), { target: { value: 'L' } })
+    fireEvent.click(screen.getByRole('button', { name: /save template/i }))
+    await waitFor(() => expect(setTemplate).toHaveBeenCalledTimes(1))
+    expect(setTemplate.mock.calls[0][0]).toEqual({
+      licenseTypeId: 'lt-6',
+      size: 'L',
+      baseDomain: 'example.org',
+      packageRegistry: 'https://reg.example.org',
+    })
+  })
+
+  it('clearing a template field sends an explicit null, not an omitted key', async () => {
+    setTemplate.mockResolvedValue(true)
+    types = [tier({ id: 'lt-6', ...fullTemplate })]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    fireEvent.change(screen.getByLabelText(/base domain/i), { target: { value: '' } })
+    fireEvent.click(screen.getByRole('button', { name: /save template/i }))
+    await waitFor(() => expect(setTemplate).toHaveBeenCalledTimes(1))
+    const sent = setTemplate.mock.calls[0][0]
+    expect(sent).toHaveProperty('baseDomain', null)
+    expect(sent).toEqual({ licenseTypeId: 'lt-6', size: 'M', baseDomain: null, packageRegistry: 'https://reg.example.org' })
+  })
+
+  it('does not tell the publisher an empty field keeps its value', () => {
+    types = [tier()]
+    render(<TiersTab appId="a1" />)
+    openEdit()
+    expect(screen.queryByText(/keep its current value/i)).toBeNull()
+    expect(screen.getByText(/replaces all three/i)).toBeTruthy()
+  })
+
 })

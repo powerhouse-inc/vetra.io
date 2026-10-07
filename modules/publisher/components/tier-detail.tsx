@@ -95,24 +95,31 @@ function DetailsSection({ appId, tier }: { appId: string; tier: PublisherLicense
 
 function TemplateSection({ appId, tier }: { appId: string; tier: PublisherLicenseType }) {
   const setTemplate = useSetLicenseTypeTemplate(appId)
-  const [size, setSize] = useState('')
-  const [baseDomain, setBaseDomain] = useState('')
-  const [registry, setRegistry] = useState('')
+  const [size, setSize] = useState(tier.size ?? '')
+  const [baseDomain, setBaseDomain] = useState(tier.baseDomain ?? '')
+  const [registry, setRegistry] = useState(tier.packageRegistry ?? '')
 
+  // SET_TEMPLATE is a full replace on the server: any field left out is cleared.
+  // So all three are always sent, an empty input becoming an explicit null.
   const save = async () => {
-    const input: { licenseTypeId: string; size?: string; baseDomain?: string; packageRegistry?: string } = {
-      licenseTypeId: tier.id,
-    }
-    if (size.trim()) input.size = size.trim()
-    if (baseDomain.trim()) input.baseDomain = baseDomain.trim()
-    if (registry.trim()) input.packageRegistry = registry.trim()
-    await run(() => setTemplate.mutateAsync(input), 'Template saved')
+    await run(
+      () =>
+        setTemplate.mutateAsync({
+          licenseTypeId: tier.id,
+          size: size.trim() || null,
+          baseDomain: baseDomain.trim() || null,
+          packageRegistry: registry.trim() || null,
+        }),
+      'Template saved',
+    )
   }
 
   return (
     <section className="space-y-3">
       <h3 className="text-sm font-semibold">Environment template</h3>
-      <p className="text-muted-foreground text-xs">Leave a field empty to keep its current value.</p>
+      <p className="text-muted-foreground text-xs">
+        Saving replaces all three fields with what is shown here; an empty field is cleared.
+      </p>
       <div className="grid gap-3 sm:grid-cols-3">
         <div className="space-y-1">
           <Label htmlFor="tpl-size">Size</Label>
@@ -127,12 +134,7 @@ function TemplateSection({ appId, tier }: { appId: string; tier: PublisherLicens
           <Input id="tpl-registry" value={registry} onChange={(e) => setRegistry(e.target.value)} />
         </div>
       </div>
-      <Button
-        size="sm"
-        variant="outline"
-        disabled={(!size.trim() && !baseDomain.trim() && !registry.trim()) || setTemplate.isPending}
-        onClick={save}
-      >
+      <Button size="sm" variant="outline" disabled={setTemplate.isPending} onClick={save}>
         {setTemplate.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
         Save template
       </Button>
@@ -268,7 +270,7 @@ export function TierDetail({
         {tier && (
           <div className="space-y-6">
             <DetailsSection appId={appId} tier={tier} />
-            <TemplateSection appId={appId} tier={tier} />
+            <TemplateSection key={tier.id} appId={appId} tier={tier} />
             <ServicesSection appId={appId} tier={tier} />
             <PackagesSection appId={appId} tier={tier} />
           </div>

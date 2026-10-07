@@ -14,6 +14,10 @@ export type PublisherLicenseType = {
   status: string
   validityDays: number | null
   templateHash: string
+  // SET_TEMPLATE is a full replace: all three must be read so all three can be sent back.
+  size: string | null
+  baseDomain: string | null
+  packageRegistry: string | null
   services: PublisherTemplateService[]
   packages: PublisherTemplatePackage[]
 }
