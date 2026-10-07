@@ -3,20 +3,29 @@ export type StatusMeta = { label: string; tone: StatusTone }
 
 export function tierStatusMeta(status: string): StatusMeta {
   switch (status) {
-    case 'DRAFT': return { label: 'Draft', tone: 'neutral' }
-    case 'ACTIVE': return { label: 'Active', tone: 'positive' }
-    case 'RETIRED': return { label: 'Retired', tone: 'danger' }
-    default: return { label: status, tone: 'neutral' }
+    case 'DRAFT':
+      return { label: 'Draft', tone: 'neutral' }
+    case 'ACTIVE':
+      return { label: 'Active', tone: 'positive' }
+    case 'RETIRED':
+      return { label: 'Retired', tone: 'danger' }
+    default:
+      return { label: status, tone: 'neutral' }
   }
 }
 
 export function licenseStatusMeta(status: string): StatusMeta {
   switch (status) {
-    case 'ISSUED': return { label: 'Issued', tone: 'neutral' }
-    case 'ACTIVE': return { label: 'Active', tone: 'positive' }
-    case 'EXPIRED': return { label: 'Expired', tone: 'warning' }
-    case 'REVOKED': return { label: 'Revoked', tone: 'danger' }
-    default: return { label: status, tone: 'neutral' }
+    case 'ISSUED':
+      return { label: 'Issued', tone: 'neutral' }
+    case 'ACTIVE':
+      return { label: 'Active', tone: 'positive' }
+    case 'EXPIRED':
+      return { label: 'Expired', tone: 'warning' }
+    case 'REVOKED':
+      return { label: 'Revoked', tone: 'danger' }
+    default:
+      return { label: status, tone: 'neutral' }
   }
 }
 

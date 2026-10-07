@@ -47,11 +47,34 @@ export type AppUserEnvironment = {
 // omits it so one publisher cannot move a tier into another publisher's app.
 // Omit a key to leave that field unchanged; send null to clear it (the server
 // tells the two apart by key presence, so never default or strip keys).
-export type CreateLicenseTypeInput = { appId: string; kind: string; label?: string | null; validityDays?: number | null }
-export type SetLicenseTypeDetailsInput = { licenseTypeId: string; kind?: string | null; label?: string | null; validityDays?: number | null }
-export type SetLicenseTypeTemplateInput = { licenseTypeId: string; size?: string | null; baseDomain?: string | null; packageRegistry?: string | null }
-export type AddLicenseTypeServiceInput = { licenseTypeId: string; type: string; prefix?: string | null }
-export type AddLicenseTypePackageInput = { licenseTypeId: string; packageName: string; version?: string | null }
+export type CreateLicenseTypeInput = {
+  appId: string
+  kind: string
+  label?: string | null
+  validityDays?: number | null
+}
+export type SetLicenseTypeDetailsInput = {
+  licenseTypeId: string
+  kind?: string | null
+  label?: string | null
+  validityDays?: number | null
+}
+export type SetLicenseTypeTemplateInput = {
+  licenseTypeId: string
+  size?: string | null
+  baseDomain?: string | null
+  packageRegistry?: string | null
+}
+export type AddLicenseTypeServiceInput = {
+  licenseTypeId: string
+  type: string
+  prefix?: string | null
+}
+export type AddLicenseTypePackageInput = {
+  licenseTypeId: string
+  packageName: string
+  version?: string | null
+}
 export type IssueGrantInput = { appId: string; licenseTypeId: string; user: string }
 // No appId: the server authorises from the licence document's own app.
 export type RevokeLicenseInput = { licenseId: string; reason?: string | null }

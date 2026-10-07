@@ -16,15 +16,31 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/shared/components/ui/dialog'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/shared/components/ui/form'
 import { Input } from '@/shared/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
 import { describePublisherError } from '../graphql'
 import { useIssueGrant } from '../hooks/use-publisher-mutations'
 import type { PublisherLicense, PublisherLicenseType } from '../types'
 
 const schema = z.object({
-  user: z.string().trim().regex(/^0x[a-fA-F0-9]{40}$/, 'Enter a 0x wallet address (42 characters)'),
+  user: z
+    .string()
+    .trim()
+    .regex(/^0x[a-fA-F0-9]{40}$/, 'Enter a 0x wallet address (42 characters)'),
   licenseTypeId: z.string().min(1, 'Choose a tier'),
 })
 type Values = z.infer<typeof schema>
@@ -38,7 +54,9 @@ type Values = z.infer<typeof schema>
 export function holdsActiveLicense(licenses: PublisherLicense[], address: string): boolean {
   const wanted = address.trim().toLowerCase()
   if (!wanted) return false
-  return licenses.some((l) => (l.status === 'ACTIVE' || l.status === 'ISSUED') && l.user.toLowerCase() === wanted)
+  return licenses.some(
+    (l) => (l.status === 'ACTIVE' || l.status === 'ISSUED') && l.user.toLowerCase() === wanted,
+  )
 }
 
 type Props = {
@@ -79,7 +97,9 @@ export function GrantDialog({ appId, licenses, types, open, onOpenChange }: Prop
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Grant licence</DialogTitle>
-          <DialogDescription>Give a wallet address access to one of your published tiers.</DialogDescription>
+          <DialogDescription>
+            Give a wallet address access to one of your published tiers.
+          </DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(submit)} className="space-y-4">
@@ -105,7 +125,9 @@ export function GrantDialog({ appId, licenses, types, open, onOpenChange }: Prop
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger aria-label="Tier">
-                        <SelectValue placeholder={activeTiers.length ? 'Choose a tier' : 'No published tiers'} />
+                        <SelectValue
+                          placeholder={activeTiers.length ? 'Choose a tier' : 'No published tiers'}
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -124,9 +146,9 @@ export function GrantDialog({ appId, licenses, types, open, onOpenChange }: Prop
               <Alert variant="destructive">
                 <AlertTitle>This address already holds an active or pending licence</AlertTitle>
                 <AlertDescription>
-                  A pending licence becomes active on the next provisioning tick. Granting another is allowed but does not
-                  replace it, and which one applies is not deterministic — revoke the existing licence first if you mean
-                  to change their tier.
+                  A pending licence becomes active on the next provisioning tick. Granting another
+                  is allowed but does not replace it, and which one applies is not deterministic —
+                  revoke the existing licence first if you mean to change their tier.
                 </AlertDescription>
               </Alert>
             )}

@@ -1,7 +1,14 @@
 'use client'
 
 import { Loader2 } from 'lucide-react'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/shared/components/ui/table'
 import { describePublisherError } from '../graphql'
 import { usePublisherEnvironments } from '../hooks/use-publisher'
 
@@ -23,7 +30,11 @@ export function EnvironmentsTab({ appId }: { appId: string }) {
     )
   }
   if (envs.error) {
-    return <p className="text-destructive py-10 text-center text-sm">{describePublisherError(envs.error)}</p>
+    return (
+      <p className="text-destructive py-10 text-center text-sm">
+        {describePublisherError(envs.error)}
+      </p>
+    )
   }
   const rows = envs.data ?? []
   if (rows.length === 0) {
@@ -31,8 +42,8 @@ export function EnvironmentsTab({ appId }: { appId: string }) {
       <div className="border-border flex flex-col items-center gap-2 rounded-xl border border-dashed py-16 text-center">
         <p className="font-medium">No environments yet</p>
         <p className="text-muted-foreground max-w-sm text-sm">
-          Environments appear shortly after a licence becomes active — provisioning runs on a timer, so it is not
-          instant. This list refreshes automatically.
+          Environments appear shortly after a licence becomes active — provisioning runs on a timer,
+          so it is not instant. This list refreshes automatically.
         </p>
       </div>
     )

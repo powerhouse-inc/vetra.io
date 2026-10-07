@@ -16,7 +16,14 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/shared/components/ui/dialog'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/shared/components/ui/form'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/shared/components/ui/form'
 import { Input } from '@/shared/components/ui/input'
 import { describePublisherError } from '../graphql'
 import { useCreateLicenseType } from '../hooks/use-publisher-mutations'
@@ -26,7 +33,10 @@ const schema = z.object({
   label: z.string(),
   validityDays: z
     .string()
-    .refine((v) => v.trim() === '' || (/^\d+$/.test(v.trim()) && Number(v) > 0), 'Enter a whole number of days'),
+    .refine(
+      (v) => v.trim() === '' || (/^\d+$/.test(v.trim()) && Number(v) > 0),
+      'Enter a whole number of days',
+    ),
 })
 type Values = z.infer<typeof schema>
 

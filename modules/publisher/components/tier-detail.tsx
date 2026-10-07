@@ -13,7 +13,13 @@ import {
 } from '@/shared/components/ui/dialog'
 import { Input } from '@/shared/components/ui/input'
 import { Label } from '@/shared/components/ui/label'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
 import { describePublisherError } from '../graphql'
 import {
   useAddLicenseTypePackage,
@@ -68,7 +74,12 @@ function DetailsSection({ appId, tier }: { appId: string; tier: PublisherLicense
   // tier's current validityDays when that key is absent. The reducer always assigns it,
   // so if that resolver ever passes its input straight through, omitting validityDays
   // here would silently wipe the validity period. No test in this repo would notice.
-  const input: { licenseTypeId: string; kind?: string; label?: string | null; validityDays?: number | null } = {
+  const input: {
+    licenseTypeId: string
+    kind?: string
+    label?: string | null
+    validityDays?: number | null
+  } = {
     licenseTypeId: tier.id,
   }
   if (kind.trim() !== (tier.kind ?? '')) input.kind = kind.trim()
@@ -94,11 +105,19 @@ function DetailsSection({ appId, tier }: { appId: string; tier: PublisherLicense
         </div>
         <div className="space-y-1">
           <Label htmlFor="tier-days">Validity (days)</Label>
-          <Input id="tier-days" inputMode="numeric" value={days} onChange={(e) => setDays(e.target.value)} />
+          <Input
+            id="tier-days"
+            inputMode="numeric"
+            value={days}
+            onChange={(e) => setDays(e.target.value)}
+          />
         </div>
       </div>
-      <Button size="sm" disabled={!kind.trim() || !daysValid || labelCleared || unchanged || setDetails.isPending}
-        onClick={save}>
+      <Button
+        size="sm"
+        disabled={!kind.trim() || !daysValid || labelCleared || unchanged || setDetails.isPending}
+        onClick={save}
+      >
         {setDetails.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
         Save details
       </Button>
@@ -140,7 +159,11 @@ function TemplateSection({ appId, tier }: { appId: string; tier: PublisherLicens
         </div>
         <div className="space-y-1">
           <Label htmlFor="tpl-domain">Base domain</Label>
-          <Input id="tpl-domain" value={baseDomain} onChange={(e) => setBaseDomain(e.target.value)} />
+          <Input
+            id="tpl-domain"
+            value={baseDomain}
+            onChange={(e) => setBaseDomain(e.target.value)}
+          />
         </div>
         <div className="space-y-1">
           <Label htmlFor="tpl-registry">Package registry</Label>
@@ -172,7 +195,9 @@ function ServicesSection({ appId, tier }: { appId: string; tier: PublisherLicens
     <section className="space-y-3">
       <h3 className="text-sm font-semibold">Services</h3>
       {tier.services.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No services yet. A tier needs at least one to be published.</p>
+        <p className="text-muted-foreground text-sm">
+          No services yet. A tier needs at least one to be published.
+        </p>
       ) : (
         <ul className="space-y-1 text-sm">
           {tier.services.map((s) => (
@@ -205,7 +230,11 @@ function ServicesSection({ appId, tier }: { appId: string; tier: PublisherLicens
           <Label htmlFor="svc-prefix">Prefix (optional)</Label>
           <Input id="svc-prefix" value={prefix} onChange={(e) => setPrefix(e.target.value)} />
         </div>
-        <Button size="sm" disabled={NOT_PROVISIONABLE.has(type) || addService.isPending} onClick={submit}>
+        <Button
+          size="sm"
+          disabled={NOT_PROVISIONABLE.has(type) || addService.isPending}
+          onClick={submit}
+        >
           {addService.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           Add service
         </Button>
@@ -221,7 +250,12 @@ function PackagesSection({ appId, tier }: { appId: string; tier: PublisherLicens
 
   const submit = async () => {
     const ok = await run(
-      () => addPackage.mutateAsync({ licenseTypeId: tier.id, packageName: name.trim(), version: version.trim() || null }),
+      () =>
+        addPackage.mutateAsync({
+          licenseTypeId: tier.id,
+          packageName: name.trim(),
+          version: version.trim() || null,
+        }),
       'Package added',
     )
     if (ok) {
@@ -278,7 +312,9 @@ export function TierDetail({
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>Edit {tier?.label ?? tier?.kind ?? 'tier'}</DialogTitle>
-          <DialogDescription>Changes apply to the tier definition, not to existing licences.</DialogDescription>
+          <DialogDescription>
+            Changes apply to the tier definition, not to existing licences.
+          </DialogDescription>
         </DialogHeader>
         {tier && (
           <div className="space-y-6">

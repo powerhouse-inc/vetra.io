@@ -197,7 +197,6 @@ describe('server message journey (publisherGql -> describePublisherError)', () =
   })
 })
 
-
 describe('retryPublisher', () => {
   // Retrying a coded refusal cannot change the answer: the server already decided.
   // It only burns the user's time and, were it ever wired to a mutation, could
@@ -205,7 +204,13 @@ describe('retryPublisher', () => {
   const coded = (code: string) => new PublisherApiError(code as never, 'refused', 200)
 
   it('never retries a coded refusal, however early the failure', () => {
-    for (const code of ['UNAUTHENTICATED', 'UNKNOWN_APP', 'INVALID_INPUT', 'APP_IDENTITY_INACTIVE', 'LICENSING_DISABLED']) {
+    for (const code of [
+      'UNAUTHENTICATED',
+      'UNKNOWN_APP',
+      'INVALID_INPUT',
+      'APP_IDENTITY_INACTIVE',
+      'LICENSING_DISABLED',
+    ]) {
       expect(retryPublisher(0, coded(code))).toBe(false)
       expect(retryPublisher(1, coded(code))).toBe(false)
     }

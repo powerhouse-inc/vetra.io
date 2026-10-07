@@ -30,16 +30,27 @@ const inputKeys = (c: Call) => Object.keys(c.variables.input as object)
 describe('publisher mutation fetchers', () => {
   it('createLicenseType returns the new id and sends the right mutation and input', async () => {
     const { calls, fetchImpl } = ok('createLicenseType', 'lt-9')
-    const id = await createLicenseType({ appId: 'a1', kind: 'PRO', label: 'Pro', validityDays: 365 }, 't', fetchImpl)
+    const id = await createLicenseType(
+      { appId: 'a1', kind: 'PRO', label: 'Pro', validityDays: 365 },
+      't',
+      fetchImpl,
+    )
     expect(id).toBe('lt-9')
     expect(calls[0].query).toMatch(/mutation[^{]*\$input: CreateLicenseTypeInput!/)
     expect(calls[0].query).toContain('createLicenseType(input: $input)')
-    expect(calls[0].variables.input).toEqual({ appId: 'a1', kind: 'PRO', label: 'Pro', validityDays: 365 })
+    expect(calls[0].variables.input).toEqual({
+      appId: 'a1',
+      kind: 'PRO',
+      label: 'Pro',
+      validityDays: 365,
+    })
   })
 
   it('setLicenseTypeDetails sends the right mutation and NEVER an app field', async () => {
     const { calls, fetchImpl } = ok('setLicenseTypeDetails')
-    expect(await setLicenseTypeDetails({ licenseTypeId: 'lt-1', label: 'New name' }, 't', fetchImpl)).toBe(true)
+    expect(
+      await setLicenseTypeDetails({ licenseTypeId: 'lt-1', label: 'New name' }, 't', fetchImpl),
+    ).toBe(true)
     expect(calls[0].query).toContain('setLicenseTypeDetails(input: $input)')
     expect(calls[0].query).toMatch(/mutation[^{]*\$input: SetLicenseTypeDetailsInput!/)
     expect(inputKeys(calls[0])).not.toContain('app')
@@ -60,7 +71,12 @@ describe('publisher mutation fetchers', () => {
 
   it('setLicenseTypeTemplate sends the right mutation and input', async () => {
     const { calls, fetchImpl } = ok('setLicenseTypeTemplate')
-    const input = { licenseTypeId: 'lt-1', size: 'M', baseDomain: 'x.example', packageRegistry: null }
+    const input = {
+      licenseTypeId: 'lt-1',
+      size: 'M',
+      baseDomain: 'x.example',
+      packageRegistry: null,
+    }
     expect(await setLicenseTypeTemplate(input, 't', fetchImpl)).toBe(true)
     expect(calls[0].query).toContain('setLicenseTypeTemplate(input: $input)')
     expect(calls[0].query).toMatch(/mutation[^{]*\$input: SetLicenseTypeTemplateInput!/)
@@ -69,10 +85,20 @@ describe('publisher mutation fetchers', () => {
 
   it('addLicenseTypeService forwards the service type verbatim', async () => {
     const { calls, fetchImpl } = ok('addLicenseTypeService')
-    expect(await addLicenseTypeService({ licenseTypeId: 'lt-1', type: 'CONNECT', prefix: null }, 't', fetchImpl)).toBe(true)
+    expect(
+      await addLicenseTypeService(
+        { licenseTypeId: 'lt-1', type: 'CONNECT', prefix: null },
+        't',
+        fetchImpl,
+      ),
+    ).toBe(true)
     expect(calls[0].query).toContain('addLicenseTypeService(input: $input)')
     expect(calls[0].query).toMatch(/mutation[^{]*\$input: AddLicenseTypeServiceInput!/)
-    expect(calls[0].variables.input).toEqual({ licenseTypeId: 'lt-1', type: 'CONNECT', prefix: null })
+    expect(calls[0].variables.input).toEqual({
+      licenseTypeId: 'lt-1',
+      type: 'CONNECT',
+      prefix: null,
+    })
   })
 
   it('addLicenseTypePackage sends the right mutation and input', async () => {
@@ -112,7 +138,9 @@ describe('publisher mutation fetchers', () => {
 
   it('revokeLicense sends licenseId and reason only, never an appId', async () => {
     const { calls, fetchImpl } = ok('revokeLicense')
-    expect(await revokeLicense({ licenseId: 'lic-3', reason: 'non-payment' }, 't', fetchImpl)).toBe(true)
+    expect(await revokeLicense({ licenseId: 'lic-3', reason: 'non-payment' }, 't', fetchImpl)).toBe(
+      true,
+    )
     expect(calls[0].query).toContain('revokeLicense(input: $input)')
     expect(calls[0].query).toMatch(/mutation[^{]*\$input: RevokeLicenseInput!/)
     expect(calls[0].variables.input).toEqual({ licenseId: 'lic-3', reason: 'non-payment' })
@@ -123,7 +151,10 @@ describe('publisher mutation fetchers', () => {
     let auth: string | undefined
     const fetchImpl = (async (_u: string, init: RequestInit) => {
       auth = (init.headers as Record<string, string>).Authorization
-      return new Response(JSON.stringify({ data: { vetraPublisher: { publishLicenseType: true } } }), { status: 200 })
+      return new Response(
+        JSON.stringify({ data: { vetraPublisher: { publishLicenseType: true } } }),
+        { status: 200 },
+      )
     }) as unknown as FetchLike
     await publishLicenseType('lt-1', 'tok', fetchImpl)
     expect(auth).toBe('Bearer tok')
@@ -134,7 +165,9 @@ describe('publisher mutation fetchers', () => {
     const fetchImpl = (async () => {
       n++
       return new Response(
-        JSON.stringify({ errors: [{ message: 'tier has no services', extensions: { code: 'INVALID_INPUT' } }] }),
+        JSON.stringify({
+          errors: [{ message: 'tier has no services', extensions: { code: 'INVALID_INPUT' } }],
+        }),
         { status: 200 },
       )
     }) as unknown as FetchLike

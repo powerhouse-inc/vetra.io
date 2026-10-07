@@ -2,7 +2,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { render, screen, cleanup, fireEvent } from '@testing-library/react'
 import React from 'react'
 
-let appsState: { data?: unknown; isPending?: boolean; error?: Error | null; isSuccess?: boolean } = {}
+let appsState: { data?: unknown; isPending?: boolean; error?: Error | null; isSuccess?: boolean } =
+  {}
 let refetch = vi.fn()
 let searchParams = new URLSearchParams()
 // The real router rewrites the query string and the page re-reads it. Modelling that
@@ -26,7 +27,15 @@ vi.mock('next/navigation', () => ({
 
 vi.mock('@/shared/components/ui/select', () => ({
   // Native stand-in: Radix Select is not drivable in jsdom. Keeps value/onValueChange wiring real.
-  Select: ({ value, onValueChange, children }: { value?: string; onValueChange: (v: string) => void; children: React.ReactNode }) => (
+  Select: ({
+    value,
+    onValueChange,
+    children,
+  }: {
+    value?: string
+    onValueChange: (v: string) => void
+    children: React.ReactNode
+  }) => (
     <select role="combobox" value={value ?? ''} onChange={(e) => onValueChange(e.target.value)}>
       {children}
     </select>
@@ -34,7 +43,9 @@ vi.mock('@/shared/components/ui/select', () => ({
   SelectTrigger: () => null,
   SelectValue: () => null,
   SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-  SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => <option value={value}>{children}</option>,
+  SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => (
+    <option value={value}>{children}</option>
+  ),
 }))
 vi.mock('@/shared/components/ui/tabs', () => {
   // Native stand-in: Radix Tabs does not respond to a jsdom click. Keeps the real
@@ -44,9 +55,15 @@ vi.mock('@/shared/components/ui/tabs', () => {
     onValueChange: () => {},
   })
   return {
-    Tabs: ({ value, onValueChange, children }: { value: string; onValueChange: (v: string) => void; children: React.ReactNode }) => (
-      <Ctx.Provider value={{ value, onValueChange }}>{children}</Ctx.Provider>
-    ),
+    Tabs: ({
+      value,
+      onValueChange,
+      children,
+    }: {
+      value: string
+      onValueChange: (v: string) => void
+      children: React.ReactNode
+    }) => <Ctx.Provider value={{ value, onValueChange }}>{children}</Ctx.Provider>,
     TabsList: ({ children }: { children: React.ReactNode }) => <div role="tablist">{children}</div>,
     TabsTrigger: ({ value, children }: { value: string; children: React.ReactNode }) => {
       const ctx = React.useContext(Ctx)
@@ -67,9 +84,15 @@ vi.mock('@/shared/components/ui/tabs', () => {
     },
   }
 })
-vi.mock('../components/tiers-tab', () => ({ TiersTab: ({ appId }: { appId: string }) => <div data-testid="tiers-app">{appId}</div> }))
-vi.mock('../components/holders-tab', () => ({ HoldersTab: ({ appId }: { appId: string }) => <div data-testid="holders-app">{appId}</div> }))
-vi.mock('../components/environments-tab', () => ({ EnvironmentsTab: ({ appId }: { appId: string }) => <div data-testid="env-app">{appId}</div> }))
+vi.mock('../components/tiers-tab', () => ({
+  TiersTab: ({ appId }: { appId: string }) => <div data-testid="tiers-app">{appId}</div>,
+}))
+vi.mock('../components/holders-tab', () => ({
+  HoldersTab: ({ appId }: { appId: string }) => <div data-testid="holders-app">{appId}</div>,
+}))
+vi.mock('../components/environments-tab', () => ({
+  EnvironmentsTab: ({ appId }: { appId: string }) => <div data-testid="env-app">{appId}</div>,
+}))
 
 import PublisherDashboard from '../components/publisher-dashboard'
 import { PRIVATE_NAV_ITEMS, NAVBAR_CONFIGS } from '@/modules/shared/components/navbar/navbar-config'
@@ -99,7 +122,11 @@ describe('PublisherDashboard', () => {
   })
 
   it('renders the tabs when the wallet owns one app and shows no picker', async () => {
-    appsState = { data: [{ id: 'a1', name: 'Knowledge Vault', status: 'ACTIVE' }], isPending: false, isSuccess: true }
+    appsState = {
+      data: [{ id: 'a1', name: 'Knowledge Vault', status: 'ACTIVE' }],
+      isPending: false,
+      isSuccess: true,
+    }
     render(<PublisherDashboard />)
     expect(await screen.findByRole('tablist')).toBeTruthy()
     expect(screen.queryByRole('combobox')).toBeNull()
@@ -119,7 +146,11 @@ describe('PublisherDashboard', () => {
   })
 
   it('selects the tab named by ?tab= and falls back to tiers for an unknown value', () => {
-    appsState = { data: [{ id: 'a1', name: 'KV', status: 'ACTIVE' }], isPending: false, isSuccess: true }
+    appsState = {
+      data: [{ id: 'a1', name: 'KV', status: 'ACTIVE' }],
+      isPending: false,
+      isSuccess: true,
+    }
     searchParams = new URLSearchParams('tab=holders')
     render(<PublisherDashboard />)
     expect(screen.getByRole('tab', { name: 'Holders' }).getAttribute('data-state')).toBe('active')
@@ -153,7 +184,9 @@ describe('PublisherDashboard', () => {
       { id: 'a1', name: 'Knowledge Vault', status: 'ACTIVE' },
       { id: 'a2', name: 'Other', status: 'ACTIVE' },
     ]
-    const ready = (data: unknown) => { appsState = { data, isPending: false, isSuccess: true } }
+    const ready = (data: unknown) => {
+      appsState = { data, isPending: false, isSuccess: true }
+    }
 
     it('defaults to the first app: tabs get a1 and the picker shows a1', () => {
       ready(two)
@@ -199,7 +232,9 @@ describe('PublisherDashboard', () => {
 })
 
 describe('tab bar', () => {
-  const ready = (data: unknown) => { appsState = { data, isPending: false, isSuccess: true } }
+  const ready = (data: unknown) => {
+    appsState = { data, isPending: false, isSuccess: true }
+  }
   const one = [{ id: 'a1', name: 'Knowledge Vault', status: 'ACTIVE' }]
 
   // The tab bar is the control used on every visit. A no-op setTab leaves Radix Tabs
@@ -234,7 +269,9 @@ describe('tab bar', () => {
 })
 
 describe('app status', () => {
-  const ready = (data: unknown) => { appsState = { data, isPending: false, isSuccess: true } }
+  const ready = (data: unknown) => {
+    appsState = { data, isPending: false, isSuccess: true }
+  }
 
   // Every publisher resolver refuses a non-ACTIVE app, so defaulting to one errors all
   // three tabs at once — and a single app gives no picker to escape with.
@@ -260,7 +297,9 @@ describe('app status', () => {
       { id: 'a2', name: 'Fresh', status: 'PENDING_IDENTITY' },
     ])
     render(<PublisherDashboard />)
-    const labels = Array.from((screen.getByRole('combobox') as HTMLSelectElement).options).map((o) => o.textContent)
+    const labels = Array.from((screen.getByRole('combobox') as HTMLSelectElement).options).map(
+      (o) => o.textContent,
+    )
     expect(labels).toEqual(['Knowledge Vault', 'Fresh — pending identity'])
   })
 })

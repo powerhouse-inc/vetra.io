@@ -12,28 +12,76 @@ const retire = vi.fn()
 // When set, merely CALLING a write hook throws: proves a read-only tab does not depend on write availability.
 let writeHooksExplode = false
 
-vi.mock('sonner', () => ({ toast: { error: (...a: unknown[]) => toastError(...a), success: vi.fn() } }))
+vi.mock('sonner', () => ({
+  toast: { error: (...a: unknown[]) => toastError(...a), success: vi.fn() },
+}))
 vi.mock('../hooks/use-publisher', () => ({
   usePublisherLicenses: () => ({
     data: [
-      { id: 'l-1', user: '0x1111111111111111111111111111111111111111', licenseTypeId: 'lt-1', status: 'ACTIVE', start: null, end: null, environmentId: 'env-1' },
-      { id: 'l-2', user: '0x2222222222222222222222222222222222222222', licenseTypeId: 'lt-1', status: 'ACTIVE', start: null, end: null, environmentId: null },
+      {
+        id: 'l-1',
+        user: '0x1111111111111111111111111111111111111111',
+        licenseTypeId: 'lt-1',
+        status: 'ACTIVE',
+        start: null,
+        end: null,
+        environmentId: 'env-1',
+      },
+      {
+        id: 'l-2',
+        user: '0x2222222222222222222222222222222222222222',
+        licenseTypeId: 'lt-1',
+        status: 'ACTIVE',
+        start: null,
+        end: null,
+        environmentId: null,
+      },
     ],
     isPending: false,
     error: null,
   }),
   usePublisherEnvironments: () => ({
     data: [
-      { appId: 'a1', user: '0xaaa', environmentId: 'env-one', licenseId: 'l-1', templateHash: 'h1' },
-      { appId: 'a1', user: '0xbbb', environmentId: 'env-two', licenseId: 'l-2', templateHash: 'h2' },
+      {
+        appId: 'a1',
+        user: '0xaaa',
+        environmentId: 'env-one',
+        licenseId: 'l-1',
+        templateHash: 'h1',
+      },
+      {
+        appId: 'a1',
+        user: '0xbbb',
+        environmentId: 'env-two',
+        licenseId: 'l-2',
+        templateHash: 'h2',
+      },
     ],
     isPending: false,
     error: null,
   }),
   usePublisherLicenseTypes: () => ({
     data: [
-      { id: 'lt-1', kind: 'PRO', label: 'Pro', status: 'ACTIVE', validityDays: 365, templateHash: 'h', services: [], packages: [] },
-      { id: 'lt-2', kind: 'TEAM', label: 'Team', status: 'DRAFT', validityDays: 30, templateHash: 'h', services: [], packages: [] },
+      {
+        id: 'lt-1',
+        kind: 'PRO',
+        label: 'Pro',
+        status: 'ACTIVE',
+        validityDays: 365,
+        templateHash: 'h',
+        services: [],
+        packages: [],
+      },
+      {
+        id: 'lt-2',
+        kind: 'TEAM',
+        label: 'Team',
+        status: 'DRAFT',
+        validityDays: 30,
+        templateHash: 'h',
+        services: [],
+        packages: [],
+      },
     ],
     isPending: false,
     error: null,
@@ -46,10 +94,14 @@ vi.mock('../hooks/use-publisher-mutations', () => {
     return refuse
   }
   return {
-    useIssueGrant: guard, useRevokeLicense: guard,
-    useCreateLicenseType: () => refuse, useSetLicenseTypeDetails: () => refuse,
-    useSetLicenseTypeTemplate: () => refuse, useAddLicenseTypeService: () => refuse,
-    useAddLicenseTypePackage: () => refuse, usePublishLicenseType: () => refuse,
+    useIssueGrant: guard,
+    useRevokeLicense: guard,
+    useCreateLicenseType: () => refuse,
+    useSetLicenseTypeDetails: () => refuse,
+    useSetLicenseTypeTemplate: () => refuse,
+    useAddLicenseTypeService: () => refuse,
+    useAddLicenseTypePackage: () => refuse,
+    usePublishLicenseType: () => refuse,
     useRetireLicenseType: guard,
   }
 })

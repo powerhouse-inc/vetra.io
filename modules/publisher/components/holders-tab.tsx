@@ -15,8 +15,21 @@ import {
 } from '@/shared/components/ui/alert-dialog'
 import { Button } from '@/shared/components/ui/button'
 import { Input } from '@/shared/components/ui/input'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/shared/components/ui/table'
 import { describePublisherError } from '../graphql'
 import { usePublisherLicenses, usePublisherLicenseTypes } from '../hooks/use-publisher'
 import { useRevokeLicense } from '../hooks/use-publisher-mutations'
@@ -65,8 +78,11 @@ function RevokeDialog({
         <AlertDialogHeader>
           <AlertDialogTitle>Revoke this licence?</AlertDialogTitle>
           <AlertDialogDescription>
-            Revoking ends this licence. The provisioning keeper will release their environment on its next tick.
-            {license && <span className="mt-2 block font-mono text-xs break-all">{license.user}</span>}
+            Revoking ends this licence. The provisioning keeper will release their environment on
+            its next tick.
+            {license && (
+              <span className="mt-2 block font-mono text-xs break-all">{license.user}</span>
+            )}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <div className="space-y-1.5">
@@ -147,7 +163,8 @@ export function HoldersTab({ appId }: { appId: string }) {
         // Without tiers the Tier column falls back to raw ids. Say so, rather than
         // leaving the publisher to read UUIDs and assume that is the tier's name.
         <p role="alert" className="text-destructive text-sm">
-          Tier names are unavailable, so the Tier column shows ids: {describePublisherError(types.error)}
+          Tier names are unavailable, so the Tier column shows ids:{' '}
+          {describePublisherError(types.error)}
         </p>
       )}
 
@@ -157,12 +174,16 @@ export function HoldersTab({ appId }: { appId: string }) {
           Loading licences…
         </div>
       ) : shown.error ? (
-        <p className="text-destructive py-10 text-center text-sm">{describePublisherError(shown.error)}</p>
+        <p className="text-destructive py-10 text-center text-sm">
+          {describePublisherError(shown.error)}
+        </p>
       ) : list.length === 0 ? (
         <div className="border-border flex flex-col items-center gap-2 rounded-xl border border-dashed py-16 text-center">
           <p className="font-medium">No licences</p>
           <p className="text-muted-foreground max-w-sm text-sm">
-            {filter === 'ALL' ? 'Grant a licence to onboard a customer.' : 'No licences match this status.'}
+            {filter === 'ALL'
+              ? 'Grant a licence to onboard a customer.'
+              : 'No licences match this status.'}
           </p>
         </div>
       ) : (
@@ -194,7 +215,12 @@ export function HoldersTab({ appId }: { appId: string }) {
                   <TableCell className="font-mono text-xs">{l.environmentId ?? '—'}</TableCell>
                   <TableCell className="pr-4 text-right">
                     {(l.status === 'ACTIVE' || l.status === 'ISSUED') && (
-                      <Button variant="outline" size="sm" className="h-7" onClick={() => setRevoking(l)}>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-7"
+                        onClick={() => setRevoking(l)}
+                      >
                         Revoke
                       </Button>
                     )}

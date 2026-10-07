@@ -14,7 +14,14 @@ import {
   AlertDialogTitle,
 } from '@/shared/components/ui/alert-dialog'
 import { Button } from '@/shared/components/ui/button'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/shared/components/ui/table'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/shared/components/ui/table'
 import { describePublisherError } from '../graphql'
 import { usePublisherLicenseTypes } from '../hooks/use-publisher'
 import { usePublishLicenseType, useRetireLicenseType } from '../hooks/use-publisher-mutations'
@@ -26,7 +33,15 @@ import { NOT_PROVISIONABLE, TierDetail } from './tier-detail'
 
 type Pending = { action: 'publish' | 'retire'; tier: PublisherLicenseType }
 
-function ConfirmDialog({ appId, pending, onClose }: { appId: string; pending: Pending | null; onClose: () => void }) {
+function ConfirmDialog({
+  appId,
+  pending,
+  onClose,
+}: {
+  appId: string
+  pending: Pending | null
+  onClose: () => void
+}) {
   const publish = usePublishLicenseType(appId)
   const retire = useRetireLicenseType(appId)
   const busy = publish.isPending || retire.isPending
@@ -54,8 +69,9 @@ function ConfirmDialog({ appId, pending, onClose }: { appId: string; pending: Pe
     title = `Retire ${name}?`
     body = (
       <>
-        Retiring stops new grants of this tier. <strong>Existing holders keep their environments</strong> — revoke a
-        licence to end service for a holder.
+        Retiring stops new grants of this tier.{' '}
+        <strong>Existing holders keep their environments</strong> — revoke a licence to end service
+        for a holder.
       </>
     )
   } else if (pending?.action === 'publish') {
@@ -63,7 +79,8 @@ function ConfirmDialog({ appId, pending, onClose }: { appId: string; pending: Pe
     body =
       pending.tier.status === 'RETIRED' ? (
         <>
-          This tier is retired. Publishing will <strong>reactivate</strong> it and allow new grants again.
+          This tier is retired. Publishing will <strong>reactivate</strong> it and allow new grants
+          again.
         </>
       ) : (
         <>Publishing makes this tier available for new grants.</>
@@ -97,7 +114,9 @@ function ConfirmDialog({ appId, pending, onClose }: { appId: string; pending: Pe
 
 function servicesLabel(t: PublisherLicenseType): string {
   if (t.services.length === 0) return '—'
-  return t.services.map((s) => (NOT_PROVISIONABLE.has(s.type) ? `${s.type} (not provisionable)` : s.type)).join(', ')
+  return t.services
+    .map((s) => (NOT_PROVISIONABLE.has(s.type) ? `${s.type} (not provisionable)` : s.type))
+    .join(', ')
 }
 
 /**
@@ -117,12 +136,13 @@ export function TiersTab({ appId }: { appId: string }) {
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1">
           <p className="text-muted-foreground text-sm">
-            Tiers are append-only: a service or package added by mistake cannot be removed — retire the tier and
-            replace it.
+            Tiers are append-only: a service or package added by mistake cannot be removed — retire
+            the tier and replace it.
           </p>
           <p className="text-muted-foreground text-sm">
-            Service types: CONNECT, SWITCHBOARD and CLINT. CLINT is not provisionable yet — the licensing API accepts
-            it, but the provisioner cannot build it, so a licence carrying it will not get an environment.
+            Service types: CONNECT, SWITCHBOARD and CLINT. CLINT is not provisionable yet — the
+            licensing API accepts it, but the provisioner cannot build it, so a licence carrying it
+            will not get an environment.
           </p>
         </div>
         <CreateTierDialog appId={appId} />
@@ -134,11 +154,15 @@ export function TiersTab({ appId }: { appId: string }) {
           Loading tiers…
         </div>
       ) : types.error ? (
-        <p className="text-destructive py-10 text-center text-sm">{describePublisherError(types.error)}</p>
+        <p className="text-destructive py-10 text-center text-sm">
+          {describePublisherError(types.error)}
+        </p>
       ) : list.length === 0 ? (
         <div className="border-border flex flex-col items-center gap-2 rounded-xl border border-dashed py-16 text-center">
           <p className="font-medium">No tiers yet</p>
-          <p className="text-muted-foreground max-w-sm text-sm">Create a tier to define what customers can be granted.</p>
+          <p className="text-muted-foreground max-w-sm text-sm">
+            Create a tier to define what customers can be granted.
+          </p>
         </div>
       ) : (
         <div className="bg-card border-border overflow-x-auto rounded-xl border shadow-sm">
@@ -169,7 +193,12 @@ export function TiersTab({ appId }: { appId: string }) {
                   <TableCell>{t.packages.length}</TableCell>
                   <TableCell className="pr-4 text-right">
                     <div className="flex justify-end gap-1">
-                      <Button variant="ghost" size="sm" className="h-7" onClick={() => setEditingId(t.id)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7"
+                        onClick={() => setEditingId(t.id)}
+                      >
                         Edit
                       </Button>
                       {(t.status === 'DRAFT' || t.status === 'RETIRED') && (

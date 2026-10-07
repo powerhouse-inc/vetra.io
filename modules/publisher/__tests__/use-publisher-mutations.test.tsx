@@ -5,11 +5,20 @@ import React from 'react'
 
 const { names, fns, waitForToken, getAuthToken } = vi.hoisted(() => {
   const names = [
-    'createLicenseType', 'setLicenseTypeDetails', 'setLicenseTypeTemplate',
-    'addLicenseTypeService', 'addLicenseTypePackage', 'publishLicenseType',
-    'retireLicenseType', 'issueGrant', 'revokeLicense',
+    'createLicenseType',
+    'setLicenseTypeDetails',
+    'setLicenseTypeTemplate',
+    'addLicenseTypeService',
+    'addLicenseTypePackage',
+    'publishLicenseType',
+    'retireLicenseType',
+    'issueGrant',
+    'revokeLicense',
   ] as const
-  const fns = Object.fromEntries(names.map((n) => [n, vi.fn()])) as Record<(typeof names)[number], ReturnType<typeof vi.fn>>
+  const fns = Object.fromEntries(names.map((n) => [n, vi.fn()])) as Record<
+    (typeof names)[number],
+    ReturnType<typeof vi.fn>
+  >
   return { names, fns, waitForToken: vi.fn(), getAuthToken: vi.fn() }
 })
 
@@ -21,7 +30,9 @@ vi.mock('../graphql', async (orig) => {
   }
 })
 vi.mock('@/modules/apps/lib/token', () => ({ waitForToken: (f: () => unknown) => waitForToken(f) }))
-vi.mock('@/modules/cloud/graphql', () => ({ getAuthToken: (...a: unknown[]) => getAuthToken(...a) }))
+vi.mock('@/modules/cloud/graphql', () => ({
+  getAuthToken: (...a: unknown[]) => getAuthToken(...a),
+}))
 vi.mock('@powerhousedao/reactor-browser', () => ({
   useDid: () => 'did:key:z1',
   useRenown: () => ({ user: { did: 'did:key:z1' } }),
@@ -46,14 +57,44 @@ beforeEach(() => {
 })
 
 const cases: [string, (a: string) => unknown, (typeof names)[number], unknown][] = [
-  ['useCreateLicenseType', h.useCreateLicenseType, 'createLicenseType', { appId: 'app-1', kind: 'PRO' }],
-  ['useSetLicenseTypeDetails', h.useSetLicenseTypeDetails, 'setLicenseTypeDetails', { licenseTypeId: 'lt-1', label: 'x' }],
-  ['useSetLicenseTypeTemplate', h.useSetLicenseTypeTemplate, 'setLicenseTypeTemplate', { licenseTypeId: 'lt-1', size: 'S' }],
-  ['useAddLicenseTypeService', h.useAddLicenseTypeService, 'addLicenseTypeService', { licenseTypeId: 'lt-1', type: 'SWITCHBOARD' }],
-  ['useAddLicenseTypePackage', h.useAddLicenseTypePackage, 'addLicenseTypePackage', { licenseTypeId: 'lt-1', packageName: 'p' }],
+  [
+    'useCreateLicenseType',
+    h.useCreateLicenseType,
+    'createLicenseType',
+    { appId: 'app-1', kind: 'PRO' },
+  ],
+  [
+    'useSetLicenseTypeDetails',
+    h.useSetLicenseTypeDetails,
+    'setLicenseTypeDetails',
+    { licenseTypeId: 'lt-1', label: 'x' },
+  ],
+  [
+    'useSetLicenseTypeTemplate',
+    h.useSetLicenseTypeTemplate,
+    'setLicenseTypeTemplate',
+    { licenseTypeId: 'lt-1', size: 'S' },
+  ],
+  [
+    'useAddLicenseTypeService',
+    h.useAddLicenseTypeService,
+    'addLicenseTypeService',
+    { licenseTypeId: 'lt-1', type: 'SWITCHBOARD' },
+  ],
+  [
+    'useAddLicenseTypePackage',
+    h.useAddLicenseTypePackage,
+    'addLicenseTypePackage',
+    { licenseTypeId: 'lt-1', packageName: 'p' },
+  ],
   ['usePublishLicenseType', h.usePublishLicenseType, 'publishLicenseType', 'lt-1'],
   ['useRetireLicenseType', h.useRetireLicenseType, 'retireLicenseType', 'lt-1'],
-  ['useIssueGrant', h.useIssueGrant, 'issueGrant', { appId: 'app-1', licenseTypeId: 'lt-1', user: '0xabc' }],
+  [
+    'useIssueGrant',
+    h.useIssueGrant,
+    'issueGrant',
+    { appId: 'app-1', licenseTypeId: 'lt-1', user: '0xabc' },
+  ],
   ['useRevokeLicense', h.useRevokeLicense, 'revokeLicense', { licenseId: 'lic-1' }],
 ]
 
@@ -61,21 +102,28 @@ type Mut = { mutateAsync: (v: unknown) => Promise<unknown> }
 const run = async (hook: (a: string) => unknown, vars: unknown) => {
   const { result } = renderHook(() => hook('app-1') as Mut, { wrapper })
   let out: unknown
-  await act(async () => { out = await result.current.mutateAsync(vars) })
+  await act(async () => {
+    out = await result.current.mutateAsync(vars)
+  })
   return out
 }
 
 describe('publisher mutation hooks', () => {
-  it.each(cases)('%s resolves its token via waitForToken and passes variables through', async (_n, hook, fn, vars) => {
-    await run(hook, vars)
-    expect(waitForToken).toHaveBeenCalledTimes(1)
-    expect(fns[fn]).toHaveBeenCalledWith(vars, 'waited-tok')
-    expect(getAuthToken).not.toHaveBeenCalled()
-  })
+  it.each(cases)(
+    '%s resolves its token via waitForToken and passes variables through',
+    async (_n, hook, fn, vars) => {
+      await run(hook, vars)
+      expect(waitForToken).toHaveBeenCalledTimes(1)
+      expect(fns[fn]).toHaveBeenCalledWith(vars, 'waited-tok')
+      expect(getAuthToken).not.toHaveBeenCalled()
+    },
+  )
 
   it('returns the new ids from create and grant', async () => {
     expect(await run(h.useCreateLicenseType, { appId: 'app-1', kind: 'PRO' })).toBe('lt-1')
-    expect(await run(h.useIssueGrant, { appId: 'app-1', licenseTypeId: 'lt-1', user: '0xabc' })).toBe('lic-1')
+    expect(
+      await run(h.useIssueGrant, { appId: 'app-1', licenseTypeId: 'lt-1', user: '0xabc' }),
+    ).toBe('lic-1')
   })
 
   it.each(cases.filter((c) => !['useIssueGrant', 'useRevokeLicense'].includes(c[0])))(
@@ -83,7 +131,9 @@ describe('publisher mutation hooks', () => {
     async (_n, hook, _fn, vars) => {
       const spy = vi.spyOn(qc, 'invalidateQueries')
       await run(hook, vars)
-      expect(spy.mock.calls.map((c) => c[0])).toEqual([{ queryKey: publisherKeys.types('app-1', 'did:key:z1') }])
+      expect(spy.mock.calls.map((c) => c[0])).toEqual([
+        { queryKey: publisherKeys.types('app-1', 'did:key:z1') },
+      ])
     },
   )
 
@@ -115,19 +165,34 @@ describe('publisher mutation hooks', () => {
   })
 
   it.each([
-    ['tier wrapper (createLicenseType)', h.useCreateLicenseType, 'createLicenseType', { appId: 'app-1', kind: 'PRO' }],
-    ['licence wrapper (issueGrant)', h.useIssueGrant, 'issueGrant', { appId: 'app-1', licenseTypeId: 'lt-1', user: '0xabc' }],
-  ] as const)('does not retry a failing mutation: %s (a retry would duplicate a tier or licence)', async (_n, hook, fn, vars) => {
-    fns[fn].mockRejectedValue(new Error('boom'))
-    await run(hook as (a: string) => unknown, vars).catch(() => {})
-    expect(fns[fn]).toHaveBeenCalledTimes(1)
-  })
+    [
+      'tier wrapper (createLicenseType)',
+      h.useCreateLicenseType,
+      'createLicenseType',
+      { appId: 'app-1', kind: 'PRO' },
+    ],
+    [
+      'licence wrapper (issueGrant)',
+      h.useIssueGrant,
+      'issueGrant',
+      { appId: 'app-1', licenseTypeId: 'lt-1', user: '0xabc' },
+    ],
+  ] as const)(
+    'does not retry a failing mutation: %s (a retry would duplicate a tier or licence)',
+    async (_n, hook, fn, vars) => {
+      fns[fn].mockRejectedValue(new Error('boom'))
+      await run(hook as (a: string) => unknown, vars).catch(() => {})
+      expect(fns[fn]).toHaveBeenCalledTimes(1)
+    },
+  )
 
   it('surfaces the server error unchanged and invalidates nothing', async () => {
     const msg = 'ADD_TEMPLATE_SERVICE rejected: a service of that type already exists'
     fns.addLicenseTypeService.mockRejectedValue(new Error(msg))
     const spy = vi.spyOn(qc, 'invalidateQueries')
-    const err = await run(h.useAddLicenseTypeService, { licenseTypeId: 'lt-1', type: 'X' }).catch((e) => e)
+    const err = await run(h.useAddLicenseTypeService, { licenseTypeId: 'lt-1', type: 'X' }).catch(
+      (e) => e,
+    )
     expect(err).toBeInstanceOf(Error)
     expect((err as Error).message).toBe(msg)
     expect(spy).not.toHaveBeenCalled()

@@ -148,21 +148,42 @@ describe('publisher read hooks', () => {
 
   it.each([
     ['useMyApps', () => useMyApps(), fetchMyApps, (d: string) => publisherKeys.apps(d)],
-    ['usePublisherLicenseTypes', () => usePublisherLicenseTypes('app-1'), fetchLicenseTypes, (d: string) => publisherKeys.types('app-1', d)],
-    ['usePublisherLicenses', () => usePublisherLicenses('app-1', 'REVOKED'), fetchLicenses, (d: string) => publisherKeys.licenses('app-1', 'REVOKED', d)],
-    ['usePublisherEnvironments', () => usePublisherEnvironments('app-1'), fetchEnvironments, (d: string) => publisherKeys.environments('app-1', d)],
-  ] as ReadonlyArray<readonly [string, () => unknown, ReturnType<typeof vi.fn>, (d: string) => readonly unknown[]]>)(
+    [
+      'usePublisherLicenseTypes',
+      () => usePublisherLicenseTypes('app-1'),
+      fetchLicenseTypes,
+      (d: string) => publisherKeys.types('app-1', d),
+    ],
+    [
+      'usePublisherLicenses',
+      () => usePublisherLicenses('app-1', 'REVOKED'),
+      fetchLicenses,
+      (d: string) => publisherKeys.licenses('app-1', 'REVOKED', d),
+    ],
+    [
+      'usePublisherEnvironments',
+      () => usePublisherEnvironments('app-1'),
+      fetchEnvironments,
+      (d: string) => publisherKeys.environments('app-1', d),
+    ],
+  ] as ReadonlyArray<
+    readonly [string, () => unknown, ReturnType<typeof vi.fn>, (d: string) => readonly unknown[]]
+  >)(
     '%s caches under the viewer did and never serves another wallet',
     async (_n, useHook, fetcher, keyFor) => {
       fetcher.mockImplementation(async () => [])
       const { qc, Wrapper } = makeWrapper()
       currentDid = 'did:key:A'
-      const a = renderHook(useHook as () => { isSuccess: boolean; data: unknown }, { wrapper: Wrapper })
+      const a = renderHook(useHook as () => { isSuccess: boolean; data: unknown }, {
+        wrapper: Wrapper,
+      })
       await waitFor(() => expect(a.result.current.isSuccess).toBe(true))
       a.unmount()
       expect(qc.getQueryData(keyFor('did:key:A'))).toBeDefined()
       currentDid = 'did:key:B'
-      const b = renderHook(useHook as () => { isSuccess: boolean; data: unknown }, { wrapper: Wrapper })
+      const b = renderHook(useHook as () => { isSuccess: boolean; data: unknown }, {
+        wrapper: Wrapper,
+      })
       expect(b.result.current.data).toBeUndefined()
       await waitFor(() => expect(b.result.current.isSuccess).toBe(true))
       expect(fetcher).toHaveBeenCalledTimes(2)
@@ -202,19 +223,31 @@ describe('publisher read hooks', () => {
       const { qc, Wrapper } = makeWrapper()
       const { result } = renderHook(() => usePublisherEnvironments('app-1'), { wrapper: Wrapper })
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(interval(qc, publisherKeys.environments('app-1', 'did:key:z1'))).toEqual({ iv: 10_000, bg: false })
+      expect(interval(qc, publisherKeys.environments('app-1', 'did:key:z1'))).toEqual({
+        iv: 10_000,
+        bg: false,
+      })
     })
 
     it('licences poll every 15s while any row is ISSUED', async () => {
-      fetchLicenses.mockResolvedValue([{ id: 'l1', status: 'ACTIVE' }, { id: 'l2', status: 'ISSUED' }])
+      fetchLicenses.mockResolvedValue([
+        { id: 'l1', status: 'ACTIVE' },
+        { id: 'l2', status: 'ISSUED' },
+      ])
       const { qc, Wrapper } = makeWrapper()
       const { result } = renderHook(() => usePublisherLicenses('app-1', null), { wrapper: Wrapper })
       await waitFor(() => expect(result.current.isSuccess).toBe(true))
-      expect(interval(qc, publisherKeys.licenses('app-1', null, 'did:key:z1'))).toEqual({ iv: 15_000, bg: false })
+      expect(interval(qc, publisherKeys.licenses('app-1', null, 'did:key:z1'))).toEqual({
+        iv: 15_000,
+        bg: false,
+      })
     })
 
     it('licences do not poll when no row is ISSUED (including an empty list)', async () => {
-      fetchLicenses.mockResolvedValue([{ id: 'l1', status: 'ACTIVE' }, { id: 'l2', status: 'REVOKED' }])
+      fetchLicenses.mockResolvedValue([
+        { id: 'l1', status: 'ACTIVE' },
+        { id: 'l2', status: 'REVOKED' },
+      ])
       const { qc, Wrapper } = makeWrapper()
       const { result } = renderHook(() => usePublisherLicenses('app-1', null), { wrapper: Wrapper })
       await waitFor(() => expect(result.current.isSuccess).toBe(true))

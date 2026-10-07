@@ -37,7 +37,10 @@ function useTierMutation<V, R>(appId: string, fn: (vars: V, token: string | null
  * turns a licence change into an environment change on its next tick. Licences are
  * invalidated by PREFIX so every status filter variant is dropped, not just ALL/ACTIVE.
  */
-function useLicenceMutation<V, R>(appId: string, fn: (vars: V, token: string | null) => Promise<R>) {
+function useLicenceMutation<V, R>(
+  appId: string,
+  fn: (vars: V, token: string | null) => Promise<R>,
+) {
   const qc = useQueryClient()
   const { keyDid: did } = useViewerDid()
   const token = usePublisherToken()
@@ -53,13 +56,21 @@ function useLicenceMutation<V, R>(appId: string, fn: (vars: V, token: string | n
 export const useCreateLicenseType = (appId: string) =>
   useTierMutation<CreateLicenseTypeInput, string>(appId, (v, t) => api.createLicenseType(v, t))
 export const useSetLicenseTypeDetails = (appId: string) =>
-  useTierMutation<SetLicenseTypeDetailsInput, boolean>(appId, (v, t) => api.setLicenseTypeDetails(v, t))
+  useTierMutation<SetLicenseTypeDetailsInput, boolean>(appId, (v, t) =>
+    api.setLicenseTypeDetails(v, t),
+  )
 export const useSetLicenseTypeTemplate = (appId: string) =>
-  useTierMutation<SetLicenseTypeTemplateInput, boolean>(appId, (v, t) => api.setLicenseTypeTemplate(v, t))
+  useTierMutation<SetLicenseTypeTemplateInput, boolean>(appId, (v, t) =>
+    api.setLicenseTypeTemplate(v, t),
+  )
 export const useAddLicenseTypeService = (appId: string) =>
-  useTierMutation<AddLicenseTypeServiceInput, boolean>(appId, (v, t) => api.addLicenseTypeService(v, t))
+  useTierMutation<AddLicenseTypeServiceInput, boolean>(appId, (v, t) =>
+    api.addLicenseTypeService(v, t),
+  )
 export const useAddLicenseTypePackage = (appId: string) =>
-  useTierMutation<AddLicenseTypePackageInput, boolean>(appId, (v, t) => api.addLicenseTypePackage(v, t))
+  useTierMutation<AddLicenseTypePackageInput, boolean>(appId, (v, t) =>
+    api.addLicenseTypePackage(v, t),
+  )
 export const usePublishLicenseType = (appId: string) =>
   useTierMutation<string, boolean>(appId, (id, t) => api.publishLicenseType(id, t))
 export const useRetireLicenseType = (appId: string) =>

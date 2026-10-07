@@ -62,8 +62,17 @@ describe('publisher query fetchers', () => {
     expect(calls[0].query).toContain('licenseTypes(appId: $appId)')
     const sel = selectionOf(calls[0].query, 'licenseTypes')
     expect(topLevelFields(sel)).toEqual([
-      'id', 'kind', 'label', 'status', 'validityDays', 'templateHash',
-      'size', 'baseDomain', 'packageRegistry', 'services', 'packages',
+      'id',
+      'kind',
+      'label',
+      'status',
+      'validityDays',
+      'templateHash',
+      'size',
+      'baseDomain',
+      'packageRegistry',
+      'services',
+      'packages',
     ])
     expect(topLevelFields(selectionOf(sel, 'services'))).toEqual(['id', 'type', 'prefix'])
     expect(topLevelFields(selectionOf(sel, 'packages'))).toEqual(['id', 'packageName', 'version'])
@@ -75,7 +84,13 @@ describe('publisher query fetchers', () => {
     expect(calls[0].variables).toEqual({ appId: 'app-1', status: null })
     expect(calls[0].query).toContain('licenses(appId: $appId, status: $status)')
     expect(fieldsOf(calls[0].query, 'licenses')).toEqual([
-      'id', 'user', 'licenseTypeId', 'status', 'start', 'end', 'environmentId',
+      'id',
+      'user',
+      'licenseTypeId',
+      'status',
+      'start',
+      'end',
+      'environmentId',
     ])
   })
 
@@ -86,13 +101,23 @@ describe('publisher query fetchers', () => {
   })
 
   it('fetchEnvironments unwraps vetraPublisher.environments, passes appId and selects every field', async () => {
-    const row = { appId: 'app-1', user: '0xa', environmentId: 'e1', licenseId: 'l1', templateHash: 'h' }
+    const row = {
+      appId: 'app-1',
+      user: '0xa',
+      environmentId: 'e1',
+      licenseId: 'l1',
+      templateHash: 'h',
+    }
     const { calls, fetchImpl } = capture({ vetraPublisher: { environments: [row] } })
     expect(await fetchEnvironments('app-1', 't', fetchImpl)).toEqual([row])
     expect(calls[0].variables).toEqual({ appId: 'app-1' })
     expect(calls[0].query).toContain('environments(appId: $appId)')
     expect(fieldsOf(calls[0].query, 'environments')).toEqual([
-      'appId', 'user', 'environmentId', 'licenseId', 'templateHash',
+      'appId',
+      'user',
+      'environmentId',
+      'licenseId',
+      'templateHash',
     ])
   })
 })

@@ -6,7 +6,13 @@ import { Loader2, RefreshCw } from 'lucide-react'
 import { Button } from '@/shared/components/ui/button'
 import { Alert, AlertDescription, AlertTitle } from '@/shared/components/ui/alert'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/shared/components/ui/tabs'
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/shared/components/ui/select'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/shared/components/ui/select'
 import { useMyApps } from '../hooks/use-publisher'
 import { describePublisherError } from '../graphql'
 import { TiersTab } from './tiers-tab'
@@ -61,7 +67,12 @@ export default function PublisherDashboard() {
         <AlertTitle>Could not load your apps</AlertTitle>
         <AlertDescription className="flex flex-wrap items-center gap-3">
           {describePublisherError(apps.error)}
-          <Button size="sm" variant="outline" onClick={() => void apps.refetch()} disabled={apps.isRefetching}>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => void apps.refetch()}
+            disabled={apps.isRefetching}
+          >
             <RefreshCw className={apps.isRefetching ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
             Retry
           </Button>
@@ -75,7 +86,8 @@ export default function PublisherDashboard() {
       <div className="border-border rounded-xl border border-dashed p-10 text-center">
         <h2 className="text-lg font-semibold">No apps yet</h2>
         <p className="text-muted-foreground mt-2 text-sm">
-          Licensing is managed per app. Register an app first, then come back to define tiers and grant licences.
+          Licensing is managed per app. Register an app first, then come back to define tiers and
+          grant licences.
         </p>
       </div>
     )
@@ -85,11 +97,15 @@ export default function PublisherDashboard() {
     <div className="space-y-6">
       {list.length > 1 && (
         <Select value={appId ?? undefined} onValueChange={setSelected}>
-          <SelectTrigger className="w-72"><SelectValue placeholder="Choose an app" /></SelectTrigger>
+          <SelectTrigger className="w-72">
+            <SelectValue placeholder="Choose an app" />
+          </SelectTrigger>
           <SelectContent>
             {list.map((a) => (
               <SelectItem key={a.id} value={a.id}>
-                {a.status === 'ACTIVE' ? a.name : `${a.name} — ${a.status.toLowerCase().replace(/_/g, ' ')}`}
+                {a.status === 'ACTIVE'
+                  ? a.name
+                  : `${a.name} — ${a.status.toLowerCase().replace(/_/g, ' ')}`}
               </SelectItem>
             ))}
           </SelectContent>
@@ -100,8 +116,9 @@ export default function PublisherDashboard() {
         <Alert variant="destructive">
           <AlertTitle>Licensing is unavailable for {current.name}</AlertTitle>
           <AlertDescription>
-            This app is {current.status.toLowerCase().replace(/_/g, ' ')}. Licensing needs an app whose identity
-            delegation is active, so tiers, holders and environments cannot be managed until it is.
+            This app is {current.status.toLowerCase().replace(/_/g, ' ')}. Licensing needs an app
+            whose identity delegation is active, so tiers, holders and environments cannot be
+            managed until it is.
           </AlertDescription>
         </Alert>
       )}

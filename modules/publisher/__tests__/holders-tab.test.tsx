@@ -14,7 +14,10 @@ let allError: Error | null = null
 let allPending = false
 
 vi.mock('sonner', () => ({
-  toast: { error: (...a: unknown[]) => toastError(...a), success: (...a: unknown[]) => toastSuccess(...a) },
+  toast: {
+    error: (...a: unknown[]) => toastError(...a),
+    success: (...a: unknown[]) => toastSuccess(...a),
+  },
 }))
 vi.mock('../hooks/use-publisher', () => ({
   // Honours the status argument like the real query, so a filter genuinely hides rows.
@@ -22,9 +25,17 @@ vi.mock('../hooks/use-publisher', () => ({
     licenseQueries.push(status)
     if (status === null && allError) return { data: undefined, isPending: false, error: allError }
     if (status === null && allPending) return { data: undefined, isPending: true, error: null }
-    return { data: status ? licenses.filter((l) => l.status === status) : licenses, isPending: false, error: null }
+    return {
+      data: status ? licenses.filter((l) => l.status === status) : licenses,
+      isPending: false,
+      error: null,
+    }
   },
-  usePublisherLicenseTypes: () => ({ data: tiersError ? undefined : tiers, isPending: false, error: tiersError }),
+  usePublisherLicenseTypes: () => ({
+    data: tiersError ? undefined : tiers,
+    isPending: false,
+    error: tiersError,
+  }),
 }))
 vi.mock('../hooks/use-publisher-mutations', () => ({
   useIssueGrant: () => ({ mutateAsync: issueGrant, isPending: false }),
@@ -34,7 +45,15 @@ vi.mock('@/shared/components/ui/select', () => {
   const Trigger = (_: { 'aria-label'?: string }) => null
   return {
     // Native stand-in: Radix Select is not drivable in jsdom. Takes its label from the trigger.
-    Select: ({ value, onValueChange, children }: { value?: string; onValueChange: (v: string) => void; children: React.ReactNode }) => {
+    Select: ({
+      value,
+      onValueChange,
+      children,
+    }: {
+      value?: string
+      onValueChange: (v: string) => void
+      children: React.ReactNode
+    }) => {
       // The trigger may be wrapped (FormControl), so search the tree for it.
       const find = (n: React.ReactNode): string | undefined => {
         for (const c of React.Children.toArray(n)) {
@@ -47,7 +66,11 @@ vi.mock('@/shared/components/ui/select', () => {
       }
       const trigger = { props: { 'aria-label': find(children) } }
       return (
-        <select aria-label={trigger?.props['aria-label']} value={value ?? ''} onChange={(e) => onValueChange(e.target.value)}>
+        <select
+          aria-label={trigger?.props['aria-label']}
+          value={value ?? ''}
+          onChange={(e) => onValueChange(e.target.value)}
+        >
           <option value="" />
           {children}
         </select>
@@ -56,7 +79,9 @@ vi.mock('@/shared/components/ui/select', () => {
     SelectTrigger: Trigger,
     SelectValue: () => null,
     SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => <option value={value}>{children}</option>,
+    SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => (
+      <option value={value}>{children}</option>
+    ),
   }
 })
 
@@ -66,11 +91,25 @@ const HOLDER = '0xAbCdEf0123456789aBcDeF0123456789AbCdEf01'
 const OTHER = '0x1111111111111111111111111111111111111111'
 
 const lic = (over: Record<string, unknown> = {}) => ({
-  id: 'lic-1', user: HOLDER.toLowerCase(), licenseTypeId: 'lt-1', status: 'ACTIVE',
-  start: null, end: null, environmentId: 'env-1', ...over,
+  id: 'lic-1',
+  user: HOLDER.toLowerCase(),
+  licenseTypeId: 'lt-1',
+  status: 'ACTIVE',
+  start: null,
+  end: null,
+  environmentId: 'env-1',
+  ...over,
 })
 const tier = (over: Record<string, unknown> = {}) => ({
-  id: 'lt-1', label: 'Pro', kind: 'PRO', status: 'ACTIVE', validityDays: 365, templateHash: 'h', services: [], packages: [], ...over,
+  id: 'lt-1',
+  label: 'Pro',
+  kind: 'PRO',
+  status: 'ACTIVE',
+  validityDays: 365,
+  templateHash: 'h',
+  services: [],
+  packages: [],
+  ...over,
 })
 
 beforeEach(() => {
@@ -85,7 +124,8 @@ beforeEach(() => {
 })
 
 const openGrant = () => fireEvent.click(screen.getByRole('button', { name: /grant/i }))
-const typeAddress = (v: string) => fireEvent.change(screen.getByLabelText(/address/i), { target: { value: v } })
+const typeAddress = (v: string) =>
+  fireEvent.change(screen.getByLabelText(/address/i), { target: { value: v } })
 const WARNING = /already holds an active or pending licence/i
 
 describe('HoldersTab', () => {
@@ -144,7 +184,9 @@ describe('HoldersTab', () => {
     render(<HoldersTab appId="a1" />)
     openGrant()
     typeAddress(HOLDER)
-    await waitFor(() => expect((screen.getByLabelText(/address/i) as HTMLInputElement).value).toBe(HOLDER))
+    await waitFor(() =>
+      expect((screen.getByLabelText(/address/i) as HTMLInputElement).value).toBe(HOLDER),
+    )
     expect(screen.queryByText(WARNING)).toBeNull()
   })
 
@@ -154,7 +196,9 @@ describe('HoldersTab', () => {
     openGrant()
     expect(screen.queryByText(WARNING)).toBeNull()
     typeAddress(OTHER)
-    await waitFor(() => expect((screen.getByLabelText(/address/i) as HTMLInputElement).value).toBe(OTHER))
+    await waitFor(() =>
+      expect((screen.getByLabelText(/address/i) as HTMLInputElement).value).toBe(OTHER),
+    )
     expect(screen.queryByText(WARNING)).toBeNull()
   })
 
@@ -189,7 +233,11 @@ describe('HoldersTab', () => {
   })
 
   it('offers only published (ACTIVE) tiers', () => {
-    tiers = [tier({ id: 'lt-1', label: 'Live' }), tier({ id: 'lt-2', label: 'Drafty', status: 'DRAFT' }), tier({ id: 'lt-3', label: 'Gone', status: 'RETIRED' })]
+    tiers = [
+      tier({ id: 'lt-1', label: 'Live' }),
+      tier({ id: 'lt-2', label: 'Drafty', status: 'DRAFT' }),
+      tier({ id: 'lt-3', label: 'Gone', status: 'RETIRED' }),
+    ]
     render(<HoldersTab appId="a1" />)
     openGrant()
     const tier_ = screen.getByLabelText('Tier')
@@ -219,7 +267,9 @@ describe('HoldersTab', () => {
     typeAddress(HOLDER)
     fireEvent.change(screen.getByLabelText('Tier'), { target: { value: 'lt-1' } })
     fireEvent.click(screen.getAllByRole('button', { name: /grant licence/i }).at(-1)!)
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith('licensing is disabled on this deployment'))
+    await waitFor(() =>
+      expect(toastError).toHaveBeenCalledWith('licensing is disabled on this deployment'),
+    )
     expect(toastSuccess).not.toHaveBeenCalled()
   })
 
@@ -278,7 +328,9 @@ describe('HoldersTab', () => {
     ]
     render(<HoldersTab appId="a1" />)
     const has = (u: string) =>
-      !!within(screen.getByText(u).closest('tr') as HTMLElement).queryByRole('button', { name: /revoke/i })
+      !!within(screen.getByText(u).closest('tr') as HTMLElement).queryByRole('button', {
+        name: /revoke/i,
+      })
     expect(has('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')).toBe(true)
     expect(has('0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb')).toBe(true)
     expect(has('0xcccccccccccccccccccccccccccccccccccccccc')).toBe(false)
@@ -302,8 +354,12 @@ describe('HoldersTab', () => {
   it('explains why Grant is disabled when the full licence list fails to load', () => {
     allError = new Error('permission denied for app a1')
     render(<HoldersTab appId="a1" />)
-    expect((screen.getByRole('button', { name: /grant licence/i }) as HTMLButtonElement).disabled).toBe(true)
-    expect(screen.getByText(/granting is unavailable/i).textContent).toContain('permission denied for app a1')
+    expect(
+      (screen.getByRole('button', { name: /grant licence/i }) as HTMLButtonElement).disabled,
+    ).toBe(true)
+    expect(screen.getByText(/granting is unavailable/i).textContent).toContain(
+      'permission denied for app a1',
+    )
   })
 
   it('gives a loading reason, not an error, while the full list is still loading', () => {
@@ -320,10 +376,20 @@ describe('HoldersTab degraded reads', () => {
   it('says tier names failed to load instead of silently showing raw ids', () => {
     tiersError = new Error('tiers are temporarily unavailable')
     licenses = [
-      { id: 'l1', user: 'did:key:z6Mk', licenseTypeId: 'lt-9', status: 'ACTIVE', start: null, end: null, environmentId: null },
+      {
+        id: 'l1',
+        user: 'did:key:z6Mk',
+        licenseTypeId: 'lt-9',
+        status: 'ACTIVE',
+        start: null,
+        end: null,
+        environmentId: null,
+      },
     ]
     render(<HoldersTab appId="a1" />)
-    expect(screen.getByText(/tier names are unavailable/i).textContent).toContain('tiers are temporarily unavailable')
+    expect(screen.getByText(/tier names are unavailable/i).textContent).toContain(
+      'tiers are temporarily unavailable',
+    )
     // the id is still shown, but it is now labelled as an id rather than passing for a name
     expect(screen.getByText('lt-9')).toBeTruthy()
   })
@@ -331,8 +397,10 @@ describe('HoldersTab degraded reads', () => {
   it('offers every licence status the model can produce', () => {
     render(<HoldersTab appId="a1" />)
     const select = screen.getByLabelText('Status filter') as HTMLSelectElement
-    expect(Array.from(select.options).map((o) => o.value).filter(Boolean)).toEqual([
-      'ALL', 'ISSUED', 'ACTIVE', 'EXPIRED', 'REVOKED', 'REPLACED',
-    ])
+    expect(
+      Array.from(select.options)
+        .map((o) => o.value)
+        .filter(Boolean),
+    ).toEqual(['ALL', 'ISSUED', 'ACTIVE', 'EXPIRED', 'REVOKED', 'REPLACED'])
   })
 })
