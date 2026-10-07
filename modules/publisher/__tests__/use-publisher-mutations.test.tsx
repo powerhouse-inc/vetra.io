@@ -114,10 +114,13 @@ describe('publisher mutation hooks', () => {
     expect(qc.getQueryState(types)?.isInvalidated).toBe(false)
   })
 
-  it('does not retry a failing mutation (a retried grant could issue two licences)', async () => {
-    fns.issueGrant.mockRejectedValue(new Error('boom'))
-    await run(h.useIssueGrant, { appId: 'app-1', licenseTypeId: 'lt-1', user: '0xabc' }).catch(() => {})
-    expect(fns.issueGrant).toHaveBeenCalledTimes(1)
+  it.each([
+    ['tier wrapper (createLicenseType)', h.useCreateLicenseType, 'createLicenseType', { appId: 'app-1', kind: 'PRO' }],
+    ['licence wrapper (issueGrant)', h.useIssueGrant, 'issueGrant', { appId: 'app-1', licenseTypeId: 'lt-1', user: '0xabc' }],
+  ] as const)('does not retry a failing mutation: %s (a retry would duplicate a tier or licence)', async (_n, hook, fn, vars) => {
+    fns[fn].mockRejectedValue(new Error('boom'))
+    await run(hook as (a: string) => unknown, vars).catch(() => {})
+    expect(fns[fn]).toHaveBeenCalledTimes(1)
   })
 
   it('surfaces the server error unchanged and invalidates nothing', async () => {

@@ -1,7 +1,6 @@
 'use client'
 
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useDid } from '@powerhousedao/reactor-browser'
 import * as api from '../graphql'
 import type {
   CreateLicenseTypeInput,
@@ -14,6 +13,7 @@ import type {
 } from '../types'
 import { publisherKeys } from './keys'
 import { usePublisherToken } from './use-publisher'
+import { useViewerDid } from './use-viewer-did'
 
 // No mutation passes `retry: retryPublisher`: retrying a grant could issue two
 // licences for one click. useMutation defaults to retry: 0, which is what we want.
@@ -22,7 +22,7 @@ import { usePublisherToken } from './use-publisher'
 /** Tier mutations invalidate the tier list. */
 function useTierMutation<V, R>(appId: string, fn: (vars: V, token: string | null) => Promise<R>) {
   const qc = useQueryClient()
-  const did = useDid() ?? 'anon'
+  const { keyDid: did } = useViewerDid()
   const token = usePublisherToken()
   return useMutation<R, Error, V>({
     mutationFn: async (vars: V) => fn(vars, await token()),
@@ -39,7 +39,7 @@ function useTierMutation<V, R>(appId: string, fn: (vars: V, token: string | null
  */
 function useLicenceMutation<V, R>(appId: string, fn: (vars: V, token: string | null) => Promise<R>) {
   const qc = useQueryClient()
-  const did = useDid() ?? 'anon'
+  const { keyDid: did } = useViewerDid()
   const token = usePublisherToken()
   return useMutation<R, Error, V>({
     mutationFn: async (vars: V) => fn(vars, await token()),

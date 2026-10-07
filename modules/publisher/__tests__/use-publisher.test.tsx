@@ -146,6 +146,82 @@ describe('publisher read hooks', () => {
     expect(qc.getQueryData(publisherKeys.licenses('app-1', 'ACTIVE', 'did:key:z1'))).toBeDefined()
   })
 
+  it.each([
+    ['useMyApps', () => useMyApps(), fetchMyApps, (d: string) => publisherKeys.apps(d)],
+    ['usePublisherLicenseTypes', () => usePublisherLicenseTypes('app-1'), fetchLicenseTypes, (d: string) => publisherKeys.types('app-1', d)],
+    ['usePublisherLicenses', () => usePublisherLicenses('app-1', 'REVOKED'), fetchLicenses, (d: string) => publisherKeys.licenses('app-1', 'REVOKED', d)],
+    ['usePublisherEnvironments', () => usePublisherEnvironments('app-1'), fetchEnvironments, (d: string) => publisherKeys.environments('app-1', d)],
+  ] as ReadonlyArray<readonly [string, () => unknown, ReturnType<typeof vi.fn>, (d: string) => readonly unknown[]]>)(
+    '%s caches under the viewer did and never serves another wallet',
+    async (_n, useHook, fetcher, keyFor) => {
+      fetcher.mockImplementation(async () => [])
+      const { qc, Wrapper } = makeWrapper()
+      currentDid = 'did:key:A'
+      const a = renderHook(useHook as () => { isSuccess: boolean; data: unknown }, { wrapper: Wrapper })
+      await waitFor(() => expect(a.result.current.isSuccess).toBe(true))
+      a.unmount()
+      expect(qc.getQueryData(keyFor('did:key:A'))).toBeDefined()
+      currentDid = 'did:key:B'
+      const b = renderHook(useHook as () => { isSuccess: boolean; data: unknown }, { wrapper: Wrapper })
+      expect(b.result.current.data).toBeUndefined()
+      await waitFor(() => expect(b.result.current.isSuccess).toBe(true))
+      expect(fetcher).toHaveBeenCalledTimes(2)
+      expect(qc.getQueryData(keyFor('did:key:B'))).toBeDefined()
+    },
+  )
+
+  it.each([
+    ['useMyApps', () => useMyApps(), fetchMyApps],
+    ['usePublisherLicenseTypes', () => usePublisherLicenseTypes('app-1'), fetchLicenseTypes],
+    ['usePublisherLicenses', () => usePublisherLicenses('app-1', null), fetchLicenses],
+    ['usePublisherEnvironments', () => usePublisherEnvironments('app-1'), fetchEnvironments],
+  ] as ReadonlyArray<readonly [string, () => { fetchStatus: string }, ReturnType<typeof vi.fn>]>)(
+    '%s does not fire while the did is unresolved (no shared anon entry)',
+    async (_n, useHook, fetcher) => {
+      currentDid = undefined
+      const { qc, Wrapper } = makeWrapper()
+      const { result } = renderHook(useHook, { wrapper: Wrapper })
+      await waitFor(() => expect(result.current.fetchStatus).toBe('idle'))
+      expect(fetcher).not.toHaveBeenCalled()
+      expect(qc.getQueryCache().getAll()).toHaveLength(1)
+      expect(qc.getQueryCache().getAll()[0].state.data).toBeUndefined()
+    },
+  )
+
+  describe('polling', () => {
+    type Obs = { options: { refetchInterval?: unknown; refetchIntervalInBackground?: boolean } }
+    const interval = (qc: QueryClient, key: readonly unknown[]) => {
+      const q = qc.getQueryCache().find({ queryKey: key })!
+      const o = (q.observers[0] as unknown as Obs).options
+      const iv = typeof o.refetchInterval === 'function' ? o.refetchInterval(q) : o.refetchInterval
+      return { iv, bg: o.refetchIntervalInBackground }
+    }
+
+    it('environments poll every 10s, even when the list is empty, and not in the background', async () => {
+      fetchEnvironments.mockResolvedValue([])
+      const { qc, Wrapper } = makeWrapper()
+      const { result } = renderHook(() => usePublisherEnvironments('app-1'), { wrapper: Wrapper })
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      expect(interval(qc, publisherKeys.environments('app-1', 'did:key:z1'))).toEqual({ iv: 10_000, bg: false })
+    })
+
+    it('licences poll every 15s while any row is ISSUED', async () => {
+      fetchLicenses.mockResolvedValue([{ id: 'l1', status: 'ACTIVE' }, { id: 'l2', status: 'ISSUED' }])
+      const { qc, Wrapper } = makeWrapper()
+      const { result } = renderHook(() => usePublisherLicenses('app-1', null), { wrapper: Wrapper })
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      expect(interval(qc, publisherKeys.licenses('app-1', null, 'did:key:z1'))).toEqual({ iv: 15_000, bg: false })
+    })
+
+    it('licences do not poll when no row is ISSUED (including an empty list)', async () => {
+      fetchLicenses.mockResolvedValue([{ id: 'l1', status: 'ACTIVE' }, { id: 'l2', status: 'REVOKED' }])
+      const { qc, Wrapper } = makeWrapper()
+      const { result } = renderHook(() => usePublisherLicenses('app-1', null), { wrapper: Wrapper })
+      await waitFor(() => expect(result.current.isSuccess).toBe(true))
+      expect(interval(qc, publisherKeys.licenses('app-1', null, 'did:key:z1')).iv).toBe(false)
+    })
+  })
+
   it('keys embed the viewer did', () => {
     expect(publisherKeys.apps('did:key:z1')).not.toEqual(publisherKeys.apps('did:key:z2'))
     expect(publisherKeys.types('app-1', 'did:a')).not.toEqual(publisherKeys.types('app-1', 'did:b'))
