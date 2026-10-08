@@ -170,7 +170,53 @@ const HANDLERS: Handler[] = [
   // vetra-cloud: the header and app page ask who we are and list our environments (none).
   { match: /\bviewer\s*\{/, reply: () => ({ viewer: { address: ME, isAdmin: false } }) },
   { match: /\bmyEnvironments\(/, reply: () => ({ myEnvironments: [] }) },
+  // The environment page reads the environment document (read path, also the header metadata).
+  {
+    match: /VetraCloudEnvironment\s*\{\s*document\(/,
+    reply: (v, s) => {
+      const env = s.cloudEnvironments.find((e) => e.id === v.id)
+      return {
+        VetraCloudEnvironment: {
+          document: env
+            ? {
+                document: {
+                  id: env.id,
+                  documentType: 'powerhouse/vetra-cloud-environment',
+                  createdAtUtcIso: '2026-10-08T00:00:00Z',
+                  lastModifiedAtUtcIso: '2026-10-08T00:00:00Z',
+                  revisionsList: [{ scope: 'global', revision: 1 }],
+                  state: { global: env.state },
+                },
+              }
+            : null,
+        },
+      }
+    },
+  },
+  // The rest of the environment page: nothing configured, status not reported yet.
+  { match: /\benvVars\(/, reply: () => ({ envVars: [] }) },
+  { match: /\bsecrets\(/, reply: () => ({ secrets: [] }) },
+  { match: /\bclintRuntimeEndpointsByEnv\(/, reply: () => ({ clintRuntimeEndpointsByEnv: [] }) },
+  { match: /\benvironmentStatus\(/, reply: () => ({ environmentStatus: null }) },
 ]
+
+/**
+ * Operations the journeys may leave unanswered, each with the reason it is safe. Anything else
+ * in `state.unmatched` fails the journey: a new query the UI depends on must be mocked.
+ */
+export const ALLOWED_UNMATCHED: Array<{ match: RegExp; reason: string }> = [
+  {
+    match: /^query GetDocumentWithOperations\(/,
+    reason:
+      'The signed-in environment page also loads the document with its full operation history ' +
+      'for editing. Mocking a reactor operation log is out of scope; the page renders from the ' +
+      'mocked VetraCloudEnvironment document read, which is what the journey asserts.',
+  },
+]
+
+/** `state.unmatched` minus the allow-listed operations; journeys expect this to be empty. */
+export const unexpectedCalls = (s: CloudState): string[] =>
+  s.unmatched.filter((q) => !ALLOWED_UNMATCHED.some((a) => a.match.test(q)))
 
 /** Answers every cloud GraphQL POST from `state`; unknown operations get a GraphQL error and are recorded. */
 export async function mockCloud(page: Page, state: CloudState): Promise<void> {

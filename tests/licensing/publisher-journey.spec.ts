@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { logIn, routeRenown, snap } from './fixtures/auth'
-import { mockCloud } from './fixtures/cloud-mock'
+import { mockCloud, unexpectedCalls } from './fixtures/cloud-mock'
 import { baseState } from './fixtures/data'
 
 test('publisher: template → plan → invite code, all on the app page', async ({ page }) => {
@@ -98,6 +98,7 @@ test('publisher: template → plan → invite code, all on the app page', async 
     expiresAt: null,
     code: 'LFC-2026',
   })
+  expect(unexpectedCalls(state)).toEqual([])
 })
 
 test('the old Licensing URL lands on the app page', async ({ page }) => {
@@ -108,4 +109,5 @@ test('the old Licensing URL lands on the app page', async ({ page }) => {
   await page.goto('/user/publisher?app=app-vault')
   await expect(page).toHaveURL(/\/user\/apps\/app-vault\?tab=plans$/)
   await expect(page.getByRole('tab', { name: 'Plans', selected: true })).toBeVisible()
+  expect(unexpectedCalls(state)).toEqual([])
 })

@@ -9,6 +9,7 @@ import type {
   PublisherTemplate,
   PublisherTerm,
 } from '../../../modules/publisher/types'
+import type { CloudEnvironmentState } from '../../../modules/cloud/types'
 import type {
   InviteCodeCheck,
   StudioAccess,
@@ -30,6 +31,8 @@ export type CloudState = {
   subscriptions: Subscription[]
   inviteChecks: Record<string, InviteCodeCheck>
   studioAccess: StudioAccess
+  /** Environment documents (vetra-cloud) the environment page can open. */
+  cloudEnvironments: Array<{ id: string; state: CloudEnvironmentState }>
   calls: Array<{ query: string; variables: Record<string, unknown> }>
   unmatched: string[]
 }
@@ -115,6 +118,25 @@ export function baseState(): CloudState {
       },
     },
     studioAccess: { allowed: true, licenseId: 'lic-studio', expires: null, hasAttachedKey: true },
+    cloudEnvironments: [
+      {
+        // Provisioned for the redeemed Pilot licence (owner journey).
+        id: 'env-kv-1',
+        state: {
+          owner: ME,
+          label: 'Acme research',
+          genericSubdomain: 'acme-research',
+          genericBaseDomain: 'vetra.io',
+          customDomain: null,
+          defaultPackageRegistry: null,
+          services: [],
+          packages: [],
+          status: 'READY',
+          apexService: null,
+          autoUpdateChannel: null,
+        },
+      },
+    ],
     calls: [],
     unmatched: [],
   }

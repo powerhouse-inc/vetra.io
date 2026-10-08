@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 import { logIn, routeRenown, snap } from './fixtures/auth'
-import { mockCloud } from './fixtures/cloud-mock'
+import { mockCloud, unexpectedCalls } from './fixtures/cloud-mock'
 import { baseState } from './fixtures/data'
 
 test('owner: redeem → subscription → environment', async ({ page }) => {
@@ -28,6 +28,17 @@ test('owner: redeem → subscription → environment', async ({ page }) => {
   await snap(page, 'subscriptions')
   await card.getByRole('link', { name: 'Acme research' }).click()
   await expect(page).toHaveURL(/\/user\/environments\/env-kv-1$/)
+  // The environment page names the environment and says which app and plan it comes with.
+  await expect(page.getByRole('status').filter({ hasText: 'Knowledge Vault · Pilot' })).toContainText(
+    'This environment comes with your Pilot licence for Knowledge Vault.',
+  )
+  await expect(page.getByText('Acme research').first()).toBeVisible()
+  await expect(page.getByRole('link', { name: 'View subscription' })).toHaveAttribute(
+    'href',
+    /\/user\/subscriptions\?highlight=lic-1$/,
+  )
+  await snap(page, 'environment')
+  expect(unexpectedCalls(state)).toEqual([])
 })
 
 test('owner: an invalid code says so before asking to log in', async ({ page }) => {
@@ -38,6 +49,7 @@ test('owner: an invalid code says so before asking to log in', async ({ page }) 
   await expect(page.getByText('This code can’t be used')).toBeVisible()
   await expect(page.getByRole('button', { name: 'Log in with Renown' })).toHaveCount(0)
   await snap(page, 'redeem-invalid')
+  expect(unexpectedCalls(state)).toEqual([])
 })
 
 test('owner: holding a licence offers the upgrade instead of a second environment', async ({
@@ -73,4 +85,5 @@ test('owner: holding a licence offers the upgrade instead of a second environmen
   await expect(page).toHaveURL(/highlight=lic-2$/)
   const redeem = state.calls.find((c) => c.query.includes('redeemInviteCode(input: $input)'))
   expect(redeem?.variables).toEqual({ input: { code: 'KV-PILOT', upgrades: 'lic-free' } })
+  expect(unexpectedCalls(state)).toEqual([])
 })
