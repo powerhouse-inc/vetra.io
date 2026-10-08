@@ -69,14 +69,18 @@ export function TemplateCard({
           <Pencil className="h-3.5 w-3.5" />
           Edit
         </Button>
+        {blocker && (
+          <span className="text-muted-foreground ml-auto self-center text-right text-xs">
+            {blocker}
+          </span>
+        )}
         <Button
           size="sm"
           variant="ghost"
           onClick={onDelete}
           disabled={blocker !== undefined}
-          title={blocker}
           aria-label={`Delete ${name}`}
-          className="text-muted-foreground hover:text-destructive ml-auto"
+          className={`text-muted-foreground hover:text-destructive ${blocker ? '' : 'ml-auto'}`}
         >
           <Trash2 className="h-4 w-4" />
         </Button>

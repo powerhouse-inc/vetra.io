@@ -12,12 +12,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/modules/shared/components/ui/select'
-import { useAddTemplateService, useRemoveTemplateService } from '../../hooks/use-publisher-mutations'
-import { CHANNELS, NO_IMAGES_YET, type ChannelValue } from '../../lib/artifacts'
+import {
+  useAddTemplateService,
+  useRemoveTemplateService,
+} from '../../hooks/use-publisher-mutations'
+import { CHANNELS, channelLabel, NO_IMAGES_YET, type ChannelValue } from '../../lib/artifacts'
 import { runWithToast } from '../../lib/run'
-import { describeService, NOT_PROVISIONABLE, SERVICE_TYPES } from '../../lib/template'
+import { NOT_PROVISIONABLE, SERVICE_TYPES, serviceLabel } from '../../lib/template'
 import type { PublisherAppArtifact, PublisherTemplate } from '../../types'
 import { SectionCard } from '../primitives'
+import { ArtifactsFailed } from './artifacts-failed'
 
 type Guard = (title: string, run: () => Promise<unknown>) => void
 
@@ -27,24 +31,30 @@ export function TemplateServices({
   guard,
   artifacts,
   artifactsLoading,
+  artifactsFailed = false,
+  onRetryArtifacts,
 }: {
   appId: string
   template: PublisherTemplate
   guard: Guard
   artifacts: PublisherAppArtifact[]
   artifactsLoading: boolean
+  artifactsFailed?: boolean
+  onRetryArtifacts?: () => void
 }) {
   const add = useAddTemplateService(appId)
   const remove = useRemoveTemplateService(appId)
   const [type, setType] = useState('CONNECT')
   const [prefix, setPrefix] = useState('')
+  // The prefix we filled in from the image; a later image pick may replace it, a typed one never.
+  const [autoPrefix, setAutoPrefix] = useState('')
   const [artifactName, setArtifactName] = useState('')
   const [channel, setChannel] = useState<ChannelValue>('LATEST')
 
   const images = artifacts.filter((a) => a.kind === 'FUSION_IMAGE')
   // Only an app-image service runs the app's own image; the server refuses an artifact on the rest.
   const wantsImage = type === 'FUSION'
-  const noImages = wantsImage && !artifactsLoading && images.length === 0
+  const noImages = wantsImage && !artifactsLoading && !artifactsFailed && images.length === 0
 
   const submit = () =>
     guard('Add this service?', async () => {
@@ -62,29 +72,48 @@ export function TemplateServices({
       if (ok) {
         setPrefix('')
         setArtifactName('')
+        setAutoPrefix('')
       }
     })
 
   return (
     <SectionCard title="Services" description="What runs in every owner’s environment.">
       {template.services.length === 0 ? (
-        <p className="text-muted-foreground text-sm">No services yet. Add at least one before a plan can use this template.</p>
+        <p className="text-muted-foreground text-sm">
+          No services yet. Add at least one before a plan can use this template.
+        </p>
       ) : (
         <ul className="divide-border divide-y text-sm">
           {template.services.map((s) => (
             <li key={s.id} className="flex items-center justify-between gap-2 py-2">
-              <span className="min-w-0 truncate font-mono text-xs">
-                {describeService(s)}
+              <span className="min-w-0 truncate text-sm">
+                {s.artifactName ? (
+                  <code className="font-mono text-xs">{s.artifactName}</code>
+                ) : (
+                  serviceLabel(s.type)
+                )}
+                {s.prefix && (
+                  <>
+                    {' at '}
+                    <code className="font-mono text-xs">{s.prefix}</code>
+                  </>
+                )}
+                {s.artifactName && s.artifactChannel
+                  ? `, following ${channelLabel(s.artifactChannel).toLowerCase()}`
+                  : ''}
                 {NOT_PROVISIONABLE.has(s.type) ? ' — not available yet' : ''}
               </span>
               <Button
                 size="icon"
                 variant="ghost"
-                aria-label={`Remove ${s.type} service`}
+                aria-label={`Remove ${serviceLabel(s.type)} service`}
                 disabled={remove.isPending}
                 onClick={() =>
                   guard('Remove this service?', () =>
-                    runWithToast(() => remove.mutateAsync({ templateId: template.id, id: s.id }), 'Service removed'),
+                    runWithToast(
+                      () => remove.mutateAsync({ templateId: template.id, id: s.id }),
+                      'Service removed',
+                    ),
                   )
                 }
               >
@@ -122,7 +151,10 @@ export function TemplateServices({
                 value={artifactName}
                 onValueChange={(v) => {
                   setArtifactName(v)
-                  if (!prefix.trim()) setPrefix(v)
+                  if (!prefix.trim() || prefix === autoPrefix) {
+                    setPrefix(v)
+                    setAutoPrefix(v)
+                  }
                 }}
                 disabled={images.length === 0}
               >
@@ -140,7 +172,11 @@ export function TemplateServices({
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="svc-follows">Follows</Label>
-              <Select value={channel} onValueChange={(v) => setChannel(v as ChannelValue)} disabled={!artifactName}>
+              <Select
+                value={channel}
+                onValueChange={(v) => setChannel(v as ChannelValue)}
+                disabled={!artifactName}
+              >
                 <SelectTrigger id="svc-follows" aria-label="Follows" className="w-full">
                   <SelectValue />
                 </SelectTrigger>
@@ -156,9 +192,21 @@ export function TemplateServices({
           </>
         )}
       </div>
+      {wantsImage && artifactsFailed && (
+        <ArtifactsFailed what="images" onRetry={onRetryArtifacts} />
+      )}
       {noImages && <p className="text-muted-foreground text-xs">{NO_IMAGES_YET}</p>}
       <div className="flex justify-end">
-        <Button size="sm" onClick={submit} disabled={NOT_PROVISIONABLE.has(type) || noImages || add.isPending}>
+        <Button
+          size="sm"
+          onClick={submit}
+          disabled={
+            NOT_PROVISIONABLE.has(type) ||
+            noImages ||
+            (wantsImage && !artifactName) ||
+            add.isPending
+          }
+        >
           {add.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           Add service
         </Button>

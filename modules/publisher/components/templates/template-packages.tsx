@@ -11,11 +11,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/modules/shared/components/ui/select'
-import { useAddTemplatePackage, useRemoveTemplatePackage } from '../../hooks/use-publisher-mutations'
+import {
+  useAddTemplatePackage,
+  useRemoveTemplatePackage,
+} from '../../hooks/use-publisher-mutations'
 import { NO_PACKAGES_YET } from '../../lib/artifacts'
 import { runWithToast } from '../../lib/run'
 import type { PublisherAppArtifact, PublisherTemplate } from '../../types'
 import { SectionCard } from '../primitives'
+import { ArtifactsFailed } from './artifacts-failed'
+
+// Radix Select items cannot have value ''. This stands for "no pinned version".
+const LATEST = '__latest__'
 
 type Guard = (title: string, run: () => Promise<unknown>) => void
 
@@ -25,12 +32,16 @@ export function TemplatePackages({
   guard,
   artifacts,
   artifactsLoading,
+  artifactsFailed = false,
+  onRetryArtifacts,
 }: {
   appId: string
   template: PublisherTemplate
   guard: Guard
   artifacts: PublisherAppArtifact[]
   artifactsLoading: boolean
+  artifactsFailed?: boolean
+  onRetryArtifacts?: () => void
 }) {
   const add = useAddTemplatePackage(appId)
   const remove = useRemoveTemplatePackage(appId)
@@ -38,14 +49,19 @@ export function TemplatePackages({
   const [version, setVersion] = useState('')
 
   const published = artifacts.filter((a) => a.kind === 'PACKAGE')
-  const noPackages = !artifactsLoading && published.length === 0
+  const noPackages = !artifactsLoading && !artifactsFailed && published.length === 0
   // Newest first: the version a publisher wants is almost always the newest.
   const versions = [...(published.find((a) => a.name === name)?.versions ?? [])].reverse()
 
   const submit = () =>
     guard('Add this package?', async () => {
       const ok = await runWithToast(
-        () => add.mutateAsync({ templateId: template.id, packageName: name, version: version || null }),
+        () =>
+          add.mutateAsync({
+            templateId: template.id,
+            packageName: name,
+            version: version && version !== LATEST ? version : null,
+          }),
         'Package added',
       )
       if (ok) {
@@ -73,7 +89,10 @@ export function TemplatePackages({
                 disabled={remove.isPending}
                 onClick={() =>
                   guard('Remove this package?', () =>
-                    runWithToast(() => remove.mutateAsync({ templateId: template.id, id: p.id }), 'Package removed'),
+                    runWithToast(
+                      () => remove.mutateAsync({ templateId: template.id, id: p.id }),
+                      'Package removed',
+                    ),
                   )
                 }
               >
@@ -108,11 +127,12 @@ export function TemplatePackages({
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="pkg-version">Version</Label>
-          <Select value={version} onValueChange={setVersion} disabled={!name}>
+          <Select value={version || LATEST} onValueChange={setVersion} disabled={!name}>
             <SelectTrigger id="pkg-version" aria-label="Version" className="w-full">
               <SelectValue placeholder="Always the latest" />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value={LATEST}>Always the latest</SelectItem>
               {versions.map((v) => (
                 <SelectItem key={v.version} value={v.version}>
                   {v.version}
@@ -122,6 +142,7 @@ export function TemplatePackages({
           </Select>
         </div>
       </div>
+      {artifactsFailed && <ArtifactsFailed what="packages" onRetry={onRetryArtifacts} />}
       {noPackages && <p className="text-muted-foreground text-xs">{NO_PACKAGES_YET}</p>}
       <div className="flex justify-end">
         <Button size="sm" onClick={submit} disabled={!name || add.isPending}>

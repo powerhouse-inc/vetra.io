@@ -119,4 +119,17 @@ describe('TemplatesTab', () => {
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Create template' })))
     expect(screen.getByTestId('editor').textContent).toBe('missing')
   })
+
+  it('shows why Delete is disabled as visible text', () => {
+    templates = { data: [tpl({ environmentCount: 2 })], isPending: false, error: null }
+    render(<TemplatesTab appId="app-1" />)
+    expect(screen.getByText('Environments still run on it')).toBeTruthy()
+  })
+
+  it('shows the plan reason when a plan uses it', () => {
+    templates = { data: [tpl({})], isPending: false, error: null }
+    terms = [term({})]
+    render(<TemplatesTab appId="app-1" />)
+    expect(screen.getByText('Move its plans to another template first')).toBeTruthy()
+  })
 })

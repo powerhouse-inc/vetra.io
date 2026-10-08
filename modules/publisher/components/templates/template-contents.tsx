@@ -29,10 +29,28 @@ export function TemplateContents({
     )
   }
   const list = artifacts.data ?? []
+  const failed = !!artifacts.error && !artifacts.data
+  const retry = () => void artifacts.refetch()
   return (
     <div className="space-y-6">
-      <TemplateServices appId={appId} template={template} guard={guard} artifacts={list} artifactsLoading={artifacts.isLoading} />
-      <TemplatePackages appId={appId} template={template} guard={guard} artifacts={list} artifactsLoading={artifacts.isLoading} />
+      <TemplateServices
+        appId={appId}
+        template={template}
+        guard={guard}
+        artifacts={list}
+        artifactsLoading={artifacts.isLoading}
+        artifactsFailed={failed}
+        onRetryArtifacts={retry}
+      />
+      <TemplatePackages
+        appId={appId}
+        template={template}
+        guard={guard}
+        artifacts={list}
+        artifactsLoading={artifacts.isLoading}
+        artifactsFailed={failed}
+        onRetryArtifacts={retry}
+      />
     </div>
   )
 }

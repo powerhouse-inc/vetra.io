@@ -61,7 +61,35 @@ describe('TemplateServices', () => {
     removeService.mockResolvedValue(true)
     const t = tpl({ services: [{ id: 's1', type: 'CONNECT', prefix: null, artifactName: null, artifactChannel: null }] })
     render(<TemplateServices appId="app-1" template={t} guard={(_, run) => void run()} artifacts={[]} artifactsLoading={false} />)
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Remove CONNECT service' })))
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Remove Connect service' })))
     expect(removeService).toHaveBeenCalledWith({ templateId: 'tpl-1', id: 's1' })
+  })
+
+  it('keeps Add disabled for an app image until one is chosen', () => {
+    render(<TemplateServices appId="app-1" template={tpl()} guard={vi.fn()} artifacts={[image]} artifactsLoading={false} />)
+    fireEvent.change(screen.getByLabelText('Service type'), { target: { value: 'FUSION' } })
+    expect((screen.getByRole('button', { name: 'Add service' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('follows a second image pick while the prefix is still the autofilled one', () => {
+    const other: PublisherAppArtifact = { ...image, name: 'other-app' }
+    render(<TemplateServices appId="app-1" template={tpl()} guard={vi.fn()} artifacts={[image, other]} artifactsLoading={false} />)
+    fireEvent.change(screen.getByLabelText('Service type'), { target: { value: 'FUSION' } })
+    fireEvent.change(screen.getByLabelText('Image'), { target: { value: 'vault-app' } })
+    fireEvent.change(screen.getByLabelText('Image'), { target: { value: 'other-app' } })
+    expect((screen.getByLabelText('Subdomain prefix (optional)') as HTMLInputElement).value).toBe('other-app')
+    fireEvent.change(screen.getByLabelText('Subdomain prefix (optional)'), { target: { value: 'mine' } })
+    fireEvent.change(screen.getByLabelText('Image'), { target: { value: 'vault-app' } })
+    expect((screen.getByLabelText('Subdomain prefix (optional)') as HTMLInputElement).value).toBe('mine')
+  })
+
+  it('offers a retry instead of "no image yet" when artifacts failed to load', () => {
+    const retry = vi.fn()
+    render(<TemplateServices appId="app-1" template={tpl()} guard={vi.fn()} artifacts={[]} artifactsLoading={false} artifactsFailed onRetryArtifacts={retry} />)
+    fireEvent.change(screen.getByLabelText('Service type'), { target: { value: 'FUSION' } })
+    expect(screen.getByText(/could not load your published images/i)).toBeTruthy()
+    expect(screen.queryByText(/has not published an app image yet/i)).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(retry).toHaveBeenCalledOnce()
   })
 })

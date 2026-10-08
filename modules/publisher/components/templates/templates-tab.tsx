@@ -21,7 +21,12 @@ export function TemplatesTab({ appId }: { appId: string }) {
   const list = templates.data ?? []
   const editing = editingId ? (list.find((t) => t.id === editingId) ?? null) : null
   const usage = terms.isPending ? 'loading' : terms.error ? 'error' : 'ready'
-  const editingMissing = editingId !== null && !editing && !templates.isPending && !templates.isFetching && !templates.error
+  const editingMissing =
+    editingId !== null &&
+    !editing &&
+    !templates.isPending &&
+    !templates.isFetching &&
+    !templates.error
   const usedBy = (id: string) => (terms.data ?? []).filter((t) => t.templateId === id)
 
   return (
@@ -41,7 +46,11 @@ export function TemplatesTab({ appId }: { appId: string }) {
       {templates.isPending ? (
         <TabSkeleton label="Loading templates" />
       ) : templates.error ? (
-        <TabError error={templates.error} onRetry={() => void templates.refetch()} retrying={templates.isRefetching} />
+        <TabError
+          error={templates.error}
+          onRetry={() => void templates.refetch()}
+          retrying={templates.isRefetching}
+        />
       ) : list.length === 0 ? (
         <EmptyState
           icon={LayoutTemplate}
@@ -76,9 +85,16 @@ export function TemplatesTab({ appId }: { appId: string }) {
         onOpenChange={setCreating}
         onCreated={(id) => setEditingId(id)}
       />
-      <TemplateEditor appId={appId} template={editing} open={editingId !== null}
+      <TemplateEditor
+        appId={appId}
+        template={editing}
+        open={editingId !== null}
         missing={editingMissing}
-        onClose={() => setEditingId(null)} />
+        error={editing ? undefined : (templates.error ?? undefined)}
+        onRetry={() => void templates.refetch()}
+        retrying={templates.isRefetching}
+        onClose={() => setEditingId(null)}
+      />
       <DeleteTemplateDialog appId={appId} template={deleting} onClose={() => setDeleting(null)} />
     </div>
   )

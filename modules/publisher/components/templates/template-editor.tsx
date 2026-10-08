@@ -12,7 +12,7 @@ import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environmen
 import { describeTemplate, templateToForm } from '../../lib/template'
 import { envCountText, templateName } from '../../lib/format'
 import type { PublisherTemplate } from '../../types'
-import { TabSkeleton } from '../primitives'
+import { TabError, TabSkeleton } from '../primitives'
 import { useAffectsConfirm } from './affects-confirm'
 import { TemplateContents } from './template-contents'
 import { TemplateDetailsForm } from './template-details-form'
@@ -23,6 +23,9 @@ export function TemplateEditor({
   template,
   open,
   missing = false,
+  error,
+  onRetry,
+  retrying = false,
   onClose,
 }: {
   appId: string
@@ -30,6 +33,10 @@ export function TemplateEditor({
   open: boolean
   /** The list has loaded and does not contain this template (deleted elsewhere). */
   missing?: boolean
+  /** The templates list failed to load while this editor was open. */
+  error?: unknown
+  onRetry?: () => void
+  retrying?: boolean
   onClose: () => void
 }) {
   const { guard, dialog } = useAffectsConfirm(template?.environmentCount ?? 0)
@@ -48,7 +55,14 @@ export function TemplateEditor({
               : 'Changes apply to every environment built from this template.'}
           </SheetDescription>
         </SheetHeader>
-        {!template && missing ? (
+        {!template && error ? (
+          <div className="space-y-3 px-4">
+            <TabError error={error} onRetry={onRetry ?? (() => undefined)} retrying={retrying} />
+            <Button variant="outline" size="sm" onClick={onClose}>
+              Back to templates
+            </Button>
+          </div>
+        ) : !template && missing ? (
           <div className="space-y-3 px-4" role="alert">
             <p className="text-sm">This template is no longer here. It may have been deleted.</p>
             <Button variant="outline" size="sm" onClick={onClose}>

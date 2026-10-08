@@ -89,4 +89,11 @@ describe('TemplateEditor', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Back to templates' }))
     expect(onClose).toHaveBeenCalled()
   })
+
+  it('shows the load error with retry instead of a skeleton', () => {
+    const onRetry = vi.fn()
+    render(<TemplateEditor appId="app-1" template={null} error={new Error('x')} onRetry={onRetry} open onClose={vi.fn()} />)
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(onRetry).toHaveBeenCalledOnce()
+  })
 })
