@@ -8,13 +8,17 @@
 
 # ---- vetraPublisher (contract) ----
 
-type PublisherApp { id: String!  name: String!  status: String! }
+type PublisherApp {
+  id: String!
+  name: String!
+  status: String!
+}
 
 type PublisherTemplate {
   id: String!
   name: String
-  mode: String!                    # SHARED | DEDICATED
-  sharedEnvironment: String        # SHARED only; null = App Environment
+  mode: String! # SHARED | DEDICATED
+  sharedEnvironment: String # SHARED only; null = App Environment
   size: String
   baseDomain: String
   packageRegistry: String
@@ -25,31 +29,38 @@ type PublisherTemplate {
   environmentCount: Int!
 }
 
-type PublisherTemplateService {    # unchanged
-  id: String!  type: String!  prefix: String  artifactName: String  artifactChannel: String
+type PublisherTemplateService { # unchanged
+  id: String!
+  type: String!
+  prefix: String
+  artifactName: String
+  artifactChannel: String
 }
-type PublisherTemplatePackage { id: String!  packageName: String  version: String }   # unchanged
-
+type PublisherTemplatePackage {
+  id: String!
+  packageName: String
+  version: String
+} # unchanged
 type PublisherTerm {
   id: String!
   kind: String!
   label: String
   templateId: String
   validityDays: Int
-  issuers: [String!]!              # INVITE_CODE | PUBLISHER_GRANT | ACHRA_SUBSCRIPTION
-  status: String!                  # DRAFT | ACTIVE | RETIRED
+  issuers: [String!]! # INVITE_CODE | PUBLISHER_GRANT | ACHRA_SUBSCRIPTION
+  status: String! # DRAFT | ACTIVE | RETIRED
   activeLicenses: Int!
 }
 
 type PublisherLicense {
   id: String!
-  user: String!                    # DID
+  user: String! # DID
   kind: String!
   issuer: String!
-  status: String!                  # ISSUED | ACTIVE | EXPIRED | REVOKED | REPLACED
+  status: String! # ISSUED | ACTIVE | EXPIRED | REVOKED | REPLACED
   start: String
   end: String
-  environmentId: String            # = stage
+  environmentId: String # = stage
   replacedBy: String
 }
 
@@ -76,41 +87,89 @@ type PublisherInviteCode {
   createdAt: String!
 }
 
-type PublisherAllowListEntry { user: String!  addedAt: String! }
+type PublisherAllowListEntry {
+  user: String!
+  addedAt: String!
+}
 
 # PublisherAppArtifact / PublisherArtifactVersion / PublisherArtifactChannel unchanged.
 
-input AddTemplateInput { appId: String!  name: String  mode: String! }
+input AddTemplateInput {
+  appId: String!
+  name: String
+  mode: String!
+}
 input SetTemplateDetailsInput {
-  appId: String!  templateId: String!
-  name: String  mode: String  sharedEnvironment: String
-  size: String  baseDomain: String  packageRegistry: String
+  appId: String!
+  templateId: String!
+  name: String
+  mode: String
+  sharedEnvironment: String
+  size: String
+  baseDomain: String
+  packageRegistry: String
 }
 input AddTemplateServiceInput {
-  appId: String!  templateId: String!
-  type: String!  prefix: String  artifactName: String  artifactChannel: String
+  appId: String!
+  templateId: String!
+  type: String!
+  prefix: String
+  artifactName: String
+  artifactChannel: String
 }
-input AddTemplatePackageInput { appId: String!  templateId: String!  packageName: String!  version: String }
-input RemoveTemplateEntryInput { appId: String!  templateId: String!  id: String! }
+input AddTemplatePackageInput {
+  appId: String!
+  templateId: String!
+  packageName: String!
+  version: String
+}
+input RemoveTemplateEntryInput {
+  appId: String!
+  templateId: String!
+  id: String!
+}
 
 input AddTermInput {
-  appId: String!  kind: String!  label: String  templateId: String
-  validityDays: Int  issuers: [String!]
+  appId: String!
+  kind: String!
+  label: String
+  templateId: String
+  validityDays: Int
+  issuers: [String!]
 }
 input SetTermDetailsInput {
-  appId: String!  termId: String!
-  kind: String  label: String  templateId: String  validityDays: Int  issuers: [String!]
+  appId: String!
+  termId: String!
+  kind: String
+  label: String
+  templateId: String
+  validityDays: Int
+  issuers: [String!]
 }
 
-input IssueGrantInput { appId: String!  kind: String!  user: String!  label: String }
-input ReplaceGrantInput { licenseId: String!  kind: String! }
-input RevokeLicenseInput { licenseId: String!  reason: String }
+input IssueGrantInput {
+  appId: String!
+  kind: String!
+  user: String!
+  label: String
+}
+input ReplaceGrantInput {
+  licenseId: String!
+  kind: String!
+}
+input RevokeLicenseInput {
+  licenseId: String!
+  reason: String
+}
 
 input CreateInviteCodeInput {
-  appId: String!  kind: String!  label: String
+  appId: String!
+  kind: String!
+  label: String
   "Omit to generate a random code."
   code: String
-  expiresAt: String  maxUses: Int
+  expiresAt: String
+  maxUses: Int
   "Write-only; stored encrypted, never returned."
   anthropicKey: String
 }
@@ -127,19 +186,19 @@ type VetraPublisherQueries {
 }
 
 type VetraPublisherMutations {
-  addTemplate(input: AddTemplateInput!): String!            # template id
+  addTemplate(input: AddTemplateInput!): String! # template id
   setTemplateDetails(input: SetTemplateDetailsInput!): Boolean!
   addTemplateService(input: AddTemplateServiceInput!): Boolean!
   removeTemplateService(input: RemoveTemplateEntryInput!): Boolean!
   addTemplatePackage(input: AddTemplatePackageInput!): Boolean!
   removeTemplatePackage(input: RemoveTemplateEntryInput!): Boolean!
   deleteTemplate(appId: String!, templateId: String!): Boolean!
-  addTerm(input: AddTermInput!): String!                    # term id
+  addTerm(input: AddTermInput!): String! # term id
   setTermDetails(input: SetTermDetailsInput!): Boolean!
   publishTerm(appId: String!, termId: String!): Boolean!
   retireTerm(appId: String!, termId: String!): Boolean!
-  issueGrant(input: IssueGrantInput!): String!              # licence id
-  replaceGrant(input: ReplaceGrantInput!): String!          # new licence id
+  issueGrant(input: IssueGrantInput!): String! # licence id
+  replaceGrant(input: ReplaceGrantInput!): String! # new licence id
   revokeLicense(input: RevokeLicenseInput!): Boolean!
   createInviteCode(input: CreateInviteCodeInput!): PublisherInviteCode!
   setInviteCodeActive(appId: String!, code: String!, active: Boolean!): Boolean!
@@ -154,8 +213,14 @@ type PublisherAppArtifact {
   versions: [PublisherArtifactVersion!]!
   channels: [PublisherArtifactChannel!]!
 }
-type PublisherArtifactVersion { version: String!  reference: String! }
-type PublisherArtifactChannel { channel: String!  version: String! }
+type PublisherArtifactVersion {
+  version: String!
+  reference: String!
+}
+type PublisherArtifactChannel {
+  channel: String!
+  version: String!
+}
 
 # ---- vetraSubscriptions (contract) ----
 
@@ -180,7 +245,7 @@ type Subscription {
   status: String!
   start: String
   end: String
-  mode: String!                     # SHARED | DEDICATED
+  mode: String! # SHARED | DEDICATED
   environmentId: String
   environmentLabel: String
   "Where 'Open' goes: the environment's primary URL (DEDICATED) or the app URL (SHARED)."
@@ -192,8 +257,8 @@ type Subscription {
 }
 
 type SubscriptionWarning {
-  kind: String!                     # EXPIRING | ENDED_STOP_PENDING | STOPPED_DELETE_PENDING | DELETE_IMMINENT
-  at: String!                       # the moment the warning is about (expiry, stop, deletion)
+  kind: String! # EXPIRING | ENDED_STOP_PENDING | STOPPED_DELETE_PENDING | DELETE_IMMINENT
+  at: String! # the moment the warning is about (expiry, stop, deletion)
   message: String!
 }
 
