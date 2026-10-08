@@ -18,6 +18,7 @@ let publisher: PublisherState = {
   isPending: false,
 }
 let app: App
+let appError: Error | null = null
 
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn() }),
@@ -28,7 +29,10 @@ vi.mock('@powerhousedao/reactor-browser', () => ({
   useRenownAuthAsync: () => ({ state: 'authenticated' }),
 }))
 vi.mock('../hooks/use-apps', () => ({
-  useApp: () => ({ data: app, isPending: false, error: null }),
+  useApp: () =>
+    appError
+      ? { data: undefined, isPending: false, error: appError }
+      : { data: app, isPending: false, error: null },
   useAppDeployments: () => ({ data: [], isPending: false, error: null }),
   useGithubDeployAppInfo: () => ({ data: undefined }),
   useConfirmAppIdentity: () => ({ mutate: vi.fn(), isPending: false }),
@@ -58,7 +62,8 @@ vi.mock('@/modules/publisher/components/artifacts/artifacts-tab', () => ({
   ArtifactsTab: () => <div>artifacts-content</div>,
 }))
 
-import { AppDetail, visibleAppTabs } from '../components/app-detail'
+import { AppDetail, missingAppView, visibleAppTabs } from '../components/app-detail'
+import { AppsApiError } from '../graphql'
 
 function makeApp(over: Partial<App> = {}): App {
   const urls = { app: null, connect: null, switchboard: null }
@@ -95,6 +100,7 @@ describe('AppDetail tabs', () => {
     cleanup()
     searchParams = new URLSearchParams()
     app = makeApp()
+    appError = null
     publisher = {
       isPublisher: true,
       app: { id: 'app-1', name: 'Vault', status: 'ACTIVE' },
@@ -210,5 +216,57 @@ describe('AppDetail tabs', () => {
     }
     render(<AppDetail appId="app-1" />)
     expect(screen.queryByText('Licensing is paused for this app')).toBeNull()
+  })
+
+  describe('an app that exists only for licensing', () => {
+    const studio = { id: 'studio-1', name: 'Vetra Studio', status: 'ACTIVE' }
+    beforeEach(() => {
+      appError = new AppsApiError('NOT_FOUND', 'no such app', 404)
+    })
+
+    it('picks the page from both answers', () => {
+      const v = (o: Partial<Parameters<typeof missingAppView>[0]>) =>
+        missingAppView({ notFound: true, publisherPending: false, isPublisher: false, ...o })
+      expect(v({ isPublisher: true })).toBe('licensing-only')
+      expect(v({ publisherPending: true })).toBe('checking')
+      expect(v({})).toBe('not-found')
+      expect(v({ notFound: false, isPublisher: true })).toBe('error')
+    })
+
+    it('shows only the licensing tabs, opening on Plans, for its publisher', () => {
+      publisher = { isPublisher: true, app: studio, isPending: false }
+      render(<AppDetail appId="studio-1" />)
+      expect(screen.getByRole('heading', { name: 'Vetra Studio' })).toBeTruthy()
+      expect(tabNames()).toEqual(['Templates', 'Plans', 'Holders', 'Invite codes'])
+      expect(screen.getByRole('tab', { name: 'Plans' }).getAttribute('aria-selected')).toBe('true')
+      expect(screen.getByText('plans-content')).toBeTruthy()
+      expect(screen.queryByRole('link', { name: /visit/i })).toBeNull()
+      expect(screen.queryByText('acme/vault')).toBeNull()
+      expect(screen.queryByText('App not found')).toBeNull()
+    })
+
+    it('follows a deep link to another licensing tab, but never to Overview or Settings', () => {
+      publisher = { isPublisher: true, app: studio, isPending: false }
+      searchParams = new URLSearchParams('tab=invite-codes')
+      render(<AppDetail appId="studio-1" />)
+      expect(screen.getByText('invite-codes-content')).toBeTruthy()
+      cleanup()
+      searchParams = new URLSearchParams('tab=settings')
+      render(<AppDetail appId="studio-1" />)
+      expect(screen.getByText('plans-content')).toBeTruthy()
+    })
+
+    it('waits for the ownership check instead of saying "not found"', () => {
+      publisher = { isPublisher: false, app: undefined, isPending: true }
+      render(<AppDetail appId="studio-1" />)
+      expect(screen.getByText('Loading app…')).toBeTruthy()
+      expect(screen.queryByText('App not found')).toBeNull()
+    })
+
+    it('says "not found" only when both agree', () => {
+      publisher = { isPublisher: false, app: undefined, isPending: false }
+      render(<AppDetail appId="studio-1" />)
+      expect(screen.getByText('App not found')).toBeTruthy()
+    })
   })
 })
