@@ -3,7 +3,8 @@ import { StudioLicenseGate } from '@/modules/studio-license/components/studio-li
 
 export default function UserStudioPage() {
   return (
-    <StudioLicenseGate>
+    // Without a live studio licence the existing studios stay listed; only creating is gated.
+    <StudioLicenseGate notAllowed={<StudioProductsGrid locked />}>
       <StudioProductsGrid />
     </StudioLicenseGate>
   )

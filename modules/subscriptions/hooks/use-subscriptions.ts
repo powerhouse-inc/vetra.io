@@ -1,6 +1,7 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import { useCallback, useState } from 'react'
 import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
 import { retryPublisher } from '@/modules/publisher/graphql'
 import { usePublisherToken } from '@/modules/publisher/hooks/use-publisher'
@@ -49,22 +50,37 @@ export function useMySubscriptions() {
   )
 }
 
+const STUDIO_ACCESS_POLL_MS = 2_000
+/** How long "not known yet" may last before we stop polling and say so. */
+export const STUDIO_ACCESS_WAIT_MS = 60_000
+
 /**
  * Studio licence. `null` means "not known yet" (no bearer token right after a
- * redirect), never "no licence": it keeps polling until a real answer arrives.
+ * redirect), never "no licence": it polls until a real answer arrives, for about a
+ * minute. Then `timedOut` is true and `retry` waits another minute.
  */
 export function useStudioAccess() {
   const { did, keyDid } = useViewerDid()
-  return useAuthedQuery<StudioAccess | null>(
+  const [since, setSince] = useState(() => Date.now())
+  const waited = (updatedAt: number) => updatedAt - since >= STUDIO_ACCESS_WAIT_MS
+  const query = useAuthedQuery<StudioAccess | null>(
     subscriptionsKeys.studioAccess(keyDid),
     (token) => (token ? fetchStudioAccess(token) : Promise.resolve(null)),
     {
       enabled: !!did,
       retry: retryPublisher,
       staleTime: 60_000,
-      refetchInterval: (query) => (query.state.data === null ? 2_000 : false),
+      refetchInterval: (q) =>
+        q.state.data === null && !waited(q.state.dataUpdatedAt) ? STUDIO_ACCESS_POLL_MS : false,
     },
   )
+  const timedOut = query.data === null && waited(query.dataUpdatedAt)
+  const { refetch } = query
+  const retry = useCallback(() => {
+    setSince(Date.now())
+    void refetch()
+  }, [refetch])
+  return { ...query, timedOut, retry }
 }
 
 function useSubscriptionsMutation<V, R>(fn: (vars: V, token: string | null) => Promise<R>) {
@@ -72,8 +88,13 @@ function useSubscriptionsMutation<V, R>(fn: (vars: V, token: string | null) => P
   const token = usePublisherToken()
   return useMutation<R, Error, V>({
     mutationFn: async (vars) => fn(vars, await token()),
-    // Redeeming the studio code changes studioAccess too, so drop every subscription query.
-    onSuccess: () => void qc.invalidateQueries({ queryKey: subscriptionsKeys.all }),
+    // Redeeming the studio code changes studioAccess too, so refresh every subscription query,
+    // except the code check: a single-use code would flash "can't be used" before navigation.
+    onSuccess: () =>
+      void qc.invalidateQueries({
+        queryKey: subscriptionsKeys.all,
+        predicate: (q) => q.queryKey[1] !== 'invite-code',
+      }),
   })
 }
 

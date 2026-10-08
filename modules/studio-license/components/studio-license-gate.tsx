@@ -1,7 +1,9 @@
 'use client'
 
 import { useEffect, useState, type ReactNode } from 'react'
+import { RefreshCw } from 'lucide-react'
 import { TabError } from '@/modules/publisher/components/primitives'
+import { Button } from '@/modules/shared/components/ui/button'
 import { RequireLogin } from '@/modules/shared/components/renown/require-login'
 import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 import { useStudioAccess } from '@/modules/subscriptions/hooks/use-subscriptions'
@@ -35,7 +37,7 @@ function PreAlphaOnce() {
   return <PreAlphaWarningDialog open={open} onAcknowledge={acknowledge} />
 }
 
-function LicenceCheck({ children }: { children: ReactNode }) {
+function LicenceCheck({ children, notAllowed }: { children: ReactNode; notAllowed?: ReactNode }) {
   const access = useStudioAccess()
   if (access.data?.allowed) {
     return (
@@ -57,6 +59,26 @@ function LicenceCheck({ children }: { children: ReactNode }) {
       </div>
     )
   }
+  // No answer for about a minute (usually no login token): say so instead of loading forever.
+  if (access.timedOut) {
+    return (
+      <div className="mx-auto mt-28 max-w-lg px-6">
+        <div
+          role="alert"
+          className="border-border bg-card flex flex-col items-center gap-3 rounded-xl border px-6 py-10 text-center"
+        >
+          <p className="text-sm font-semibold">We couldn’t check your studio access</p>
+          <p className="text-muted-foreground max-w-md text-sm">
+            Your login may not have finished. Try again, or log out and back in.
+          </p>
+          <Button size="sm" variant="outline" onClick={access.retry}>
+            <RefreshCw className="h-3.5 w-3.5" />
+            Try again
+          </Button>
+        </div>
+      </div>
+    )
+  }
   if (access.isPending || access.data == null) {
     return (
       <div
@@ -69,14 +91,23 @@ function LicenceCheck({ children }: { children: ReactNode }) {
       </div>
     )
   }
-  return <NoLicencePanel />
+  return notAllowed ?? <NoLicencePanel />
 }
 
-/** Gates Vetra Studio and app creation on a vetra-studio licence (decision D2). */
-export function StudioLicenseGate({ children }: { children: ReactNode }) {
+/**
+ * Gates Vetra Studio and app creation on a vetra-studio licence (decision D2). `notAllowed`
+ * replaces the "redeem a code" panel for pages that still show something without a licence.
+ */
+export function StudioLicenseGate({
+  children,
+  notAllowed,
+}: {
+  children: ReactNode
+  notAllowed?: ReactNode
+}) {
   return (
     <RequireLogin title="Log in to use Vetra Studio">
-      <LicenceCheck>{children}</LicenceCheck>
+      <LicenceCheck notAllowed={notAllowed}>{children}</LicenceCheck>
     </RequireLogin>
   )
 }

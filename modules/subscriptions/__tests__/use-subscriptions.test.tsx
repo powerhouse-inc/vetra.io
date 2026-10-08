@@ -40,7 +40,7 @@ function setup() {
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   )
-  return { Wrapper, invalidate }
+  return { Wrapper, invalidate, qc }
 }
 
 describe('subscription hooks', () => {
@@ -70,14 +70,44 @@ describe('subscription hooks', () => {
     await waitFor(() => expect(result.current.subscription?.licenseId).toBe('new'))
   })
 
-  it('refreshes every subscription query after a redemption', async () => {
+  it('refreshes subscription queries after a redemption, but not the code check', async () => {
     redeemInviteCode.mockResolvedValue({ licenseId: 'l1' })
-    const { Wrapper, invalidate } = setup()
+    const { Wrapper, qc } = setup()
+    qc.setQueryData(['subscriptions', 'mine', 'did:pkh:eip155:1:0xme'], [])
+    qc.setQueryData(['subscriptions', 'invite-code', 'C'], { valid: true })
     const { result } = renderHook(() => useRedeemInviteCode(), { wrapper: Wrapper })
     await act(async () => {
       await result.current.mutateAsync({ code: 'C' })
     })
     expect(redeemInviteCode).toHaveBeenCalledWith({ code: 'C' }, 'tok')
-    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['subscriptions'] })
+    expect(
+      qc.getQueryState(['subscriptions', 'mine', 'did:pkh:eip155:1:0xme'])?.isInvalidated,
+    ).toBe(true)
+    expect(qc.getQueryState(['subscriptions', 'invite-code', 'C'])?.isInvalidated).toBe(false)
+  })
+
+  it('stops waiting for a studio answer after about a minute, and can start again', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true })
+    try {
+      fetchStudioAccess.mockResolvedValue(null)
+      const { Wrapper } = setup()
+      const { result } = renderHook(() => useStudioAccess(), { wrapper: Wrapper })
+      await waitFor(() => expect(fetchStudioAccess).toHaveBeenCalled())
+      expect(result.current.timedOut).toBe(false)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(62_000)
+      })
+      await waitFor(() => expect(result.current.timedOut).toBe(true))
+      const calls = fetchStudioAccess.mock.calls.length
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(10_000)
+      })
+      expect(fetchStudioAccess.mock.calls.length).toBe(calls)
+      act(() => result.current.retry())
+      await waitFor(() => expect(result.current.timedOut).toBe(false))
+      expect(fetchStudioAccess.mock.calls.length).toBeGreaterThan(calls)
+    } finally {
+      vi.useRealTimers()
+    }
   })
 })

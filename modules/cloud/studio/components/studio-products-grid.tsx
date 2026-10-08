@@ -1,7 +1,15 @@
 'use client'
 
-import { Loader2 } from 'lucide-react'
+import { Loader2, Ticket } from 'lucide-react'
+import Link from 'next/link'
+import { Banner } from '@/modules/apps/components/banner'
 import { CloudLanding } from '@/modules/cloud/components/cloud-landing'
+import { Button } from '@/modules/shared/components/ui/button'
+import { NoLicencePanel } from '@/modules/studio-license/components/no-licence-panel'
+import {
+  useMySubscriptions,
+  useStudioAccess,
+} from '@/modules/subscriptions/hooks/use-subscriptions'
 import { StudioBootScreen } from './studio-boot-screen'
 import { StudioProductCard } from './studio-product-card'
 import { NewProductCard } from './new-product-card'
@@ -26,7 +34,38 @@ function ProductCardSkeleton() {
   )
 }
 
-export function StudioProductsGrid() {
+/** Shown above the list when the studio licence has lapsed: what happens next, and how to get back in. */
+function LapsedBanner() {
+  const access = useStudioAccess()
+  const subs = useMySubscriptions()
+  const licenseId = access.data?.licenseId
+  const licence = licenseId ? subs.data?.find((s) => s.licenseId === licenseId) : undefined
+  const warning = licence?.warnings[0]
+  return (
+    <div className="mb-6">
+      <Banner
+        tone={warning ? 'warning' : 'neutral'}
+        icon={Ticket}
+        title="Your studio access has ended"
+        actions={
+          <Button asChild size="sm">
+            <Link href="/redeem">Redeem a code</Link>
+          </Button>
+        }
+      >
+        {warning ? `${warning.message} ` : ''}Your studios are listed below. Redeem a code to create
+        new ones.
+      </Banner>
+    </div>
+  )
+}
+
+/**
+ * The studio list. `locked`: no live studio licence, so existing studios stay listed (with the
+ * licence's offboarding warning) but nothing new can be created; with no studios at all it is
+ * the "redeem a code" panel.
+ */
+export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
   const {
     gate,
     products,
@@ -57,9 +96,12 @@ export function StudioProductsGrid() {
   // Authed, settled, and genuinely empty: invite the user to create their first.
   const showEmptyState = !isScanning && products.length === 0 && !creating
 
+  if (locked && showEmptyState) return <NoLicencePanel />
+
   return (
     <div className="mx-auto mt-24 max-w-screen-xl px-6 pb-16">
       <h1 className="mb-6 text-2xl font-semibold">Studio</h1>
+      {locked && <LapsedBanner />}
 
       {showEmptyState ? (
         <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
@@ -96,7 +138,7 @@ export function StudioProductsGrid() {
                   })}
                 />
               ))}
-              {creating ? (
+              {locked ? null : creating ? (
                 // Card-sized creating state that sits in the grid alongside the
                 // product cards. (StudioBootScreen is a min-h-[60vh] full-screen
                 // spinner — using it here ballooned the grid cell.)
