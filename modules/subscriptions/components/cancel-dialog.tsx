@@ -17,13 +17,22 @@ import { useCancelSubscription } from '../hooks/use-subscriptions'
 import { subscriptionName } from '../lib/subscriptions'
 import type { Subscription } from '../types'
 
-export function CancelDialog({ subscription: current, onClose }: { subscription: Subscription | null; onClose: () => void }) {
+export function CancelDialog({
+  subscription: current,
+  onClose,
+}: {
+  subscription: Subscription | null
+  onClose: () => void
+}) {
   const cancel = useCancelSubscription()
   // Keep the last subscription so the title and body do not flash while the dialog animates closed.
   const subscription = useLastPresent(current)
   const confirm = async () => {
     if (!current) return
-    const ok = await runWithToast(() => cancel.mutateAsync({ licenseId: current.licenseId }), 'Subscription cancelled')
+    const ok = await runWithToast(
+      () => cancel.mutateAsync({ licenseId: current.licenseId }),
+      'Subscription cancelled',
+    )
     if (ok) onClose()
   }
   return (
@@ -31,7 +40,11 @@ export function CancelDialog({ subscription: current, onClose }: { subscription:
       <AlertDialogContent className="max-h-[85vh] overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Cancel {subscription ? `${subscriptionName(subscription)} on ${subscription.appName}` : 'subscription'}?
+            Cancel{' '}
+            {subscription
+              ? `${subscriptionName(subscription)} on ${subscription.appName}`
+              : 'subscription'}
+            ?
           </AlertDialogTitle>
           <AlertDialogDescription>
             {subscription?.mode === 'SHARED'

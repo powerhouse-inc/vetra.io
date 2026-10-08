@@ -15,23 +15,54 @@ const openLogin = vi.fn()
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
-vi.mock('@powerhousedao/reactor-browser', () => ({ useRenownAuthAsync: () => ({ state: authState }) }))
-vi.mock('@/modules/shared/components/renown/login-modal-context', () => ({ useOpenLogin: () => openLogin }))
+vi.mock('@powerhousedao/reactor-browser', () => ({
+  useRenownAuthAsync: () => ({ state: authState }),
+}))
+vi.mock('@/modules/shared/components/renown/login-modal-context', () => ({
+  useOpenLogin: () => openLogin,
+}))
 vi.mock('../hooks/use-subscriptions', () => ({
   useInviteCodeCheck: () => check,
-  useMySubscriptions: () => ({ data: subs, isPending: false, fetchStatus: 'idle', error: null, refetch: refetchSubs, ...mySubs }),
+  useMySubscriptions: () => ({
+    data: subs,
+    isPending: false,
+    fetchStatus: 'idle',
+    error: null,
+    refetch: refetchSubs,
+    ...mySubs,
+  }),
   useRedeemInviteCode: () => ({ mutateAsync: redeem, isPending: false }),
 }))
 
 import { RedeemFlow } from '../components/redeem/redeem-flow'
 
 const valid = (over: Partial<InviteCodeCheck> = {}): InviteCodeCheck => ({
-  valid: true, appId: 'kv', appName: 'Knowledge Vault', kind: 'kv-pilot', termLabel: 'Pilot', mode: 'DEDICATED', ...over,
+  valid: true,
+  appId: 'kv',
+  appName: 'Knowledge Vault',
+  kind: 'kv-pilot',
+  termLabel: 'Pilot',
+  mode: 'DEDICATED',
+  ...over,
 })
 const sub = (over: Partial<Subscription>): Subscription => ({
-  licenseId: 'l1', appId: 'kv', appName: 'Knowledge Vault', kind: 'kv-free', termLabel: 'Free',
-  issuer: 'INVITE_CODE', status: 'ACTIVE', start: '2026-10-01T00:00:00Z', end: null, mode: 'DEDICATED',
-  environmentId: 'env-1', environmentLabel: 'Acme', openUrl: null, stoppedAt: null, deleteAfter: null, warnings: [], ...over,
+  licenseId: 'l1',
+  appId: 'kv',
+  appName: 'Knowledge Vault',
+  kind: 'kv-free',
+  termLabel: 'Free',
+  issuer: 'INVITE_CODE',
+  status: 'ACTIVE',
+  start: '2026-10-01T00:00:00Z',
+  end: null,
+  mode: 'DEDICATED',
+  environmentId: 'env-1',
+  environmentLabel: 'Acme',
+  openUrl: null,
+  stoppedAt: null,
+  deleteAfter: null,
+  warnings: [],
+  ...over,
 })
 
 describe('RedeemFlow', () => {
@@ -44,11 +75,17 @@ describe('RedeemFlow', () => {
   })
 
   it('says an invalid code is invalid before asking anyone to log in', () => {
-    check = { data: { valid: false, appId: null, appName: null, kind: null, termLabel: null, mode: null }, isPending: false, error: null }
+    check = {
+      data: { valid: false, appId: null, appName: null, kind: null, termLabel: null, mode: null },
+      isPending: false,
+      error: null,
+    }
     render(<RedeemFlow code="NOPE" />)
     expect(screen.getByText('This code can’t be used')).toBeTruthy()
     expect(screen.queryByRole('button', { name: 'Log in with Renown' })).toBeNull()
-    expect(screen.getByRole('link', { name: /try another code/i }).getAttribute('href')).toBe('/redeem')
+    expect(screen.getByRole('link', { name: /try another code/i }).getAttribute('href')).toBe(
+      '/redeem',
+    )
   })
 
   it('shows what the code gives, then asks to log in', () => {
@@ -97,12 +134,17 @@ describe('RedeemFlow', () => {
   it('offers to upgrade a live licence of the same app, and only that', async () => {
     authState = 'authenticated'
     check = { data: valid(), isPending: false, error: null }
-    subs = [sub({ licenseId: 'live' }), sub({ licenseId: 'ended', status: 'EXPIRED', termLabel: 'Old' })]
+    subs = [
+      sub({ licenseId: 'live' }),
+      sub({ licenseId: 'ended', status: 'EXPIRED', termLabel: 'Old' }),
+    ]
     redeem.mockResolvedValue(sub({ licenseId: 'new-3' }))
     render(<RedeemFlow code="KV-PILOT" />)
     expect(screen.queryByRole('radio', { name: /upgrade old/i })).toBeNull()
     // Preselected: a second code for something you hold is an extension, not a second licence.
-    expect(screen.getByRole('radio', { name: /upgrade free/i }).getAttribute('aria-checked')).toBe('true')
+    expect(screen.getByRole('radio', { name: /upgrade free/i }).getAttribute('aria-checked')).toBe(
+      'true',
+    )
     expect(screen.queryByLabelText('Project name')).toBeNull()
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
     expect(redeem).toHaveBeenCalledWith({ code: 'KV-PILOT', upgrades: 'live' })
@@ -122,8 +164,25 @@ describe('RedeemFlow', () => {
 
   it('extends the studio licence a person already holds instead of failing with ALREADY_HOLDS', async () => {
     authState = 'authenticated'
-    check = { data: valid({ appId: 'studio', appName: 'Vetra Studio', mode: 'SHARED', termLabel: 'Early access' }), isPending: false, error: null }
-    subs = [sub({ licenseId: 'studio-lic', appId: 'studio', appName: 'Vetra Studio', termLabel: 'Early access', mode: 'SHARED' })]
+    check = {
+      data: valid({
+        appId: 'studio',
+        appName: 'Vetra Studio',
+        mode: 'SHARED',
+        termLabel: 'Early access',
+      }),
+      isPending: false,
+      error: null,
+    }
+    subs = [
+      sub({
+        licenseId: 'studio-lic',
+        appId: 'studio',
+        appName: 'Vetra Studio',
+        termLabel: 'Early access',
+        mode: 'SHARED',
+      }),
+    ]
     redeem.mockResolvedValue(sub({ licenseId: 'studio-lic-2' }))
     render(<RedeemFlow code="STUDIO-2" />)
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
@@ -137,7 +196,9 @@ describe('RedeemFlow', () => {
     render(<RedeemFlow code="FREE" />)
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
     expect(screen.getByText('You already have this plan')).toBeTruthy()
-    expect(screen.getByRole('link', { name: /see your subscriptions/i }).getAttribute('href')).toBe('/user/subscriptions')
+    expect(screen.getByRole('link', { name: /see your subscriptions/i }).getAttribute('href')).toBe(
+      '/user/subscriptions',
+    )
     expect(push).not.toHaveBeenCalled()
   })
 
@@ -190,7 +251,9 @@ describe('RedeemFlow', () => {
     fireEvent.click(screen.getByRole('radio', { name: 'Start something new' }))
     fireEvent.change(screen.getByLabelText('Project name'), { target: { value: 'Again' } })
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Extend Free instead' })))
+    await act(async () =>
+      fireEvent.click(screen.getByRole('button', { name: 'Extend Free instead' })),
+    )
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
     expect(redeem).toHaveBeenLastCalledWith({ code: 'KV-PILOT', upgrades: 'live' })
   })
@@ -201,7 +264,9 @@ describe('RedeemFlow', () => {
     redeem.mockResolvedValue(sub({ licenseId: 'new-6' }))
     render(<RedeemFlow code="FREE" />)
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
-    expect((screen.getByRole('button', { name: 'Get access' }) as HTMLButtonElement).disabled).toBe(true)
+    expect((screen.getByRole('button', { name: 'Get access' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    )
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
     expect(redeem).toHaveBeenCalledTimes(1)
   })

@@ -19,15 +19,28 @@ vi.mock('@/modules/cloud/hooks/use-environment', () => ({
     isError: false,
   }),
 }))
-vi.mock('@/modules/shared/components/ui/select', () => import('@/modules/shared/test/native-select'))
+vi.mock(
+  '@/modules/shared/components/ui/select',
+  () => import('@/modules/shared/test/native-select'),
+)
 // Contents have their own tests; this one is about the details guard.
 vi.mock('../components/templates/template-contents', () => ({ TemplateContents: () => null }))
 
 import { TemplateEditor } from '../components/templates/template-editor'
 
 const tpl = (over: Partial<PublisherTemplate> = {}): PublisherTemplate => ({
-  id: 'tpl-1', name: 'Pro', mode: 'DEDICATED', sharedEnvironment: null, size: null, baseDomain: null,
-  packageRegistry: null, services: [], packages: [], templateHash: 'h', environmentCount: 3, ...over,
+  id: 'tpl-1',
+  name: 'Pro',
+  mode: 'DEDICATED',
+  sharedEnvironment: null,
+  size: null,
+  baseDomain: null,
+  packageRegistry: null,
+  services: [],
+  packages: [],
+  templateHash: 'h',
+  environmentCount: 3,
+  ...over,
 })
 
 describe('TemplateEditor', () => {
@@ -52,7 +65,9 @@ describe('TemplateEditor', () => {
     render(<TemplateEditor appId="app-1" template={tpl()} open onClose={vi.fn()} />)
     fireEvent.change(screen.getByLabelText('Size'), { target: { value: 'VETRA_AGENT_L' } })
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Save changes' })))
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Apply to 3 environments' })))
+    await act(async () =>
+      fireEvent.click(screen.getByRole('button', { name: 'Apply to 3 environments' })),
+    )
     expect(setDetails).toHaveBeenCalledOnce()
   })
 
@@ -79,7 +94,9 @@ describe('TemplateEditor', () => {
         onClose={vi.fn()}
       />,
     )
-    expect((screen.getByLabelText('Shared environment') as HTMLSelectElement).value).toBe('env-gone')
+    expect((screen.getByLabelText('Shared environment') as HTMLSelectElement).value).toBe(
+      'env-gone',
+    )
   })
 
   it('shows a short error with Close when the template is missing', () => {
@@ -92,7 +109,16 @@ describe('TemplateEditor', () => {
 
   it('shows the load error with retry instead of a skeleton', () => {
     const onRetry = vi.fn()
-    render(<TemplateEditor appId="app-1" template={null} error={new Error('x')} onRetry={onRetry} open onClose={vi.fn()} />)
+    render(
+      <TemplateEditor
+        appId="app-1"
+        template={null}
+        error={new Error('x')}
+        onRetry={onRetry}
+        open
+        onClose={vi.fn()}
+      />,
+    )
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(onRetry).toHaveBeenCalledOnce()
   })

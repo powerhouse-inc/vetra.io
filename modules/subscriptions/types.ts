@@ -12,10 +12,7 @@ export type InviteCodeCheck = {
 }
 
 export type SubscriptionWarningKind =
-  | 'EXPIRING'
-  | 'ENDED_STOP_PENDING'
-  | 'STOPPED_DELETE_PENDING'
-  | 'DELETE_IMMINENT'
+  'EXPIRING' | 'ENDED_STOP_PENDING' | 'STOPPED_DELETE_PENDING' | 'DELETE_IMMINENT'
 
 export type SubscriptionWarning = { kind: SubscriptionWarningKind; at: string; message: string }
 

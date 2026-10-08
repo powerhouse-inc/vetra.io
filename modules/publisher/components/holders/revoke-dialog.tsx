@@ -54,7 +54,9 @@ export function RevokeDialog({
     <AlertDialog open={!!license} onOpenChange={(o) => !o && close()}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>Revoke {shown ? shortDid(shown.license.user) : ''}’s licence?</AlertDialogTitle>
+          <AlertDialogTitle>
+            Revoke {shown ? shortDid(shown.license.user) : ''}’s licence?
+          </AlertDialogTitle>
           <AlertDialogDescription>
             {shown?.mode === 'SHARED'
               ? 'They lose access to your app right away.'

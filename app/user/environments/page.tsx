@@ -21,7 +21,6 @@ export default function EnvironmentsPage() {
     if (state === 'unauthenticated') router.replace('/cloud')
   }, [state, router])
 
-  if (state === 'authenticated')
-    return <CloudDashboard />
+  if (state === 'authenticated') return <CloudDashboard />
   return null
 }

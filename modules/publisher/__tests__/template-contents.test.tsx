@@ -16,14 +16,26 @@ vi.mock('../hooks/use-publisher-mutations', () => ({
   useAddTemplatePackage: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useRemoveTemplatePackage: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
-vi.mock('@/modules/shared/components/ui/select', () => import('@/modules/shared/test/native-select'))
+vi.mock(
+  '@/modules/shared/components/ui/select',
+  () => import('@/modules/shared/test/native-select'),
+)
 
 import { useAffectsConfirm } from '../components/templates/affects-confirm'
 import { TemplateContents } from '../components/templates/template-contents'
 
 const tpl: PublisherTemplate = {
-  id: 'tpl-1', name: 'Pro', mode: 'DEDICATED', sharedEnvironment: null, size: null, baseDomain: null,
-  packageRegistry: null, services: [], packages: [], templateHash: 'h', environmentCount: 2,
+  id: 'tpl-1',
+  name: 'Pro',
+  mode: 'DEDICATED',
+  sharedEnvironment: null,
+  size: null,
+  baseDomain: null,
+  packageRegistry: null,
+  services: [],
+  packages: [],
+  templateHash: 'h',
+  environmentCount: 2,
 }
 
 function Harness() {
@@ -49,7 +61,9 @@ describe('TemplateContents', () => {
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Add service' })))
     expect(screen.getByRole('alertdialog')).toBeTruthy()
     expect(addService).not.toHaveBeenCalled()
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Apply to 2 environments' })))
+    await act(async () =>
+      fireEvent.click(screen.getByRole('button', { name: 'Apply to 2 environments' })),
+    )
     expect(addService).toHaveBeenCalledOnce()
   })
 

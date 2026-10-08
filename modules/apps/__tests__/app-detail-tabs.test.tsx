@@ -37,7 +37,9 @@ vi.mock('@/modules/publisher/hooks/use-publisher', () => ({
   useAppPublisher: () => publisher,
 }))
 vi.mock('../components/app-overview', () => ({ AppOverview: () => <div>overview-content</div> }))
-vi.mock('../components/app-deployments', () => ({ AppDeployments: () => <div>deployments-content</div> }))
+vi.mock('../components/app-deployments', () => ({
+  AppDeployments: () => <div>deployments-content</div>,
+}))
 vi.mock('../components/app-settings', () => ({ AppSettings: () => <div>settings-content</div> }))
 vi.mock('../components/github-flow-link', () => ({ GithubFlowLink: () => null }))
 vi.mock('@/modules/publisher/components/plans/plans-tab', () => ({
@@ -61,37 +63,79 @@ import { AppDetail, visibleAppTabs } from '../components/app-detail'
 function makeApp(over: Partial<App> = {}): App {
   const urls = { app: null, connect: null, switchboard: null }
   return {
-    id: 'app-1', slug: 'vault', name: 'Vault', ownerAddress: '0xme', status: 'ACTIVE',
+    id: 'app-1',
+    slug: 'vault',
+    name: 'Vault',
+    ownerAddress: '0xme',
+    status: 'ACTIVE',
     repository: { installationId: '1', repositoryId: '2', fullName: 'acme/vault' },
-    productionBranch: 'main', productionEnvironmentId: 'env-prod', previewsEnabled: false,
-    previewLimit: 0, previewTtlDays: 0, harborProject: 'acme', identityDid: 'did:key:z',
-    renownAuthorizeUrl: 'https://renown/authorize', identityExpiresAt: null, productionUrls: urls,
-    previews: [], latestDeployment: null, createdAt: '2026-10-01T00:00:00Z', updatedAt: '2026-10-01T00:00:00Z',
+    productionBranch: 'main',
+    productionEnvironmentId: 'env-prod',
+    previewsEnabled: false,
+    previewLimit: 0,
+    previewTtlDays: 0,
+    harborProject: 'acme',
+    identityDid: 'did:key:z',
+    renownAuthorizeUrl: 'https://renown/authorize',
+    identityExpiresAt: null,
+    productionUrls: urls,
+    previews: [],
+    latestDeployment: null,
+    createdAt: '2026-10-01T00:00:00Z',
+    updatedAt: '2026-10-01T00:00:00Z',
     ...over,
   }
 }
 
-const tabNames = () => screen.getAllByRole('tab').map((t) => t.textContent?.replace(/\d+$/, '').trim())
+const tabNames = () =>
+  screen.getAllByRole('tab').map((t) => t.textContent?.replace(/\d+$/, '').trim())
 
 describe('AppDetail tabs', () => {
   beforeEach(() => {
     cleanup()
     searchParams = new URLSearchParams()
     app = makeApp()
-    publisher = { isPublisher: true, app: { id: 'app-1', name: 'Vault', status: 'ACTIVE' }, isPending: false }
+    publisher = {
+      isPublisher: true,
+      app: { id: 'app-1', name: 'Vault', status: 'ACTIVE' },
+      isPending: false,
+    }
   })
 
   it('computes the tab list from ownership and read-only state', () => {
     expect(visibleAppTabs({ readOnly: false, isPublisher: true })).toEqual([
-      'overview', 'deployments', 'artifacts', 'templates', 'plans', 'holders', 'invite-codes', 'settings',
+      'overview',
+      'deployments',
+      'artifacts',
+      'templates',
+      'plans',
+      'holders',
+      'invite-codes',
+      'settings',
     ])
-    expect(visibleAppTabs({ readOnly: false, isPublisher: false })).toEqual(['overview', 'deployments', 'settings'])
-    expect(visibleAppTabs({ readOnly: true, isPublisher: true })).toEqual(['overview', 'deployments'])
+    expect(visibleAppTabs({ readOnly: false, isPublisher: false })).toEqual([
+      'overview',
+      'deployments',
+      'settings',
+    ])
+    expect(visibleAppTabs({ readOnly: true, isPublisher: true })).toEqual([
+      'overview',
+      'deployments',
+    ])
   })
 
   it('shows licensing tabs to the publisher, with readable labels', () => {
     render(<AppDetail appId="app-1" />)
-    expect(tabNames()).toEqual(['Overview', 'Deployments', 'Artifacts', 'Templates', 'Plans', 'Holders', 'Invite codes', 'Settings'])
+    expect(tabNames()).toEqual([
+      'Overview',
+      'Deployments',
+      'Artifacts',
+      'Templates',
+      'Plans',
+      'Holders',
+      'Invite codes',
+      'Settings',
+    ])
   })
 
   it('opens a licensing tab from the URL', () => {
@@ -110,14 +154,22 @@ describe('AppDetail tabs', () => {
   })
 
   it('shows the paused-licensing banner on a licensing tab of an inactive app', () => {
-    publisher = { isPublisher: true, app: { id: 'app-1', name: 'Vault', status: 'PENDING_IDENTITY' }, isPending: false }
+    publisher = {
+      isPublisher: true,
+      app: { id: 'app-1', name: 'Vault', status: 'PENDING_IDENTITY' },
+      isPending: false,
+    }
     searchParams = new URLSearchParams('tab=artifacts')
     render(<AppDetail appId="app-1" />)
     expect(screen.getByText('Licensing is paused for this app')).toBeTruthy()
   })
 
   it('names the next step in the paused banner instead of a raw status', () => {
-    publisher = { isPublisher: true, app: { id: 'app-1', name: 'Vault', status: 'PENDING_IDENTITY' }, isPending: false }
+    publisher = {
+      isPublisher: true,
+      app: { id: 'app-1', name: 'Vault', status: 'PENDING_IDENTITY' },
+      isPending: false,
+    }
     searchParams = new URLSearchParams('tab=artifacts')
     render(<AppDetail appId="app-1" />)
     expect(screen.getByText(/Authorize this app on Renown first/)).toBeTruthy()
@@ -151,7 +203,11 @@ describe('AppDetail tabs', () => {
   })
 
   it('does not show the paused banner on Overview', () => {
-    publisher = { isPublisher: true, app: { id: 'app-1', name: 'Vault', status: 'PENDING_IDENTITY' }, isPending: false }
+    publisher = {
+      isPublisher: true,
+      app: { id: 'app-1', name: 'Vault', status: 'PENDING_IDENTITY' },
+      isPending: false,
+    }
     render(<AppDetail appId="app-1" />)
     expect(screen.queryByText('Licensing is paused for this app')).toBeNull()
   })

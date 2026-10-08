@@ -48,7 +48,12 @@ export function ModeChoice({
                 disabled && 'cursor-not-allowed opacity-60',
               )}
             >
-              <RadioGroupItem value={o.value} disabled={disabled} aria-label={o.title} className="border-muted-foreground/50 data-[state=checked]:border-primary mt-1" />
+              <RadioGroupItem
+                value={o.value}
+                disabled={disabled}
+                aria-label={o.title}
+                className="border-muted-foreground/50 data-[state=checked]:border-primary mt-1"
+              />
               <span className="space-y-1">
                 <span className="flex items-center gap-2 font-medium">
                   <o.icon className="h-4 w-4" aria-hidden />

@@ -30,7 +30,10 @@ export function DeleteTemplateDialog({
   const shown = useLastPresent(template)
   const confirm = async () => {
     if (!template) return
-    const ok = await runWithToast(() => del.mutateAsync({ templateId: template.id }), 'Template deleted')
+    const ok = await runWithToast(
+      () => del.mutateAsync({ templateId: template.id }),
+      'Template deleted',
+    )
     if (ok) onClose()
   }
   return (

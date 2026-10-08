@@ -31,18 +31,22 @@ export function useInviteCodeCheck(code: string) {
 
 export function useMySubscriptions() {
   const { did, keyDid } = useViewerDid()
-  return useAuthedQuery<Subscription[]>(subscriptionsKeys.mine(keyDid), (token) => fetchMySubscriptions(token), {
-    enabled: !!did,
-    retry: retryPublisher,
-    // A fresh licence is ISSUED and its environment appears a little later: poll until settled.
-    refetchInterval: (query) =>
-      query.state.data?.some(
-        (s) => s.status === 'ISSUED' || (s.mode === 'DEDICATED' && isLive(s) && !s.environmentId),
-      )
-        ? SETTLING_POLL_MS
-        : false,
-    refetchIntervalInBackground: false,
-  })
+  return useAuthedQuery<Subscription[]>(
+    subscriptionsKeys.mine(keyDid),
+    (token) => fetchMySubscriptions(token),
+    {
+      enabled: !!did,
+      retry: retryPublisher,
+      // A fresh licence is ISSUED and its environment appears a little later: poll until settled.
+      refetchInterval: (query) =>
+        query.state.data?.some(
+          (s) => s.status === 'ISSUED' || (s.mode === 'DEDICATED' && isLive(s) && !s.environmentId),
+        )
+          ? SETTLING_POLL_MS
+          : false,
+      refetchIntervalInBackground: false,
+    },
+  )
 }
 
 /**
@@ -74,10 +78,14 @@ function useSubscriptionsMutation<V, R>(fn: (vars: V, token: string | null) => P
 }
 
 export const useRedeemInviteCode = () =>
-  useSubscriptionsMutation<RedeemInviteCodeInput, Subscription>((input, t) => redeemInviteCode(input, t))
+  useSubscriptionsMutation<RedeemInviteCodeInput, Subscription>((input, t) =>
+    redeemInviteCode(input, t),
+  )
 
 export const useCancelSubscription = () =>
-  useSubscriptionsMutation<{ licenseId: string }, boolean>(({ licenseId }, t) => cancelSubscription(licenseId, t))
+  useSubscriptionsMutation<{ licenseId: string }, boolean>(({ licenseId }, t) =>
+    cancelSubscription(licenseId, t),
+  )
 
 export function useSubscriptionForEnvironment(environmentId: string) {
   const subs = useMySubscriptions()

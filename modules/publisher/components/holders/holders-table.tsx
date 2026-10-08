@@ -106,17 +106,33 @@ export function HoldersTable({
                 <TableCell>
                   <StatusPill meta={licenseStatusMeta(r.status)} />
                 </TableCell>
-                <TableCell className="text-muted-foreground text-sm whitespace-nowrap">{dateRange(r.start, r.end)}</TableCell>
+                <TableCell className="text-muted-foreground text-sm whitespace-nowrap">
+                  {dateRange(r.start, r.end)}
+                </TableCell>
                 <TableCell className="text-sm">
-                  <EnvironmentCell row={r} mode={modeOf(r.kind)} unavailable={environmentsUnavailable} />
+                  <EnvironmentCell
+                    row={r}
+                    mode={modeOf(r.kind)}
+                    unavailable={environmentsUnavailable}
+                  />
                 </TableCell>
                 <TableCell className="pr-4 text-right whitespace-nowrap">
                   {live && (
                     <div className="inline-flex gap-2">
-                      <Button size="sm" variant="outline" className="h-8" onClick={() => onChangePlan(r)}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8"
+                        onClick={() => onChangePlan(r)}
+                      >
                         Change plan
                       </Button>
-                      <Button size="sm" variant="ghost" className="text-destructive h-8" onClick={() => onRevoke(r)}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="text-destructive h-8"
+                        onClick={() => onRevoke(r)}
+                      >
                         Revoke
                       </Button>
                     </div>

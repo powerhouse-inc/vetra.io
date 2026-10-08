@@ -31,7 +31,10 @@ export function TabSkeleton({ rows = 3, label }: { rows?: number; label: string 
   return (
     <div className="space-y-3" role="status" aria-label={label}>
       {Array.from({ length: rows }, (_, i) => (
-        <div key={i} className="bg-card border-border flex items-center gap-4 rounded-xl border p-4">
+        <div
+          key={i}
+          className="bg-card border-border flex items-center gap-4 rounded-xl border p-4"
+        >
           <Skeleton className="h-10 w-10 shrink-0 rounded-xl" />
           <div className="flex-1 space-y-2">
             <Skeleton className="h-4 w-1/3" />

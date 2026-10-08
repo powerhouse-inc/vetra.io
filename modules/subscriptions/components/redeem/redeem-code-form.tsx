@@ -16,7 +16,11 @@ export function RedeemCodeForm({ initial = '' }: { initial?: string }) {
     if (trimmed) router.push(redeemPath(trimmed))
   }
   return (
-    <form onSubmit={submit} aria-label="Redeem an invite code" className="flex flex-col gap-2 sm:flex-row">
+    <form
+      onSubmit={submit}
+      aria-label="Redeem an invite code"
+      className="flex flex-col gap-2 sm:flex-row"
+    >
       <Input
         aria-label="Invite code"
         placeholder="Enter your code"

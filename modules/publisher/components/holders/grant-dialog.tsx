@@ -34,7 +34,13 @@ import {
 } from '@/modules/shared/components/ui/select'
 import { useAddToAllowList, useIssueGrant } from '../../hooks/use-publisher-mutations'
 import { termName } from '../../lib/format'
-import { grantablePlans, isOnAllowList, liveLicenseOf, modeOfKind, USER_PATTERN } from '../../lib/holders'
+import {
+  grantablePlans,
+  isOnAllowList,
+  liveLicenseOf,
+  modeOfKind,
+  USER_PATTERN,
+} from '../../lib/holders'
 import { runWithToast } from '../../lib/run'
 import type {
   PublisherAllowListEntry,
@@ -78,7 +84,10 @@ export function GrantDialog({
 }) {
   const issue = useIssueGrant(appId)
   const allow = useAddToAllowList(appId)
-  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { user: '', kind: '', label: '' } })
+  const form = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: { user: '', kind: '', label: '' },
+  })
   const plans = grantablePlans(terms)
   const user = form.watch('user').trim()
   const kind = form.watch('kind')
@@ -132,7 +141,8 @@ export function GrantDialog({
                   {needsAllowList && (
                     <FormDescription className="flex items-center gap-1.5">
                       <Info className="h-3.5 w-3.5" aria-hidden />
-                      Not on your allow list yet — they will be added to your allow list when you grant.
+                      Not on your allow list yet — they will be added to your allow list when you
+                      grant.
                     </FormDescription>
                   )}
                   <FormMessage />
@@ -148,7 +158,9 @@ export function GrantDialog({
                   <Select value={field.value} onValueChange={field.onChange}>
                     <FormControl>
                       <SelectTrigger aria-label="Plan" className="w-full">
-                        <SelectValue placeholder={plans.length ? 'Choose a plan' : 'No plan allows grants yet'} />
+                        <SelectValue
+                          placeholder={plans.length ? 'Choose a plan' : 'No plan allows grants yet'}
+                        />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
@@ -160,7 +172,9 @@ export function GrantDialog({
                     </SelectContent>
                   </Select>
                   {plans.length === 0 && !loadError && (
-                    <FormDescription>Publish a plan with “Granted by you” switched on first.</FormDescription>
+                    <FormDescription>
+                      Publish a plan with “Granted by you” switched on first.
+                    </FormDescription>
                   )}
                   <FormMessage />
                 </FormItem>
@@ -174,7 +188,11 @@ export function GrantDialog({
                   <FormItem>
                     <FormLabel>Project name</FormLabel>
                     <FormControl>
-                      <Input placeholder="Shown as their environment’s name" autoComplete="off" {...field} />
+                      <Input
+                        placeholder="Shown as their environment’s name"
+                        autoComplete="off"
+                        {...field}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -183,7 +201,15 @@ export function GrantDialog({
             )}
             {existing && (
               <Alert>
-                <AlertTitle>Already holds {termName(terms.find((t) => t.kind === existing.kind) ?? { label: null, kind: existing.kind })}</AlertTitle>
+                <AlertTitle>
+                  Already holds{' '}
+                  {termName(
+                    terms.find((t) => t.kind === existing.kind) ?? {
+                      label: null,
+                      kind: existing.kind,
+                    },
+                  )}
+                </AlertTitle>
                 <AlertDescription>
                   Granting gives them a second licence and a second environment. To move them to
                   another plan and keep their environment, use “Change plan” on their row.
@@ -191,7 +217,10 @@ export function GrantDialog({
               </Alert>
             )}
             {loadFailed && (
-              <p role="alert" className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
+              <p
+                role="alert"
+                className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm"
+              >
                 Your plans or allow list did not load, so granting is paused.
                 <Button type="button" size="sm" variant="outline" onClick={onRetry}>
                   Try again

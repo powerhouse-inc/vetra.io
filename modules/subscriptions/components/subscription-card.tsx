@@ -91,7 +91,11 @@ export function SubscriptionCard({
                 </a>
               </Button>
             )}
-            <Button variant="ghost" onClick={onCancel} aria-label={`Cancel ${subscriptionName(s)} on ${s.appName}`}>
+            <Button
+              variant="ghost"
+              onClick={onCancel}
+              aria-label={`Cancel ${subscriptionName(s)} on ${s.appName}`}
+            >
               Cancel
             </Button>
           </div>

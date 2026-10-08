@@ -83,7 +83,12 @@ describe('toPublisherError', () => {
   })
 
   it('maps the retired licence-type codes to UNKNOWN', () => {
-    for (const code of ['UNKNOWN_APP', 'APP_IDENTITY_INACTIVE', 'UNKNOWN_LICENSE_TYPE', 'UNKNOWN_LICENSE']) {
+    for (const code of [
+      'UNKNOWN_APP',
+      'APP_IDENTITY_INACTIVE',
+      'UNKNOWN_LICENSE_TYPE',
+      'UNKNOWN_LICENSE',
+    ]) {
       expect(toPublisherError({ message: 'x', extensions: { code } }, 200).code).toBe('UNKNOWN')
     }
   })
@@ -98,9 +103,9 @@ describe('toPublisherError', () => {
 describe('describePublisherError', () => {
   it('keeps the server sentence for INVALID_INPUT and UNKNOWN: it is specific', () => {
     for (const code of ['INVALID_INPUT', 'UNKNOWN'] as const) {
-      expect(describePublisherError(new PublisherApiError(code, 'kind 2026-pro already exists', null))).toBe(
-        'kind 2026-pro already exists',
-      )
+      expect(
+        describePublisherError(new PublisherApiError(code, 'kind 2026-pro already exists', null)),
+      ).toBe('kind 2026-pro already exists')
     }
   })
 
@@ -118,7 +123,9 @@ describe('describePublisherError', () => {
       ALREADY_HOLDS: /already have this plan/i,
     }
     for (const [code, copy] of Object.entries(expected)) {
-      const text = describePublisherError(new PublisherApiError(code as never, 'raw server text', null))
+      const text = describePublisherError(
+        new PublisherApiError(code as never, 'raw server text', null),
+      )
       expect(text).toMatch(copy)
       expect(text).not.toBe('raw server text')
     }

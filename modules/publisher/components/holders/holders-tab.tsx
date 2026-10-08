@@ -60,7 +60,12 @@ export function HoldersTab({ appId }: { appId: string }) {
   const shown = filterHolders(rows, { status, kind, query })
   const modeOf = (k: string) => modeOfKind(k, termList, templateList)
   const plansError = terms.error ?? templates.error
-  const grantLoadError = !!plansError || !!allowList.error || terms.isPending || templates.isPending || allowList.isPending
+  const grantLoadError =
+    !!plansError ||
+    !!allowList.error ||
+    terms.isPending ||
+    templates.isPending ||
+    allowList.isPending
   const retryGrantData = () => {
     if (terms.error) void terms.refetch()
     if (templates.error) void templates.refetch()
@@ -92,7 +97,10 @@ export function HoldersTab({ appId }: { appId: string }) {
       ) : (
         <div className="space-y-3">
           {environments.error && environments.data === undefined && (
-            <p role="alert" className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
+            <p
+              role="alert"
+              className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm"
+            >
               Environments did not load, so they are not shown below.
               <Button size="sm" variant="outline" onClick={() => void environments.refetch()}>
                 Try again
@@ -101,7 +109,10 @@ export function HoldersTab({ appId }: { appId: string }) {
           )}
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <div className="relative flex-1">
-              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" aria-hidden />
+              <Search
+                className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2"
+                aria-hidden
+              />
               <Input
                 aria-label="Search holders"
                 placeholder="Search by address or project"

@@ -10,16 +10,36 @@ import {
   sameUser,
   USER_PATTERN,
 } from '../lib/holders'
-import type { PublisherEnvironment, PublisherLicense, PublisherTemplate, PublisherTerm } from '../types'
+import type {
+  PublisherEnvironment,
+  PublisherLicense,
+  PublisherTemplate,
+  PublisherTerm,
+} from '../types'
 
 const A = '0xAbCdEf0123456789aBcDeF0123456789AbCdEf01'
 const lic = (over: Partial<PublisherLicense>): PublisherLicense => ({
-  id: 'l1', user: `did:pkh:eip155:1:${A.toLowerCase()}`, kind: 'pro', issuer: 'PUBLISHER_GRANT',
-  status: 'ACTIVE', start: '2026-10-01T00:00:00Z', end: null, environmentId: 'env-1', replacedBy: null, ...over,
+  id: 'l1',
+  user: `did:pkh:eip155:1:${A.toLowerCase()}`,
+  kind: 'pro',
+  issuer: 'PUBLISHER_GRANT',
+  status: 'ACTIVE',
+  start: '2026-10-01T00:00:00Z',
+  end: null,
+  environmentId: 'env-1',
+  replacedBy: null,
+  ...over,
 })
 const env = (over: Partial<PublisherEnvironment>): PublisherEnvironment => ({
-  environmentId: 'env-1', user: 'u', licenseId: 'l1', rootLicenseId: 'l1', label: 'Acme', templateHash: 'h',
-  stoppedAt: null, deleteAfter: null, ...over,
+  environmentId: 'env-1',
+  user: 'u',
+  licenseId: 'l1',
+  rootLicenseId: 'l1',
+  label: 'Acme',
+  templateHash: 'h',
+  stoppedAt: null,
+  deleteAfter: null,
+  ...over,
 })
 
 describe('users', () => {
@@ -41,7 +61,11 @@ describe('users', () => {
 describe('joinHolders', () => {
   it('attaches the environment by licence id, else by environment id', () => {
     const rows = joinHolders(
-      [lic({ id: 'l1' }), lic({ id: 'l2', environmentId: 'env-2' }), lic({ id: 'l3', environmentId: null })],
+      [
+        lic({ id: 'l1' }),
+        lic({ id: 'l2', environmentId: 'env-2' }),
+        lic({ id: 'l3', environmentId: null }),
+      ],
       [env({ licenseId: 'l1' }), env({ environmentId: 'env-2', licenseId: 'old' })],
     )
     expect(rows.find((r) => r.id === 'l1')?.environment?.environmentId).toBe('env-1')
@@ -63,27 +87,59 @@ describe('joinHolders', () => {
 })
 
 describe('filters and checks', () => {
-  const rows = joinHolders([lic({ id: 'l1' }), lic({ id: 'l2', status: 'REVOKED', kind: 'free', user: 'did:pkh:eip155:1:0x1111111111111111111111111111111111111111' })], [])
+  const rows = joinHolders(
+    [
+      lic({ id: 'l1' }),
+      lic({
+        id: 'l2',
+        status: 'REVOKED',
+        kind: 'free',
+        user: 'did:pkh:eip155:1:0x1111111111111111111111111111111111111111',
+      }),
+    ],
+    [],
+  )
 
   it('filters by status, plan and a search over the DID', () => {
-    expect(filterHolders(rows, { status: 'REVOKED', kind: 'ALL', query: '' }).map((r) => r.id)).toEqual(['l2'])
-    expect(filterHolders(rows, { status: 'ALL', kind: 'pro', query: '' }).map((r) => r.id)).toEqual(['l1'])
-    expect(filterHolders(rows, { status: 'ALL', kind: 'ALL', query: '0x1111' }).map((r) => r.id)).toEqual(['l2'])
-    expect(filterHolders(rows, { status: 'ALL', kind: 'ALL', query: 'ABCDEF' }).map((r) => r.id)).toEqual(['l1'])
+    expect(
+      filterHolders(rows, { status: 'REVOKED', kind: 'ALL', query: '' }).map((r) => r.id),
+    ).toEqual(['l2'])
+    expect(filterHolders(rows, { status: 'ALL', kind: 'pro', query: '' }).map((r) => r.id)).toEqual(
+      ['l1'],
+    )
+    expect(
+      filterHolders(rows, { status: 'ALL', kind: 'ALL', query: '0x1111' }).map((r) => r.id),
+    ).toEqual(['l2'])
+    expect(
+      filterHolders(rows, { status: 'ALL', kind: 'ALL', query: 'ABCDEF' }).map((r) => r.id),
+    ).toEqual(['l1'])
   })
 
   it('finds a live licence and allow-list membership whatever the address form', () => {
     expect(liveLicenseOf([lic({})], A)?.id).toBe('l1')
     expect(liveLicenseOf([lic({ status: 'EXPIRED' })], A)).toBeUndefined()
-    expect(isOnAllowList([{ user: A.toLowerCase(), addedAt: 'x' }], `did:pkh:eip155:1:${A}`)).toBe(true)
+    expect(isOnAllowList([{ user: A.toLowerCase(), addedAt: 'x' }], `did:pkh:eip155:1:${A}`)).toBe(
+      true,
+    )
   })
 
   it('offers only published plans a publisher may grant', () => {
     const t = (over: Partial<PublisherTerm>): PublisherTerm => ({
-      id: 'x', kind: 'k', label: null, templateId: 't', validityDays: null, issuers: ['PUBLISHER_GRANT'],
-      status: 'ACTIVE', activeLicenses: 0, ...over,
+      id: 'x',
+      kind: 'k',
+      label: null,
+      templateId: 't',
+      validityDays: null,
+      issuers: ['PUBLISHER_GRANT'],
+      status: 'ACTIVE',
+      activeLicenses: 0,
+      ...over,
     })
-    const plans = [t({ id: 'a' }), t({ id: 'b', status: 'DRAFT' }), t({ id: 'c', issuers: ['INVITE_CODE'] })]
+    const plans = [
+      t({ id: 'a' }),
+      t({ id: 'b', status: 'DRAFT' }),
+      t({ id: 'c', issuers: ['INVITE_CODE'] }),
+    ]
     expect(grantablePlans(plans).map((p) => p.id)).toEqual(['a'])
   })
 

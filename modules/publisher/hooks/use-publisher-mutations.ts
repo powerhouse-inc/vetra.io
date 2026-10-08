@@ -34,7 +34,8 @@ function usePublisherMutation<V, R>(
   return useMutation<R, Error, V>({
     mutationFn: async (vars) => fn(vars, await token()),
     onSuccess: () => {
-      for (const r of invalidates) void qc.invalidateQueries({ queryKey: publisherKeys.of(r, appId) })
+      for (const r of invalidates)
+        void qc.invalidateQueries({ queryKey: publisherKeys.of(r, appId) })
     },
   })
 }
@@ -121,9 +122,17 @@ export const useIssueGrant = (appId: string) =>
     LICENCE_WRITES,
   )
 export const useReplaceGrant = (appId: string) =>
-  usePublisherMutation<ReplaceGrantInput, string>(appId, (v, t) => api.replaceGrant(v, t), LICENCE_WRITES)
+  usePublisherMutation<ReplaceGrantInput, string>(
+    appId,
+    (v, t) => api.replaceGrant(v, t),
+    LICENCE_WRITES,
+  )
 export const useRevokeLicense = (appId: string) =>
-  usePublisherMutation<RevokeLicenseInput, boolean>(appId, (v, t) => api.revokeLicense(v, t), LICENCE_WRITES)
+  usePublisherMutation<RevokeLicenseInput, boolean>(
+    appId,
+    (v, t) => api.revokeLicense(v, t),
+    LICENCE_WRITES,
+  )
 
 export const useCreateInviteCode = (appId: string) =>
   usePublisherMutation<NoApp<CreateInviteCodeInput>, PublisherInviteCode>(

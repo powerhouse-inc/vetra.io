@@ -39,7 +39,9 @@ describe('AllowListCard', () => {
   it('removes an entry', async () => {
     remove.mockResolvedValue(true)
     render(<AllowListCard appId="app-1" entries={[{ user: A, addedAt: '2026-10-01T00:00:00Z' }]} />)
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: `Remove ${A} from the allow list` })))
+    await act(async () =>
+      fireEvent.click(screen.getByRole('button', { name: `Remove ${A} from the allow list` })),
+    )
     expect(remove).toHaveBeenCalledWith({ user: A })
   })
 })
@@ -51,7 +53,9 @@ describe('AllowListCard loading', () => {
 
   it('offers a retry instead of claiming the list is empty when it failed to load', () => {
     const retry = vi.fn()
-    render(<AllowListCard appId="app-1" entries={undefined} error={new Error('boom')} onRetry={retry} />)
+    render(
+      <AllowListCard appId="app-1" entries={undefined} error={new Error('boom')} onRetry={retry} />,
+    )
     expect(screen.queryByText('Nobody on the list yet.')).toBeNull()
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(retry).toHaveBeenCalledOnce()

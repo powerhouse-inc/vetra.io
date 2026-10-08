@@ -56,7 +56,8 @@ export function ChangePlanDialog({
   const options = grantablePlans(terms).filter((t) => t.kind !== shown?.kind)
   const target = options.find((t) => t.kind === kind)
   // The environment is only carried over between two dedicated plans.
-  const keepsEnvironment = !!shown && !!target && modeOf(shown.kind) === 'DEDICATED' && modeOf(target.kind) === 'DEDICATED'
+  const keepsEnvironment =
+    !!shown && !!target && modeOf(shown.kind) === 'DEDICATED' && modeOf(target.kind) === 'DEDICATED'
   const description = !shown
     ? ''
     : keepsEnvironment
@@ -84,7 +85,15 @@ export function ChangePlanDialog({
           <Label>New plan</Label>
           <Select value={kind} onValueChange={setKind}>
             <SelectTrigger aria-label="New plan" className="w-full">
-              <SelectValue placeholder={plansUnavailable ? 'Your plans did not load' : options.length ? 'Choose a plan' : 'No other plan allows grants'} />
+              <SelectValue
+                placeholder={
+                  plansUnavailable
+                    ? 'Your plans did not load'
+                    : options.length
+                      ? 'Choose a plan'
+                      : 'No other plan allows grants'
+                }
+              />
             </SelectTrigger>
             <SelectContent>
               {options.map((t) => (

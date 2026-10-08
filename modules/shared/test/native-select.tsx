@@ -5,7 +5,11 @@ import React from 'react'
  *   vi.mock('@/shared/components/ui/select', () => import('@/modules/shared/test/native-select'))
  * The native <select> takes its accessible name from the SelectTrigger's aria-label.
  */
-export const SelectTrigger = (_: { 'aria-label'?: string; className?: string; children?: React.ReactNode }) => null
+export const SelectTrigger = (_: {
+  'aria-label'?: string
+  className?: string
+  children?: React.ReactNode
+}) => null
 export const SelectValue = (_: { placeholder?: string }) => null
 export const SelectContent = ({ children }: { children: React.ReactNode }) => <>{children}</>
 export const SelectItem = ({

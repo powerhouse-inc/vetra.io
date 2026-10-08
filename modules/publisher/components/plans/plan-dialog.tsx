@@ -190,7 +190,12 @@ export function PlanDialog({
                     <FormDescription className="flex flex-wrap items-center gap-2">
                       Your templates did not load.
                       {onRetryTemplates && (
-                        <Button type="button" size="sm" variant="outline" onClick={onRetryTemplates}>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={onRetryTemplates}
+                        >
                           Try again
                         </Button>
                       )}

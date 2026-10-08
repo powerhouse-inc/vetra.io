@@ -29,9 +29,9 @@ test('owner: redeem → subscription → environment', async ({ page }) => {
   await card.getByRole('link', { name: 'Acme research' }).click()
   await expect(page).toHaveURL(/\/user\/environments\/env-kv-1$/)
   // The environment page names the environment and says which app and plan it comes with.
-  await expect(page.getByRole('status').filter({ hasText: 'Knowledge Vault · Pilot' })).toContainText(
-    'This environment comes with your Pilot licence for Knowledge Vault.',
-  )
+  await expect(
+    page.getByRole('status').filter({ hasText: 'Knowledge Vault · Pilot' }),
+  ).toContainText('This environment comes with your Pilot licence for Knowledge Vault.')
   await expect(page.getByText('Acme research').first()).toBeVisible()
   await expect(page.getByRole('link', { name: 'View subscription' })).toHaveAttribute(
     'href',

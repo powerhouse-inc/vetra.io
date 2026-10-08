@@ -58,8 +58,17 @@ const READS: Read[] = [
     call: (f) => api.fetchTemplates('app-1', 't', f),
     variables: { appId: 'app-1' },
     fields: [
-      'id', 'name', 'mode', 'sharedEnvironment', 'size', 'baseDomain', 'packageRegistry',
-      'templateHash', 'environmentCount', 'services', 'packages',
+      'id',
+      'name',
+      'mode',
+      'sharedEnvironment',
+      'size',
+      'baseDomain',
+      'packageRegistry',
+      'templateHash',
+      'environmentCount',
+      'services',
+      'packages',
     ],
   },
   {
@@ -67,7 +76,16 @@ const READS: Read[] = [
     field: 'terms',
     call: (f) => api.fetchTerms('app-1', 't', f),
     variables: { appId: 'app-1' },
-    fields: ['id', 'kind', 'label', 'templateId', 'validityDays', 'issuers', 'status', 'activeLicenses'],
+    fields: [
+      'id',
+      'kind',
+      'label',
+      'templateId',
+      'validityDays',
+      'issuers',
+      'status',
+      'activeLicenses',
+    ],
   },
   {
     name: 'fetchAppArtifacts',
@@ -81,7 +99,17 @@ const READS: Read[] = [
     field: 'licenses',
     call: (f) => api.fetchLicenses('app-1', null, 't', f),
     variables: { appId: 'app-1', status: null },
-    fields: ['id', 'user', 'kind', 'issuer', 'status', 'start', 'end', 'environmentId', 'replacedBy'],
+    fields: [
+      'id',
+      'user',
+      'kind',
+      'issuer',
+      'status',
+      'start',
+      'end',
+      'environmentId',
+      'replacedBy',
+    ],
   },
   {
     name: 'fetchEnvironments',
@@ -89,8 +117,14 @@ const READS: Read[] = [
     call: (f) => api.fetchEnvironments('app-1', 't', f),
     variables: { appId: 'app-1' },
     fields: [
-      'environmentId', 'user', 'licenseId', 'rootLicenseId', 'label', 'templateHash',
-      'stoppedAt', 'deleteAfter',
+      'environmentId',
+      'user',
+      'licenseId',
+      'rootLicenseId',
+      'label',
+      'templateHash',
+      'stoppedAt',
+      'deleteAfter',
     ],
   },
   {
@@ -99,8 +133,15 @@ const READS: Read[] = [
     call: (f) => api.fetchInviteCodes('app-1', 't', f),
     variables: { appId: 'app-1' },
     fields: [
-      'code', 'kind', 'label', 'active', 'expiresAt', 'maxUses', 'redemptions',
-      'hasAnthropicKey', 'createdAt',
+      'code',
+      'kind',
+      'label',
+      'active',
+      'expiresAt',
+      'maxUses',
+      'redemptions',
+      'hasAnthropicKey',
+      'createdAt',
     ],
   },
   {
@@ -129,7 +170,11 @@ describe('nested selections', () => {
     const { calls, fetchImpl } = capture({ vetraPublisher: { templates: [] } })
     await api.fetchTemplates('app-1', 't', fetchImpl)
     expect(fieldsOf(calls[0].query, 'services')).toEqual([
-      'id', 'type', 'prefix', 'artifactName', 'artifactChannel',
+      'id',
+      'type',
+      'prefix',
+      'artifactName',
+      'artifactChannel',
     ])
     expect(fieldsOf(calls[0].query, 'packages')).toEqual(['id', 'packageName', 'version'])
   })

@@ -30,7 +30,8 @@ function setup() {
   const Wrapper = ({ children }: { children: React.ReactNode }) => (
     <QueryClientProvider client={qc}>{children}</QueryClientProvider>
   )
-  const invalidated = () => invalidate.mock.calls.map((c) => (c[0] as { queryKey: unknown[] }).queryKey)
+  const invalidated = () =>
+    invalidate.mock.calls.map((c) => (c[0] as { queryKey: unknown[] }).queryKey)
   return { Wrapper, invalidated }
 }
 
@@ -46,7 +47,10 @@ describe('publisher mutation hooks', () => {
       id = await result.current.mutateAsync({ name: 'Free', mode: 'SHARED' })
     })
     expect(id).toBe('tpl-1')
-    expect(addTemplate).toHaveBeenCalledWith({ appId: 'app-1', name: 'Free', mode: 'SHARED' }, 'tok')
+    expect(addTemplate).toHaveBeenCalledWith(
+      { appId: 'app-1', name: 'Free', mode: 'SHARED' },
+      'tok',
+    )
     expect(invalidated()).toEqual([['publisher', 'templates', 'app-1']])
   })
 
@@ -57,7 +61,10 @@ describe('publisher mutation hooks', () => {
     await act(async () => {
       await result.current.mutateAsync({ kind: 'pro', user: '0xabc', label: null })
     })
-    expect(issueGrant).toHaveBeenCalledWith({ appId: 'app-1', kind: 'pro', user: '0xabc', label: null }, 'tok')
+    expect(issueGrant).toHaveBeenCalledWith(
+      { appId: 'app-1', kind: 'pro', user: '0xabc', label: null },
+      'tok',
+    )
     expect(invalidated()).toEqual([
       ['publisher', 'licenses', 'app-1'],
       ['publisher', 'environments', 'app-1'],
@@ -77,7 +84,10 @@ describe('publisher mutation hooks', () => {
       await act1.result.current.mutateAsync({ code: 'C', active: false })
     })
     expect(publishTerm).toHaveBeenCalledWith({ appId: 'app-1', termId: 't1' }, 'tok')
-    expect(setInviteCodeActive).toHaveBeenCalledWith({ appId: 'app-1', code: 'C', active: false }, 'tok')
+    expect(setInviteCodeActive).toHaveBeenCalledWith(
+      { appId: 'app-1', code: 'C', active: false },
+      'tok',
+    )
   })
 
   it('never retries a failed write', async () => {
@@ -85,7 +95,9 @@ describe('publisher mutation hooks', () => {
     const { Wrapper } = setup()
     const { result } = renderHook(() => useIssueGrant('app-1'), { wrapper: Wrapper })
     await act(async () => {
-      await expect(result.current.mutateAsync({ kind: 'pro', user: '0xabc' })).rejects.toThrow('nope')
+      await expect(result.current.mutateAsync({ kind: 'pro', user: '0xabc' })).rejects.toThrow(
+        'nope',
+      )
     })
     expect(issueGrant).toHaveBeenCalledTimes(1)
   })

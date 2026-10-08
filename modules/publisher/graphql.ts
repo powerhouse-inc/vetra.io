@@ -132,7 +132,6 @@ export async function publisherGql<T>(
   return body.data
 }
 
-
 /**
  * Plain-language copy per code. INVALID_INPUT carries the reducer's own, specific
  * sentence ("kind … already exists") and UNKNOWN is whatever the server said, so
@@ -144,11 +143,15 @@ export const ERROR_COPY: Partial<Record<PublisherErrorCode, string>> = {
   UNAUTHENTICATED: 'Your login has expired. Log in again and retry.',
   NOT_FOUND: 'We could not find that. It may have been removed, or it belongs to another account.',
   FORBIDDEN: 'You are not allowed to do that for this app.',
-  APP_NOT_ACTIVE: 'This app is not active right now, so licensing changes are paused. Open the app’s Overview to see what it needs, then try again.',
+  APP_NOT_ACTIVE:
+    'This app is not active right now, so licensing changes are paused. Open the app’s Overview to see what it needs, then try again.',
   NOT_ON_ALLOW_LIST: 'That person is not on your allow list yet. Add them, then grant again.',
-  TERM_NOT_ISSUABLE: 'That plan can’t be handed out this way. Check it is published and allows this way of giving it out.',
-  UNSUPPORTED_DID: 'Use a wallet address (0x…) or a did:pkh identity. Other identity types are not supported.',
-  LICENSING_DISABLED: 'Licensing is switched off on this deployment right now. You can look, but not change anything.',
+  TERM_NOT_ISSUABLE:
+    'That plan can’t be handed out this way. Check it is published and allows this way of giving it out.',
+  UNSUPPORTED_DID:
+    'Use a wallet address (0x…) or a did:pkh identity. Other identity types are not supported.',
+  LICENSING_DISABLED:
+    'Licensing is switched off on this deployment right now. You can look, but not change anything.',
   INVALID_CODE: 'This code can’t be used. It may be mistyped, paused, expired or used up.',
   ALREADY_HOLDS: 'You already have this plan for this app.',
 }
@@ -224,7 +227,14 @@ export const fetchTemplates = (appId: string, token: string | null, fetchImpl?: 
   )
 
 export const fetchTerms = (appId: string, token: string | null, fetchImpl?: FetchLike) =>
-  read<PublisherTerm[]>('terms', APP_ID, `terms(appId: $appId) { ${TERM_FIELDS} }`, { appId }, token, fetchImpl)
+  read<PublisherTerm[]>(
+    'terms',
+    APP_ID,
+    `terms(appId: $appId) { ${TERM_FIELDS} }`,
+    { appId },
+    token,
+    fetchImpl,
+  )
 
 /** Published artifacts. An app that has published nothing returns []. */
 export const fetchAppArtifacts = (appId: string, token: string | null, fetchImpl?: FetchLike) =>
@@ -356,7 +366,10 @@ export const setTermDetails = inputWrite<SetTermDetailsInput, boolean>(
   'SetTermDetailsInput',
 )
 export const issueGrant = inputWrite<IssueGrantInput, string>('issueGrant', 'IssueGrantInput')
-export const replaceGrant = inputWrite<ReplaceGrantInput, string>('replaceGrant', 'ReplaceGrantInput')
+export const replaceGrant = inputWrite<ReplaceGrantInput, string>(
+  'replaceGrant',
+  'ReplaceGrantInput',
+)
 export const revokeLicense = inputWrite<RevokeLicenseInput, boolean>(
   'revokeLicense',
   'RevokeLicenseInput',

@@ -18,8 +18,11 @@ vi.mock('../graphql', async (orig) => ({
 }))
 vi.mock('@/modules/cloud/graphql', () => ({ getAuthToken: async () => 'tok' }))
 vi.mock('@/modules/cloud/query/use-authed-query', () => ({
-  useAuthedQuery: (key: readonly unknown[], fetcher: (t: string | null) => Promise<unknown>, options?: object) =>
-    useQuery({ queryKey: key, queryFn: () => fetcher('tok'), ...options }),
+  useAuthedQuery: (
+    key: readonly unknown[],
+    fetcher: (t: string | null) => Promise<unknown>,
+    options?: object,
+  ) => useQuery({ queryKey: key, queryFn: () => fetcher('tok'), ...options }),
 }))
 vi.mock('@powerhousedao/reactor-browser', () => ({
   useDid: () => currentDid,

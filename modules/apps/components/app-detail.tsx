@@ -58,7 +58,13 @@ import { Banner } from './banner'
 import { StatusPill } from './status'
 
 /** Owner-only tabs, in display order. Tasks append to this as each tab lands. */
-export const LICENSING_TABS = ['artifacts', 'templates', 'plans', 'holders', 'invite-codes'] as const
+export const LICENSING_TABS = [
+  'artifacts',
+  'templates',
+  'plans',
+  'holders',
+  'invite-codes',
+] as const
 const ALL_TABS = ['overview', 'deployments', ...LICENSING_TABS, 'settings'] as const
 export type AppTab = (typeof ALL_TABS)[number]
 
@@ -359,9 +365,12 @@ export function AppDetail({ appId }: { appId: string }) {
         )}
       </div>
 
-      {showLicensing && isLicensingTab(tab) && publisher.app && publisher.app.status !== 'ACTIVE' && (
-        <LicensingUnavailableBanner status={publisher.app.status} />
-      )}
+      {showLicensing &&
+        isLicensingTab(tab) &&
+        publisher.app &&
+        publisher.app.status !== 'ACTIVE' && (
+          <LicensingUnavailableBanner status={publisher.app.status} />
+        )}
 
       {licensingError && (
         <Banner
@@ -389,7 +398,7 @@ export function AppDetail({ appId }: { appId: string }) {
       <Tabs value={tab} onValueChange={setTab} className="gap-8">
         {/* The baseline is an inset shadow, not a border: a scrolling list clips anything that
             hangs below it, which would cut off the active underline. */}
-        <TabsList className="h-auto w-full justify-start gap-6 overflow-x-auto rounded-none bg-transparent p-0 shadow-[inset_0_-1px_0_var(--border)] [scrollbar-width:none]">
+        <TabsList className="h-auto w-full [scrollbar-width:none] justify-start gap-6 overflow-x-auto rounded-none bg-transparent p-0 shadow-[inset_0_-1px_0_var(--border)]">
           {visibleTabs.map((t) => (
             <Fragment key={t}>
               {/* Placeholders where the licensing tabs appear, while ownership is checked. */}

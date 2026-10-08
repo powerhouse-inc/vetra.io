@@ -33,7 +33,10 @@ export function AllowListCard({
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (!valid) return
-    const ok = await runWithToast(() => add.mutateAsync({ user: user.trim() }), 'Added to the allow list')
+    const ok = await runWithToast(
+      () => add.mutateAsync({ user: user.trim() }),
+      'Added to the allow list',
+    )
     if (ok) setUser('')
   }
 
@@ -57,14 +60,19 @@ export function AllowListCard({
       </form>
       {entries === undefined ? (
         error ? (
-          <div role="alert" className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
+          <div
+            role="alert"
+            className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm"
+          >
             {describePublisherError(error)}
             <Button size="sm" variant="outline" onClick={onRetry}>
               Try again
             </Button>
           </div>
         ) : (
-          <p role="status" className="text-muted-foreground text-sm">Loading the allow list…</p>
+          <p role="status" className="text-muted-foreground text-sm">
+            Loading the allow list…
+          </p>
         )
       ) : entries.length === 0 ? (
         <p className="text-muted-foreground text-sm">Nobody on the list yet.</p>
@@ -72,16 +80,21 @@ export function AllowListCard({
         <ul className="divide-border divide-y text-sm">
           {entries.map((e) => (
             <li key={e.user} className="flex items-center gap-3 py-2">
-              <span className="min-w-0 flex-1 font-mono text-xs break-all">
-                {shortDid(e.user)}
+              <span className="min-w-0 flex-1 font-mono text-xs break-all">{shortDid(e.user)}</span>
+              <span className="text-muted-foreground hidden text-xs sm:inline">
+                Added {formatDate(e.addedAt)}
               </span>
-              <span className="text-muted-foreground hidden text-xs sm:inline">Added {formatDate(e.addedAt)}</span>
               <Button
                 size="icon"
                 variant="ghost"
                 aria-label={`Remove ${e.user} from the allow list`}
                 disabled={remove.isPending}
-                onClick={() => void runWithToast(() => remove.mutateAsync({ user: e.user }), 'Removed from the allow list')}
+                onClick={() =>
+                  void runWithToast(
+                    () => remove.mutateAsync({ user: e.user }),
+                    'Removed from the allow list',
+                  )
+                }
               >
                 <Trash2 className="h-4 w-4" />
               </Button>

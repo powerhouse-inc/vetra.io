@@ -1,5 +1,12 @@
 import { describe, it, expect } from 'vitest'
-import { dateRange, envCountText, shortDid, templateName, termName, validityText } from '../lib/format'
+import {
+  dateRange,
+  envCountText,
+  shortDid,
+  templateName,
+  termName,
+  validityText,
+} from '../lib/format'
 import { inviteCodeState, licenseStatusMeta, termStatusMeta } from '../lib/status'
 
 describe('format', () => {
@@ -7,7 +14,9 @@ describe('format', () => {
     const addr = '0xAbCdEf0123456789aBcDeF0123456789AbCdEf01'
     expect(shortDid(`did:pkh:eip155:1:${addr}`)).toBe('0xAbCd…Ef01')
     expect(shortDid(addr)).toBe('0xAbCd…Ef01')
-    expect(shortDid('did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK')).toBe('did:key:z6Mk…ta2doK')
+    expect(shortDid('did:key:z6MkhaXgBZDvotDkL5257faiztiGiC2QtKLGpbnnEGta2doK')).toBe(
+      'did:key:z6Mk…ta2doK',
+    )
   })
 
   it('names plans and templates without ever showing an empty string', () => {
@@ -46,7 +55,9 @@ describe('status meta', () => {
     const now = new Date('2026-10-08T12:00:00Z')
     const base = { active: true, expiresAt: null, maxUses: null, redemptions: 0 }
     expect(inviteCodeState(base, now)).toBe('active')
-    expect(inviteCodeState({ ...base, active: false, expiresAt: '2026-01-01T00:00:00Z' }, now)).toBe('paused')
+    expect(
+      inviteCodeState({ ...base, active: false, expiresAt: '2026-01-01T00:00:00Z' }, now),
+    ).toBe('paused')
     expect(inviteCodeState({ ...base, expiresAt: '2026-10-08T11:59:59Z' }, now)).toBe('expired')
     expect(inviteCodeState({ ...base, maxUses: 3, redemptions: 3 }, now)).toBe('used-up')
     expect(inviteCodeState({ ...base, maxUses: 3, redemptions: 2 }, now)).toBe('active')

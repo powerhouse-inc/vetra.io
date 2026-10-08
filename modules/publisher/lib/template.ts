@@ -39,12 +39,17 @@ export function serviceLabel(type: string): string {
 export function describeService(s: PublisherTemplateService): string {
   const where = s.prefix ? ` at ${s.prefix}` : ''
   if (!s.artifactName) return `${serviceLabel(s.type)}${where}`
-  const follows = s.artifactChannel ? `, following ${channelLabel(s.artifactChannel).toLowerCase()}` : ''
+  const follows = s.artifactChannel
+    ? `, following ${channelLabel(s.artifactChannel).toLowerCase()}`
+    : ''
   return `${s.artifactName}${where}${follows}`
 }
 
 /** The whole template as one sentence, so a publisher can check it at a glance. */
-export function describeTemplate(t: PublisherTemplate, sharedEnvironmentName?: string | null): string {
+export function describeTemplate(
+  t: PublisherTemplate,
+  sharedEnvironmentName?: string | null,
+): string {
   if (t.mode === 'SHARED') {
     return t.sharedEnvironment
       ? `Owners get an account on ${sharedEnvironmentName ? `the ${sharedEnvironmentName} environment` : 'one shared environment'}.`
@@ -53,7 +58,9 @@ export function describeTemplate(t: PublisherTemplate, sharedEnvironmentName?: s
   if (t.services.length === 0) return 'Nothing to run yet — add at least one service.'
   const services = t.services.map(describeService).join(', ')
   const packages = t.packages
-    .map((p) => (p.packageName ? (p.version ? `${p.packageName}@${p.version}` : p.packageName) : null))
+    .map((p) =>
+      p.packageName ? (p.version ? `${p.packageName}@${p.version}` : p.packageName) : null,
+    )
     .filter((x): x is string => x !== null)
   const withPackages = packages.length > 0 ? `, with ${packages.join(' and ')} installed` : ''
   return `Each owner gets ${services}${withPackages}.`

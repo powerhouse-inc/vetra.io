@@ -67,7 +67,10 @@ export function useAppPublisher(appId: string) {
   return { isPublisher: !!app, app, isPending, error, retry, retrying: apps.isFetching }
 }
 
-type ListOptions<T> = Omit<UseQueryOptions<T[], Error, T[], readonly unknown[]>, 'queryKey' | 'queryFn'>
+type ListOptions<T> = Omit<
+  UseQueryOptions<T[], Error, T[], readonly unknown[]>,
+  'queryKey' | 'queryFn'
+>
 
 function useAppList<T>(
   resource: PublisherResource,

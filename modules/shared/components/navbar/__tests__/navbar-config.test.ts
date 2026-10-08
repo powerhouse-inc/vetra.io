@@ -14,6 +14,8 @@ describe('navigation', () => {
     expect(labels.indexOf('Subscriptions')).toBe(labels.indexOf('Environments') + 1)
     const item = PRIVATE_NAV_ITEMS.find((i) => i.label === 'Subscriptions')
     expect(item?.href).toBe('/user/subscriptions')
-    expect(item && 'isActive' in item && item.isActive ? item.isActive('/user/subscriptions') : false).toBe(true)
+    expect(
+      item && 'isActive' in item && item.isActive ? item.isActive('/user/subscriptions') : false,
+    ).toBe(true)
   })
 })

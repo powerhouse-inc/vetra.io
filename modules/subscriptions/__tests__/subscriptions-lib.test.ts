@@ -11,10 +11,23 @@ import {
 import type { Subscription } from '../types'
 
 const sub = (over: Partial<Subscription>): Subscription => ({
-  licenseId: 'l1', appId: 'kv', appName: 'Knowledge Vault', kind: 'kv-pro', termLabel: 'Pro',
-  issuer: 'INVITE_CODE', status: 'ACTIVE', start: '2026-10-01T00:00:00Z', end: null, mode: 'DEDICATED',
-  environmentId: 'env-1', environmentLabel: 'Acme', openUrl: 'https://acme.kv', stoppedAt: null,
-  deleteAfter: null, warnings: [], ...over,
+  licenseId: 'l1',
+  appId: 'kv',
+  appName: 'Knowledge Vault',
+  kind: 'kv-pro',
+  termLabel: 'Pro',
+  issuer: 'INVITE_CODE',
+  status: 'ACTIVE',
+  start: '2026-10-01T00:00:00Z',
+  end: null,
+  mode: 'DEDICATED',
+  environmentId: 'env-1',
+  environmentLabel: 'Acme',
+  openUrl: 'https://acme.kv',
+  stoppedAt: null,
+  deleteAfter: null,
+  warnings: [],
+  ...over,
 })
 
 describe('subscriptions lib', () => {
@@ -47,7 +60,9 @@ describe('subscriptions lib', () => {
     const now = new Date('2026-10-08T00:00:00Z')
     expect(validityLine(sub({ end: null }), now)).toMatch(/^Since .* · no end date$/)
     expect(validityLine(sub({ end: '2026-11-01T00:00:00Z' }), now)).toMatch(/· until /)
-    expect(validityLine(sub({ status: 'EXPIRED', end: '2026-10-02T00:00:00Z' }), now)).toMatch(/^Ended /)
+    expect(validityLine(sub({ status: 'EXPIRED', end: '2026-10-02T00:00:00Z' }), now)).toMatch(
+      /^Ended /,
+    )
     expect(validityLine(sub({ status: 'ISSUED', start: null }), now)).toBe('Starting now')
   })
 

@@ -106,9 +106,7 @@ describe('CreateInviteCodeDialog', () => {
     create.mockResolvedValue({ ...made, code: 'LFC_2026-vip' })
     render(<CreateInviteCodeDialog appId="app-1" plans={plans} open onOpenChange={vi.fn()} />)
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Create code' })))
-    await act(async () =>
-      fireEvent.click(screen.getByRole('button', { name: 'Copy redeem link' })),
-    )
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Copy redeem link' })))
     expect(writeText).toHaveBeenCalledWith(`${window.location.origin}/redeem/LFC_2026-vip`)
   })
 

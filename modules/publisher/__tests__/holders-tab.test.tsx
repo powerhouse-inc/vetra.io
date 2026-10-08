@@ -1,7 +1,12 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import React from 'react'
-import type { PublisherEnvironment, PublisherLicense, PublisherTemplate, PublisherTerm } from '../types'
+import type {
+  PublisherEnvironment,
+  PublisherLicense,
+  PublisherTemplate,
+  PublisherTerm,
+} from '../types'
 
 let licenses: PublisherLicense[] = []
 let environments: PublisherEnvironment[] = []
@@ -14,14 +19,35 @@ vi.mock('../hooks/use-publisher', () => ({
   usePublisherEnvironments: () => ({ data: environments, isPending: false, error: null }),
   usePublisherTerms: () => ({
     data: [
-      { id: 't1', kind: 'free', label: 'Free', templateId: 'tpl-s', validityDays: null, issuers: ['PUBLISHER_GRANT'], status: 'ACTIVE', activeLicenses: 1 },
-      { id: 't2', kind: 'pro', label: 'Pro', templateId: 'tpl-d', validityDays: null, issuers: ['PUBLISHER_GRANT'], status: 'ACTIVE', activeLicenses: 1 },
+      {
+        id: 't1',
+        kind: 'free',
+        label: 'Free',
+        templateId: 'tpl-s',
+        validityDays: null,
+        issuers: ['PUBLISHER_GRANT'],
+        status: 'ACTIVE',
+        activeLicenses: 1,
+      },
+      {
+        id: 't2',
+        kind: 'pro',
+        label: 'Pro',
+        templateId: 'tpl-d',
+        validityDays: null,
+        issuers: ['PUBLISHER_GRANT'],
+        status: 'ACTIVE',
+        activeLicenses: 1,
+      },
     ] satisfies PublisherTerm[],
     isPending: false,
     error: null,
   }),
   usePublisherTemplates: () => ({
-    data: [{ id: 'tpl-s', mode: 'SHARED' }, { id: 'tpl-d', mode: 'DEDICATED' }] as PublisherTemplate[],
+    data: [
+      { id: 'tpl-s', mode: 'SHARED' },
+      { id: 'tpl-d', mode: 'DEDICATED' },
+    ] as PublisherTemplate[],
     isPending: false,
     error: null,
   }),
@@ -34,14 +60,24 @@ vi.mock('../hooks/use-publisher-mutations', () => ({
   useAddToAllowList: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useRemoveFromAllowList: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
-vi.mock('@/modules/shared/components/ui/select', () => import('@/modules/shared/test/native-select'))
+vi.mock(
+  '@/modules/shared/components/ui/select',
+  () => import('@/modules/shared/test/native-select'),
+)
 
 import { HoldersTab } from '../components/holders/holders-tab'
 
 const lic = (over: Partial<PublisherLicense>): PublisherLicense => ({
-  id: 'l1', user: 'did:pkh:eip155:1:0xabcdef0123456789abcdef0123456789abcdef01', kind: 'pro',
-  issuer: 'PUBLISHER_GRANT', status: 'ACTIVE', start: '2026-10-01T00:00:00Z', end: null,
-  environmentId: 'env-1', replacedBy: null, ...over,
+  id: 'l1',
+  user: 'did:pkh:eip155:1:0xabcdef0123456789abcdef0123456789abcdef01',
+  kind: 'pro',
+  issuer: 'PUBLISHER_GRANT',
+  status: 'ACTIVE',
+  start: '2026-10-01T00:00:00Z',
+  end: null,
+  environmentId: 'env-1',
+  replacedBy: null,
+  ...over,
 })
 
 describe('HoldersTab', () => {
@@ -59,10 +95,18 @@ describe('HoldersTab', () => {
 
   it('shows each holder’s environment state as text, never as a link', () => {
     licenses = [lic({ status: 'REVOKED' })]
-    environments = [{
-      environmentId: 'env-1', user: 'u', licenseId: 'l1', rootLicenseId: 'l1', label: 'Acme vault',
-      templateHash: 'h', stoppedAt: '2026-10-20T00:00:00Z', deleteAfter: '2027-01-10T00:00:00Z',
-    }]
+    environments = [
+      {
+        environmentId: 'env-1',
+        user: 'u',
+        licenseId: 'l1',
+        rootLicenseId: 'l1',
+        label: 'Acme vault',
+        templateHash: 'h',
+        stoppedAt: '2026-10-20T00:00:00Z',
+        deleteAfter: '2027-01-10T00:00:00Z',
+      },
+    ]
     render(<HoldersTab appId="app-1" />)
     const row = screen.getByTestId('holder-l1')
     expect(within(row).getByText('Acme vault')).toBeTruthy()
@@ -74,16 +118,27 @@ describe('HoldersTab', () => {
 
   it('says a running environment is running', () => {
     licenses = [lic({})]
-    environments = [{
-      environmentId: 'env-1', user: 'u', licenseId: 'l1', rootLicenseId: 'l1', label: 'Acme vault',
-      templateHash: 'h', stoppedAt: null, deleteAfter: null,
-    }]
+    environments = [
+      {
+        environmentId: 'env-1',
+        user: 'u',
+        licenseId: 'l1',
+        rootLicenseId: 'l1',
+        label: 'Acme vault',
+        templateHash: 'h',
+        stoppedAt: null,
+        deleteAfter: null,
+      },
+    ]
     render(<HoldersTab appId="app-1" />)
     expect(within(screen.getByTestId('holder-l1')).getByText('Running')).toBeTruthy()
   })
 
   it('says a dedicated environment is on its way, and a shared plan has none of its own', () => {
-    licenses = [lic({ id: 'l1', environmentId: null, status: 'ISSUED' }), lic({ id: 'l2', kind: 'free', environmentId: null })]
+    licenses = [
+      lic({ id: 'l1', environmentId: null, status: 'ISSUED' }),
+      lic({ id: 'l2', kind: 'free', environmentId: null }),
+    ]
     render(<HoldersTab appId="app-1" />)
     expect(within(screen.getByTestId('holder-l1')).getByText('Being set up…')).toBeTruthy()
     expect(within(screen.getByTestId('holder-l2')).getByText('Shared environment')).toBeTruthy()
@@ -101,7 +156,9 @@ describe('HoldersTab', () => {
     licenses = [lic({})]
     replaceGrant.mockResolvedValue('l9')
     render(<HoldersTab appId="app-1" />)
-    fireEvent.click(within(screen.getByTestId('holder-l1')).getByRole('button', { name: 'Change plan' }))
+    fireEvent.click(
+      within(screen.getByTestId('holder-l1')).getByRole('button', { name: 'Change plan' }),
+    )
     fireEvent.change(screen.getByLabelText('New plan'), { target: { value: 'free' } })
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Move to Free' })))
     expect(replaceGrant).toHaveBeenCalledWith({ licenseId: 'l1', kind: 'free' })

@@ -45,7 +45,9 @@ describe('useAffectsConfirm', () => {
     const run = vi.fn().mockResolvedValue(true)
     render(<Harness count={2} run={run} />)
     await act(async () => fireEvent.click(screen.getByText('save')))
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Apply to 2 environments' })))
+    await act(async () =>
+      fireEvent.click(screen.getByRole('button', { name: 'Apply to 2 environments' })),
+    )
     expect(run).toHaveBeenCalledOnce()
   })
 })

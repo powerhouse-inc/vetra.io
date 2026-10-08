@@ -17,10 +17,23 @@ vi.mock('../hooks/use-subscriptions', () => ({
 import { SubscriptionsView } from '../components/subscriptions-view'
 
 const sub = (over: Partial<Subscription>): Subscription => ({
-  licenseId: 'l1', appId: 'kv', appName: 'Knowledge Vault', kind: 'kv-pro', termLabel: 'Pro',
-  issuer: 'INVITE_CODE', status: 'ACTIVE', start: '2026-10-01T00:00:00Z', end: null, mode: 'DEDICATED',
-  environmentId: 'env-1', environmentLabel: 'Acme', openUrl: null, stoppedAt: null, deleteAfter: null,
-  warnings: [], ...over,
+  licenseId: 'l1',
+  appId: 'kv',
+  appName: 'Knowledge Vault',
+  kind: 'kv-pro',
+  termLabel: 'Pro',
+  issuer: 'INVITE_CODE',
+  status: 'ACTIVE',
+  start: '2026-10-01T00:00:00Z',
+  end: null,
+  mode: 'DEDICATED',
+  environmentId: 'env-1',
+  environmentLabel: 'Acme',
+  openUrl: null,
+  stoppedAt: null,
+  deleteAfter: null,
+  warnings: [],
+  ...over,
 })
 
 describe('SubscriptionsView', () => {
@@ -34,7 +47,9 @@ describe('SubscriptionsView', () => {
     subs = { data: [], isPending: false, error: null }
     render(<SubscriptionsView />)
     expect(screen.getByText('No subscriptions yet')).toBeTruthy()
-    expect(screen.getAllByRole('link', { name: /redeem a code/i })[0].getAttribute('href')).toBe('/redeem')
+    expect(screen.getAllByRole('link', { name: /redeem a code/i })[0].getAttribute('href')).toBe(
+      '/redeem',
+    )
   })
 
   it('shows a skeleton while loading', () => {
@@ -54,7 +69,11 @@ describe('SubscriptionsView', () => {
 
   it('groups by app and tucks ended ones away', () => {
     subs = {
-      data: [sub({ licenseId: 'a' }), sub({ licenseId: 'b', status: 'EXPIRED' }), sub({ licenseId: 'c', appId: 'pf', appName: 'pfnuer' })],
+      data: [
+        sub({ licenseId: 'a' }),
+        sub({ licenseId: 'b', status: 'EXPIRED' }),
+        sub({ licenseId: 'c', appId: 'pf', appName: 'pfnuer' }),
+      ],
       isPending: false,
       error: null,
     }
@@ -81,7 +100,9 @@ describe('SubscriptionsView', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Cancel Pro on Knowledge Vault' }))
     expect(screen.getByText(/keeps running for 14 days/i)).toBeTruthy()
     expect(cancel).not.toHaveBeenCalled()
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Cancel subscription' })))
+    await act(async () =>
+      fireEvent.click(screen.getByRole('button', { name: 'Cancel subscription' })),
+    )
     expect(cancel).toHaveBeenCalledWith({ licenseId: 'a' })
   })
 

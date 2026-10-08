@@ -5,7 +5,9 @@ import React from 'react'
 let state = 'resolving'
 const openLogin = vi.fn()
 vi.mock('@powerhousedao/reactor-browser', () => ({ useRenownAuthAsync: () => ({ state }) }))
-vi.mock('@/modules/shared/components/renown/login-modal-context', () => ({ useOpenLogin: () => openLogin }))
+vi.mock('@/modules/shared/components/renown/login-modal-context', () => ({
+  useOpenLogin: () => openLogin,
+}))
 
 import { RequireLogin } from '../require-login'
 

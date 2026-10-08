@@ -49,13 +49,21 @@ function LicenceCheck({ children }: { children: ReactNode }) {
   if (access.error) {
     return (
       <div className="mx-auto mt-28 max-w-lg px-6">
-        <TabError error={access.error} onRetry={() => void access.refetch()} retrying={access.isRefetching} />
+        <TabError
+          error={access.error}
+          onRetry={() => void access.refetch()}
+          retrying={access.isRefetching}
+        />
       </div>
     )
   }
   if (access.isPending || access.data == null) {
     return (
-      <div role="status" aria-label="Checking your studio access" className="mx-auto mt-28 max-w-4xl space-y-4 px-6">
+      <div
+        role="status"
+        aria-label="Checking your studio access"
+        className="mx-auto mt-28 max-w-4xl space-y-4 px-6"
+      >
         <Skeleton className="h-10 w-1/3" />
         <Skeleton className="h-48 w-full rounded-2xl" />
       </div>

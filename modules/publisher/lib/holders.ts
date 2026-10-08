@@ -40,7 +40,9 @@ export function joinHolders(
     ...l,
     environment:
       environments.find((e) => e.licenseId === l.id) ??
-      (l.environmentId ? (environments.find((e) => e.environmentId === l.environmentId) ?? null) : null),
+      (l.environmentId
+        ? (environments.find((e) => e.environmentId === l.environmentId) ?? null)
+        : null),
   }))
   const time = (s: string | null) => (s ? new Date(s).getTime() : Number.POSITIVE_INFINITY)
   return rows.sort((a, b) => {
@@ -50,7 +52,14 @@ export function joinHolders(
   })
 }
 
-export const LICENSE_FILTERS = ['ALL', 'ISSUED', 'ACTIVE', 'EXPIRED', 'REVOKED', 'REPLACED'] as const
+export const LICENSE_FILTERS = [
+  'ALL',
+  'ISSUED',
+  'ACTIVE',
+  'EXPIRED',
+  'REVOKED',
+  'REPLACED',
+] as const
 export type LicenseFilter = (typeof LICENSE_FILTERS)[number]
 
 export function filterHolders(
@@ -62,11 +71,16 @@ export function filterHolders(
     (r) =>
       (status === 'ALL' || r.status === status) &&
       (kind === 'ALL' || r.kind === kind) &&
-      (q === '' || r.user.toLowerCase().includes(q) || (r.environment?.label ?? '').toLowerCase().includes(q)),
+      (q === '' ||
+        r.user.toLowerCase().includes(q) ||
+        (r.environment?.label ?? '').toLowerCase().includes(q)),
   )
 }
 
-export function liveLicenseOf(licenses: PublisherLicense[], user: string): PublisherLicense | undefined {
+export function liveLicenseOf(
+  licenses: PublisherLicense[],
+  user: string,
+): PublisherLicense | undefined {
   return licenses.find((l) => isLive(l) && sameUser(l.user, user))
 }
 

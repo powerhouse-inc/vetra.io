@@ -29,7 +29,8 @@ function ArtifactCard({ artifact }: { artifact: PublisherAppArtifact }) {
         <div className="min-w-0 flex-1">
           <h3 className="truncate font-mono text-sm font-semibold">{artifact.name}</h3>
           <p className="text-muted-foreground text-xs">
-            <span>{artifactKindLabel(artifact.kind)}</span> · <span>{artifact.versions.length} published</span>
+            <span>{artifactKindLabel(artifact.kind)}</span> ·{' '}
+            <span>{artifact.versions.length} published</span>
           </p>
         </div>
       </header>
@@ -48,7 +49,11 @@ function ArtifactCard({ artifact }: { artifact: PublisherAppArtifact }) {
       )}
       <ul className="divide-border divide-y text-sm">
         {shown.map((v) => (
-          <li key={v.version} data-testid="artifact-version" className="flex items-center gap-3 py-2">
+          <li
+            key={v.version}
+            data-testid="artifact-version"
+            className="flex items-center gap-3 py-2"
+          >
             <span className="w-24 shrink-0 font-mono">{v.version}</span>
             <span className="text-muted-foreground min-w-0 flex-1 truncate font-mono text-xs">
               {v.reference}

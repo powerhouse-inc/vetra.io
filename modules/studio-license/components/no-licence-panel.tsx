@@ -1,6 +1,15 @@
 'use client'
 
-import { BookOpen, ExternalLink, Github, Mail, MessageCircle, Sparkles, Terminal, Ticket } from 'lucide-react'
+import {
+  BookOpen,
+  ExternalLink,
+  Github,
+  Mail,
+  MessageCircle,
+  Sparkles,
+  Terminal,
+  Ticket,
+} from 'lucide-react'
 import Link from 'next/link'
 import { CopyButton } from '@/modules/apps/components/copy-button'
 import { Button } from '@/modules/shared/components/ui/button'
@@ -11,7 +20,8 @@ const NPM_CMD = 'npm install -g ph-cmd vetra'
 const GITHUB_URL = 'https://github.com/powerhouse-inc/vetra-cli'
 const WAITLIST_ACTION =
   'https://gmail.us21.list-manage.com/subscribe/post?u=a65ca7e437961008f5f5c1bad&id=c8ea339c46&f_id=00fda7e6f0'
-const ACADEMY_URL = 'https://academy.vetra.io/academy/GetStarted/VetraStudio#running-vetra-studio-locally'
+const ACADEMY_URL =
+  'https://academy.vetra.io/academy/GetStarted/VetraStudio#running-vetra-studio-locally'
 
 function Command({ cmd, label }: { cmd: string; label: string }) {
   return (
@@ -28,7 +38,10 @@ export function NoLicencePanel() {
   return (
     <main className="mx-auto mt-24 max-w-4xl space-y-6 px-4 py-10 sm:px-6">
       <section className="bg-card border-border relative overflow-hidden rounded-2xl border p-6 shadow-sm sm:p-10">
-        <div aria-hidden className="bg-primary/10 pointer-events-none absolute -top-24 right-0 h-64 w-96 rounded-full blur-3xl" />
+        <div
+          aria-hidden
+          className="bg-primary/10 pointer-events-none absolute -top-24 right-0 h-64 w-96 rounded-full blur-3xl"
+        />
         <div className="relative space-y-4">
           <span className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-2xl">
             <Sparkles className="h-5 w-5" aria-hidden />
@@ -53,7 +66,9 @@ export function NoLicencePanel() {
             <Mail className="text-primary h-4 w-4" aria-hidden />
             No code yet?
           </h2>
-          <p className="text-muted-foreground text-sm">Join the waitlist and we will send one when a spot opens.</p>
+          <p className="text-muted-foreground text-sm">
+            Join the waitlist and we will send one when a spot opens.
+          </p>
           <form action={WAITLIST_ACTION} method="post" target="_blank" className="flex gap-2">
             <input
               type="email"
@@ -80,16 +95,28 @@ export function NoLicencePanel() {
             <Terminal className="text-primary h-4 w-4" aria-hidden />
             Run it on your machine
           </h2>
-          <p className="text-muted-foreground text-sm">No code needed: run Vetra locally with one command.</p>
+          <p className="text-muted-foreground text-sm">
+            No code needed: run Vetra locally with one command.
+          </p>
           <Command cmd={CURL_CMD} label="Copy install script command" />
           <Command cmd={NPM_CMD} label="Copy npm install command" />
           <div className="flex flex-wrap gap-3 text-sm">
-            <Link href={GITHUB_URL} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
+            <Link
+              href={GITHUB_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
+            >
               <Github className="h-4 w-4" aria-hidden />
               powerhouse-inc/vetra-cli
               <ExternalLink className="h-3 w-3" aria-hidden />
             </Link>
-            <Link href={ACADEMY_URL} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
+            <Link
+              href={ACADEMY_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5"
+            >
               <BookOpen className="h-4 w-4" aria-hidden />
               Step-by-step guide
             </Link>

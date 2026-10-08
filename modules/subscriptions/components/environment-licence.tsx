@@ -16,12 +16,17 @@ export function EnvironmentLicenceBadge({ environmentId }: { environmentId: stri
       <p className="text-muted-foreground flex items-center gap-1.5">
         <BadgeCheck className="text-primary h-3.5 w-3.5 shrink-0" aria-hidden />
         <span className="text-foreground min-w-0 font-medium break-all">{`${s.appName} · ${subscriptionName(s)}`}</span>
-        <Link href={subscriptionHref(s.licenseId)} className="text-primary ml-auto shrink-0 hover:underline">
+        <Link
+          href={subscriptionHref(s.licenseId)}
+          className="text-primary ml-auto shrink-0 hover:underline"
+        >
           Subscription
         </Link>
       </p>
       {warning && (
-        <p className={warningTone(warning.kind) === 'danger' ? 'text-destructive' : 'text-warning'}>{warning.message}</p>
+        <p className={warningTone(warning.kind) === 'danger' ? 'text-destructive' : 'text-warning'}>
+          {warning.message}
+        </p>
       )}
     </div>
   )

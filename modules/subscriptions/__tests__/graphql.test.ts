@@ -12,7 +12,10 @@ import {
 const capture = (data: unknown) => {
   const calls: Array<{ query: string; variables: unknown; auth: string | undefined }> = []
   const fetchImpl = (async (_url: string, init: RequestInit) => {
-    calls.push({ ...JSON.parse(init.body as string), auth: (init.headers as Record<string, string>).Authorization })
+    calls.push({
+      ...JSON.parse(init.body as string),
+      auth: (init.headers as Record<string, string>).Authorization,
+    })
     return new Response(JSON.stringify({ data }), { status: 200 })
   }) as unknown as FetchLike
   return { calls, fetchImpl }
@@ -23,12 +26,21 @@ const SUB_FIELDS =
 
 describe('vetraSubscriptions client', () => {
   it('checks a code without a token', async () => {
-    const check = { valid: true, appId: 'a', appName: 'Vault', kind: 'pilot', termLabel: 'Pilot', mode: 'DEDICATED' }
+    const check = {
+      valid: true,
+      appId: 'a',
+      appName: 'Vault',
+      kind: 'pilot',
+      termLabel: 'Pilot',
+      mode: 'DEDICATED',
+    }
     const { calls, fetchImpl } = capture({ vetraSubscriptions: { inviteCode: check } })
     await expect(fetchInviteCodeCheck('LFC_2026-vip', fetchImpl)).resolves.toEqual(check)
     expect(calls[0].auth).toBeUndefined()
     expect(calls[0].variables).toEqual({ code: 'LFC_2026-vip' })
-    expect(calls[0].query).toContain('inviteCode(code: $code) { valid appId appName kind termLabel mode }')
+    expect(calls[0].query).toContain(
+      'inviteCode(code: $code) { valid appId appName kind termLabel mode }',
+    )
   })
 
   it('lists my subscriptions with every contract field', async () => {
@@ -46,7 +58,9 @@ describe('vetraSubscriptions client', () => {
   })
 
   it('redeems with the input passed through untouched', async () => {
-    const { calls, fetchImpl } = capture({ vetraSubscriptions: { redeemInviteCode: { licenseId: 'l' } } })
+    const { calls, fetchImpl } = capture({
+      vetraSubscriptions: { redeemInviteCode: { licenseId: 'l' } },
+    })
     await redeemInviteCode({ code: 'C', upgrades: 'old' }, 'tok', fetchImpl)
     expect(calls[0].query).toContain('mutation ($input: RedeemInviteCodeInput!)')
     expect(calls[0].query).toContain('redeemInviteCode(input: $input) {')
@@ -58,9 +72,13 @@ describe('vetraSubscriptions client', () => {
     await expect(cancelSubscription('l1', 'tok', a.fetchImpl)).resolves.toBe(true)
     expect(a.calls[0].query).toContain('cancelSubscription(licenseId: $licenseId)')
     const b = capture({ vetraSubscriptions: { applyStudioKey: true } })
-    await expect(applyStudioKey('t-1', ['ANTHROPIC_API_KEY'], 'tok', b.fetchImpl)).resolves.toBe(true)
+    await expect(applyStudioKey('t-1', ['ANTHROPIC_API_KEY'], 'tok', b.fetchImpl)).resolves.toBe(
+      true,
+    )
     expect(b.calls[0].query).toContain('mutation ($tenantId: String!, $secretNames: [String!]!)')
-    expect(b.calls[0].query).toContain('applyStudioKey(tenantId: $tenantId, secretNames: $secretNames)')
+    expect(b.calls[0].query).toContain(
+      'applyStudioKey(tenantId: $tenantId, secretNames: $secretNames)',
+    )
     expect(b.calls[0].variables).toEqual({ tenantId: 't-1', secretNames: ['ANTHROPIC_API_KEY'] })
   })
 })

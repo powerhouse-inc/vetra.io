@@ -5,9 +5,15 @@ import type { Subscription, SubscriptionWarningKind } from '../types'
 const LIVE = new Set(['ISSUED', 'ACTIVE'])
 export const isLive = (s: Pick<Subscription, 'status'>): boolean => LIVE.has(s.status)
 
-export type AppGroup = { appId: string; appName: string; live: Subscription[]; past: Subscription[] }
+export type AppGroup = {
+  appId: string
+  appName: string
+  live: Subscription[]
+  past: Subscription[]
+}
 
-const startTime = (s: Subscription) => (s.start ? new Date(s.start).getTime() : Number.POSITIVE_INFINITY)
+const startTime = (s: Subscription) =>
+  s.start ? new Date(s.start).getTime() : Number.POSITIVE_INFINITY
 
 export function groupByApp(subs: Subscription[]): AppGroup[] {
   const groups = new Map<string, AppGroup>()
@@ -20,7 +26,7 @@ export function groupByApp(subs: Subscription[]): AppGroup[] {
   return [...groups.values()]
     .map((g) => ({ ...g, live: g.live.sort(byStart), past: g.past.sort(byStart) }))
     .sort((a, b) => {
-      if ((a.live.length > 0) !== (b.live.length > 0)) return a.live.length > 0 ? -1 : 1
+      if (a.live.length > 0 !== b.live.length > 0) return a.live.length > 0 ? -1 : 1
       return a.appName.localeCompare(b.appName)
     })
 }

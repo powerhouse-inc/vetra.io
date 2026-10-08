@@ -17,8 +17,8 @@ function nextStep(status: string): string {
 export function LicensingUnavailableBanner({ status }: { status: string }) {
   return (
     <Banner tone="warning" icon={PauseCircle} title="Licensing is paused for this app">
-      {nextStep(status)} Until then you can look around, but plans, grants and invite codes can’t
-      be changed.
+      {nextStep(status)} Until then you can look around, but plans, grants and invite codes can’t be
+      changed.
     </Banner>
   )
 }

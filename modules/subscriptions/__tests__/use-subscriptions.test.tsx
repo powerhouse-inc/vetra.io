@@ -16,10 +16,15 @@ vi.mock('../graphql', () => ({
   cancelSubscription: vi.fn(),
 }))
 vi.mock('@/modules/cloud/query/use-authed-query', () => ({
-  useAuthedQuery: (key: readonly unknown[], fetcher: (t: string | null) => Promise<unknown>, options?: object) =>
-    useQuery({ queryKey: key, queryFn: () => fetcher('tok'), ...options }),
+  useAuthedQuery: (
+    key: readonly unknown[],
+    fetcher: (t: string | null) => Promise<unknown>,
+    options?: object,
+  ) => useQuery({ queryKey: key, queryFn: () => fetcher('tok'), ...options }),
 }))
-vi.mock('@/modules/publisher/hooks/use-publisher', () => ({ usePublisherToken: () => async () => 'tok' }))
+vi.mock('@/modules/publisher/hooks/use-publisher', () => ({
+  usePublisherToken: () => async () => 'tok',
+}))
 vi.mock('@powerhousedao/reactor-browser', () => ({ useDid: () => did }))
 
 import {
@@ -59,7 +64,9 @@ describe('subscription hooks', () => {
       { licenseId: 'new', environmentId: 'env-1', status: 'ACTIVE' },
     ])
     const { Wrapper } = setup()
-    const { result } = renderHook(() => useSubscriptionForEnvironment('env-1'), { wrapper: Wrapper })
+    const { result } = renderHook(() => useSubscriptionForEnvironment('env-1'), {
+      wrapper: Wrapper,
+    })
     await waitFor(() => expect(result.current.subscription?.licenseId).toBe('new'))
   })
 

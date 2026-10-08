@@ -29,20 +29,32 @@ describe('StudioLicenseGate', () => {
   })
 
   it('opens the studio for a licence holder', () => {
-    access = { data: { allowed: true, licenseId: 'l', expires: null, hasAttachedKey: true }, isPending: false, error: null }
+    access = {
+      data: { allowed: true, licenseId: 'l', expires: null, hasAttachedKey: true },
+      isPending: false,
+      error: null,
+    }
     render(<StudioLicenseGate>studio</StudioLicenseGate>)
     expect(screen.getByText('studio')).toBeTruthy()
   })
 
   it('points everyone else at /redeem', () => {
-    access = { data: { allowed: false, licenseId: null, expires: null, hasAttachedKey: false }, isPending: false, error: null }
+    access = {
+      data: { allowed: false, licenseId: null, expires: null, hasAttachedKey: false },
+      isPending: false,
+      error: null,
+    }
     render(<StudioLicenseGate>studio</StudioLicenseGate>)
     expect(screen.getByRole('heading', { name: /vetra studio is in early access/i })).toBeTruthy()
     expect(screen.getByRole('link', { name: 'Redeem a code' }).getAttribute('href')).toBe('/redeem')
   })
 
   it('never tells a licensed user to redeem a code when the check fails', () => {
-    access = { data: undefined, isPending: false, error: new PublisherApiError('NETWORK', 'fetch failed', null) }
+    access = {
+      data: undefined,
+      isPending: false,
+      error: new PublisherApiError('NETWORK', 'fetch failed', null),
+    }
     render(<StudioLicenseGate>studio</StudioLicenseGate>)
     expect(screen.queryByRole('link', { name: 'Redeem a code' })).toBeNull()
     expect(screen.getByText(/lost the connection to vetra/i)).toBeTruthy()
@@ -52,7 +64,11 @@ describe('StudioLicenseGate', () => {
 
   it('shows the pre-alpha notice once per browser', () => {
     localStorage.removeItem('vetra_prealpha_ack')
-    access = { data: { allowed: true, licenseId: 'l', expires: null, hasAttachedKey: true }, isPending: false, error: null }
+    access = {
+      data: { allowed: true, licenseId: 'l', expires: null, hasAttachedKey: true },
+      isPending: false,
+      error: null,
+    }
     render(<StudioLicenseGate>studio</StudioLicenseGate>)
     expect(screen.getByRole('dialog')).toBeTruthy()
   })

@@ -14,7 +14,14 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/modules/shared/components/ui/dialog'
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/modules/shared/components/ui/form'
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/modules/shared/components/ui/form'
 import { Input } from '@/modules/shared/components/ui/input'
 import { useAddTemplate } from '../../hooks/use-publisher-mutations'
 import { runWithToast } from '../../lib/run'
@@ -38,7 +45,10 @@ export function CreateTemplateDialog({
   onCreated: (templateId: string) => void
 }) {
   const add = useAddTemplate(appId)
-  const form = useForm<Values>({ resolver: zodResolver(schema), defaultValues: { name: '', mode: 'SHARED' } })
+  const form = useForm<Values>({
+    resolver: zodResolver(schema),
+    defaultValues: { name: '', mode: 'SHARED' },
+  })
 
   useEffect(() => {
     if (!open) form.reset()
@@ -73,7 +83,11 @@ export function CreateTemplateDialog({
                 <FormItem>
                   <FormLabel>Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="e.g. Community, Pro workspace" autoComplete="off" {...field} />
+                    <Input
+                      placeholder="e.g. Community, Pro workspace"
+                      autoComplete="off"
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

@@ -9,8 +9,15 @@ describe('redeem lib', () => {
   })
 
   it('builds the input for each choice', () => {
-    expect(redeemInput({ code: 'C', choice: 'new', label: ' Acme ', mode: 'DEDICATED' })).toEqual({ code: 'C', label: 'Acme' })
-    expect(redeemInput({ code: 'C', choice: 'new', label: 'ignored', mode: 'SHARED' })).toEqual({ code: 'C' })
-    expect(redeemInput({ code: 'C', choice: { upgrades: 'lic-1' }, label: 'x', mode: 'DEDICATED' })).toEqual({ code: 'C', upgrades: 'lic-1' })
+    expect(redeemInput({ code: 'C', choice: 'new', label: ' Acme ', mode: 'DEDICATED' })).toEqual({
+      code: 'C',
+      label: 'Acme',
+    })
+    expect(redeemInput({ code: 'C', choice: 'new', label: 'ignored', mode: 'SHARED' })).toEqual({
+      code: 'C',
+    })
+    expect(
+      redeemInput({ code: 'C', choice: { upgrades: 'lic-1' }, label: 'x', mode: 'DEDICATED' }),
+    ).toEqual({ code: 'C', upgrades: 'lic-1' })
   })
 })

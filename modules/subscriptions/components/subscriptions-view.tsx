@@ -35,11 +35,21 @@ function AppSection({
       </div>
       <div className="space-y-3">
         {group.live.map((s) => (
-          <SubscriptionCard key={s.licenseId} subscription={s} highlighted={s.licenseId === highlight} onCancel={() => onCancel(s)} />
+          <SubscriptionCard
+            key={s.licenseId}
+            subscription={s}
+            highlighted={s.licenseId === highlight}
+            onCancel={() => onCancel(s)}
+          />
         ))}
         {showPast &&
           group.past.map((s) => (
-            <SubscriptionCard key={s.licenseId} subscription={s} highlighted={s.licenseId === highlight} onCancel={() => onCancel(s)} />
+            <SubscriptionCard
+              key={s.licenseId}
+              subscription={s}
+              highlighted={s.licenseId === highlight}
+              onCancel={() => onCancel(s)}
+            />
           ))}
       </div>
       {group.past.length > 0 && (
@@ -62,7 +72,9 @@ export function SubscriptionsView() {
   // Bring a just-redeemed subscription into view once it has rendered.
   useEffect(() => {
     if (!highlight || !subs.data) return
-    document.getElementById(`subscription-${highlight}`)?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
+    document
+      .getElementById(`subscription-${highlight}`)
+      ?.scrollIntoView?.({ behavior: 'smooth', block: 'center' })
   }, [highlight, subs.data])
 
   return (
@@ -84,7 +96,11 @@ export function SubscriptionsView() {
       {subs.isPending ? (
         <TabSkeleton rows={3} label="Loading subscriptions" />
       ) : subs.error ? (
-        <TabError error={subs.error} onRetry={() => void subs.refetch()} retrying={subs.isRefetching} />
+        <TabError
+          error={subs.error}
+          onRetry={() => void subs.refetch()}
+          retrying={subs.isRefetching}
+        />
       ) : groups.length === 0 ? (
         <EmptyState
           icon={BadgeCheck}

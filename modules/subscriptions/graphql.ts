@@ -11,7 +11,10 @@ const SUBSCRIPTION_FIELDS = `licenseId appId appName kind termLabel issuer statu
 type Ns<T> = { vetraSubscriptions: T }
 
 /** Public: no token is sent. One answer for unknown, paused, expired and used up. */
-export async function fetchInviteCodeCheck(code: string, fetchImpl?: FetchLike): Promise<InviteCodeCheck> {
+export async function fetchInviteCodeCheck(
+  code: string,
+  fetchImpl?: FetchLike,
+): Promise<InviteCodeCheck> {
   const data = await publisherGql<Ns<{ inviteCode: InviteCodeCheck }>>(
     `query ($code: String!) { vetraSubscriptions { inviteCode(code: $code) { valid appId appName kind termLabel mode } } }`,
     { code },
@@ -21,7 +24,10 @@ export async function fetchInviteCodeCheck(code: string, fetchImpl?: FetchLike):
   return data.vetraSubscriptions.inviteCode
 }
 
-export async function fetchMySubscriptions(token: string | null, fetchImpl?: FetchLike): Promise<Subscription[]> {
+export async function fetchMySubscriptions(
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<Subscription[]> {
   const data = await publisherGql<Ns<{ mySubscriptions: Subscription[] }>>(
     `query { vetraSubscriptions { mySubscriptions { ${SUBSCRIPTION_FIELDS} } } }`,
     {},
@@ -31,7 +37,10 @@ export async function fetchMySubscriptions(token: string | null, fetchImpl?: Fet
   return data.vetraSubscriptions.mySubscriptions ?? []
 }
 
-export async function fetchStudioAccess(token: string | null, fetchImpl?: FetchLike): Promise<StudioAccess> {
+export async function fetchStudioAccess(
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<StudioAccess> {
   const data = await publisherGql<Ns<{ studioAccess: StudioAccess }>>(
     `query { vetraSubscriptions { studioAccess { allowed licenseId expires hasAttachedKey } } }`,
     {},
