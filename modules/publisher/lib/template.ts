@@ -29,19 +29,25 @@ export const SIZES: { value: CloudResourceSize; label: string }[] = [
   { value: 'VETRA_AGENT_XXL', label: 'Double extra large' },
 ]
 
+/** "Connect", "Your app image": the part of the picker label before the dash. */
+export function serviceLabel(type: string): string {
+  const full = SERVICE_TYPES.find((t) => t.value === type)?.label
+  return full ? full.split(' — ')[0] : type
+}
+
 /** "vault-app at kv, following latest release". */
 export function describeService(s: PublisherTemplateService): string {
   const where = s.prefix ? ` at ${s.prefix}` : ''
-  if (!s.artifactName) return `${s.type}${where}`
+  if (!s.artifactName) return `${serviceLabel(s.type)}${where}`
   const follows = s.artifactChannel ? `, following ${channelLabel(s.artifactChannel).toLowerCase()}` : ''
   return `${s.artifactName}${where}${follows}`
 }
 
 /** The whole template as one sentence, so a publisher can check it at a glance. */
-export function describeTemplate(t: PublisherTemplate): string {
+export function describeTemplate(t: PublisherTemplate, sharedEnvironmentName?: string | null): string {
   if (t.mode === 'SHARED') {
     return t.sharedEnvironment
-      ? 'Owners get an account on one shared environment.'
+      ? `Owners get an account on ${sharedEnvironmentName ? `the ${sharedEnvironmentName} environment` : 'one shared environment'}.`
       : 'Owners get an account on your App Environment.'
   }
   if (t.services.length === 0) return 'Nothing to run yet — add at least one service.'

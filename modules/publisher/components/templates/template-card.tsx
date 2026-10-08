@@ -9,16 +9,29 @@ import type { PublisherTemplate, PublisherTerm } from '../../types'
 export function TemplateCard({
   template,
   usedBy,
+  usage = 'ready',
   onEdit,
   onDelete,
 }: {
   template: PublisherTemplate
   usedBy: PublisherTerm[]
+  /** Whether plan usage is known yet; until it is, nothing claims the template is free. */
+  usage?: 'loading' | 'error' | 'ready'
   onEdit: () => void
   onDelete: () => void
 }) {
   const name = templateName(template)
   const inUse = usedBy.length > 0
+  const running = template.environmentCount > 0
+  const blocker = inUse
+    ? 'Move its plans to another template first'
+    : usage === 'loading'
+      ? 'Checking which plans use it'
+      : usage === 'error'
+        ? 'Could not check which plans use it'
+        : running
+          ? 'Environments still run on it'
+          : undefined
   const Icon = template.mode === 'SHARED' ? Users : Server
   return (
     <article
@@ -40,7 +53,15 @@ export function TemplateCard({
         </div>
       </div>
       <div className="text-muted-foreground flex flex-wrap gap-x-4 gap-y-1 text-xs">
-        <span>{inUse ? `Used by ${usedBy.map(termName).join(', ')}` : 'Not used by a plan yet'}</span>
+        <span>
+          {inUse
+            ? `Used by ${usedBy.map(termName).join(', ')}`
+            : usage === 'loading'
+              ? 'Checking plans…'
+              : usage === 'error'
+                ? 'Could not check plans'
+                : 'Not used by a plan yet'}
+        </span>
         {template.mode === 'DEDICATED' && <span>{envCountText(template.environmentCount)}</span>}
       </div>
       <div className="border-border mt-auto flex gap-2 border-t pt-3">
@@ -52,8 +73,8 @@ export function TemplateCard({
           size="sm"
           variant="ghost"
           onClick={onDelete}
-          disabled={inUse}
-          title={inUse ? 'Move its plans to another template first' : undefined}
+          disabled={blocker !== undefined}
+          title={blocker}
           aria-label={`Delete ${name}`}
           className="text-muted-foreground hover:text-destructive ml-auto"
         >

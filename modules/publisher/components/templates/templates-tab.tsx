@@ -20,6 +20,8 @@ export function TemplatesTab({ appId }: { appId: string }) {
 
   const list = templates.data ?? []
   const editing = editingId ? (list.find((t) => t.id === editingId) ?? null) : null
+  const usage = terms.isPending ? 'loading' : terms.error ? 'error' : 'ready'
+  const editingMissing = editingId !== null && !editing && !templates.isPending && !templates.isFetching && !templates.error
   const usedBy = (id: string) => (terms.data ?? []).filter((t) => t.templateId === id)
 
   return (
@@ -61,6 +63,7 @@ export function TemplatesTab({ appId }: { appId: string }) {
               key={t.id}
               template={t}
               usedBy={usedBy(t.id)}
+              usage={usage}
               onEdit={() => setEditingId(t.id)}
               onDelete={() => setDeleting(t)}
             />
@@ -73,7 +76,9 @@ export function TemplatesTab({ appId }: { appId: string }) {
         onOpenChange={setCreating}
         onCreated={(id) => setEditingId(id)}
       />
-      <TemplateEditor appId={appId} template={editing} open={editingId !== null} onClose={() => setEditingId(null)} />
+      <TemplateEditor appId={appId} template={editing} open={editingId !== null}
+        missing={editingMissing}
+        onClose={() => setEditingId(null)} />
       <DeleteTemplateDialog appId={appId} template={deleting} onClose={() => setDeleting(null)} />
     </div>
   )

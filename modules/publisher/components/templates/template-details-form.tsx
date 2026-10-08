@@ -62,7 +62,7 @@ export function TemplateDetailsForm({
     <section className="space-y-5" aria-label="Template details">
       <div className="space-y-1.5">
         <Label htmlFor="template-name">Name</Label>
-        <Input id="template-name" value={form.name} onChange={(e) => set('name', e.target.value)} />
+        <Input id="template-name" maxLength={60} value={form.name} onChange={(e) => set('name', e.target.value)} />
       </div>
 
       <ModeChoice
@@ -73,16 +73,19 @@ export function TemplateDetailsForm({
 
       {form.mode === 'SHARED' ? (
         <div className="space-y-1.5">
-          <Label>Shared environment</Label>
+          <Label htmlFor="template-shared-env">Shared environment</Label>
           <Select
             value={form.sharedEnvironment || APP_ENVIRONMENT}
             onValueChange={(v) => set('sharedEnvironment', v === APP_ENVIRONMENT ? '' : v)}
           >
-            <SelectTrigger aria-label="Shared environment" className="w-full sm:w-80">
+            <SelectTrigger id="template-shared-env" aria-label="Shared environment" className="w-full sm:w-80">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={APP_ENVIRONMENT}>App Environment (production)</SelectItem>
+              {form.sharedEnvironment && !environments.some((e) => e.id === form.sharedEnvironment) && (
+                <SelectItem value={form.sharedEnvironment}>Saved environment</SelectItem>
+              )}
               {environments.map((e) => (
                 <SelectItem key={e.id} value={e.id}>
                   {e.state.label || e.name || e.id}
@@ -97,12 +100,12 @@ export function TemplateDetailsForm({
       ) : (
         <div className="space-y-4">
           <div className="space-y-1.5">
-            <Label>Size</Label>
+            <Label htmlFor="template-size">Size</Label>
             <Select
               value={form.size || DEFAULT_SIZE}
               onValueChange={(v) => set('size', v === DEFAULT_SIZE ? '' : v)}
             >
-              <SelectTrigger aria-label="Size" className="w-full sm:w-64">
+              <SelectTrigger id="template-size" aria-label="Size" className="w-full sm:w-64">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>

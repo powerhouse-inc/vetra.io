@@ -3,15 +3,16 @@ import { act, cleanup, fireEvent, render, screen, within } from '@testing-librar
 import React from 'react'
 import type { PublisherTemplate, PublisherTerm } from '../types'
 
-let templates: { data?: PublisherTemplate[]; isPending: boolean; error: Error | null }
+let templates: { data?: PublisherTemplate[]; isPending: boolean; isFetching?: boolean; error: Error | null }
 let terms: PublisherTerm[] = []
+let termsState: { isPending: boolean; error: Error | null } = { isPending: false, error: null }
 const addTemplate = vi.fn()
 const deleteTemplate = vi.fn()
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock('../hooks/use-publisher', () => ({
   usePublisherTemplates: () => ({ ...templates, refetch: vi.fn(), isRefetching: false }),
-  usePublisherTerms: () => ({ data: terms, isPending: false, error: null }),
+  usePublisherTerms: () => ({ data: terms, ...termsState }),
 }))
 vi.mock('../hooks/use-publisher-mutations', () => ({
   useAddTemplate: () => ({ mutateAsync: addTemplate, isPending: false }),
@@ -19,8 +20,8 @@ vi.mock('../hooks/use-publisher-mutations', () => ({
 }))
 // The editor has its own tests; here it only needs to say which template is open.
 vi.mock('../components/templates/template-editor', () => ({
-  TemplateEditor: ({ open, template }: { open: boolean; template: PublisherTemplate | null }) =>
-    open ? <div data-testid="editor">{template ? template.id : 'loading'}</div> : null,
+  TemplateEditor: ({ open, template, missing }: { open: boolean; template: PublisherTemplate | null; missing?: boolean }) =>
+    open ? <div data-testid="editor">{template ? template.id : missing ? 'missing' : 'loading'}</div> : null,
 }))
 
 import { TemplatesTab } from '../components/templates/templates-tab'
@@ -39,6 +40,7 @@ describe('TemplatesTab', () => {
     cleanup()
     vi.clearAllMocks()
     terms = []
+    termsState = { isPending: false, error: null }
   })
 
   it('invites a first template when there are none', () => {
@@ -73,7 +75,7 @@ describe('TemplatesTab', () => {
   })
 
   it('creates a template and opens it in the editor', async () => {
-    templates = { data: [tpl({ id: 'tpl-0' })], isPending: false, error: null }
+    templates = { data: [tpl({ id: 'tpl-0' })], isPending: false, isFetching: true, error: null }
     addTemplate.mockResolvedValue('tpl-new')
     render(<TemplatesTab appId="app-1" />)
     fireEvent.click(screen.getByRole('button', { name: 'New template' }))
@@ -82,5 +84,39 @@ describe('TemplatesTab', () => {
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Create template' })))
     expect(addTemplate).toHaveBeenCalledWith({ name: 'Starter', mode: 'DEDICATED' })
     expect(screen.getByTestId('editor').textContent).toBe('loading')
+  })
+
+  it('does not call a template unused, or let it be deleted, while plans are loading', () => {
+    templates = { data: [tpl({})], isPending: false, error: null }
+    termsState = { isPending: true, error: null }
+    render(<TemplatesTab appId="app-1" />)
+    expect(screen.queryByText('Not used by a plan yet')).toBeNull()
+    expect(screen.getByText('Checking plans…')).toBeTruthy()
+    expect((screen.getByRole('button', { name: 'Delete Pro' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('keeps Delete disabled when plans failed to load', () => {
+    templates = { data: [tpl({})], isPending: false, error: null }
+    termsState = { isPending: false, error: new Error('x') }
+    render(<TemplatesTab appId="app-1" />)
+    expect(screen.queryByText('Not used by a plan yet')).toBeNull()
+    expect((screen.getByRole('button', { name: 'Delete Pro' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('cannot delete a template that environments still run on', () => {
+    templates = { data: [tpl({ environmentCount: 2 })], isPending: false, error: null }
+    render(<TemplatesTab appId="app-1" />)
+    expect((screen.getByRole('button', { name: 'Delete Pro' }) as HTMLButtonElement).disabled).toBe(true)
+  })
+
+  it('says so when the template being edited is not in the loaded list', async () => {
+    templates = { data: [tpl({ id: 'tpl-0' })], isPending: false, error: null }
+    addTemplate.mockResolvedValue('tpl-gone')
+    render(<TemplatesTab appId="app-1" />)
+    fireEvent.click(screen.getByRole('button', { name: 'New template' }))
+    fireEvent.change(screen.getByLabelText('Name'), { target: { value: 'X' } })
+    fireEvent.click(screen.getByRole('radio', { name: /dedicated/i }))
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Create template' })))
+    expect(screen.getByTestId('editor').textContent).toBe('missing')
   })
 })

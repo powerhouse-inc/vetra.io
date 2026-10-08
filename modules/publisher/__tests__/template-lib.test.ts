@@ -20,6 +20,9 @@ describe('describeTemplate', () => {
     expect(describeTemplate(tpl({ mode: 'SHARED', sharedEnvironment: 'env-9' }))).toBe(
       'Owners get an account on one shared environment.',
     )
+    expect(describeTemplate(tpl({ mode: 'SHARED', sharedEnvironment: 'env-9' }), 'Community')).toBe(
+      'Owners get an account on the Community environment.',
+    )
   })
 
   it('asks for a service on an empty dedicated template', () => {
@@ -35,7 +38,7 @@ describe('describeTemplate', () => {
       packages: [{ id: 'p1', packageName: '@acme/vault', version: '1.2.0' }],
     })
     expect(describeTemplate(t)).toBe(
-      'Each owner gets vault-app at kv, following latest release, SWITCHBOARD, with @acme/vault@1.2.0 installed.',
+      'Each owner gets vault-app at kv, following latest release, Switchboard, with @acme/vault@1.2.0 installed.',
     )
   })
 })
