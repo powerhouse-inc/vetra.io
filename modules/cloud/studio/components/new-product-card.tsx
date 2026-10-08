@@ -21,7 +21,7 @@ export function NewProductCard({
 }: {
   onCreate: (apiKey?: string) => Promise<void>
   createError: string | null
-  /** When true, the invite code supplies the key — provision directly, no form. */
+  /** When true, the studio licence supplies the key — provision directly, no form. */
   hasAttachedKey: boolean
   /**
    * `card` — dashed tile sized to sit in the products grid.
@@ -80,7 +80,7 @@ export function NewProductCard({
       </button>
     )
 
-  // Invite code carries the key: clicking provisions immediately (the grid swaps
+  // The studio licence carries the key: clicking provisions immediately (the grid swaps
   // to its "Creating…" state via `creating`). Surface any error beneath the card.
   if (hasAttachedKey) {
     return (

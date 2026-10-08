@@ -47,7 +47,7 @@ export function useCreateStudioEnvironment() {
       const ownerAddress = signer.user?.address
       if (!ownerAddress) throw new Error('Signer has no user address — cannot claim ownership')
 
-      // Invite-code path: try to claim a pre-provisioned ("warm") env first.
+      // Licence-key path: try to claim a pre-provisioned ("warm") env first.
       // On null (pool empty / no server-side key) fall through to cold provisioning.
       if (!input.anthropicApiKey) {
         const token = await getAuthToken(renown)
@@ -101,7 +101,7 @@ export function useCreateStudioEnvironment() {
           value: input.anthropicApiKey as string,
         }))
         // Per-env random secret gating vetra-cli's session-export endpoints. The
-        // invite paths set this server-side; this covers manual key entry.
+        // licence-key paths set this server-side; this covers manual key entry.
         changes.push({
           kind: 'setSecret',
           name: 'VETRA_SESSION_EXPORT_SECRET',

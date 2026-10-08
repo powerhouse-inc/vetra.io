@@ -45,7 +45,7 @@ export function StudioProductsGrid() {
 
   // Provision a new product; it surfaces in the list optimistically (as
   // "Provisioning…") immediately, and the 30s poll reconciles it against the
-  // server-resolved list. The key is omitted when the invite code carries one
+  // server-resolved list. The key is omitted when the studio licence carries one
   // (server-side injection).
   const handleCreate = async (apiKey?: string) => {
     await createProduct(apiKey)

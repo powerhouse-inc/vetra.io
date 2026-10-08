@@ -48,11 +48,11 @@ export type StudioProductsState = {
   createError: string | null
   /**
    * Provision a new product env; resolves to the new env id for navigation.
-   * Omit the key when the caller's invite code carries one (`hasAttachedKey`) —
+   * Omit the key when the caller's studio licence carries one (`hasAttachedKey`) —
    * the subgraph then injects it server-side.
    */
   createProduct: (anthropicApiKey?: string) => Promise<string>
-  /** True when the caller's redeemed code has a Claude key, so no manual entry is needed. */
+  /** True when the caller's studio licence has a Claude key, so no manual entry is needed. */
   hasAttachedKey: boolean
   did: string | undefined
 }
