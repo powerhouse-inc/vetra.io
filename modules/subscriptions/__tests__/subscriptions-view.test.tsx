@@ -86,6 +86,29 @@ describe('SubscriptionsView', () => {
     expect(screen.getByRole('region', { name: 'pfnuer' })).toBeTruthy()
   })
 
+  it('keeps an ended licence in view while it still has a warning to act on', () => {
+    subs = {
+      data: [
+        sub({
+          licenseId: 'old',
+          status: 'EXPIRED',
+          warnings: [
+            {
+              kind: 'ENDED_STOP_PENDING',
+              message: 'Acme stops on Oct 15 unless you get a new licence.',
+              at: '2026-10-15T00:00:00Z',
+            },
+          ],
+        }),
+      ],
+      isPending: false,
+      error: null,
+    }
+    render(<SubscriptionsView />)
+    expect(screen.getByText(/Acme stops on Oct 15/)).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Hide ended' })).toBeTruthy()
+  })
+
   it('highlights the subscription named in the URL', () => {
     params = new URLSearchParams('highlight=a')
     subs = { data: [sub({ licenseId: 'a' })], isPending: false, error: null }

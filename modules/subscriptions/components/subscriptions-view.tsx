@@ -21,7 +21,11 @@ function AppSection({
   highlight: string | null
   onCancel: (s: Subscription) => void
 }) {
-  const [showPast, setShowPast] = useState(group.past.some((s) => s.licenseId === highlight))
+  // Ended licences start folded away, unless one was just linked to or still has a warning to
+  // act on (its environment is about to stop or be deleted).
+  const [showPast, setShowPast] = useState(
+    group.past.some((s) => s.licenseId === highlight || s.warnings.length > 0),
+  )
   const headingId = `app-${group.appId}`
   return (
     <section aria-labelledby={headingId} className="space-y-3">
