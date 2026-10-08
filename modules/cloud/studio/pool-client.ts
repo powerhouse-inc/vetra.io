@@ -66,9 +66,9 @@ export type ClaimStudioEnvironmentResult = {
 }
 
 /**
- * Claim a pre-provisioned ("warm") studio for the authenticated invite-code
- * caller. The subgraph assigns one atomically, transfers ownership, and injects
- * the code's attached key server-side. Returns null when none is available
+ * Claim a pre-provisioned ("warm") studio for the authenticated caller. The
+ * subgraph assigns one atomically, transfers ownership, and injects the key
+ * from the caller's studio licence server-side. Returns null when none is available
  * (caller should fall back to cold provisioning) or on transport failure.
  */
 export async function claimStudioEnvironment(
