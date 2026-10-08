@@ -1,0 +1,237 @@
+# Copied verbatim from the binding licensing API contract
+# (vetra-cloud-package: docs/superpowers/specs/2026-10-08-licensing-api-contract.md),
+# the vetraPublisher and vetraSubscriptions blocks. Refresh it when the contract changes.
+#
+# Two additions the contract leaves implicit, so the schema can be built:
+# - the artifact types it marks "unchanged", as the backend's publisher-schema.ts declares them;
+# - the root fields that mount each namespace (as publisher-schema.ts does).
+
+# ---- vetraPublisher (contract) ----
+
+type PublisherApp { id: String!  name: String!  status: String! }
+
+type PublisherTemplate {
+  id: String!
+  name: String
+  mode: String!                    # SHARED | DEDICATED
+  sharedEnvironment: String        # SHARED only; null = App Environment
+  size: String
+  baseDomain: String
+  packageRegistry: String
+  services: [PublisherTemplateService!]!
+  packages: [PublisherTemplatePackage!]!
+  templateHash: String!
+  "Environments currently provisioned from this template (DEDICATED), for the 'affects N' warning."
+  environmentCount: Int!
+}
+
+type PublisherTemplateService {    # unchanged
+  id: String!  type: String!  prefix: String  artifactName: String  artifactChannel: String
+}
+type PublisherTemplatePackage { id: String!  packageName: String  version: String }   # unchanged
+
+type PublisherTerm {
+  id: String!
+  kind: String!
+  label: String
+  templateId: String
+  validityDays: Int
+  issuers: [String!]!              # INVITE_CODE | PUBLISHER_GRANT | ACHRA_SUBSCRIPTION
+  status: String!                  # DRAFT | ACTIVE | RETIRED
+  activeLicenses: Int!
+}
+
+type PublisherLicense {
+  id: String!
+  user: String!                    # DID
+  kind: String!
+  issuer: String!
+  status: String!                  # ISSUED | ACTIVE | EXPIRED | REVOKED | REPLACED
+  start: String
+  end: String
+  environmentId: String            # = stage
+  replacedBy: String
+}
+
+type PublisherEnvironment {
+  environmentId: String!
+  user: String!
+  licenseId: String!
+  rootLicenseId: String!
+  label: String
+  templateHash: String!
+  stoppedAt: String
+  deleteAfter: String
+}
+
+type PublisherInviteCode {
+  code: String!
+  kind: String!
+  label: String
+  active: Boolean!
+  expiresAt: String
+  maxUses: Int
+  redemptions: Int!
+  hasAnthropicKey: Boolean!
+  createdAt: String!
+}
+
+type PublisherAllowListEntry { user: String!  addedAt: String! }
+
+# PublisherAppArtifact / PublisherArtifactVersion / PublisherArtifactChannel unchanged.
+
+input AddTemplateInput { appId: String!  name: String  mode: String! }
+input SetTemplateDetailsInput {
+  appId: String!  templateId: String!
+  name: String  mode: String  sharedEnvironment: String
+  size: String  baseDomain: String  packageRegistry: String
+}
+input AddTemplateServiceInput {
+  appId: String!  templateId: String!
+  type: String!  prefix: String  artifactName: String  artifactChannel: String
+}
+input AddTemplatePackageInput { appId: String!  templateId: String!  packageName: String!  version: String }
+input RemoveTemplateEntryInput { appId: String!  templateId: String!  id: String! }
+
+input AddTermInput {
+  appId: String!  kind: String!  label: String  templateId: String
+  validityDays: Int  issuers: [String!]
+}
+input SetTermDetailsInput {
+  appId: String!  termId: String!
+  kind: String  label: String  templateId: String  validityDays: Int  issuers: [String!]
+}
+
+input IssueGrantInput { appId: String!  kind: String!  user: String!  label: String }
+input ReplaceGrantInput { licenseId: String!  kind: String! }
+input RevokeLicenseInput { licenseId: String!  reason: String }
+
+input CreateInviteCodeInput {
+  appId: String!  kind: String!  label: String
+  "Omit to generate a random code."
+  code: String
+  expiresAt: String  maxUses: Int
+  "Write-only; stored encrypted, never returned."
+  anthropicKey: String
+}
+
+type VetraPublisherQueries {
+  myApps: [PublisherApp!]!
+  templates(appId: String!): [PublisherTemplate!]!
+  terms(appId: String!): [PublisherTerm!]!
+  appArtifacts(appId: String!): [PublisherAppArtifact!]!
+  licenses(appId: String!, status: String): [PublisherLicense!]!
+  environments(appId: String!): [PublisherEnvironment!]!
+  inviteCodes(appId: String!): [PublisherInviteCode!]!
+  allowList(appId: String!): [PublisherAllowListEntry!]!
+}
+
+type VetraPublisherMutations {
+  addTemplate(input: AddTemplateInput!): String!            # template id
+  setTemplateDetails(input: SetTemplateDetailsInput!): Boolean!
+  addTemplateService(input: AddTemplateServiceInput!): Boolean!
+  removeTemplateService(input: RemoveTemplateEntryInput!): Boolean!
+  addTemplatePackage(input: AddTemplatePackageInput!): Boolean!
+  removeTemplatePackage(input: RemoveTemplateEntryInput!): Boolean!
+  deleteTemplate(appId: String!, templateId: String!): Boolean!
+  addTerm(input: AddTermInput!): String!                    # term id
+  setTermDetails(input: SetTermDetailsInput!): Boolean!
+  publishTerm(appId: String!, termId: String!): Boolean!
+  retireTerm(appId: String!, termId: String!): Boolean!
+  issueGrant(input: IssueGrantInput!): String!              # licence id
+  replaceGrant(input: ReplaceGrantInput!): String!          # new licence id
+  revokeLicense(input: RevokeLicenseInput!): Boolean!
+  createInviteCode(input: CreateInviteCodeInput!): PublisherInviteCode!
+  setInviteCodeActive(appId: String!, code: String!, active: Boolean!): Boolean!
+  addToAllowList(appId: String!, user: String!): Boolean!
+  removeFromAllowList(appId: String!, user: String!): Boolean!
+}
+
+# ---- unchanged artifact types (publisher-schema.ts) ----
+type PublisherAppArtifact {
+  kind: String!
+  name: String!
+  versions: [PublisherArtifactVersion!]!
+  channels: [PublisherArtifactChannel!]!
+}
+type PublisherArtifactVersion { version: String!  reference: String! }
+type PublisherArtifactChannel { channel: String!  version: String! }
+
+# ---- vetraSubscriptions (contract) ----
+
+type InviteCodeCheck {
+  valid: Boolean!
+  "Null when invalid."
+  appId: String
+  appName: String
+  kind: String
+  termLabel: String
+  "DEDICATED | SHARED; the redeem page asks for a project name only for DEDICATED."
+  mode: String
+}
+
+type Subscription {
+  licenseId: String!
+  appId: String!
+  appName: String!
+  kind: String!
+  termLabel: String
+  issuer: String!
+  status: String!
+  start: String
+  end: String
+  mode: String!                     # SHARED | DEDICATED
+  environmentId: String
+  environmentLabel: String
+  "Where 'Open' goes: the environment's primary URL (DEDICATED) or the app URL (SHARED)."
+  openUrl: String
+  stoppedAt: String
+  deleteAfter: String
+  "Offboarding/expiry banners, newest relevant first."
+  warnings: [SubscriptionWarning!]!
+}
+
+type SubscriptionWarning {
+  kind: String!                     # EXPIRING | ENDED_STOP_PENDING | STOPPED_DELETE_PENDING | DELETE_IMMINENT
+  at: String!                       # the moment the warning is about (expiry, stop, deletion)
+  message: String!
+}
+
+type StudioAccess {
+  allowed: Boolean!
+  licenseId: String
+  expires: String
+  hasAttachedKey: Boolean!
+}
+
+input RedeemInviteCodeInput {
+  code: String!
+  "Project name for a DEDICATED environment; ignored for SHARED."
+  label: String
+  "Replace this licence (same app) instead of starting a new environment."
+  upgrades: String
+}
+
+type VetraSubscriptionsQueries {
+  "Public, unauthenticated; rate-limited by ingress."
+  inviteCode(code: String!): InviteCodeCheck!
+  mySubscriptions: [Subscription!]!
+  studioAccess: StudioAccess!
+}
+
+type VetraSubscriptionsMutations {
+  redeemInviteCode(input: RedeemInviteCodeInput!): Subscription!
+  cancelSubscription(licenseId: String!): Boolean!
+  "Writes the caller's studio-licence Claude key into a tenant's secrets (was VetraAccessCodes.applyInviteCodeSecret)."
+  applyStudioKey(tenantId: String!, secretNames: [String!]!): Boolean!
+}
+
+# ---- roots ----
+type Query {
+  vetraPublisher: VetraPublisherQueries!
+  vetraSubscriptions: VetraSubscriptionsQueries!
+}
+type Mutation {
+  vetraPublisher: VetraPublisherMutations!
+  vetraSubscriptions: VetraSubscriptionsMutations!
+}
