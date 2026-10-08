@@ -23,7 +23,7 @@ import { useReplaceGrant } from '../../hooks/use-publisher-mutations'
 import { shortDid, termName } from '../../lib/format'
 import { grantablePlans } from '../../lib/holders'
 import { runWithToast } from '../../lib/run'
-import type { PublisherLicense, PublisherTerm } from '../../types'
+import type { PublisherLicense, PublisherTerm, TemplateMode } from '../../types'
 
 /** Upgrade or downgrade in place: the new licence inherits the environment. */
 export function ChangePlanDialog({
@@ -31,18 +31,28 @@ export function ChangePlanDialog({
   license,
   terms,
   plansUnavailable = false,
+  modeOf = () => null,
   onClose,
 }: {
   appId: string
   license: PublisherLicense | null
   terms: PublisherTerm[]
   plansUnavailable?: boolean
+  /** Mode of the template behind a plan, or null when it is not known. */
+  modeOf?: (kind: string) => TemplateMode | null
   onClose: () => void
 }) {
   const replace = useReplaceGrant(appId)
   const [kind, setKind] = useState('')
   const options = grantablePlans(terms).filter((t) => t.kind !== license?.kind)
   const target = options.find((t) => t.kind === kind)
+  // The environment is only carried over between two dedicated plans.
+  const keepsEnvironment = !!license && !!target && modeOf(license.kind) === 'DEDICATED' && modeOf(target.kind) === 'DEDICATED'
+  const description = !license
+    ? ''
+    : keepsEnvironment
+      ? `${shortDid(license.user)} keeps their environment. It is rebuilt from the new plan’s template.`
+      : `Move ${shortDid(license.user)} to another plan. Their access follows the new plan.`
 
   const close = () => {
     setKind('')
@@ -59,12 +69,10 @@ export function ChangePlanDialog({
 
   return (
     <Dialog open={!!license} onOpenChange={(o) => !o && close()}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Change plan</DialogTitle>
-          <DialogDescription>
-            {license ? `${shortDid(license.user)} keeps their environment. It is rebuilt from the new plan’s template.` : ''}
-          </DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
         <div className="space-y-1.5">
           <Label>New plan</Label>

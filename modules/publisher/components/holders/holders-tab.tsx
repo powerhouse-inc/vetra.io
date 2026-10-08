@@ -177,6 +177,7 @@ export function HoldersTab({ appId }: { appId: string }) {
         license={changing}
         terms={termList}
         plansUnavailable={!!terms.error || terms.isPending}
+        modeOf={modeOf}
         onClose={() => setChanging(null)}
       />
       <RevokeDialog
