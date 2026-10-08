@@ -18,8 +18,9 @@ export const envSchema = z.object({
       'Must be a valid URL (e.g., https://switchboard.example.com/graphql) for the Switchboard API.',
   }),
 
-  // Cloud Switchboard supergraph (serves the vetra-access-codes subgraph that backs
-  // the early-access gate). Falls back to NEXT_PUBLIC_SWITCHBOARD_URL.
+  // Cloud Switchboard supergraph: environments, apps, and the vetra-licensing subgraph
+  // (vetraPublisher / vetraSubscriptions) behind the studio licence gate and the
+  // licensing UI. Falls back to NEXT_PUBLIC_SWITCHBOARD_URL.
   NEXT_PUBLIC_CLOUD_SWITCHBOARD_URL: z
     .url({ error: 'Must be a valid URL for the cloud Switchboard GraphQL API.' })
     .optional(),
