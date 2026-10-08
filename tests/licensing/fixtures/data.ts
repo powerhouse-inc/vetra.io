@@ -80,7 +80,11 @@ export const INVALID_CHECK: InviteCodeCheck = {
 export function baseState(): CloudState {
   return {
     apps: [app('app-vault', 'Knowledge Vault')],
-    publisherApps: [{ id: 'app-vault', name: 'Knowledge Vault', status: 'ACTIVE' }],
+    publisherApps: [
+      { id: 'app-vault', name: 'Knowledge Vault', status: 'ACTIVE' },
+      // Exists only as a licensing document: in myApps, but vetra-apps has no row for it.
+      { id: 'app-studio', name: 'Vetra Studio', status: 'ACTIVE' },
+    ],
     artifacts: [
       {
         kind: 'FUSION_IMAGE',

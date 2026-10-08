@@ -188,7 +188,15 @@ const HANDLERS: Handler[] = [
     },
   },
   // vetra-apps (top-level fields)
-  { match: /\bapp\(id:/, reply: (v, s) => ({ app: s.apps.find((a) => a.id === v.id) ?? null }) },
+  {
+    // Like vetra-apps: an id it has no row for (the licensing-only Vetra Studio) is NOT_FOUND.
+    match: /\bapp\(id:/,
+    reply: (v, s) => {
+      const app = s.apps.find((a) => a.id === v.id)
+      if (!app) throw new GqlRefusal('NOT_FOUND', `app ${String(v.id)} not found`)
+      return { app }
+    },
+  },
   { match: /appDeployments\(/, reply: () => ({ appDeployments: [] }) },
   {
     match: /githubDeployAppInfo/,
