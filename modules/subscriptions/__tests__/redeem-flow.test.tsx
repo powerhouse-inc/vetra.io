@@ -183,4 +183,39 @@ describe('RedeemFlow', () => {
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
     expect(redeem).toHaveBeenLastCalledWith({ code: 'KV-PILOT', upgrades: 'live' })
   })
+
+  it('keeps Get access disabled after a successful redeem until the page moves on', async () => {
+    authState = 'authenticated'
+    check = { data: valid({ mode: 'SHARED' }), isPending: false, error: null }
+    redeem.mockResolvedValue(sub({ licenseId: 'new-6' }))
+    render(<RedeemFlow code="FREE" />)
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
+    expect((screen.getByRole('button', { name: 'Get access' }) as HTMLButtonElement).disabled).toBe(true)
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
+    expect(redeem).toHaveBeenCalledTimes(1)
+  })
+
+  it('clears a failed-redeem error when the choice changes', async () => {
+    authState = 'authenticated'
+    check = { data: valid(), isPending: false, error: null }
+    subs = [sub({ licenseId: 'live' })]
+    redeem.mockRejectedValue(new PublisherApiError('INVALID_CODE', 'paused', 200))
+    render(<RedeemFlow code="KV-PILOT" />)
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
+    expect(screen.getByText('This code can’t be used any more')).toBeTruthy()
+    fireEvent.click(screen.getByRole('radio', { name: 'Start something new' }))
+    expect(screen.queryByText('This code can’t be used any more')).toBeNull()
+  })
+
+  it('clears a failed-redeem error when the name is edited', async () => {
+    authState = 'authenticated'
+    check = { data: valid(), isPending: false, error: null }
+    redeem.mockRejectedValue(new PublisherApiError('INVALID_CODE', 'paused', 200))
+    render(<RedeemFlow code="KV-PILOT" />)
+    fireEvent.change(screen.getByLabelText('Project name'), { target: { value: 'A' } })
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
+    expect(screen.getByText('This code can’t be used any more')).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Project name'), { target: { value: 'AB' } })
+    expect(screen.queryByText('This code can’t be used any more')).toBeNull()
+  })
 })

@@ -43,6 +43,12 @@ export function RedeemFlow({ code }: { code: string }) {
   const [picked, setPicked] = useState<string | null>(null)
   const [label, setLabel] = useState('')
   const [error, setError] = useState<unknown>(null)
+  // Set once redeem succeeds: the button stays off until the route changes.
+  const [done, setDone] = useState(false)
+  const choose = (value: string) => {
+    setPicked(value)
+    setError(null)
+  }
 
   if (check.isPending) {
     return (
@@ -161,6 +167,7 @@ export function RedeemFlow({ code }: { code: string }) {
     setError(null)
     try {
       const sub = await redeem.mutateAsync(redeemInput({ code, choice: redeemChoice, label, mode: info.mode }))
+      setDone(true)
       toast.success(`${subscriptionName(sub)} is yours`)
       router.push(subscriptionHref(sub.licenseId))
     } catch (err) {
@@ -175,7 +182,7 @@ export function RedeemFlow({ code }: { code: string }) {
         {candidates.length > 0 && (
           <div className="space-y-2">
             <Label>You already have {info.appName}</Label>
-            <RadioGroup value={choice} onValueChange={setPicked} className="space-y-2">
+            <RadioGroup value={choice} onValueChange={choose} className="space-y-2">
               {candidates.map((s) => (
                 <label key={s.licenseId} className="border-border has-[[data-state=checked]]:border-primary flex cursor-pointer items-start gap-3 rounded-xl border p-3">
                   <RadioGroupItem value={s.licenseId} aria-label={`Upgrade ${subscriptionName(s)}`} className="mt-1" />
@@ -207,7 +214,10 @@ export function RedeemFlow({ code }: { code: string }) {
               placeholder="e.g. Acme research"
               value={label}
               maxLength={60}
-              onChange={(e) => setLabel(e.target.value)}
+              onChange={(e) => {
+                setLabel(e.target.value)
+                setError(null)
+              }}
             />
             <p className="text-muted-foreground text-xs">Your environment is called this. You can have several.</p>
           </div>
@@ -224,7 +234,7 @@ export function RedeemFlow({ code }: { code: string }) {
             <AlertDescription className="space-y-2">
               <p>{describePublisherError(error)}</p>
               {isPublisherError(error, 'ALREADY_HOLDS') && candidates.length > 0 && choice === NEW && (
-                <Button size="sm" variant="outline" onClick={() => setPicked(candidates[0].licenseId)}>
+                <Button size="sm" variant="outline" onClick={() => choose(candidates[0].licenseId)}>
                   Extend {subscriptionName(candidates[0])} instead
                 </Button>
               )}
@@ -236,7 +246,7 @@ export function RedeemFlow({ code }: { code: string }) {
             </AlertDescription>
           </Alert>
         )}
-        <Button size="lg" className="w-full sm:w-auto" onClick={() => void submit()} disabled={redeem.isPending || (needsName && !label.trim())}>
+        <Button size="lg" className="w-full sm:w-auto" onClick={() => void submit()} disabled={redeem.isPending || done || (needsName && !label.trim())}>
           {redeem.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           Get access
           {!redeem.isPending && <ArrowRight className="h-4 w-4" />}
