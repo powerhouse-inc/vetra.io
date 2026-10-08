@@ -6,6 +6,19 @@ import { INVALID_CHECK, ME, type CloudState } from './data'
 type Vars = Record<string, any> // eslint-disable-line @typescript-eslint/no-explicit-any
 type Handler = { match: RegExp; reply: (v: Vars, s: CloudState) => unknown }
 
+/** A refusal the way the server sends it: a GraphQL error with `extensions.code`. */
+class GqlRefusal extends Error {
+  constructor(
+    readonly code: string,
+    message: string,
+  ) {
+    super(message)
+  }
+}
+
+/** The server upgrades only the newest licence of a chain, and only ACTIVE, EXPIRED or REVOKED. */
+const UPGRADABLE = new Set(['ACTIVE', 'EXPIRED', 'REVOKED'])
+
 const pub = (field: string, value: unknown) => ({ vetraPublisher: { [field]: value } })
 const subs = (field: string, value: unknown) => ({ vetraSubscriptions: { [field]: value } })
 const defined = (o: Vars) =>
@@ -127,9 +140,22 @@ const HANDLERS: Handler[] = [
     match: /redeemInviteCode\(input/,
     reply: (v, s) => {
       const check = s.inviteChecks[v.input.code]
+      if (!check?.valid) throw new GqlRefusal('INVALID_CODE', 'invalid code')
       const replaced = v.input.upgrades
         ? s.subscriptions.find((x) => x.licenseId === v.input.upgrades)
         : undefined
+      if (v.input.upgrades) {
+        // As the backend validates an upgrade (issue.ts), with the ruling that an ACTIVE licence
+        // of the code's own plan is renewed rather than refused.
+        if (!replaced || replaced.appId !== check.appId)
+          throw new GqlRefusal('NOT_FOUND', 'no such licence')
+        if (!UPGRADABLE.has(replaced.status)) {
+          throw new GqlRefusal(
+            'INVALID_INPUT',
+            `licence ${replaced.licenseId} is ${replaced.status}`,
+          )
+        }
+      }
       if (replaced) replaced.status = 'REPLACED'
       const sub = {
         licenseId: `lic-${s.subscriptions.length + 1}`,
@@ -150,6 +176,14 @@ const HANDLERS: Handler[] = [
         warnings: [],
       }
       s.subscriptions.push(sub)
+      if (check.appId === s.studioAppId) {
+        s.studioAccess = {
+          allowed: true,
+          licenseId: sub.licenseId,
+          expires: null,
+          hasAttachedKey: true,
+        }
+      }
       return subs('redeemInviteCode', sub)
     },
   },
@@ -198,6 +232,8 @@ const HANDLERS: Handler[] = [
   { match: /\bsecrets\(/, reply: () => ({ secrets: [] }) },
   { match: /\bclintRuntimeEndpointsByEnv\(/, reply: () => ({ clintRuntimeEndpointsByEnv: [] }) },
   { match: /\benvironmentStatus\(/, reply: () => ({ environmentStatus: null }) },
+  // Vetra Studio: the studio list (cloud observability).
+  { match: /\bmyStudioProducts\s*\{/, reply: () => ({ myStudioProducts: [] }) },
 ]
 
 /**
@@ -229,6 +265,14 @@ export async function mockCloud(page: Page, state: CloudState): Promise<void> {
       state.unmatched.push(body.query.replace(/\s+/g, ' ').slice(0, 140))
       return route.fulfill({ json: { data: null, errors: [{ message: 'not mocked in e2e' }] } })
     }
-    return route.fulfill({ json: { data: handler.reply(variables, state) } })
+    try {
+      return await route.fulfill({ json: { data: handler.reply(variables, state) } })
+    } catch (err) {
+      if (!(err instanceof GqlRefusal)) throw err
+      state.refusals.push(err.code)
+      return route.fulfill({
+        json: { data: null, errors: [{ message: err.message, extensions: { code: err.code } }] },
+      })
+    }
   })
 }

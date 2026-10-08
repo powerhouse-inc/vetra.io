@@ -31,6 +31,10 @@ export type CloudState = {
   subscriptions: Subscription[]
   inviteChecks: Record<string, InviteCodeCheck>
   studioAccess: StudioAccess
+  /** The vetra-studio app: redeeming one of its codes grants studio access. */
+  studioAppId: string
+  /** Error codes the mock refused with, in order. */
+  refusals: string[]
   /** Environment documents (vetra-cloud) the environment page can open. */
   cloudEnvironments: Array<{ id: string; state: CloudEnvironmentState }>
   calls: Array<{ query: string; variables: Record<string, unknown> }>
@@ -108,6 +112,14 @@ export function baseState(): CloudState {
         termLabel: 'E2E',
         mode: 'SHARED',
       },
+      'STUDIO-EARLY': {
+        valid: true,
+        appId: 'app-studio',
+        appName: 'Vetra Studio',
+        kind: 'studio-early-access-30d',
+        termLabel: 'Early access',
+        mode: 'SHARED',
+      },
       'KV-PILOT': {
         valid: true,
         appId: 'app-kv',
@@ -118,6 +130,8 @@ export function baseState(): CloudState {
       },
     },
     studioAccess: { allowed: true, licenseId: 'lic-studio', expires: null, hasAttachedKey: true },
+    studioAppId: 'app-studio',
+    refusals: [],
     cloudEnvironments: [
       {
         // Provisioned for the redeemed Pilot licence (owner journey).
