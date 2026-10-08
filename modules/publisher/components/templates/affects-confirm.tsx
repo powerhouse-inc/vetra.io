@@ -11,6 +11,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/modules/shared/components/ui/alert-dialog'
+import { useLastPresent } from '@/modules/shared/hooks/use-last-present'
 
 export function affectsCopy(n: number): string {
   return n === 1
@@ -29,6 +30,8 @@ export function useAffectsConfirm(environmentCount: number): {
   dialog: ReactNode
 } {
   const [pending, setPending] = useState<Pending | null>(null)
+  // Keep the last title so it does not blank while the dialog fades out.
+  const shown = useLastPresent(pending)
 
   const guard = useCallback(
     (title: string, run: () => Promise<unknown>) => {
@@ -48,7 +51,7 @@ export function useAffectsConfirm(environmentCount: number): {
     <AlertDialog open={pending !== null} onOpenChange={(open) => !open && setPending(null)}>
       <AlertDialogContent>
         <AlertDialogHeader>
-          <AlertDialogTitle>{pending?.title}</AlertDialogTitle>
+          <AlertDialogTitle>{shown?.title}</AlertDialogTitle>
           <AlertDialogDescription>
             {affectsCopy(environmentCount)} Every owner on this template gets it on the next
             provisioning pass, all at once.

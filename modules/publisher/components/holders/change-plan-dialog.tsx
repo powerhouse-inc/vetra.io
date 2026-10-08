@@ -19,6 +19,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/modules/shared/components/ui/select'
+import { useLastPresent } from '@/modules/shared/hooks/use-last-present'
 import { useReplaceGrant } from '../../hooks/use-publisher-mutations'
 import { shortDid, termName } from '../../lib/format'
 import { grantablePlans } from '../../lib/holders'
@@ -44,20 +45,25 @@ export function ChangePlanDialog({
 }) {
   const replace = useReplaceGrant(appId)
   const [kind, setKind] = useState('')
-  const options = grantablePlans(terms).filter((t) => t.kind !== license?.kind)
+  // Keep the last licence so the copy does not flip while the dialog fades out; the choice is
+  // cleared when it opens again, not mid-fade.
+  const shown = useLastPresent(license)
+  const [wasOpen, setWasOpen] = useState(!!license)
+  if (!!license !== wasOpen) {
+    setWasOpen(!!license)
+    if (license) setKind('')
+  }
+  const options = grantablePlans(terms).filter((t) => t.kind !== shown?.kind)
   const target = options.find((t) => t.kind === kind)
   // The environment is only carried over between two dedicated plans.
-  const keepsEnvironment = !!license && !!target && modeOf(license.kind) === 'DEDICATED' && modeOf(target.kind) === 'DEDICATED'
-  const description = !license
+  const keepsEnvironment = !!shown && !!target && modeOf(shown.kind) === 'DEDICATED' && modeOf(target.kind) === 'DEDICATED'
+  const description = !shown
     ? ''
     : keepsEnvironment
-      ? `${shortDid(license.user)} keeps their environment. It is rebuilt from the new plan’s template.`
-      : `Move ${shortDid(license.user)} to another plan. Their access follows the new plan.`
+      ? `${shortDid(shown.user)} keeps their environment. It is rebuilt from the new plan’s template.`
+      : `Move ${shortDid(shown.user)} to another plan. Their access follows the new plan.`
 
-  const close = () => {
-    setKind('')
-    onClose()
-  }
+  const close = onClose
   const submit = async () => {
     if (!license || !target) return
     const ok = await runWithToast(

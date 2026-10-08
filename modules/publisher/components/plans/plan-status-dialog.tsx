@@ -10,6 +10,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/modules/shared/components/ui/alert-dialog'
+import { useLastPresent } from '@/modules/shared/hooks/use-last-present'
 import { usePublishTerm, useRetireTerm } from '../../hooks/use-publisher-mutations'
 import { termName } from '../../lib/format'
 import { runWithToast } from '../../lib/run'
@@ -29,8 +30,10 @@ export function PlanStatusDialog({
   const publish = usePublishTerm(appId)
   const retire = useRetireTerm(appId)
   const busy = publish.isPending || retire.isPending
-  const name = pending ? termName(pending.term) : ''
-  const isRetire = pending?.action === 'retire'
+  // Keep the last plan so the title does not read "Publish ?" while the dialog fades out.
+  const shown = useLastPresent(pending)
+  const name = shown ? termName(shown.term) : ''
+  const isRetire = shown?.action === 'retire'
 
   const confirm = async () => {
     if (!pending) return
@@ -51,7 +54,7 @@ export function PlanStatusDialog({
           <AlertDialogDescription>
             {isRetire
               ? 'Nobody new can get this plan. Existing licences run until they end.'
-              : pending?.term.status === 'RETIRED'
+              : shown?.term.status === 'RETIRED'
                 ? 'People can get this plan again, through the ways you chose.'
                 : 'People can get this plan through the ways you chose. Its plan ID is fixed from now on.'}
           </AlertDialogDescription>
