@@ -17,6 +17,7 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 
+import { HoldersTab } from '@/modules/publisher/components/holders/holders-tab'
 import { PlansTab } from '@/modules/publisher/components/plans/plans-tab'
 import { TemplatesTab } from '@/modules/publisher/components/templates/templates-tab'
 import { ArtifactsTab } from '@/modules/publisher/components/artifacts/artifacts-tab'
@@ -52,7 +53,7 @@ import { Banner } from './banner'
 import { StatusPill } from './status'
 
 /** Owner-only tabs, in display order. Tasks append to this as each tab lands. */
-export const LICENSING_TABS = ['artifacts', 'templates', 'plans'] as const
+export const LICENSING_TABS = ['artifacts', 'templates', 'plans', 'holders'] as const
 const ALL_TABS = ['overview', 'deployments', ...LICENSING_TABS, 'settings'] as const
 export type AppTab = (typeof ALL_TABS)[number]
 
@@ -62,6 +63,7 @@ export const APP_TAB_LABEL: Record<AppTab, string> = {
   artifacts: 'Artifacts',
   templates: 'Templates',
   plans: 'Plans',
+  holders: 'Holders',
   settings: 'Settings',
 }
 
@@ -387,6 +389,11 @@ export function AppDetail({ appId }: { appId: string }) {
         {showLicensing && (
           <TabsContent value="plans">
             <PlansTab appId={appId} />
+          </TabsContent>
+        )}
+        {showLicensing && (
+          <TabsContent value="holders">
+            <HoldersTab appId={appId} />
           </TabsContent>
         )}
         {!readOnly && (
