@@ -3,7 +3,6 @@
 import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { EarlyAccessGate } from '@/modules/invites/early-access-gate'
 import { CloudDashboard } from './cloud-dashboard'
 
 /**
@@ -12,8 +11,7 @@ import { CloudDashboard } from './cloud-dashboard'
  * logged-out status (never while auth is still resolving), so this and the
  * `/cloud` page can't ping-pong.
  *
- * Gated behind the early-access invite code (same as /user/products) so
- * environments can't be created without a redeemed code.
+ * Owners see environments that came with a licence here; only a Renown login is needed.
  */
 export default function EnvironmentsPage() {
   const { state } = useRenownAuthAsync()
@@ -23,11 +21,6 @@ export default function EnvironmentsPage() {
     if (state === 'unauthenticated') router.replace('/cloud')
   }, [state, router])
 
-  if (state === 'authenticated')
-    return (
-      <EarlyAccessGate>
-        <CloudDashboard />
-      </EarlyAccessGate>
-    )
+  if (state === 'authenticated') return <CloudDashboard />
   return null
 }

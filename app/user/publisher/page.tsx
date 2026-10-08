@@ -1,15 +1,14 @@
-'use client'
+import { redirect } from 'next/navigation'
 
-import { EarlyAccessGate } from '@/modules/invites/early-access-gate'
-import PublisherDashboard from '@/modules/publisher/components/publisher-dashboard'
+type Props = { searchParams: Promise<{ app?: string | string[] }> }
 
-export default function PublisherPage() {
-  return (
-    <EarlyAccessGate>
-      <main className="mx-auto mt-20 max-w-screen-xl px-4 py-8 sm:px-6">
-        <h1 className="mb-6 text-2xl font-semibold">Licensing</h1>
-        <PublisherDashboard />
-      </main>
-    </EarlyAccessGate>
-  )
+/**
+ * The old Licensing dashboard. Licensing now lives on each app's page, so an
+ * old bookmark with ?app=<id> lands on that app's Plans tab and anything else
+ * on the apps home.
+ */
+export default async function PublisherRedirect({ searchParams }: Props) {
+  const { app } = await searchParams
+  const id = Array.isArray(app) ? app[0] : app
+  redirect(id ? `/user/apps/${encodeURIComponent(id)}?tab=plans` : '/user')
 }

@@ -1,0 +1,7 @@
+{
+  "//": "The root tsconfig excludes tests/; this one type-checks (and gives ESLint a project for) the licensing journeys. Check with: pnpm exec tsc -p tests/licensing",
+  "extends": "../../tsconfig.json",
+  "compilerOptions": { "incremental": false },
+  "include": ["**/*.ts"],
+  "exclude": []
+}

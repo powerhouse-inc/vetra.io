@@ -57,3 +57,8 @@ cdn-cache/.playwright-cli/
 
 # Claude Code local artifacts
 .claude/
+
+# Playwright licensing journeys (playwright.licensing.config.ts): results, report, screenshots
+/test-results-licensing/
+/playwright-report-licensing/
+/licensing-screens/

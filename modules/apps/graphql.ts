@@ -86,7 +86,7 @@ export function describeAppsError(err: unknown): string {
     case 'GITHUB_NOT_CONNECTED':
       return 'Your GitHub connection expired or is missing. Reconnect GitHub and try again.'
     case 'APP_NOT_ACTIVE':
-      return 'Authorize the app identity on Renown before deploying.'
+      return 'Authorize this app on Renown before deploying.'
     case 'PREVIEWS_DISABLED':
       return 'Preview environments are turned off for this app.'
     case 'SERVICE_NOT_CONFIGURED':

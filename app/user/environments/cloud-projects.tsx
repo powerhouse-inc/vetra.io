@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
 } from '@/modules/shared/components/ui/alert-dialog'
 import { Button } from '@/modules/shared/components/ui/button'
+import { EnvironmentLicenceBadge } from '@/modules/subscriptions/components/environment-licence'
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/shared/components/ui/card'
 
 import type { CloudEnvironment } from './types'
@@ -122,6 +123,7 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
         <StatusDot status={env.state.status} />
       </CardHeader>
       <CardContent className="space-y-4 pt-0">
+        <EnvironmentLicenceBadge environmentId={env.id} />
         <div className="flex items-center gap-4 text-sm">
           <div className="text-muted-foreground flex items-center gap-1.5">
             <Package className="h-3.5 w-3.5" />

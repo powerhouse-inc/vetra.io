@@ -33,6 +33,11 @@ export const PRIVATE_NAV_ITEMS: NavItem[] = [
     isActive: (p) => p.includes('/user/environments'),
   },
   {
+    label: 'Subscriptions',
+    href: '/user/subscriptions',
+    isActive: (p) => p.startsWith('/user/subscriptions'),
+  },
+  {
     label: 'Studio',
     href: '/user/studio',
     isActive: (p) => p.includes('/user/studio') || p.includes('/user/products'),
@@ -41,11 +46,6 @@ export const PRIVATE_NAV_ITEMS: NavItem[] = [
     label: 'Packages',
     href: '/user/packages',
     isActive: (p) => p.includes('/user/packages'),
-  },
-  {
-    label: 'Licensing',
-    href: '/user/publisher',
-    isActive: (p) => p.startsWith('/user/publisher'),
   },
 ]
 
@@ -66,11 +66,6 @@ export const NAVBAR_CONFIGS: Record<string, NavbarConfig> = {
         label: 'Packages',
         href: '/user/packages',
         isActive: (currentPath) => currentPath.includes('/user/packages'),
-      },
-      {
-        label: 'Licensing',
-        href: '/user/publisher',
-        isActive: (currentPath) => currentPath.startsWith('/user/publisher'),
       },
       {
         label: 'Builders',

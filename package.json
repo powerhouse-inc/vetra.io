@@ -13,6 +13,7 @@
     "format:check": "prettier --check .",
     "codegen": "graphql-codegen --config codegen.ts",
     "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:e2e:licensing": "node node_modules/@playwright/test/cli.js test -c playwright.licensing.config.ts",
     "storybook": "node .storybook/ensure-next-config-shim.cjs && storybook dev -p 6006",
     "build-storybook": "node .storybook/ensure-next-config-shim.cjs && storybook build",
     "semantic-release": "semantic-release"
