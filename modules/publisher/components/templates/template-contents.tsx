@@ -1,18 +1,24 @@
 'use client'
 
 import { Info } from 'lucide-react'
+import { usePublisherAppArtifacts } from '../../hooks/use-publisher'
 import type { PublisherTemplate } from '../../types'
+import { TemplatePackages } from './template-packages'
+import { TemplateServices } from './template-services'
 
 type Guard = (title: string, run: () => Promise<unknown>) => void
 
-/** What each owner gets. Task 5 adds services and packages for DEDICATED templates. */
+/** What each owner gets: services and packages for DEDICATED, a note for SHARED. */
 export function TemplateContents({
+  appId,
   template,
+  guard,
 }: {
   appId: string
   template: PublisherTemplate
   guard: Guard
 }) {
+  const artifacts = usePublisherAppArtifacts(template.mode === 'DEDICATED' ? appId : null)
   if (template.mode === 'SHARED') {
     return (
       <p className="bg-muted text-muted-foreground flex gap-2 rounded-lg p-3 text-sm">
@@ -22,5 +28,11 @@ export function TemplateContents({
       </p>
     )
   }
-  return null
+  const list = artifacts.data ?? []
+  return (
+    <div className="space-y-6">
+      <TemplateServices appId={appId} template={template} guard={guard} artifacts={list} artifactsLoading={artifacts.isLoading} />
+      <TemplatePackages appId={appId} template={template} guard={guard} artifacts={list} artifactsLoading={artifacts.isLoading} />
+    </div>
+  )
 }
