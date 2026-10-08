@@ -17,6 +17,9 @@ import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 
+import { ArtifactsTab } from '@/modules/publisher/components/artifacts/artifacts-tab'
+import { LicensingUnavailableBanner } from '@/modules/publisher/components/licensing-unavailable-banner'
+import { useAppPublisher } from '@/modules/publisher/hooks/use-publisher'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/components/ui/tabs'
 
@@ -43,52 +46,35 @@ import { AppDeployments } from './app-deployments'
 import { AppOverview } from './app-overview'
 import { AppSettings } from './app-settings'
 import { GithubFlowLink } from './github-flow-link'
+import { Banner } from './banner'
 import { StatusPill } from './status'
 
-const TABS = ['overview', 'deployments', 'settings'] as const
-type Tab = (typeof TABS)[number]
+/** Owner-only tabs, in display order. Tasks append to this as each tab lands. */
+export const LICENSING_TABS = ['artifacts'] as const
+const ALL_TABS = ['overview', 'deployments', ...LICENSING_TABS, 'settings'] as const
+export type AppTab = (typeof ALL_TABS)[number]
 
-function Banner({
-  tone,
-  icon: Icon,
-  title,
-  children,
-  actions,
+export const APP_TAB_LABEL: Record<AppTab, string> = {
+  overview: 'Overview',
+  deployments: 'Deployments',
+  artifacts: 'Artifacts',
+  settings: 'Settings',
+}
+
+const isLicensingTab = (t: AppTab): boolean => (LICENSING_TABS as readonly string[]).includes(t)
+
+/** Licensing tabs only for the app's publisher; nothing editable on a deleted app. */
+export function visibleAppTabs({
+  readOnly,
+  isPublisher,
 }: {
-  tone: 'warning' | 'danger' | 'neutral'
-  icon: typeof Fingerprint
-  title: string
-  children: React.ReactNode
-  actions?: React.ReactNode
-}) {
-  return (
-    <div
-      role="status"
-      className={
-        tone === 'warning'
-          ? 'border-warning/40 bg-warning/10 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center'
-          : tone === 'danger'
-            ? 'border-destructive/40 bg-destructive/10 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center'
-            : 'border-border bg-muted/50 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center'
-      }
-    >
-      <Icon
-        className={
-          tone === 'warning'
-            ? 'text-warning h-5 w-5 shrink-0'
-            : tone === 'danger'
-              ? 'text-destructive h-5 w-5 shrink-0'
-              : 'text-muted-foreground h-5 w-5 shrink-0'
-        }
-        aria-hidden
-      />
-      <div className="min-w-0 flex-1 space-y-0.5">
-        <p className="text-sm font-semibold">{title}</p>
-        <p className="text-muted-foreground text-sm">{children}</p>
-      </div>
-      {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
-    </div>
-  )
+  readOnly: boolean
+  isPublisher: boolean
+}): AppTab[] {
+  const tabs: AppTab[] = ['overview', 'deployments']
+  if (isPublisher && !readOnly) tabs.push(...LICENSING_TABS)
+  if (!readOnly) tabs.push('settings')
+  return tabs
 }
 
 function Header({ app }: { app: App }) {
@@ -161,13 +147,15 @@ export function AppDetail({ appId }: { appId: string }) {
   const githubInfo = useGithubDeployAppInfo()
   const confirm = useConfirmAppIdentity()
   const app = appQuery.data
+  const publisher = useAppPublisher(appId)
 
   const tabParam = params.get('tab')
   const readOnly = app ? isAppReadOnly(app) : false
   const identity = app ? identityState(app) : ({ kind: 'unknown' } as const)
   // A deleted app is read-only: no Settings tab, no actions.
-  const visibleTabs: readonly Tab[] = readOnly ? TABS.filter((t) => t !== 'settings') : TABS
-  const tab: Tab = visibleTabs.includes(tabParam as Tab) ? (tabParam as Tab) : 'overview'
+  const visibleTabs = visibleAppTabs({ readOnly, isPublisher: publisher.isPublisher })
+  const tab: AppTab = visibleTabs.includes(tabParam as AppTab) ? (tabParam as AppTab) : 'overview'
+  const showLicensing = publisher.isPublisher && !readOnly
 
   const deployments = useMemo(
     () =>
@@ -344,15 +332,19 @@ export function AppDetail({ appId }: { appId: string }) {
         )}
       </div>
 
+      {showLicensing && isLicensingTab(tab) && publisher.app && publisher.app.status !== 'ACTIVE' && (
+        <LicensingUnavailableBanner status={publisher.app.status} />
+      )}
+
       <Tabs value={tab} onValueChange={setTab} className="gap-8">
-        <TabsList className="border-border h-auto w-full justify-start gap-6 rounded-none border-b bg-transparent p-0">
+        <TabsList className="border-border h-auto w-full justify-start gap-6 overflow-x-auto rounded-none border-b bg-transparent p-0 [scrollbar-width:none]">
           {visibleTabs.map((t) => (
             <TabsTrigger
               key={t}
               value={t}
-              className="data-[state=active]:border-b-foreground text-muted-foreground data-[state=active]:text-foreground dark:data-[state=active]:border-b-foreground -mb-px h-10 flex-none rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 capitalize shadow-none data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent"
+              className="data-[state=active]:border-b-foreground text-muted-foreground data-[state=active]:text-foreground dark:data-[state=active]:border-b-foreground -mb-px h-10 flex-none shrink-0 rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 shadow-none data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent"
             >
-              {t}
+              {APP_TAB_LABEL[t]}
               {t === 'deployments' && deployments.length > 0 && (
                 <span className="bg-muted text-muted-foreground rounded-full px-1.5 text-[10px] font-semibold">
                   {deployments.length}
@@ -378,6 +370,11 @@ export function AppDetail({ appId }: { appId: string }) {
             error={deploymentsQuery.error}
           />
         </TabsContent>
+        {showLicensing && (
+          <TabsContent value="artifacts">
+            <ArtifactsTab appId={appId} />
+          </TabsContent>
+        )}
         {!readOnly && (
           <TabsContent value="settings">
             <AppSettings app={app} onAuthorize={authorize} />
