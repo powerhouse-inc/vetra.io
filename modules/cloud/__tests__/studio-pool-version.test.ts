@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchStudioPoolVersion } from '@/modules/invites/lib/client'
+import { fetchStudioPoolVersion } from '@/modules/cloud/studio/pool-client'
 
 function mockFetch(impl: () => Promise<unknown>) {
   global.fetch = vi.fn(impl) as unknown as typeof fetch

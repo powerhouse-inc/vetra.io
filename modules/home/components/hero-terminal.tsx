@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { useState } from 'react'
 import { Check, ChevronDown, Copy, ExternalLink, Github } from 'lucide-react'
 
-// Keep in sync with the install commands in modules/invites/early-access-gate.tsx
+// Keep in sync with the install commands in modules/studio-license/components/no-licence-panel.tsx
 const CURL_CMD = 'curl -fsSL https://get.vetra.io | sh'
 const NPM_CMD = 'npm install -g ph-cmd vetra-cli --registry=https://registry.vetra.io'
 const GITHUB_URL = 'https://github.com/powerhouse-inc/vetra-cli'

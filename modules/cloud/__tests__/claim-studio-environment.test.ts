@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
-import { claimStudioEnvironment } from '../client'
+import { claimStudioEnvironment } from '../studio/pool-client'
 
 describe('claimStudioEnvironment', () => {
   let fetchMock: ReturnType<typeof vi.fn>

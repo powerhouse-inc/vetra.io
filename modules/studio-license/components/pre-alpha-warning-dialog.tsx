@@ -16,8 +16,7 @@ import {
  * Vetra Studio is pre-alpha, so data isn't durable. Nudge the user to back up
  * their work (download documents / push to GitHub) at the end of a cycle.
  *
- * Controlled by the gate so it fires only on a genuine first redemption, not for
- * returning users with a cached grant.
+ * Shown once per browser the first time a studio licence is seen.
  */
 export function PreAlphaWarningDialog({
   open,
