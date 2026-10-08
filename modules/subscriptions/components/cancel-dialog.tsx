@@ -12,7 +12,7 @@ import {
   AlertDialogTitle,
 } from '@/modules/shared/components/ui/alert-dialog'
 import { runWithToast } from '@/modules/publisher/lib/run'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { useCancelSubscription } from '../hooks/use-subscriptions'
 import { subscriptionName } from '../lib/subscriptions'
 import type { Subscription } from '../types'
@@ -21,9 +21,7 @@ export function CancelDialog({ subscription: current, onClose }: { subscription:
   const cancel = useCancelSubscription()
   // Keep the last subscription so the title and body do not flash while the dialog animates closed.
   const [last, setLast] = useState<Subscription | null>(current)
-  useEffect(() => {
-    if (current) setLast(current)
-  }, [current])
+  if (current && current !== last) setLast(current)
   const subscription = current ?? last
   const confirm = async () => {
     if (!current) return
