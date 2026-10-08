@@ -32,6 +32,9 @@ vi.mock('../components/app-overview', () => ({ AppOverview: () => <div>overview-
 vi.mock('../components/app-deployments', () => ({ AppDeployments: () => <div>deployments-content</div> }))
 vi.mock('../components/app-settings', () => ({ AppSettings: () => <div>settings-content</div> }))
 vi.mock('../components/github-flow-link', () => ({ GithubFlowLink: () => null }))
+vi.mock('@/modules/publisher/components/templates/templates-tab', () => ({
+  TemplatesTab: () => <div>templates-content</div>,
+}))
 vi.mock('@/modules/publisher/components/artifacts/artifacts-tab', () => ({
   ArtifactsTab: () => <div>artifacts-content</div>,
 }))
@@ -63,7 +66,7 @@ describe('AppDetail tabs', () => {
 
   it('computes the tab list from ownership and read-only state', () => {
     expect(visibleAppTabs({ readOnly: false, isPublisher: true })).toEqual([
-      'overview', 'deployments', 'artifacts', 'settings',
+      'overview', 'deployments', 'artifacts', 'templates', 'settings',
     ])
     expect(visibleAppTabs({ readOnly: false, isPublisher: false })).toEqual(['overview', 'deployments', 'settings'])
     expect(visibleAppTabs({ readOnly: true, isPublisher: true })).toEqual(['overview', 'deployments'])
@@ -71,7 +74,7 @@ describe('AppDetail tabs', () => {
 
   it('shows licensing tabs to the publisher, with readable labels', () => {
     render(<AppDetail appId="app-1" />)
-    expect(tabNames()).toEqual(['Overview', 'Deployments', 'Artifacts', 'Settings'])
+    expect(tabNames()).toEqual(['Overview', 'Deployments', 'Artifacts', 'Templates', 'Settings'])
   })
 
   it('opens a licensing tab from the URL', () => {
