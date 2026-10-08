@@ -2,6 +2,7 @@
 
 import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
 import {
+  BadgeCheck,
   Boxes,
   Check,
   Cloud,
@@ -152,6 +153,15 @@ function RenownButton() {
             <Link href="/user/environments">
               <Cloud className="h-4 w-4" />
               Environments
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            asChild
+            className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
+          >
+            <Link href="/user/subscriptions">
+              <BadgeCheck className="h-4 w-4" />
+              Subscriptions
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem

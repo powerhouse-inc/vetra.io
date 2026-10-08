@@ -33,6 +33,11 @@ export const PRIVATE_NAV_ITEMS: NavItem[] = [
     isActive: (p) => p.includes('/user/environments'),
   },
   {
+    label: 'Subscriptions',
+    href: '/user/subscriptions',
+    isActive: (p) => p.startsWith('/user/subscriptions'),
+  },
+  {
     label: 'Studio',
     href: '/user/studio',
     isActive: (p) => p.includes('/user/studio') || p.includes('/user/products'),
