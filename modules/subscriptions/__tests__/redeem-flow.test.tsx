@@ -60,6 +60,17 @@ describe('RedeemFlow', () => {
     expect(openLogin).toHaveBeenCalled()
   })
 
+  it('claims no step while login state is still resolving', () => {
+    authState = 'resolving'
+    check = { data: valid(), isPending: false, error: null }
+    render(<RedeemFlow code="KV-PILOT" />)
+    expect(screen.getByRole('heading', { name: 'Knowledge Vault' })).toBeTruthy()
+    expect(screen.getByRole('status', { name: 'Checking your login' })).toBeTruthy()
+    expect(screen.queryByRole('list', { name: 'Progress' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Log in with Renown' })).toBeNull()
+    expect(screen.queryByRole('button', { name: /get access/i })).toBeNull()
+  })
+
   it('asks a project name for a dedicated plan and lands on the new subscription', async () => {
     authState = 'authenticated'
     check = { data: valid(), isPending: false, error: null }

@@ -21,10 +21,15 @@ import { RedeemSteps } from './redeem-steps'
 
 const NEW = 'new'
 
-function Shell({ step, children }: { step: 1 | 2 | 3; children: ReactNode }) {
+/** `step` null: login state is not known yet, so no step is claimed. */
+function Shell({ step, children }: { step: 1 | 2 | 3 | null; children: ReactNode }) {
   return (
     <div className="bg-card border-border space-y-6 rounded-2xl border p-6 shadow-sm sm:p-8">
-      <RedeemSteps current={step} />
+      {step === null ? (
+        <Skeleton className="h-6 w-56 max-w-full" aria-hidden />
+      ) : (
+        <RedeemSteps current={step} />
+      )}
       {children}
     </div>
   )
@@ -123,14 +128,27 @@ export function RedeemFlow({ code }: { code: string }) {
     </div>
   )
 
+  // Until login state is known, claim no step: showing "Log in" and then jumping to "Set up"
+  // reads as a glitch.
+  if (state === 'resolving') {
+    return (
+      <Shell step={null}>
+        {hero}
+        <div className="border-border space-y-3 border-t pt-6" role="status" aria-label="Checking your login">
+          <Skeleton className="h-4 w-2/3" />
+          <Skeleton className="h-10 w-44" />
+        </div>
+      </Shell>
+    )
+  }
+
   if (!authenticated) {
     return (
       <Shell step={2}>
         {hero}
         <div className="border-border space-y-3 border-t pt-6">
           <p className="text-muted-foreground text-sm">Log in with Renown to claim it. No wallet needed in advance.</p>
-          <Button size="lg" onClick={openLogin} disabled={state === 'resolving'}>
-            {state === 'resolving' && <Loader2 className="h-4 w-4 animate-spin" />}
+          <Button size="lg" onClick={openLogin}>
             Log in with Renown
           </Button>
         </div>
@@ -185,7 +203,7 @@ export function RedeemFlow({ code }: { code: string }) {
             <RadioGroup value={choice} onValueChange={choose} className="space-y-2">
               {candidates.map((s) => (
                 <label key={s.licenseId} className="border-border has-[[data-state=checked]]:border-primary flex cursor-pointer items-start gap-3 rounded-xl border p-3">
-                  <RadioGroupItem value={s.licenseId} aria-label={`Upgrade ${subscriptionName(s)}`} className="mt-1" />
+                  <RadioGroupItem value={s.licenseId} aria-label={`Upgrade ${subscriptionName(s)}`} className="border-muted-foreground/50 data-[state=checked]:border-primary mt-1" />
                   <span>
                     <span className="block text-sm font-medium">Upgrade {subscriptionName(s)}</span>
                     <span className="text-muted-foreground block text-xs">
@@ -195,7 +213,7 @@ export function RedeemFlow({ code }: { code: string }) {
                 </label>
               ))}
               <label className="border-border has-[[data-state=checked]]:border-primary flex cursor-pointer items-start gap-3 rounded-xl border p-3">
-                <RadioGroupItem value={NEW} aria-label="Start something new" className="mt-1" />
+                <RadioGroupItem value={NEW} aria-label="Start something new" className="border-muted-foreground/50 data-[state=checked]:border-primary mt-1" />
                 <span>
                   <span className="block text-sm font-medium">Start something new</span>
                   <span className="text-muted-foreground block text-xs">
