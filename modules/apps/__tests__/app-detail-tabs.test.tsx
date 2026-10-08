@@ -1,10 +1,18 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { cleanup, render, screen } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 import type { App } from '../types'
 
 let searchParams = new URLSearchParams()
-let publisher: { isPublisher: boolean; app?: { id: string; name: string; status: string }; isPending: boolean } = {
+type PublisherState = {
+  isPublisher: boolean
+  app?: { id: string; name: string; status: string }
+  isPending: boolean
+  error?: unknown
+  retry?: () => void
+  retrying?: boolean
+}
+let publisher: PublisherState = {
   isPublisher: true,
   app: { id: 'app-1', name: 'Vault', status: 'ACTIVE' },
   isPending: false,
@@ -106,6 +114,40 @@ describe('AppDetail tabs', () => {
     searchParams = new URLSearchParams('tab=artifacts')
     render(<AppDetail appId="app-1" />)
     expect(screen.getByText('Licensing is paused for this app')).toBeTruthy()
+  })
+
+  it('names the next step in the paused banner instead of a raw status', () => {
+    publisher = { isPublisher: true, app: { id: 'app-1', name: 'Vault', status: 'PENDING_IDENTITY' }, isPending: false }
+    searchParams = new URLSearchParams('tab=artifacts')
+    render(<AppDetail appId="app-1" />)
+    expect(screen.getByText(/Authorize this app on Renown first/)).toBeTruthy()
+    expect(screen.queryByText(/pending identity/i)).toBeNull()
+  })
+
+  it('holds a deep-linked licensing tab on a skeleton while ownership loads', () => {
+    publisher = { isPublisher: false, app: undefined, isPending: true }
+    searchParams = new URLSearchParams('tab=holders')
+    render(<AppDetail appId="app-1" />)
+    expect(screen.getByRole('status', { name: 'Loading Holders' })).toBeTruthy()
+    expect(screen.queryByText('overview-content')).toBeNull()
+  })
+
+  it('says so, with a retry, when the ownership check fails', () => {
+    const retry = vi.fn()
+    publisher = {
+      isPublisher: false,
+      app: undefined,
+      isPending: false,
+      error: new Error('boom'),
+      retry,
+      retrying: false,
+    }
+    searchParams = new URLSearchParams('tab=plans')
+    render(<AppDetail appId="app-1" />)
+    expect(screen.getByText('Your plans and invite codes did not load')).toBeTruthy()
+    expect(screen.getByText('overview-content')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    expect(retry).toHaveBeenCalledTimes(1)
   })
 
   it('does not show the paused banner on Overview', () => {

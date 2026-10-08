@@ -109,7 +109,7 @@ describe('describePublisherError', () => {
       UNAUTHENTICATED: /log in again/i,
       NOT_FOUND: /could not find/i,
       FORBIDDEN: /not allowed/i,
-      APP_NOT_ACTIVE: /app is not active/i,
+      APP_NOT_ACTIVE: /app is not active right now.*overview/i,
       NOT_ON_ALLOW_LIST: /allow list/i,
       TERM_NOT_ISSUABLE: /plan can.t be handed out this way/i,
       UNSUPPORTED_DID: /wallet address/i,

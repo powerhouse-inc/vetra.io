@@ -60,7 +60,11 @@ export function useAppPublisher(appId: string) {
   const app = apps.data?.find((a) => a.id === appId)
   // A disabled query (signed out) is "pending" forever in React Query; it is not loading.
   const isPending = apps.isPending && apps.fetchStatus !== 'idle'
-  return { isPublisher: !!app, app, isPending }
+  // Only a failure with nothing to show counts; a failed background refetch keeps the tabs.
+  const error = apps.data ? null : apps.error
+  const { refetch } = apps
+  const retry = useCallback(() => void refetch(), [refetch])
+  return { isPublisher: !!app, app, isPending, error, retry, retrying: apps.isFetching }
 }
 
 type ListOptions<T> = Omit<UseQueryOptions<T[], Error, T[], readonly unknown[]>, 'queryKey' | 'queryFn'>

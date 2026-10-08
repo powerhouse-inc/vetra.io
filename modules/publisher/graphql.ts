@@ -144,7 +144,7 @@ export const ERROR_COPY: Partial<Record<PublisherErrorCode, string>> = {
   UNAUTHENTICATED: 'Your login has expired. Log in again and retry.',
   NOT_FOUND: 'We could not find that. It may have been removed, or it belongs to another account.',
   FORBIDDEN: 'You are not allowed to do that for this app.',
-  APP_NOT_ACTIVE: 'This app is not active yet, so licensing changes are paused. Authorize its deploy identity first.',
+  APP_NOT_ACTIVE: 'This app is not active right now, so licensing changes are paused. Open the app’s Overview to see what it needs, then try again.',
   NOT_ON_ALLOW_LIST: 'That person is not on your allow list yet. Add them, then grant again.',
   TERM_NOT_ISSUABLE: 'That plan can’t be handed out this way. Check it is published and allows this way of giving it out.',
   UNSUPPORTED_DID: 'Use a wallet address (0x…) or a did:pkh identity. Other identity types are not supported.',

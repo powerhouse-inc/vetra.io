@@ -10,11 +10,12 @@ import {
   Loader2,
   RefreshCw,
   Trash2,
+  TriangleAlert,
   Unplug,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useRef } from 'react'
+import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 
 import { HoldersTab } from '@/modules/publisher/components/holders/holders-tab'
@@ -23,8 +24,11 @@ import { PlansTab } from '@/modules/publisher/components/plans/plans-tab'
 import { TemplatesTab } from '@/modules/publisher/components/templates/templates-tab'
 import { ArtifactsTab } from '@/modules/publisher/components/artifacts/artifacts-tab'
 import { LicensingUnavailableBanner } from '@/modules/publisher/components/licensing-unavailable-banner'
+import { TabSkeleton } from '@/modules/publisher/components/primitives'
+import { describePublisherError, isPublisherError } from '@/modules/publisher/graphql'
 import { useAppPublisher } from '@/modules/publisher/hooks/use-publisher'
 import { Button } from '@/modules/shared/components/ui/button'
+import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/components/ui/tabs'
 
 import { describeAppsError, isAppsError } from '../graphql'
@@ -162,8 +166,23 @@ export function AppDetail({ appId }: { appId: string }) {
   const identity = app ? identityState(app) : ({ kind: 'unknown' } as const)
   // A deleted app is read-only: no Settings tab, no actions.
   const visibleTabs = visibleAppTabs({ readOnly, isPublisher: publisher.isPublisher })
-  const tab: AppTab = visibleTabs.includes(tabParam as AppTab) ? (tabParam as AppTab) : 'overview'
+  // While ownership is still being checked, a deep link to a licensing tab waits on a skeleton
+  // instead of flashing Overview.
+  const checkingLicensing = publisher.isPending && !readOnly
+  const awaitingTab =
+    checkingLicensing && isLicensingTab(tabParam as AppTab) ? (tabParam as AppTab) : null
+  const tab: AppTab =
+    awaitingTab ?? (visibleTabs.includes(tabParam as AppTab) ? (tabParam as AppTab) : 'overview')
   const showLicensing = publisher.isPublisher && !readOnly
+  // A failed ownership check hides the licensing tabs; say so, with a retry. "Not deployed here
+  // yet" is only worth a banner when they came for a licensing tab.
+  const licensingError =
+    !readOnly &&
+    publisher.error &&
+    (!isPublisherError(publisher.error, 'PUBLISHER_UNAVAILABLE') ||
+      isLicensingTab(tabParam as AppTab))
+      ? publisher.error
+      : null
 
   const deployments = useMemo(
     () =>
@@ -344,23 +363,57 @@ export function AppDetail({ appId }: { appId: string }) {
         <LicensingUnavailableBanner status={publisher.app.status} />
       )}
 
-      <Tabs value={tab} onValueChange={setTab} className="gap-8">
-        <TabsList className="border-border h-auto w-full justify-start gap-6 overflow-x-auto rounded-none border-b bg-transparent p-0 [scrollbar-width:none]">
-          {visibleTabs.map((t) => (
-            <TabsTrigger
-              key={t}
-              value={t}
-              className="data-[state=active]:border-b-foreground text-muted-foreground data-[state=active]:text-foreground dark:data-[state=active]:border-b-foreground -mb-px h-10 flex-none shrink-0 rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 shadow-none data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent"
+      {licensingError && (
+        <Banner
+          tone="warning"
+          icon={TriangleAlert}
+          title="Your plans and invite codes did not load"
+          actions={
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={publisher.retry}
+              disabled={publisher.retrying}
             >
-              {APP_TAB_LABEL[t]}
-              {t === 'deployments' && deployments.length > 0 && (
-                <span className="bg-muted text-muted-foreground rounded-full px-1.5 text-[10px] font-semibold">
-                  {deployments.length}
-                </span>
-              )}
-            </TabsTrigger>
+              <RefreshCw
+                className={publisher.retrying ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'}
+              />
+              Try again
+            </Button>
+          }
+        >
+          {describePublisherError(licensingError)}
+        </Banner>
+      )}
+
+      <Tabs value={tab} onValueChange={setTab} className="gap-8">
+        {/* The baseline is an inset shadow, not a border: a scrolling list clips anything that
+            hangs below it, which would cut off the active underline. */}
+        <TabsList className="h-auto w-full justify-start gap-6 overflow-x-auto rounded-none bg-transparent p-0 shadow-[inset_0_-1px_0_var(--border)] [scrollbar-width:none]">
+          {visibleTabs.map((t) => (
+            <Fragment key={t}>
+              {/* Placeholders where the licensing tabs appear, while ownership is checked. */}
+              {t === 'settings' &&
+                checkingLicensing &&
+                LICENSING_TABS.map((l) => (
+                  <Skeleton key={l} aria-hidden className="h-4 w-16 shrink-0 self-center" />
+                ))}
+              <TabsTrigger
+                value={t}
+                className="data-[state=active]:border-b-foreground text-muted-foreground data-[state=active]:text-foreground dark:data-[state=active]:border-b-foreground h-10 flex-none shrink-0 rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 shadow-none data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent"
+              >
+                {APP_TAB_LABEL[t]}
+                {t === 'deployments' && deployments.length > 0 && (
+                  <span className="bg-muted text-muted-foreground rounded-full px-1.5 text-[10px] font-semibold">
+                    {deployments.length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </Fragment>
           ))}
         </TabsList>
+
+        {awaitingTab && <TabSkeleton label={`Loading ${APP_TAB_LABEL[awaitingTab]}`} />}
 
         <TabsContent value="overview">
           <AppOverview

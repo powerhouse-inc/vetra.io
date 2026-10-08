@@ -33,7 +33,7 @@ import {
   usePublisherTemplates,
 } from '../hooks/use-publisher'
 import { publisherKeys } from '../hooks/keys'
-import { PublisherApiError } from '../graphql'
+import { PublisherApiError, isPublisherError } from '../graphql'
 
 function wrapper() {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
@@ -99,12 +99,18 @@ describe('publisher query hooks', () => {
     const { result } = renderHook(() => useAppPublisher('app-1'), { wrapper: Wrapper })
     await waitFor(() => expect(result.current.isPending).toBe(false))
     expect(result.current.isPublisher).toBe(false)
+    expect(isPublisherError(result.current.error, 'FORBIDDEN')).toBe(true)
   })
 
   it('useAppPublisher is not pending while signed out', () => {
     currentDid = undefined
     const { Wrapper } = wrapper()
     const { result } = renderHook(() => useAppPublisher('app-1'), { wrapper: Wrapper })
-    expect(result.current).toEqual({ isPublisher: false, app: undefined, isPending: false })
+    expect(result.current).toMatchObject({
+      isPublisher: false,
+      app: undefined,
+      isPending: false,
+      error: null,
+    })
   })
 })
