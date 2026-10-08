@@ -153,7 +153,7 @@ export const ERROR_COPY: Partial<Record<PublisherErrorCode, string>> = {
   LICENSING_DISABLED:
     'Licensing is switched off on this deployment right now. You can look, but not change anything.',
   INVALID_CODE: 'This code can’t be used. It may be mistyped, paused, expired or used up.',
-  ALREADY_HOLDS: 'You already have this plan for this app.',
+  ALREADY_HOLDS: 'You already have this plan. Nothing to renew.',
 }
 
 export function describePublisherError(err: unknown): string {

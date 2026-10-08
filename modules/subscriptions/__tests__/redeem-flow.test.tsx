@@ -131,23 +131,55 @@ describe('RedeemFlow', () => {
     expect(redeem).toHaveBeenCalledWith({ code: 'FREE' })
   })
 
-  it('offers to upgrade a live licence of the same app, and only that', async () => {
+  it('never preselects switching a live licence to another plan', async () => {
     authState = 'authenticated'
     check = { data: valid(), isPending: false, error: null }
     subs = [
       sub({ licenseId: 'live' }),
-      sub({ licenseId: 'ended', status: 'EXPIRED', termLabel: 'Old' }),
+      sub({ licenseId: 'setting-up', status: 'ISSUED', termLabel: 'Pending' }),
+      sub({ licenseId: 'ended', status: 'EXPIRED', termLabel: 'Old', environmentLabel: 'Lab' }),
+      sub({ licenseId: 'gone', status: 'REPLACED', termLabel: 'Older' }),
     ]
     redeem.mockResolvedValue(sub({ licenseId: 'new-3' }))
     render(<RedeemFlow code="KV-PILOT" />)
-    expect(screen.queryByRole('radio', { name: /upgrade old/i })).toBeNull()
-    // Preselected: a second code for something you hold is an extension, not a second licence.
-    expect(screen.getByRole('radio', { name: /upgrade free/i }).getAttribute('aria-checked')).toBe(
+    const radios = screen.getAllByRole('radio').map((r) => r.getAttribute('aria-label'))
+    expect(radios).toEqual(['Switch Free to Pilot', 'Bring back Lab', 'Start something new'])
+    for (const r of screen.getAllByRole('radio'))
+      expect(r.getAttribute('aria-checked')).toBe('false')
+    const button = screen.getByRole('button', { name: 'Get access' }) as HTMLButtonElement
+    expect(button.disabled).toBe(true)
+    fireEvent.click(screen.getByRole('radio', { name: 'Switch Free to Pilot' }))
+    expect(screen.queryByLabelText('Project name')).toBeNull()
+    await act(async () => fireEvent.click(button))
+    expect(redeem).toHaveBeenCalledWith({ code: 'KV-PILOT', upgrades: 'live' })
+  })
+
+  it('preselects renewing the plan already held', async () => {
+    authState = 'authenticated'
+    check = { data: valid(), isPending: false, error: null }
+    subs = [sub({ licenseId: 'same', kind: 'kv-pilot', termLabel: 'Pilot' })]
+    redeem.mockResolvedValue(sub({ licenseId: 'renewed' }))
+    render(<RedeemFlow code="KV-PILOT" />)
+    expect(screen.getByRole('radio', { name: 'Renew Pilot' }).getAttribute('aria-checked')).toBe(
       'true',
     )
-    expect(screen.queryByLabelText('Project name')).toBeNull()
+    // A DEDICATED code still offers a second environment.
+    expect(screen.getByRole('radio', { name: 'Start something new' })).toBeTruthy()
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
-    expect(redeem).toHaveBeenCalledWith({ code: 'KV-PILOT', upgrades: 'live' })
+    expect(redeem).toHaveBeenCalledWith({ code: 'KV-PILOT', upgrades: 'same' })
+  })
+
+  it('brings back an ended licence by default when nothing is live', async () => {
+    authState = 'authenticated'
+    check = { data: valid(), isPending: false, error: null }
+    subs = [sub({ licenseId: 'cancelled', status: 'REVOKED' })]
+    redeem.mockResolvedValue(sub({ licenseId: 'back' }))
+    render(<RedeemFlow code="KV-PILOT" />)
+    expect(
+      screen.getByRole('radio', { name: 'Bring back Acme' }).getAttribute('aria-checked'),
+    ).toBe('true')
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
+    expect(redeem).toHaveBeenCalledWith({ code: 'KV-PILOT', upgrades: 'cancelled' })
   })
 
   it('can still start something new next to a live licence', async () => {
@@ -162,7 +194,7 @@ describe('RedeemFlow', () => {
     expect(redeem).toHaveBeenCalledWith({ code: 'KV-PILOT', label: 'Second project' })
   })
 
-  it('extends the studio licence a person already holds instead of failing with ALREADY_HOLDS', async () => {
+  it('renews the studio licence a person already holds', async () => {
     authState = 'authenticated'
     check = {
       data: valid({
@@ -179,12 +211,16 @@ describe('RedeemFlow', () => {
         licenseId: 'studio-lic',
         appId: 'studio',
         appName: 'Vetra Studio',
+        kind: 'kv-pilot',
         termLabel: 'Early access',
         mode: 'SHARED',
       }),
     ]
     redeem.mockResolvedValue(sub({ licenseId: 'studio-lic-2' }))
     render(<RedeemFlow code="STUDIO-2" />)
+    // SHARED: a second account next to a live one adds nothing, so no "new" choice.
+    expect(screen.queryByRole('radio', { name: 'Start something new' })).toBeNull()
+    expect(screen.getByRole('radio', { name: 'Renew Early access' })).toBeTruthy()
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
     expect(redeem).toHaveBeenCalledWith({ code: 'STUDIO-2', upgrades: 'studio-lic' })
   })
@@ -196,6 +232,8 @@ describe('RedeemFlow', () => {
     render(<RedeemFlow code="FREE" />)
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
     expect(screen.getByText('You already have this plan')).toBeTruthy()
+    expect(screen.getByText('Nothing to renew.')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: /instead/i })).toBeNull()
     expect(screen.getByRole('link', { name: /see your subscriptions/i }).getAttribute('href')).toBe(
       '/user/subscriptions',
     )
@@ -241,23 +279,6 @@ describe('RedeemFlow', () => {
     expect(screen.queryByText(/code is paused/)).toBeNull()
   })
 
-  it('offers "Extend … instead" after ALREADY_HOLDS and redeems with upgrades', async () => {
-    authState = 'authenticated'
-    check = { data: valid(), isPending: false, error: null }
-    subs = [sub({ licenseId: 'live' })]
-    redeem.mockRejectedValueOnce(new PublisherApiError('ALREADY_HOLDS', 'holds', 200))
-    redeem.mockResolvedValueOnce(sub({ licenseId: 'new-5' }))
-    render(<RedeemFlow code="KV-PILOT" />)
-    fireEvent.click(screen.getByRole('radio', { name: 'Start something new' }))
-    fireEvent.change(screen.getByLabelText('Project name'), { target: { value: 'Again' } })
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
-    await act(async () =>
-      fireEvent.click(screen.getByRole('button', { name: 'Extend Free instead' })),
-    )
-    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
-    expect(redeem).toHaveBeenLastCalledWith({ code: 'KV-PILOT', upgrades: 'live' })
-  })
-
   it('keeps Get access disabled after a successful redeem until the page moves on', async () => {
     authState = 'authenticated'
     check = { data: valid({ mode: 'SHARED' }), isPending: false, error: null }
@@ -277,6 +298,7 @@ describe('RedeemFlow', () => {
     subs = [sub({ licenseId: 'live' })]
     redeem.mockRejectedValue(new PublisherApiError('INVALID_CODE', 'paused', 200))
     render(<RedeemFlow code="KV-PILOT" />)
+    fireEvent.click(screen.getByRole('radio', { name: 'Switch Free to Pilot' }))
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Get access' })))
     expect(screen.getByText('This code can’t be used any more')).toBeTruthy()
     fireEvent.click(screen.getByRole('radio', { name: 'Start something new' }))

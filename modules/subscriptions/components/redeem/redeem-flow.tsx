@@ -20,10 +20,11 @@ import {
   useRedeemInviteCode,
 } from '../../hooks/use-subscriptions'
 import { redeemInput, type RedeemChoice } from '../../lib/redeem'
-import { subscriptionHref, subscriptionName, upgradeCandidates } from '../../lib/subscriptions'
+import { defaultRedeemChoice, NEW_CHOICE, offersNew, redeemOptions } from '../../lib/redeem-options'
+import { subscriptionHref, subscriptionName } from '../../lib/subscriptions'
 import { RedeemSteps } from './redeem-steps'
 
-const NEW = 'new'
+const NEW = NEW_CHOICE
 
 /** `step` null: login state is not known yet, so no step is claimed. */
 function Shell({ step, children }: { step: 1 | 2 | 3 | null; children: ReactNode }) {
@@ -46,9 +47,8 @@ export function RedeemFlow({ code }: { code: string }) {
   const subs = useMySubscriptions()
   const redeem = useRedeemInviteCode()
   const router = useRouter()
-  // null = not chosen yet: defaults to upgrading the first live licence of this app,
-  // because a second code for a plan you already hold is refused (ALREADY_HOLDS) —
-  // extending studio access, for example, is an upgrade of the licence you have.
+  // null = not chosen yet, so the default applies (see defaultRedeemChoice): renewing the plan
+  // they hold, never switching a live licence to another plan without an explicit choice.
   const [picked, setPicked] = useState<string | null>(null)
   const [label, setLabel] = useState('')
   const [error, setError] = useState<unknown>(null)
@@ -110,9 +110,11 @@ export function RedeemFlow({ code }: { code: string }) {
   const info = check.data
   const dedicated = info.mode === 'DEDICATED'
   const authenticated = state === 'authenticated'
-  const candidates = info.appId ? upgradeCandidates(subs.data ?? [], info.appId) : []
-  const choice = picked ?? candidates[0]?.licenseId ?? NEW
-  const redeemChoice: RedeemChoice = choice === NEW ? 'new' : { upgrades: choice }
+  const options = redeemOptions(subs.data ?? [], info)
+  const showNew = offersNew(options, info.mode)
+  const choice = picked ?? defaultRedeemChoice(options, info.mode)
+  const redeemChoice: RedeemChoice | null =
+    choice === null ? null : choice === NEW ? 'new' : { upgrades: choice }
   const needsName = dedicated && choice === NEW
 
   const hero = (
@@ -200,6 +202,7 @@ export function RedeemFlow({ code }: { code: string }) {
   }
 
   const submit = async () => {
+    if (!redeemChoice) return
     setError(null)
     try {
       const sub = await redeem.mutateAsync(
@@ -217,45 +220,46 @@ export function RedeemFlow({ code }: { code: string }) {
     <Shell step={3}>
       {hero}
       <div className="border-border space-y-5 border-t pt-6">
-        {candidates.length > 0 && (
+        {options.length > 0 && (
           <div className="space-y-2">
             <Label>You already have {info.appName}</Label>
-            <RadioGroup value={choice} onValueChange={choose} className="space-y-2">
-              {candidates.map((s) => (
+            {choice === null && (
+              <p className="text-muted-foreground text-xs">Choose what this code should do.</p>
+            )}
+            <RadioGroup value={choice ?? ''} onValueChange={choose} className="space-y-2">
+              {options.map((o) => (
                 <label
-                  key={s.licenseId}
+                  key={o.licenseId}
                   className="border-border has-[[data-state=checked]]:border-primary flex cursor-pointer items-start gap-3 rounded-xl border p-3"
                 >
                   <RadioGroupItem
-                    value={s.licenseId}
-                    aria-label={`Upgrade ${subscriptionName(s)}`}
+                    value={o.licenseId}
+                    aria-label={o.title}
                     className="border-muted-foreground/50 data-[state=checked]:border-primary mt-1"
                   />
                   <span>
-                    <span className="block text-sm font-medium">Upgrade {subscriptionName(s)}</span>
-                    <span className="text-muted-foreground block text-xs">
-                      {s.environmentLabel
-                        ? `${s.environmentLabel} keeps its data and switches to the new plan.`
-                        : 'Your access switches to the new plan.'}
-                    </span>
+                    <span className="block text-sm font-medium">{o.title}</span>
+                    <span className="text-muted-foreground block text-xs">{o.detail}</span>
                   </span>
                 </label>
               ))}
-              <label className="border-border has-[[data-state=checked]]:border-primary flex cursor-pointer items-start gap-3 rounded-xl border p-3">
-                <RadioGroupItem
-                  value={NEW}
-                  aria-label="Start something new"
-                  className="border-muted-foreground/50 data-[state=checked]:border-primary mt-1"
-                />
-                <span>
-                  <span className="block text-sm font-medium">Start something new</span>
-                  <span className="text-muted-foreground block text-xs">
-                    {dedicated
-                      ? 'A second environment, for a different project.'
-                      : 'Keep what you have and add this.'}
+              {showNew && (
+                <label className="border-border has-[[data-state=checked]]:border-primary flex cursor-pointer items-start gap-3 rounded-xl border p-3">
+                  <RadioGroupItem
+                    value={NEW}
+                    aria-label="Start something new"
+                    className="border-muted-foreground/50 data-[state=checked]:border-primary mt-1"
+                  />
+                  <span>
+                    <span className="block text-sm font-medium">Start something new</span>
+                    <span className="text-muted-foreground block text-xs">
+                      {dedicated
+                        ? 'A second environment, for a different project.'
+                        : 'Keep what you have and add this.'}
+                    </span>
                   </span>
-                </span>
-              </label>
+                </label>
+              )}
             </RadioGroup>
           </div>
         )}
@@ -287,25 +291,18 @@ export function RedeemFlow({ code }: { code: string }) {
                   : 'That did not work'}
             </AlertTitle>
             <AlertDescription className="space-y-2">
-              <p>{describePublisherError(error)}</p>
-              {isPublisherError(error, 'ALREADY_HOLDS') &&
-                candidates.length > 0 &&
-                choice === NEW && (
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => choose(candidates[0].licenseId)}
+              {isPublisherError(error, 'ALREADY_HOLDS') ? (
+                <>
+                  <p>Nothing to renew.</p>
+                  <Link
+                    href="/user/subscriptions"
+                    className="text-primary block font-medium hover:underline"
                   >
-                    Extend {subscriptionName(candidates[0])} instead
-                  </Button>
-                )}
-              {isPublisherError(error, 'ALREADY_HOLDS') && (
-                <Link
-                  href="/user/subscriptions"
-                  className="text-primary block font-medium hover:underline"
-                >
-                  See your subscriptions
-                </Link>
+                    See your subscriptions
+                  </Link>
+                </>
+              ) : (
+                <p>{describePublisherError(error)}</p>
               )}
             </AlertDescription>
           </Alert>
@@ -314,7 +311,7 @@ export function RedeemFlow({ code }: { code: string }) {
           size="lg"
           className="w-full sm:w-auto"
           onClick={() => void submit()}
-          disabled={redeem.isPending || done || (needsName && !label.trim())}
+          disabled={redeem.isPending || done || !redeemChoice || (needsName && !label.trim())}
         >
           {redeem.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
           Get access

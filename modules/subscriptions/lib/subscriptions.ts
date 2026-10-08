@@ -67,9 +67,15 @@ export function warningTone(kind: SubscriptionWarningKind): 'warning' | 'danger'
   return kind === 'STOPPED_DELETE_PENDING' || kind === 'DELETE_IMMINENT' ? 'danger' : 'warning'
 }
 
-/** Only a live licence of the same app can be upgraded in place. */
+/**
+ * Licences a redeemed code can build on, in place. Only the newest licence of each chain can be
+ * upgraded, and only while it is ACTIVE, EXPIRED or REVOKED: an upgraded licence turns REPLACED
+ * (so excluding REPLACED leaves the newest of each chain), and an ISSUED one is still being set
+ * up, which the server refuses.
+ */
+const UPGRADABLE = new Set(['ACTIVE', 'EXPIRED', 'REVOKED'])
 export function upgradeCandidates(subs: Subscription[], appId: string): Subscription[] {
-  return subs.filter((s) => s.appId === appId && isLive(s))
+  return subs.filter((s) => s.appId === appId && UPGRADABLE.has(s.status))
 }
 
 export const environmentHref = (s: Pick<Subscription, 'environmentId'>): string | null =>

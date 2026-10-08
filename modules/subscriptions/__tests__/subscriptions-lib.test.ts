@@ -44,7 +44,7 @@ describe('subscriptions lib', () => {
     expect(kv.past.map((s) => s.licenseId)).toEqual(['c'])
   })
 
-  it('offers only live licences of the same app as upgrade targets', () => {
+  it('offers the newest licence of each chain that the server can upgrade', () => {
     const subs = [
       sub({ licenseId: 'live' }),
       sub({ licenseId: 'issued', status: 'ISSUED' }),
@@ -53,7 +53,11 @@ describe('subscriptions lib', () => {
       sub({ licenseId: 'replaced', status: 'REPLACED' }),
       sub({ licenseId: 'other', appId: 'other' }),
     ]
-    expect(upgradeCandidates(subs, 'kv').map((s) => s.licenseId)).toEqual(['live', 'issued'])
+    expect(upgradeCandidates(subs, 'kv').map((s) => s.licenseId)).toEqual([
+      'live',
+      'ended',
+      'revoked',
+    ])
   })
 
   it('reads validity in plain words', () => {
