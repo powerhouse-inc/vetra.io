@@ -1,6 +1,7 @@
 'use client'
 
 import { OpenPanelComponent } from '@openpanel/nextjs'
+import { OPENPANEL_FILTER_JS } from '@/modules/shared/lib/analytics-privacy'
 
 interface OpenPanelProviderProps {
   /**
@@ -34,6 +35,8 @@ export function OpenPanelProvider({ clientId, apiUrl, environment }: OpenPanelPr
       trackScreenViews
       trackOutgoingLinks
       trackAttributes
+      // Hides invite codes in /redeem/<code> paths and referrers before anything is sent.
+      filter={OPENPANEL_FILTER_JS}
       globalProperties={environment ? { environment } : undefined}
     />
   )
