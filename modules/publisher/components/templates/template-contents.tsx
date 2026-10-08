@@ -31,6 +31,7 @@ export function TemplateContents({
   const list = artifacts.data ?? []
   const failed = !!artifacts.error && !artifacts.data
   const retry = () => void artifacts.refetch()
+  const retrying = failed && artifacts.isFetching
   return (
     <div className="space-y-6">
       <TemplateServices
@@ -40,6 +41,7 @@ export function TemplateContents({
         artifacts={list}
         artifactsLoading={artifacts.isLoading}
         artifactsFailed={failed}
+        artifactsRetrying={retrying}
         onRetryArtifacts={retry}
       />
       <TemplatePackages
@@ -49,6 +51,7 @@ export function TemplateContents({
         artifacts={list}
         artifactsLoading={artifacts.isLoading}
         artifactsFailed={failed}
+        artifactsRetrying={retrying}
         onRetryArtifacts={retry}
       />
     </div>

@@ -92,4 +92,10 @@ describe('TemplateServices', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(retry).toHaveBeenCalledOnce()
   })
+
+  it('shows the artifacts retry as busy while it runs', () => {
+    render(<TemplateServices appId="app-1" template={tpl()} guard={vi.fn()} artifacts={[]} artifactsLoading={false} artifactsFailed artifactsRetrying onRetryArtifacts={vi.fn()} />)
+    fireEvent.change(screen.getByLabelText('Service type'), { target: { value: 'FUSION' } })
+    expect((screen.getByRole('button', { name: 'Try again' }) as HTMLButtonElement).disabled).toBe(true)
+  })
 })

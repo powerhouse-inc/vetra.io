@@ -32,6 +32,7 @@ export function TemplateServices({
   artifacts,
   artifactsLoading,
   artifactsFailed = false,
+  artifactsRetrying = false,
   onRetryArtifacts,
 }: {
   appId: string
@@ -40,6 +41,7 @@ export function TemplateServices({
   artifacts: PublisherAppArtifact[]
   artifactsLoading: boolean
   artifactsFailed?: boolean
+  artifactsRetrying?: boolean
   onRetryArtifacts?: () => void
 }) {
   const add = useAddTemplateService(appId)
@@ -193,7 +195,7 @@ export function TemplateServices({
         )}
       </div>
       {wantsImage && artifactsFailed && (
-        <ArtifactsFailed what="images" onRetry={onRetryArtifacts} />
+        <ArtifactsFailed what="images" onRetry={onRetryArtifacts} retrying={artifactsRetrying} />
       )}
       {noImages && <p className="text-muted-foreground text-xs">{NO_IMAGES_YET}</p>}
       <div className="flex justify-end">

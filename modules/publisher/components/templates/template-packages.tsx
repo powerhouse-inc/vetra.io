@@ -33,6 +33,7 @@ export function TemplatePackages({
   artifacts,
   artifactsLoading,
   artifactsFailed = false,
+  artifactsRetrying = false,
   onRetryArtifacts,
 }: {
   appId: string
@@ -41,6 +42,7 @@ export function TemplatePackages({
   artifacts: PublisherAppArtifact[]
   artifactsLoading: boolean
   artifactsFailed?: boolean
+  artifactsRetrying?: boolean
   onRetryArtifacts?: () => void
 }) {
   const add = useAddTemplatePackage(appId)
@@ -142,7 +144,7 @@ export function TemplatePackages({
           </Select>
         </div>
       </div>
-      {artifactsFailed && <ArtifactsFailed what="packages" onRetry={onRetryArtifacts} />}
+      {artifactsFailed && <ArtifactsFailed what="packages" onRetry={onRetryArtifacts} retrying={artifactsRetrying} />}
       {noPackages && <p className="text-muted-foreground text-xs">{NO_PACKAGES_YET}</p>}
       <div className="flex justify-end">
         <Button size="sm" onClick={submit} disabled={!name || add.isPending}>

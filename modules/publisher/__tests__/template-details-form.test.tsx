@@ -31,6 +31,17 @@ describe('TemplateDetailsForm', () => {
     vi.clearAllMocks()
   })
 
+  it('opens Advanced as a disclosure that says whether it is open', () => {
+    render(<TemplateDetailsForm appId="app-1" template={tpl()} guard={(_, run) => void run()} />)
+    const toggle = screen.getByRole('button', { name: 'Advanced' })
+    expect(toggle.getAttribute('aria-expanded')).toBe('false')
+    expect(screen.queryByLabelText('Base domain')).toBeNull()
+    fireEvent.click(toggle)
+    expect(toggle.getAttribute('aria-expanded')).toBe('true')
+    expect(document.getElementById(toggle.getAttribute('aria-controls') ?? '')).toBeTruthy()
+    expect(screen.getByLabelText('Base domain')).toBeTruthy()
+  })
+
   it('keeps Save disabled until something changes', () => {
     render(<TemplateDetailsForm appId="app-1" template={tpl()} guard={(_, run) => void run()} />)
     expect((screen.getByRole('button', { name: 'Save changes' }) as HTMLButtonElement).disabled).toBe(true)

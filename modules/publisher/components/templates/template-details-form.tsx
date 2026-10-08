@@ -131,11 +131,14 @@ export function TemplateDetailsForm({
               </SelectContent>
             </Select>
           </div>
-          <button
+          <Button
             type="button"
-            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm"
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-foreground -ml-2 gap-1 px-2"
             onClick={() => setAdvanced((x) => !x)}
             aria-expanded={advanced}
+            aria-controls="template-advanced"
           >
             <ChevronDown
               className={
@@ -143,11 +146,12 @@ export function TemplateDetailsForm({
                   ? 'h-4 w-4 rotate-180 transition-transform'
                   : 'h-4 w-4 transition-transform'
               }
+              aria-hidden
             />
             Advanced
-          </button>
+          </Button>
           {advanced && (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div id="template-advanced" className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="template-domain">Base domain</Label>
                 <Input
