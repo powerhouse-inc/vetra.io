@@ -155,6 +155,8 @@ export function CreateInviteCodeDialog({
               </DialogDescription>
             </DialogHeader>
             <Form {...form}>
+              {/* `submit` reads its refs after the mutation settles, never during render. */}
+              {/* eslint-disable-next-line react-hooks/refs */}
               <form onSubmit={form.handleSubmit(submit)} className="space-y-4">
                 <FormField
                   control={form.control}
