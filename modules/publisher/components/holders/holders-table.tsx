@@ -14,7 +14,7 @@ import {
   TableRow,
 } from '@/modules/shared/components/ui/table'
 import { dateRange, shortDid, termName } from '../../lib/format'
-import type { HolderRow } from '../../lib/holders'
+import { canChangePlan, type HolderRow } from '../../lib/holders'
 import { licenseStatusMeta } from '../../lib/status'
 import type { PublisherTerm, TemplateMode } from '../../types'
 
@@ -117,24 +117,28 @@ export function HoldersTable({
                   />
                 </TableCell>
                 <TableCell className="pr-4 text-right whitespace-nowrap">
-                  {live && (
+                  {(live || canChangePlan(r)) && (
                     <div className="inline-flex gap-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8"
-                        onClick={() => onChangePlan(r)}
-                      >
-                        Change plan
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-destructive h-8"
-                        onClick={() => onRevoke(r)}
-                      >
-                        Revoke
-                      </Button>
+                      {canChangePlan(r) && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8"
+                          onClick={() => onChangePlan(r)}
+                        >
+                          Change plan
+                        </Button>
+                      )}
+                      {live && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-destructive h-8"
+                          onClick={() => onRevoke(r)}
+                        >
+                          Revoke
+                        </Button>
+                      )}
                     </div>
                   )}
                 </TableCell>

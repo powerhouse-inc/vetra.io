@@ -101,3 +101,20 @@ export function modeOfKind(
   const term = terms.find((t) => t.kind === kind)
   return templates.find((t) => t.id === term?.templateId)?.mode ?? null
 }
+
+/**
+ * The server moves a licence to another plan only from the newest licence of its chain, and only
+ * while it is ACTIVE, EXPIRED or REVOKED (an ISSUED one is still being set up).
+ */
+const PLAN_CHANGEABLE = new Set(['ACTIVE', 'EXPIRED', 'REVOKED'])
+export function canChangePlan(l: Pick<PublisherLicense, 'status' | 'replacedBy'>): boolean {
+  return l.replacedBy == null && PLAN_CHANGEABLE.has(l.status)
+}
+
+/** Plans a licence can move to: an ACTIVE licence cannot "move" to the plan it already has. */
+export function changePlanTargets(
+  terms: PublisherTerm[],
+  l: Pick<PublisherLicense, 'status' | 'kind'>,
+): PublisherTerm[] {
+  return grantablePlans(terms).filter((t) => l.status !== 'ACTIVE' || t.kind !== l.kind)
+}

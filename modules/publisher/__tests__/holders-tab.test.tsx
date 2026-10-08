@@ -164,6 +164,40 @@ describe('HoldersTab', () => {
     expect(replaceGrant).toHaveBeenCalledWith({ licenseId: 'l1', kind: 'free' })
   })
 
+  it('offers Change plan only on the newest ACTIVE, EXPIRED or REVOKED licence of a chain', () => {
+    licenses = [
+      lic({ id: 'active' }),
+      lic({ id: 'issued', status: 'ISSUED' }),
+      lic({ id: 'expired', status: 'EXPIRED' }),
+      lic({ id: 'revoked', status: 'REVOKED' }),
+      lic({ id: 'replaced', status: 'REPLACED', replacedBy: 'active' }),
+    ]
+    render(<HoldersTab appId="app-1" />)
+    const has = (id: string, name: string) =>
+      within(screen.getByTestId(`holder-${id}`)).queryByRole('button', { name }) !== null
+    expect(
+      ['active', 'issued', 'expired', 'revoked', 'replaced'].map((id) => has(id, 'Change plan')),
+    ).toEqual([true, false, true, true, false])
+    // Revoking stays for licences that are still running.
+    expect(['active', 'issued', 'expired'].map((id) => has(id, 'Revoke'))).toEqual([
+      true,
+      true,
+      false,
+    ])
+  })
+
+  it('brings an expired holder back on the same plan', async () => {
+    licenses = [lic({ status: 'EXPIRED' })]
+    replaceGrant.mockResolvedValue('l9')
+    render(<HoldersTab appId="app-1" />)
+    fireEvent.click(
+      within(screen.getByTestId('holder-l1')).getByRole('button', { name: 'Change plan' }),
+    )
+    fireEvent.change(screen.getByLabelText('New plan'), { target: { value: 'pro' } })
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: /^Move to / })))
+    expect(replaceGrant).toHaveBeenCalledWith({ licenseId: 'l1', kind: 'pro' })
+  })
+
   it('revokes with an optional reason and tells what happens to the environment', async () => {
     licenses = [lic({})]
     revoke.mockResolvedValue(true)

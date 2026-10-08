@@ -22,7 +22,7 @@ import {
 import { useLastPresent } from '@/modules/shared/hooks/use-last-present'
 import { useReplaceGrant } from '../../hooks/use-publisher-mutations'
 import { shortDid, termName } from '../../lib/format'
-import { grantablePlans } from '../../lib/holders'
+import { changePlanTargets } from '../../lib/holders'
 import { runWithToast } from '../../lib/run'
 import type { PublisherLicense, PublisherTerm, TemplateMode } from '../../types'
 
@@ -53,7 +53,7 @@ export function ChangePlanDialog({
     setWasOpen(!!license)
     if (license) setKind('')
   }
-  const options = grantablePlans(terms).filter((t) => t.kind !== shown?.kind)
+  const options = shown ? changePlanTargets(terms, shown) : []
   const target = options.find((t) => t.kind === kind)
   // The environment is only carried over between two dedicated plans.
   const keepsEnvironment =
