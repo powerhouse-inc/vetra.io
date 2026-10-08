@@ -7,6 +7,8 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
+  // The licensing journeys need their own server env; see playwright.licensing.config.ts.
+  testIgnore: ['licensing/**'],
   use: {
     baseURL: 'http://localhost:3000',
     trace: 'on-first-retry',
