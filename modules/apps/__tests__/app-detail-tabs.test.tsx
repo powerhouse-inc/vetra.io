@@ -231,6 +231,29 @@ describe('AppDetail tabs', () => {
       expect(v({ publisherPending: true })).toBe('checking')
       expect(v({})).toBe('not-found')
       expect(v({ notFound: false, isPublisher: true })).toBe('error')
+      // A failed myApps check is not a "no": never claim the app does not exist.
+      expect(v({ publisherError: true })).toBe('unchecked')
+      expect(v({ publisherError: true, isPublisher: true })).toBe('licensing-only')
+      expect(v({ publisherError: true, publisherPending: true })).toBe('checking')
+      expect(v({ notFound: false, publisherError: true })).toBe('error')
+    })
+
+    it('offers a retry, not "not found", when the ownership check failed', () => {
+      const retry = vi.fn()
+      publisher = {
+        isPublisher: false,
+        app: undefined,
+        isPending: false,
+        error: new Error('network down'),
+        retry,
+        retrying: false,
+      }
+      render(<AppDetail appId="studio-1" />)
+      expect(screen.getByText('We couldn’t check whether you publish this app')).toBeTruthy()
+      expect(screen.queryByText('App not found')).toBeNull()
+      expect(screen.queryByText(/belongs to another account/)).toBeNull()
+      fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
+      expect(retry).toHaveBeenCalledTimes(1)
     })
 
     it('shows only the licensing tabs, opening on Plans, for its publisher', () => {

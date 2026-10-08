@@ -16,6 +16,10 @@ describe('licensing-only apps', () => {
       'studio',
     ])
     expect(licensingOnlyApps(undefined, [{ id: 'vault' }])).toEqual([])
+    // Exact ids only: no prefix, case or substring matches.
+    expect(
+      licensingOnlyApps(published, [{ id: 'VAULT' }, { id: 'stud' }, { id: 'beta-2' }]).length,
+    ).toBe(3)
     expect(
       licensingOnlyApps(published, [{ id: 'vault' }, { id: 'studio' }, { id: 'beta' }]),
     ).toEqual([])

@@ -99,14 +99,18 @@ export function missingAppView({
   notFound,
   publisherPending,
   isPublisher,
+  publisherError = false,
 }: {
   notFound: boolean
   publisherPending: boolean
   isPublisher: boolean
-}): 'licensing-only' | 'checking' | 'not-found' | 'error' {
+  /** The myApps check failed: we cannot tell whether they publish it, so never "not found". */
+  publisherError?: boolean
+}): 'licensing-only' | 'checking' | 'unchecked' | 'not-found' | 'error' {
   if (!notFound) return 'error'
   if (isPublisher) return 'licensing-only'
-  return publisherPending ? 'checking' : 'not-found'
+  if (publisherPending) return 'checking'
+  return publisherError ? 'unchecked' : 'not-found'
 }
 
 const TAB_LIST_CLASS =
@@ -372,9 +376,24 @@ export function AppDetail({ appId }: { appId: string }) {
       notFound,
       publisherPending: publisher.isPending,
       isPublisher: publisher.isPublisher,
+      publisherError: !!publisher.error,
     })
     if (view === 'licensing-only' && publisher.app) {
       return <LicensingOnlyAppDetail app={publisher.app} />
+    }
+    if (view === 'unchecked') {
+      return (
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+          <p className="text-lg font-semibold">We couldn’t check whether you publish this app</p>
+          <p className="text-muted-foreground max-w-sm text-sm">
+            {describePublisherError(publisher.error)}
+          </p>
+          <Button variant="outline" onClick={publisher.retry} disabled={publisher.retrying}>
+            <RefreshCw className={publisher.retrying ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+            Try again
+          </Button>
+        </div>
+      )
     }
     if (view === 'checking') {
       return (
