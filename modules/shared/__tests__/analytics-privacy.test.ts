@@ -7,8 +7,10 @@ import {
 } from '../lib/analytics-privacy'
 
 // Runs the exact source the layout inlines, as the browser would.
-// eslint-disable-next-line @typescript-eslint/no-implied-eval
-const evaluate = <T>(src: string): T => new Function(`return (${src})`)() as T
+type Fn = (...args: unknown[]) => unknown
+// eslint-disable-next-line @typescript-eslint/no-implied-eval -- evaluating the inlined source is the point
+const compile = (args: string[], body: string) => new Function(...args, body) as Fn
+const evaluate = <T>(src: string): T => compile([], `return (${src})`)() as T
 const scrub = evaluate<(u: unknown) => unknown>(SCRUB_URL_JS)
 
 describe('analytics privacy', () => {
@@ -34,7 +36,7 @@ describe('analytics privacy', () => {
 
   it('Umami: scrubs the page URL and the referrer before sending', () => {
     const win: Record<string, unknown> = {}
-    new Function('window', UMAMI_BEFORE_SEND_JS)(win)
+    compile(['window'], UMAMI_BEFORE_SEND_JS)(win)
     const beforeSend = win[UMAMI_BEFORE_SEND] as (t: string, p: unknown) => unknown
     expect(
       beforeSend('event', {
