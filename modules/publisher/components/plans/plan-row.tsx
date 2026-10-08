@@ -32,7 +32,7 @@ export function PlanRow({
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap items-center gap-2">
           <h3 className="min-w-0 font-semibold break-words">{termName(term)}</h3>
-          <code className="bg-muted text-muted-foreground rounded px-1.5 py-0.5 text-xs">
+          <code className="bg-muted text-muted-foreground max-w-full rounded px-1.5 py-0.5 text-xs break-all">
             {term.kind}
           </code>
           <StatusPill meta={termStatusMeta(term.status)} />

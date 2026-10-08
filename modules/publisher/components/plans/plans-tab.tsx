@@ -92,6 +92,7 @@ export function PlansTab({ appId }: { appId: string }) {
         term={editing?.term ?? null}
         templates={templateList}
         templatesUnavailable={!!templates.error}
+        onRetryTemplates={() => void templates.refetch()}
         open={editing !== null}
         onOpenChange={(o) => !o && setEditing(null)}
       />

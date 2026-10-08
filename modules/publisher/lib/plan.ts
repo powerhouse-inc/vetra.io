@@ -13,7 +13,7 @@ export const ISSUER_OPTIONS: {
   {
     value: 'ACHRA_SUBSCRIPTION',
     label: 'Paid subscription',
-    hint: 'Coming with Achra.',
+    hint: 'Coming soon.',
     disabled: true,
   },
 ]

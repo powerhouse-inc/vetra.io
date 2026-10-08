@@ -53,7 +53,7 @@ export function PlanStatusDialog({
               ? 'Nobody new can get this plan. Existing licences run until they end.'
               : pending?.term.status === 'RETIRED'
                 ? 'People can get this plan again, through the ways you chose.'
-                : 'People can get this plan through the ways you chose. Its kind is fixed from now on.'}
+                : 'People can get this plan through the ways you chose. Its plan ID is fixed from now on.'}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

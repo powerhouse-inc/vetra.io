@@ -40,7 +40,6 @@ import {
   planDetailsInput,
   planInput,
   planSchema,
-  publishBlocker,
   termToForm,
   type PlanForm,
 } from '../../lib/plan'
@@ -54,6 +53,7 @@ export function PlanDialog({
   term,
   templates,
   templatesUnavailable = false,
+  onRetryTemplates,
   open,
   onOpenChange,
 }: {
@@ -63,6 +63,7 @@ export function PlanDialog({
   templates: PublisherTemplate[]
   /** True when the template list failed to load: say so instead of implying there are none. */
   templatesUnavailable?: boolean
+  onRetryTemplates?: () => void
   open: boolean
   onOpenChange: (open: boolean) => void
 }) {
@@ -79,20 +80,19 @@ export function PlanDialog({
   useEffect(() => {
     if (open) {
       form.reset(term ? termToForm(term) : EMPTY_PLAN)
+      setKindTouched(!!term)
     }
   }, [open, term, form])
 
   const submit = async (values: PlanForm) => {
     // A published plan must stay complete (the server refuses otherwise); say so before sending.
     if (term?.status === 'ACTIVE') {
-      const missing = publishBlocker({
-        templateId: values.templateId || null,
-        issuers: values.issuers,
-      })
-      if (missing) {
-        form.setError(values.templateId ? 'issuers' : 'templateId', {
-          message: `${missing} A published plan needs both.`,
-        })
+      const message = 'A published plan needs a template and at least one way to hand it out.'
+      const noTemplate = !values.templateId
+      const noIssuer = values.issuers.length === 0
+      if (noTemplate || noIssuer) {
+        if (noTemplate) form.setError('templateId', { message })
+        if (noIssuer) form.setError('issuers', { message })
         return
       }
     }
@@ -139,7 +139,7 @@ export function PlanDialog({
               name="kind"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Kind</FormLabel>
+                  <FormLabel>Plan ID</FormLabel>
                   <FormControl>
                     <Input
                       className="font-mono"
@@ -155,8 +155,8 @@ export function PlanDialog({
                   </FormControl>
                   <FormDescription>
                     {kindLocked
-                      ? 'Published plans keep their kind: existing licences carry it.'
-                      : 'The id licences carry. Lowercase, numbers and dashes.'}
+                      ? 'Published plans keep their plan ID: existing licences carry it.'
+                      : 'The ID licences carry. Lowercase, numbers and dashes.'}
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
@@ -187,8 +187,13 @@ export function PlanDialog({
                     </SelectContent>
                   </Select>
                   {templatesUnavailable ? (
-                    <FormDescription>
-                      Your templates did not load. Close this and try again.
+                    <FormDescription className="flex flex-wrap items-center gap-2">
+                      Your templates did not load.
+                      {onRetryTemplates && (
+                        <Button type="button" size="sm" variant="outline" onClick={onRetryTemplates}>
+                          Try again
+                        </Button>
+                      )}
                     </FormDescription>
                   ) : templates.length === 0 ? (
                     <FormDescription>
