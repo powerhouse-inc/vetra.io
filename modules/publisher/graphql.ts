@@ -1,46 +1,58 @@
 import { getCloudEndpoint } from '@/modules/cloud/graphql'
 import type {
+  AddTemplateInput,
+  AddTemplatePackageInput,
+  AddTemplateServiceInput,
+  AddTermInput,
+  CreateInviteCodeInput,
+  IssueGrantInput,
+  PublisherAllowListEntry,
   PublisherApp,
   PublisherAppArtifact,
+  PublisherEnvironment,
+  PublisherInviteCode,
   PublisherLicense,
-  PublisherLicenseType,
-  AppUserEnvironment,
-  CreateLicenseTypeInput,
-  SetLicenseTypeDetailsInput,
-  SetLicenseTypeTemplateInput,
-  AddLicenseTypeServiceInput,
-  AddLicenseTypePackageInput,
-  IssueGrantInput,
-  RemoveLicenseTypeEntryInput,
+  PublisherTemplate,
+  PublisherTerm,
+  RemoveTemplateEntryInput,
+  ReplaceGrantInput,
   RevokeLicenseInput,
+  SetTemplateDetailsInput,
+  SetTermDetailsInput,
 } from './types'
 
 export type FetchLike = (input: string, init: RequestInit) => Promise<Response>
 
 export type PublisherErrorCode =
   | 'UNAUTHENTICATED'
-  | 'UNKNOWN_APP'
-  | 'APP_IDENTITY_INACTIVE'
-  | 'LICENSING_DISABLED'
-  | 'UNKNOWN_LICENSE_TYPE'
-  | 'UNKNOWN_LICENSE'
+  | 'NOT_FOUND'
+  | 'FORBIDDEN'
   | 'INVALID_INPUT'
+  | 'APP_NOT_ACTIVE'
   | 'NOT_ON_ALLOW_LIST'
+  | 'TERM_NOT_ISSUABLE'
+  | 'UNSUPPORTED_DID'
+  | 'LICENSING_DISABLED'
+  | 'INVALID_CODE'
+  | 'ALREADY_HOLDS'
   | 'PUBLISHER_UNAVAILABLE'
   | 'NETWORK'
   | 'UNKNOWN'
 
-// Codes the server sends in extensions.code. PUBLISHER_UNAVAILABLE, NETWORK and
-// UNKNOWN are produced locally and are deliberately not in this set.
+// Codes the vetra-licensing subgraph (vetraPublisher + vetraSubscriptions) sends in
+// extensions.code. PUBLISHER_UNAVAILABLE, NETWORK and UNKNOWN are produced locally.
 const KNOWN_CODES = new Set<string>([
   'UNAUTHENTICATED',
-  'UNKNOWN_APP',
-  'APP_IDENTITY_INACTIVE',
-  'LICENSING_DISABLED',
-  'UNKNOWN_LICENSE_TYPE',
-  'UNKNOWN_LICENSE',
+  'NOT_FOUND',
+  'FORBIDDEN',
   'INVALID_INPUT',
+  'APP_NOT_ACTIVE',
   'NOT_ON_ALLOW_LIST',
+  'TERM_NOT_ISSUABLE',
+  'UNSUPPORTED_DID',
+  'LICENSING_DISABLED',
+  'INVALID_CODE',
+  'ALREADY_HOLDS',
 ])
 
 type GqlError = { message?: string; extensions?: { code?: unknown } }
@@ -120,20 +132,31 @@ export async function publisherGql<T>(
   return body.data
 }
 
+
 /**
- * The spec requires backend error text be surfaced verbatim, so this returns the
- * SERVER's message for every code the server can send. Only NETWORK and
- * PUBLISHER_UNAVAILABLE get copy of our own, because those two are produced here
- * and their raw text ("fetch failed") means nothing to a publisher.
- *
- * UNKNOWN_APP is deliberately ambiguous server-side ("not yours" and "no such
- * app" are indistinguishable); do not add copy that guesses which happened.
+ * Plain-language copy per code. INVALID_INPUT carries the reducer's own, specific
+ * sentence ("kind … already exists") and UNKNOWN is whatever the server said, so
+ * those two stay verbatim; everything else reads the same wherever it surfaces.
  */
+export const ERROR_COPY: Partial<Record<PublisherErrorCode, string>> = {
+  NETWORK: 'Lost the connection to Vetra. Check your network and try again.',
+  PUBLISHER_UNAVAILABLE: 'Licensing is not available on this deployment yet.',
+  UNAUTHENTICATED: 'Your login has expired. Log in again and retry.',
+  NOT_FOUND: 'We could not find that. It may have been removed, or it belongs to another account.',
+  FORBIDDEN: 'You are not allowed to do that for this app.',
+  APP_NOT_ACTIVE: 'This app is not active yet, so licensing changes are paused. Authorize its deploy identity first.',
+  NOT_ON_ALLOW_LIST: 'That person is not on your allow list yet. Add them, then grant again.',
+  TERM_NOT_ISSUABLE: 'That plan can’t be handed out this way. Check it is published and allows this way of giving it out.',
+  UNSUPPORTED_DID: 'Use a wallet address (0x…) or a did:pkh identity. Other identity types are not supported.',
+  LICENSING_DISABLED: 'Licensing is switched off on this deployment right now. You can look, but not change anything.',
+  INVALID_CODE: 'This code can’t be used. It may be mistyped, paused, expired or used up.',
+  ALREADY_HOLDS: 'You already have this plan for this app.',
+}
+
 export function describePublisherError(err: unknown): string {
-  if (isPublisherError(err, 'NETWORK'))
-    return 'Lost the connection to Vetra. Check your network and try again.'
-  if (isPublisherError(err, 'PUBLISHER_UNAVAILABLE')) {
-    return 'The licensing API is not available on this deployment.'
+  if (isPublisherError(err)) {
+    const copy = ERROR_COPY[err.code]
+    if (copy) return copy
   }
   if (err instanceof Error && err.message) return err.message
   return 'Something went wrong.'
@@ -151,116 +174,33 @@ export function retryPublisher(failureCount: number, error: unknown): boolean {
 }
 
 // ---------------------------------------------------------------------------
-// Queries. Every field except myApps takes an appId which the SERVER authorises
-// against apps.owner_address; fetchers pass it through and never filter.
-// myApps deliberately takes NO argument: it is derived from the caller's wallet.
+// Reads. Every per-app field takes an appId the SERVER authorises against the
+// app's owner; fetchers pass it through and never filter. myApps takes no
+// argument: the server derives it from the caller's wallet.
 // ---------------------------------------------------------------------------
 
 const APP_FIELDS = `id name status`
-const TYPE_FIELDS = `id kind label status validityDays templateHash
-  size baseDomain packageRegistry
+const TEMPLATE_FIELDS = `id name mode sharedEnvironment size baseDomain packageRegistry
+  templateHash environmentCount
   services { id type prefix artifactName artifactChannel }
   packages { id packageName version }`
-const LICENSE_FIELDS = `id user licenseTypeId status start end environmentId`
-const ENV_FIELDS = `appId user environmentId licenseId templateHash`
-
-export async function fetchMyApps(
-  token: string | null,
-  fetchImpl?: FetchLike,
-): Promise<PublisherApp[]> {
-  const data = await publisherGql<{ vetraPublisher: { myApps: PublisherApp[] } }>(
-    `query { vetraPublisher { myApps { ${APP_FIELDS} } } }`,
-    {},
-    token,
-    fetchImpl,
-  )
-  return data.vetraPublisher.myApps
-}
-
-export async function fetchLicenseTypes(
-  appId: string,
-  token: string | null,
-  fetchImpl?: FetchLike,
-): Promise<PublisherLicenseType[]> {
-  const data = await publisherGql<{ vetraPublisher: { licenseTypes: PublisherLicenseType[] } }>(
-    `query ($appId: String!) { vetraPublisher { licenseTypes(appId: $appId) { ${TYPE_FIELDS} } } }`,
-    { appId },
-    token,
-    fetchImpl,
-  )
-  return data.vetraPublisher.licenseTypes
-}
-
+const TERM_FIELDS = `id kind label templateId validityDays issuers status activeLicenses`
 const ARTIFACT_FIELDS = `kind name versions { version reference } channels { channel version }`
+const LICENSE_FIELDS = `id user kind issuer status start end environmentId replacedBy`
+const ENVIRONMENT_FIELDS = `environmentId user licenseId rootLicenseId label templateHash stoppedAt deleteAfter`
+export const INVITE_CODE_FIELDS = `code kind label active expiresAt maxUses redemptions hasAnthropicKey createdAt`
+const ALLOW_LIST_FIELDS = `user addedAt`
 
-/**
- * The artifacts this app has published. An app that has published nothing
- * returns an empty list — the builder says so rather than showing an empty
- * dropdown, which is the failure mode that makes a form feel broken.
- */
-export async function fetchAppArtifacts(
-  appId: string,
-  token: string | null,
-  fetchImpl?: FetchLike,
-): Promise<PublisherAppArtifact[]> {
-  const data = await publisherGql<{
-    vetraPublisher: { appArtifacts: PublisherAppArtifact[] }
-  }>(
-    `query ($appId: String!) { vetraPublisher { appArtifacts(appId: $appId) { ${ARTIFACT_FIELDS} } } }`,
-    { appId },
-    token,
-    fetchImpl,
-  )
-  return data.vetraPublisher.appArtifacts
-}
-
-export async function fetchLicenses(
-  appId: string,
-  status: string | null,
-  token: string | null,
-  fetchImpl?: FetchLike,
-): Promise<PublisherLicense[]> {
-  const data = await publisherGql<{ vetraPublisher: { licenses: PublisherLicense[] } }>(
-    `query ($appId: String!, $status: String) { vetraPublisher { licenses(appId: $appId, status: $status) { ${LICENSE_FIELDS} } } }`,
-    { appId, status },
-    token,
-    fetchImpl,
-  )
-  return data.vetraPublisher.licenses
-}
-
-export async function fetchEnvironments(
-  appId: string,
-  token: string | null,
-  fetchImpl?: FetchLike,
-): Promise<AppUserEnvironment[]> {
-  const data = await publisherGql<{ vetraPublisher: { environments: AppUserEnvironment[] } }>(
-    `query ($appId: String!) { vetraPublisher { environments(appId: $appId) { ${ENV_FIELDS} } } }`,
-    { appId },
-    token,
-    fetchImpl,
-  )
-  return data.vetraPublisher.environments
-}
-
-// ---------------------------------------------------------------------------
-// Mutations. Input objects are passed straight through as the `input` variable:
-// a key the caller omits stays absent from the JSON body ("leave unchanged") and
-// a key set to null is sent as null ("clear"). Do not normalise, default or strip
-// them. No retry or swallowing here; the UI layer decides how to react to
-// INVALID_INPUT and friends.
-// ---------------------------------------------------------------------------
-
-async function mutate<T>(
+async function read<T>(
   field: string,
-  args: string,
+  declaration: string,
   call: string,
   variables: Record<string, unknown>,
   token: string | null,
   fetchImpl?: FetchLike,
 ): Promise<T> {
   const data = await publisherGql<{ vetraPublisher: Record<string, T> }>(
-    `mutation ${args} { vetraPublisher { ${call} } }`,
+    `query ${declaration} { vetraPublisher { ${call} } }`.replace('query  {', 'query {'),
     variables,
     token,
     fetchImpl,
@@ -268,153 +208,186 @@ async function mutate<T>(
   return data.vetraPublisher[field]
 }
 
-export const createLicenseType = (
-  input: CreateLicenseTypeInput,
-  token: string | null,
-  fetchImpl?: FetchLike,
-) =>
-  mutate<string>(
-    'createLicenseType',
-    '($input: CreateLicenseTypeInput!)',
-    'createLicenseType(input: $input)',
-    { input },
+const APP_ID = '($appId: String!)'
+
+export const fetchPublisherApps = (token: string | null, fetchImpl?: FetchLike) =>
+  read<PublisherApp[]>('myApps', '', `myApps { ${APP_FIELDS} }`, {}, token, fetchImpl)
+
+export const fetchTemplates = (appId: string, token: string | null, fetchImpl?: FetchLike) =>
+  read<PublisherTemplate[]>(
+    'templates',
+    APP_ID,
+    `templates(appId: $appId) { ${TEMPLATE_FIELDS} }`,
+    { appId },
     token,
     fetchImpl,
   )
 
-export const setLicenseTypeDetails = (
-  input: SetLicenseTypeDetailsInput,
-  token: string | null,
-  fetchImpl?: FetchLike,
-) =>
-  mutate<boolean>(
-    'setLicenseTypeDetails',
-    '($input: SetLicenseTypeDetailsInput!)',
-    'setLicenseTypeDetails(input: $input)',
-    { input },
+export const fetchTerms = (appId: string, token: string | null, fetchImpl?: FetchLike) =>
+  read<PublisherTerm[]>('terms', APP_ID, `terms(appId: $appId) { ${TERM_FIELDS} }`, { appId }, token, fetchImpl)
+
+/** Published artifacts. An app that has published nothing returns []. */
+export const fetchAppArtifacts = (appId: string, token: string | null, fetchImpl?: FetchLike) =>
+  read<PublisherAppArtifact[]>(
+    'appArtifacts',
+    APP_ID,
+    `appArtifacts(appId: $appId) { ${ARTIFACT_FIELDS} }`,
+    { appId },
     token,
     fetchImpl,
   )
 
-export const setLicenseTypeTemplate = (
-  input: SetLicenseTypeTemplateInput,
+export const fetchLicenses = (
+  appId: string,
+  status: string | null,
   token: string | null,
   fetchImpl?: FetchLike,
 ) =>
-  mutate<boolean>(
-    'setLicenseTypeTemplate',
-    '($input: SetLicenseTypeTemplateInput!)',
-    'setLicenseTypeTemplate(input: $input)',
-    { input },
+  read<PublisherLicense[]>(
+    'licenses',
+    '($appId: String!, $status: String)',
+    `licenses(appId: $appId, status: $status) { ${LICENSE_FIELDS} }`,
+    { appId, status },
     token,
     fetchImpl,
   )
 
-export const addLicenseTypeService = (
-  input: AddLicenseTypeServiceInput,
-  token: string | null,
-  fetchImpl?: FetchLike,
-) =>
-  mutate<boolean>(
-    'addLicenseTypeService',
-    '($input: AddLicenseTypeServiceInput!)',
-    'addLicenseTypeService(input: $input)',
-    { input },
+export const fetchEnvironments = (appId: string, token: string | null, fetchImpl?: FetchLike) =>
+  read<PublisherEnvironment[]>(
+    'environments',
+    APP_ID,
+    `environments(appId: $appId) { ${ENVIRONMENT_FIELDS} }`,
+    { appId },
     token,
     fetchImpl,
   )
 
-export const removeLicenseTypeService = (
-  input: RemoveLicenseTypeEntryInput,
-  token: string | null,
-  fetchImpl?: FetchLike,
-) =>
-  mutate<boolean>(
-    'removeLicenseTypeService',
-    '($input: RemoveLicenseTypeEntryInput!)',
-    'removeLicenseTypeService(input: $input)',
-    { input },
+export const fetchInviteCodes = (appId: string, token: string | null, fetchImpl?: FetchLike) =>
+  read<PublisherInviteCode[]>(
+    'inviteCodes',
+    APP_ID,
+    `inviteCodes(appId: $appId) { ${INVITE_CODE_FIELDS} }`,
+    { appId },
     token,
     fetchImpl,
   )
 
-export const removeLicenseTypePackage = (
-  input: RemoveLicenseTypeEntryInput,
-  token: string | null,
-  fetchImpl?: FetchLike,
-) =>
-  mutate<boolean>(
-    'removeLicenseTypePackage',
-    '($input: RemoveLicenseTypeEntryInput!)',
-    'removeLicenseTypePackage(input: $input)',
-    { input },
+export const fetchAllowList = (appId: string, token: string | null, fetchImpl?: FetchLike) =>
+  read<PublisherAllowListEntry[]>(
+    'allowList',
+    APP_ID,
+    `allowList(appId: $appId) { ${ALLOW_LIST_FIELDS} }`,
+    { appId },
     token,
     fetchImpl,
   )
 
-export const addLicenseTypePackage = (
-  input: AddLicenseTypePackageInput,
+// ---------------------------------------------------------------------------
+// Writes. Inputs and arguments go through untouched: a key the caller omits stays
+// absent from the JSON and null stays null. No retry or swallowing here.
+// ---------------------------------------------------------------------------
+
+async function mutate<T>(
+  field: string,
+  declaration: string,
+  call: string,
+  variables: Record<string, unknown>,
   token: string | null,
   fetchImpl?: FetchLike,
-) =>
-  mutate<boolean>(
-    'addLicenseTypePackage',
-    '($input: AddLicenseTypePackageInput!)',
-    'addLicenseTypePackage(input: $input)',
-    { input },
+): Promise<T> {
+  const data = await publisherGql<{ vetraPublisher: Record<string, T> }>(
+    `mutation ${declaration} { vetraPublisher { ${call} } }`,
+    variables,
     token,
     fetchImpl,
   )
+  return data.vetraPublisher[field]
+}
 
-// publish/retire take a bare licenseTypeId argument, not an input object.
-export const publishLicenseType = (
-  licenseTypeId: string,
-  token: string | null,
-  fetchImpl?: FetchLike,
-) =>
-  mutate<boolean>(
-    'publishLicenseType',
-    '($licenseTypeId: String!)',
-    'publishLicenseType(licenseTypeId: $licenseTypeId)',
-    { licenseTypeId },
-    token,
-    fetchImpl,
-  )
+/** A mutation that takes one `input` object. `selection` is for object results. */
+function inputWrite<I extends object, R>(field: string, inputType: string, selection?: string) {
+  return (input: I, token: string | null, fetchImpl?: FetchLike) =>
+    mutate<R>(
+      field,
+      `($input: ${inputType}!)`,
+      selection ? `${field}(input: $input) { ${selection} }` : `${field}(input: $input)`,
+      { input },
+      token,
+      fetchImpl,
+    )
+}
 
-export const retireLicenseType = (
-  licenseTypeId: string,
-  token: string | null,
-  fetchImpl?: FetchLike,
-) =>
-  mutate<boolean>(
-    'retireLicenseType',
-    '($licenseTypeId: String!)',
-    'retireLicenseType(licenseTypeId: $licenseTypeId)',
-    { licenseTypeId },
-    token,
-    fetchImpl,
-  )
+/** A mutation that takes bare scalar arguments and returns Boolean!. */
+function argsWrite<A extends Record<string, string | boolean>>(
+  field: string,
+  types: { [K in keyof A & string]: string },
+) {
+  const names = Object.keys(types) as Array<keyof A & string>
+  const declaration = `(${names.map((n) => `$${n}: ${types[n]}`).join(', ')})`
+  const call = `${field}(${names.map((n) => `${n}: $${n}`).join(', ')})`
+  return (args: A, token: string | null, fetchImpl?: FetchLike) =>
+    mutate<boolean>(field, declaration, call, args, token, fetchImpl)
+}
 
-export const issueGrant = (input: IssueGrantInput, token: string | null, fetchImpl?: FetchLike) =>
-  mutate<string>(
-    'issueGrant',
-    '($input: IssueGrantInput!)',
-    'issueGrant(input: $input)',
-    { input },
-    token,
-    fetchImpl,
-  )
+export const addTemplate = inputWrite<AddTemplateInput, string>('addTemplate', 'AddTemplateInput')
+export const setTemplateDetails = inputWrite<SetTemplateDetailsInput, boolean>(
+  'setTemplateDetails',
+  'SetTemplateDetailsInput',
+)
+export const addTemplateService = inputWrite<AddTemplateServiceInput, boolean>(
+  'addTemplateService',
+  'AddTemplateServiceInput',
+)
+export const removeTemplateService = inputWrite<RemoveTemplateEntryInput, boolean>(
+  'removeTemplateService',
+  'RemoveTemplateEntryInput',
+)
+export const addTemplatePackage = inputWrite<AddTemplatePackageInput, boolean>(
+  'addTemplatePackage',
+  'AddTemplatePackageInput',
+)
+export const removeTemplatePackage = inputWrite<RemoveTemplateEntryInput, boolean>(
+  'removeTemplatePackage',
+  'RemoveTemplateEntryInput',
+)
+export const addTerm = inputWrite<AddTermInput, string>('addTerm', 'AddTermInput')
+export const setTermDetails = inputWrite<SetTermDetailsInput, boolean>(
+  'setTermDetails',
+  'SetTermDetailsInput',
+)
+export const issueGrant = inputWrite<IssueGrantInput, string>('issueGrant', 'IssueGrantInput')
+export const replaceGrant = inputWrite<ReplaceGrantInput, string>('replaceGrant', 'ReplaceGrantInput')
+export const revokeLicense = inputWrite<RevokeLicenseInput, boolean>(
+  'revokeLicense',
+  'RevokeLicenseInput',
+)
+export const createInviteCode = inputWrite<CreateInviteCodeInput, PublisherInviteCode>(
+  'createInviteCode',
+  'CreateInviteCodeInput',
+  INVITE_CODE_FIELDS,
+)
 
-export const revokeLicense = (
-  input: RevokeLicenseInput,
-  token: string | null,
-  fetchImpl?: FetchLike,
-) =>
-  mutate<boolean>(
-    'revokeLicense',
-    '($input: RevokeLicenseInput!)',
-    'revokeLicense(input: $input)',
-    { input },
-    token,
-    fetchImpl,
-  )
+export const deleteTemplate = argsWrite<{ appId: string; templateId: string }>('deleteTemplate', {
+  appId: 'String!',
+  templateId: 'String!',
+})
+export const publishTerm = argsWrite<{ appId: string; termId: string }>('publishTerm', {
+  appId: 'String!',
+  termId: 'String!',
+})
+export const retireTerm = argsWrite<{ appId: string; termId: string }>('retireTerm', {
+  appId: 'String!',
+  termId: 'String!',
+})
+export const setInviteCodeActive = argsWrite<{ appId: string; code: string; active: boolean }>(
+  'setInviteCodeActive',
+  { appId: 'String!', code: 'String!', active: 'Boolean!' },
+)
+export const addToAllowList = argsWrite<{ appId: string; user: string }>('addToAllowList', {
+  appId: 'String!',
+  user: 'String!',
+})
+export const removeFromAllowList = argsWrite<{ appId: string; user: string }>(
+  'removeFromAllowList',
+  { appId: 'String!', user: 'String!' },
+)

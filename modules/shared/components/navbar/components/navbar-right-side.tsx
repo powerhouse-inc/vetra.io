@@ -6,7 +6,6 @@ import {
   Check,
   Cloud,
   Copy,
-  FileKey,
   Layers,
   LogIn,
   LogOut,
@@ -162,15 +161,6 @@ function RenownButton() {
             <Link href="/user/packages">
               <Package className="h-4 w-4" />
               Packages
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            asChild
-            className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
-          >
-            <Link href="/user/publisher">
-              <FileKey className="h-4 w-4" />
-              Licensing
             </Link>
           </DropdownMenuItem>
           <DropdownMenuSeparator className="bg-border/50" />
