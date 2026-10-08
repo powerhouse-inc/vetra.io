@@ -23,7 +23,7 @@ export function RequireLogin({
   if (state === 'authenticated') return <>{children}</>
   if (state === 'resolving') {
     return (
-      <div role="status" aria-label="Checking your login" className="mx-auto mt-28 max-w-4xl space-y-4 px-6">
+      <div role="status" aria-label="Checking your login" className="space-y-4 py-4">
         <Skeleton className="h-8 w-1/3" />
         <Skeleton className="h-4 w-1/2" />
         <Skeleton className="h-40 w-full rounded-xl" />
@@ -31,7 +31,7 @@ export function RequireLogin({
     )
   }
   return (
-    <div className="mx-auto mt-28 flex max-w-md flex-col items-center gap-4 px-6 text-center">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-16 text-center">
       <span className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-2xl">
         <LogIn className="h-5 w-5" aria-hidden />
       </span>

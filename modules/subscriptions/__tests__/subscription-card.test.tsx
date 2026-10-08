@@ -46,10 +46,10 @@ describe('SubscriptionCard', () => {
   it('offers Cancel only while live', () => {
     const onCancel = vi.fn()
     const { rerender } = render(<SubscriptionCard subscription={sub()} highlighted={false} onCancel={onCancel} />)
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel Pro on Knowledge Vault' }))
     expect(onCancel).toHaveBeenCalled()
     rerender(<SubscriptionCard subscription={sub({ status: 'EXPIRED' })} highlighted={false} onCancel={onCancel} />)
-    expect(screen.queryByRole('button', { name: 'Cancel' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Cancel Pro on Knowledge Vault' })).toBeNull()
   })
 
   it('describes a shared plan without an environment link', () => {

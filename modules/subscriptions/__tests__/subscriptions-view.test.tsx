@@ -78,7 +78,7 @@ describe('SubscriptionsView', () => {
     subs = { data: [sub({ licenseId: 'a' })], isPending: false, error: null }
     cancel.mockResolvedValue(true)
     render(<SubscriptionsView />)
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel Pro on Knowledge Vault' }))
     expect(screen.getByText(/keeps running for 14 days/i)).toBeTruthy()
     expect(cancel).not.toHaveBeenCalled()
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Cancel subscription' })))
@@ -88,7 +88,7 @@ describe('SubscriptionsView', () => {
   it('keeping it sends nothing', () => {
     subs = { data: [sub({ licenseId: 'a' })], isPending: false, error: null }
     render(<SubscriptionsView />)
-    fireEvent.click(screen.getByRole('button', { name: 'Cancel' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Cancel Pro on Knowledge Vault' }))
     fireEvent.click(screen.getByRole('button', { name: 'Keep it' }))
     expect(cancel).not.toHaveBeenCalled()
   })

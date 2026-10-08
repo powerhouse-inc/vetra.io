@@ -12,19 +12,26 @@ import {
   AlertDialogTitle,
 } from '@/modules/shared/components/ui/alert-dialog'
 import { runWithToast } from '@/modules/publisher/lib/run'
+import { useEffect, useState } from 'react'
 import { useCancelSubscription } from '../hooks/use-subscriptions'
 import { subscriptionName } from '../lib/subscriptions'
 import type { Subscription } from '../types'
 
-export function CancelDialog({ subscription, onClose }: { subscription: Subscription | null; onClose: () => void }) {
+export function CancelDialog({ subscription: current, onClose }: { subscription: Subscription | null; onClose: () => void }) {
   const cancel = useCancelSubscription()
+  // Keep the last subscription so the title and body do not flash while the dialog animates closed.
+  const [last, setLast] = useState<Subscription | null>(current)
+  useEffect(() => {
+    if (current) setLast(current)
+  }, [current])
+  const subscription = current ?? last
   const confirm = async () => {
-    if (!subscription) return
-    const ok = await runWithToast(() => cancel.mutateAsync({ licenseId: subscription.licenseId }), 'Subscription cancelled')
+    if (!current) return
+    const ok = await runWithToast(() => cancel.mutateAsync({ licenseId: current.licenseId }), 'Subscription cancelled')
     if (ok) onClose()
   }
   return (
-    <AlertDialog open={!!subscription} onOpenChange={(o) => !o && onClose()}>
+    <AlertDialog open={!!current} onOpenChange={(o) => !o && onClose()}>
       <AlertDialogContent className="max-h-[85vh] overflow-y-auto">
         <AlertDialogHeader>
           <AlertDialogTitle>
