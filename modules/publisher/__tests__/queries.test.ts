@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { fetchMyApps, fetchLicenseTypes, fetchLicenses, fetchEnvironments } from '../graphql'
+import * as api from '../graphql'
 import type { FetchLike } from '../graphql'
 
 const capture = (data: unknown) => {
@@ -11,10 +11,8 @@ const capture = (data: unknown) => {
   return { calls, fetchImpl }
 }
 
-// Body of the `{ ... }` that follows `field` (optionally with an argument list),
-// brace-balanced. Asserting against this, not the whole document, matters: a
-// variable declaration such as `$status: String` would otherwise satisfy a check
-// that `status` is in the selection.
+// Body of the `{ ... }` that follows `field`, brace-balanced, so a variable
+// declaration like `$status: String` can never satisfy a selection check.
 const selectionOf = (query: string, field: string): string => {
   const m = new RegExp(`\\b${field}\\s*(\\([^)]*\\))?\\s*\\{`).exec(query)
   if (!m) throw new Error(`no selection for ${field} in: ${query}`)
@@ -27,10 +25,6 @@ const selectionOf = (query: string, field: string): string => {
   }
   return query.slice(start, i - 1)
 }
-
-// Field names selected at the top level of a selection, with nested blocks
-// reduced to their field name. Compared for exact equality so dropping OR
-// adding any field fails.
 const topLevelFields = (selection: string): string[] => {
   let flat = selection
   let prev: string
@@ -40,84 +34,161 @@ const topLevelFields = (selection: string): string[] => {
   } while (flat !== prev)
   return flat.split(/\s+/).filter(Boolean)
 }
-
 const fieldsOf = (query: string, field: string) => topLevelFields(selectionOf(query, field))
-describe('publisher query fetchers', () => {
-  it('fetchMyApps unwraps vetraPublisher.myApps, sends no variables and no argument', async () => {
-    const { calls, fetchImpl } = capture({
-      vetraPublisher: { myApps: [{ id: 'a1', name: 'Vault', status: 'ACTIVE' }] },
-    })
-    const apps = await fetchMyApps('t', fetchImpl)
-    expect(apps).toEqual([{ id: 'a1', name: 'Vault', status: 'ACTIVE' }])
-    expect(calls[0].variables).toEqual({})
-    expect(calls[0].query).toMatch(/myApps\s*\{/)
-    expect(calls[0].query).not.toContain('appId')
-    expect(fieldsOf(calls[0].query, 'myApps')).toEqual(['id', 'name', 'status'])
-  })
 
-  it('fetchLicenseTypes passes appId and selects every field including nested services and packages', async () => {
-    const { calls, fetchImpl } = capture({ vetraPublisher: { licenseTypes: [] } })
-    await fetchLicenseTypes('app-1', 't', fetchImpl)
-    expect(calls[0].variables).toEqual({ appId: 'app-1' })
-    expect(calls[0].query).toContain('licenseTypes(appId: $appId)')
-    const sel = selectionOf(calls[0].query, 'licenseTypes')
-    expect(topLevelFields(sel)).toEqual([
+type Read = {
+  name: string
+  field: string
+  call: (f: FetchLike) => Promise<unknown>
+  variables: Record<string, unknown>
+  fields: string[]
+}
+
+const READS: Read[] = [
+  {
+    name: 'fetchPublisherApps',
+    field: 'myApps',
+    call: (f) => api.fetchPublisherApps('t', f),
+    variables: {},
+    fields: ['id', 'name', 'status'],
+  },
+  {
+    name: 'fetchTemplates',
+    field: 'templates',
+    call: (f) => api.fetchTemplates('app-1', 't', f),
+    variables: { appId: 'app-1' },
+    fields: [
       'id',
-      'kind',
-      'label',
-      'status',
-      'validityDays',
-      'templateHash',
+      'name',
+      'mode',
+      'sharedEnvironment',
       'size',
       'baseDomain',
       'packageRegistry',
+      'templateHash',
+      'environmentCount',
       'services',
       'packages',
-    ])
-    expect(topLevelFields(selectionOf(sel, 'services'))).toEqual(['id', 'type', 'prefix'])
-    expect(topLevelFields(selectionOf(sel, 'packages'))).toEqual(['id', 'packageName', 'version'])
-  })
-
-  it('fetchLicenses passes a null status when none is given and selects every field', async () => {
-    const { calls, fetchImpl } = capture({ vetraPublisher: { licenses: [] } })
-    await fetchLicenses('app-1', null, 't', fetchImpl)
-    expect(calls[0].variables).toEqual({ appId: 'app-1', status: null })
-    expect(calls[0].query).toContain('licenses(appId: $appId, status: $status)')
-    expect(fieldsOf(calls[0].query, 'licenses')).toEqual([
+    ],
+  },
+  {
+    name: 'fetchTerms',
+    field: 'terms',
+    call: (f) => api.fetchTerms('app-1', 't', f),
+    variables: { appId: 'app-1' },
+    fields: [
+      'id',
+      'kind',
+      'label',
+      'templateId',
+      'validityDays',
+      'issuers',
+      'status',
+      'activeLicenses',
+    ],
+  },
+  {
+    name: 'fetchAppArtifacts',
+    field: 'appArtifacts',
+    call: (f) => api.fetchAppArtifacts('app-1', 't', f),
+    variables: { appId: 'app-1' },
+    fields: ['kind', 'name', 'versions', 'channels'],
+  },
+  {
+    name: 'fetchLicenses',
+    field: 'licenses',
+    call: (f) => api.fetchLicenses('app-1', null, 't', f),
+    variables: { appId: 'app-1', status: null },
+    fields: [
       'id',
       'user',
-      'licenseTypeId',
+      'kind',
+      'issuer',
       'status',
       'start',
       'end',
       'environmentId',
-    ])
-  })
-
-  it('fetchLicenses forwards a given status', async () => {
-    const { calls, fetchImpl } = capture({ vetraPublisher: { licenses: [] } })
-    await fetchLicenses('app-1', 'ACTIVE', 't', fetchImpl)
-    expect(calls[0].variables).toEqual({ appId: 'app-1', status: 'ACTIVE' })
-  })
-
-  it('fetchEnvironments unwraps vetraPublisher.environments, passes appId and selects every field', async () => {
-    const row = {
-      appId: 'app-1',
-      user: '0xa',
-      environmentId: 'e1',
-      licenseId: 'l1',
-      templateHash: 'h',
-    }
-    const { calls, fetchImpl } = capture({ vetraPublisher: { environments: [row] } })
-    expect(await fetchEnvironments('app-1', 't', fetchImpl)).toEqual([row])
-    expect(calls[0].variables).toEqual({ appId: 'app-1' })
-    expect(calls[0].query).toContain('environments(appId: $appId)')
-    expect(fieldsOf(calls[0].query, 'environments')).toEqual([
-      'appId',
-      'user',
+      'replacedBy',
+    ],
+  },
+  {
+    name: 'fetchEnvironments',
+    field: 'environments',
+    call: (f) => api.fetchEnvironments('app-1', 't', f),
+    variables: { appId: 'app-1' },
+    fields: [
       'environmentId',
+      'user',
       'licenseId',
+      'rootLicenseId',
+      'label',
       'templateHash',
+      'stoppedAt',
+      'deleteAfter',
+    ],
+  },
+  {
+    name: 'fetchInviteCodes',
+    field: 'inviteCodes',
+    call: (f) => api.fetchInviteCodes('app-1', 't', f),
+    variables: { appId: 'app-1' },
+    fields: [
+      'code',
+      'kind',
+      'label',
+      'active',
+      'expiresAt',
+      'maxUses',
+      'redemptions',
+      'hasAnthropicKey',
+      'createdAt',
+    ],
+  },
+  {
+    name: 'fetchAllowList',
+    field: 'allowList',
+    call: (f) => api.fetchAllowList('app-1', 't', f),
+    variables: { appId: 'app-1' },
+    fields: ['user', 'addedAt'],
+  },
+]
+
+describe.each(READS)('$name', ({ field, call, variables, fields }) => {
+  it('unwraps vetraPublisher.<field>, sends the variables, selects exactly the contract fields', async () => {
+    const { calls, fetchImpl } = capture({ vetraPublisher: { [field]: [] } })
+    await expect(call(fetchImpl)).resolves.toEqual([])
+    expect(calls).toHaveLength(1)
+    expect(calls[0].query).toMatch(/^query\b/)
+    expect(calls[0].query).toMatch(/vetraPublisher\s*\{/)
+    expect(calls[0].variables).toEqual(variables)
+    expect(fieldsOf(calls[0].query, field)).toEqual(fields)
+  })
+})
+
+describe('nested selections', () => {
+  it('templates select every service and package field', async () => {
+    const { calls, fetchImpl } = capture({ vetraPublisher: { templates: [] } })
+    await api.fetchTemplates('app-1', 't', fetchImpl)
+    expect(fieldsOf(calls[0].query, 'services')).toEqual([
+      'id',
+      'type',
+      'prefix',
+      'artifactName',
+      'artifactChannel',
     ])
+    expect(fieldsOf(calls[0].query, 'packages')).toEqual(['id', 'packageName', 'version'])
+  })
+
+  it('myApps takes no argument: ownership comes from the wallet', async () => {
+    const { calls, fetchImpl } = capture({ vetraPublisher: { myApps: [] } })
+    await api.fetchPublisherApps('t', fetchImpl)
+    expect(calls[0].query).not.toContain('appId')
+  })
+
+  it('licences pass a status filter through untouched', async () => {
+    const { calls, fetchImpl } = capture({ vetraPublisher: { licenses: [] } })
+    await api.fetchLicenses('app-1', 'ACTIVE', 't', fetchImpl)
+    expect(calls[0].variables).toEqual({ appId: 'app-1', status: 'ACTIVE' })
+    expect(calls[0].query).toContain('licenses(appId: $appId, status: $status)')
   })
 })

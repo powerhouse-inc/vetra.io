@@ -9,6 +9,20 @@ import {
   type FetchLike,
 } from '../graphql'
 
+const SERVER_CODES = [
+  'UNAUTHENTICATED',
+  'NOT_FOUND',
+  'FORBIDDEN',
+  'INVALID_INPUT',
+  'APP_NOT_ACTIVE',
+  'NOT_ON_ALLOW_LIST',
+  'TERM_NOT_ISSUABLE',
+  'UNSUPPORTED_DID',
+  'LICENSING_DISABLED',
+  'INVALID_CODE',
+  'ALREADY_HOLDS',
+] as const
+
 const jsonResponse = (body: unknown, status = 200) =>
   new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } })
 
@@ -29,12 +43,12 @@ describe('publisherGql', () => {
 
   it('maps a server error code onto PublisherApiError', async () => {
     const fetchImpl = vi.fn(async () =>
-      jsonResponse({ errors: [{ message: 'no such app', extensions: { code: 'UNKNOWN_APP' } }] }),
+      jsonResponse({ errors: [{ message: 'no such app', extensions: { code: 'NOT_FOUND' } }] }),
     ) as unknown as FetchLike
     const err = await publisherGql('{ ok }', undefined, 't', fetchImpl).catch(
       (e: unknown) => e as PublisherApiError,
     )
-    expect(isPublisherError(err, 'UNKNOWN_APP')).toBe(true)
+    expect(isPublisherError(err, 'NOT_FOUND')).toBe(true)
     expect((err as PublisherApiError).message).toBe('no such app')
   })
 
@@ -63,17 +77,19 @@ describe('publisherGql', () => {
 
 describe('toPublisherError', () => {
   it('passes every code the server can send through unchanged', () => {
+    for (const code of SERVER_CODES) {
+      expect(toPublisherError({ message: 'x', extensions: { code } }, 200).code).toBe(code)
+    }
+  })
+
+  it('maps the retired licence-type codes to UNKNOWN', () => {
     for (const code of [
-      'UNAUTHENTICATED',
       'UNKNOWN_APP',
       'APP_IDENTITY_INACTIVE',
-      'LICENSING_DISABLED',
       'UNKNOWN_LICENSE_TYPE',
       'UNKNOWN_LICENSE',
-      'INVALID_INPUT',
-      'NOT_ON_ALLOW_LIST',
     ]) {
-      expect(toPublisherError({ message: 'x', extensions: { code } }, 200).code).toBe(code)
+      expect(toPublisherError({ message: 'x', extensions: { code } }, 200).code).toBe('UNKNOWN')
     }
   })
 
@@ -85,33 +101,34 @@ describe('toPublisherError', () => {
 })
 
 describe('describePublisherError', () => {
-  it('returns the SERVER message verbatim for every server-controlled code', () => {
-    // The spec requires backend error text be surfaced verbatim; the UI invents
-    // no error copy of its own. Canned copy here would hide, for example, which
-    // licence type a tier mutation rejected.
-    for (const code of [
-      'UNAUTHENTICATED',
-      'UNKNOWN_APP',
-      'APP_IDENTITY_INACTIVE',
-      'LICENSING_DISABLED',
-      'UNKNOWN_LICENSE_TYPE',
-      'UNKNOWN_LICENSE',
-      'INVALID_INPUT',
-      'NOT_ON_ALLOW_LIST',
-      'UNKNOWN',
-    ] as const) {
-      const err = new PublisherApiError(code, 'the exact server text', null)
-      expect(describePublisherError(err)).toBe('the exact server text')
+  it('keeps the server sentence for INVALID_INPUT and UNKNOWN: it is specific', () => {
+    for (const code of ['INVALID_INPUT', 'UNKNOWN'] as const) {
+      expect(
+        describePublisherError(new PublisherApiError(code, 'kind 2026-pro already exists', null)),
+      ).toBe('kind 2026-pro already exists')
     }
   })
 
-  it('supplies copy only for the two codes the server never sends', () => {
-    expect(describePublisherError(new PublisherApiError('NETWORK', 'fetch failed', null))).toMatch(
-      /connection/i,
-    )
-    expect(
-      describePublisherError(new PublisherApiError('PUBLISHER_UNAVAILABLE', 'x', null)),
-    ).toMatch(/not available/i)
+  it('gives every other code plain-language copy', () => {
+    const expected: Record<string, RegExp> = {
+      UNAUTHENTICATED: /log in again/i,
+      NOT_FOUND: /could not find/i,
+      FORBIDDEN: /not allowed/i,
+      APP_NOT_ACTIVE: /app is not active right now.*overview/i,
+      NOT_ON_ALLOW_LIST: /allow list/i,
+      TERM_NOT_ISSUABLE: /plan can.t be handed out this way/i,
+      UNSUPPORTED_DID: /wallet address/i,
+      LICENSING_DISABLED: /switched off/i,
+      INVALID_CODE: /code can.t be used/i,
+      ALREADY_HOLDS: /already have this plan/i,
+    }
+    for (const [code, copy] of Object.entries(expected)) {
+      const text = describePublisherError(
+        new PublisherApiError(code as never, 'raw server text', null),
+      )
+      expect(text).toMatch(copy)
+      expect(text).not.toBe('raw server text')
+    }
   })
 
   it('falls back to the message for a non-PublisherApiError', () => {
@@ -204,13 +221,7 @@ describe('retryPublisher', () => {
   const coded = (code: string) => new PublisherApiError(code as never, 'refused', 200)
 
   it('never retries a coded refusal, however early the failure', () => {
-    for (const code of [
-      'UNAUTHENTICATED',
-      'UNKNOWN_APP',
-      'INVALID_INPUT',
-      'APP_IDENTITY_INACTIVE',
-      'LICENSING_DISABLED',
-    ]) {
+    for (const code of SERVER_CODES) {
       expect(retryPublisher(0, coded(code))).toBe(false)
       expect(retryPublisher(1, coded(code))).toBe(false)
     }

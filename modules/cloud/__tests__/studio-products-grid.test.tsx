@@ -15,6 +15,26 @@ vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 // Mutable holder so each test can drive the grid through its states.
 let state: StudioProductsState
 vi.mock('@/modules/cloud/studio/use-studio-products', () => ({ useStudioProducts: () => state }))
+// The lapsed-licence banner reads the studio licence and its warnings.
+vi.mock('@/modules/subscriptions/hooks/use-subscriptions', () => ({
+  useStudioAccess: () => ({
+    data: { allowed: false, licenseId: 'studio-1', expires: null, hasAttachedKey: false },
+  }),
+  useMySubscriptions: () => ({
+    data: [
+      {
+        licenseId: 'studio-1',
+        warnings: [
+          {
+            kind: 'ENDED_STOP_PENDING',
+            at: '2026-10-20T00:00:00Z',
+            message: 'Studios stop on Oct 20.',
+          },
+        ],
+      },
+    ],
+  }),
+}))
 
 import { StudioProductsGrid } from '@/modules/cloud/studio/components/studio-products-grid'
 
@@ -66,5 +86,34 @@ describe('StudioProductsGrid', () => {
     const { getByText } = render(<StudioProductsGrid />)
     getByText(/no products yet/i)
     getByText(/create new product/i)
+  })
+
+  it('keeps listing existing studios after the licence lapsed, without creating', () => {
+    state = {
+      ...baseState,
+      products: [
+        {
+          envId: 'e1',
+          subdomain: 's',
+          prefix: 'vetra-agent',
+          label: 'L',
+          brand: { title: 'Concord', tagline: null, description: null },
+          status: 'ready',
+        },
+      ],
+    }
+    const { getByText, queryByText, getByRole } = render(<StudioProductsGrid locked />)
+    getByText('Concord')
+    getByText('Your studio access has ended')
+    getByText(/Studios stop on Oct 20\./)
+    expect(queryByText(/create new product/i)).toBeNull()
+    expect(getByRole('link', { name: 'Redeem a code' }).getAttribute('href')).toBe('/redeem')
+  })
+
+  it('shows the redeem panel when the licence lapsed and there are no studios', () => {
+    state = { ...baseState, products: [] }
+    const { getByRole, queryByText } = render(<StudioProductsGrid locked />)
+    getByRole('heading', { name: /vetra studio is in early access/i })
+    expect(queryByText(/create new product/i)).toBeNull()
   })
 })

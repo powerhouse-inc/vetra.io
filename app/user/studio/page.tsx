@@ -1,10 +1,11 @@
 import { StudioProductsGrid } from '@/modules/cloud/studio/components/studio-products-grid'
-import { EarlyAccessGate } from '@/modules/invites/early-access-gate'
+import { StudioLicenseGate } from '@/modules/studio-license/components/studio-license-gate'
 
 export default function UserStudioPage() {
   return (
-    <EarlyAccessGate>
+    // Without a live studio licence the existing studios stay listed; only creating is gated.
+    <StudioLicenseGate notAllowed={<StudioProductsGrid locked />}>
       <StudioProductsGrid />
-    </EarlyAccessGate>
+    </StudioLicenseGate>
   )
 }

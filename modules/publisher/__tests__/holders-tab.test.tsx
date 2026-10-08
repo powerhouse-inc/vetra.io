@@ -1,406 +1,211 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
-import { render, screen, fireEvent, waitFor, cleanup, within } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import React from 'react'
+import type {
+  PublisherEnvironment,
+  PublisherLicense,
+  PublisherTemplate,
+  PublisherTerm,
+} from '../types'
 
-const issueGrant = vi.fn()
+let licenses: PublisherLicense[] = []
+let environments: PublisherEnvironment[] = []
+const replaceGrant = vi.fn()
 const revoke = vi.fn()
-const toastError = vi.fn()
-const toastSuccess = vi.fn()
-const licenseQueries: Array<string | null> = []
-let licenses: Array<Record<string, unknown>> = []
-let tiers: unknown[] = []
-let tiersError: Error | null = null
-let allError: Error | null = null
-let allPending = false
 
-vi.mock('sonner', () => ({
-  toast: {
-    error: (...a: unknown[]) => toastError(...a),
-    success: (...a: unknown[]) => toastSuccess(...a),
-  },
-}))
+vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock('../hooks/use-publisher', () => ({
-  // Honours the status argument like the real query, so a filter genuinely hides rows.
-  usePublisherLicenses: (_appId: string, status: string | null) => {
-    licenseQueries.push(status)
-    if (status === null && allError) return { data: undefined, isPending: false, error: allError }
-    if (status === null && allPending) return { data: undefined, isPending: true, error: null }
-    return {
-      data: status ? licenses.filter((l) => l.status === status) : licenses,
-      isPending: false,
-      error: null,
-    }
-  },
-  usePublisherLicenseTypes: () => ({
-    data: tiersError ? undefined : tiers,
+  usePublisherLicenses: () => ({ data: licenses, isPending: false, error: null, refetch: vi.fn() }),
+  usePublisherEnvironments: () => ({ data: environments, isPending: false, error: null }),
+  usePublisherTerms: () => ({
+    data: [
+      {
+        id: 't1',
+        kind: 'free',
+        label: 'Free',
+        templateId: 'tpl-s',
+        validityDays: null,
+        issuers: ['PUBLISHER_GRANT'],
+        status: 'ACTIVE',
+        activeLicenses: 1,
+      },
+      {
+        id: 't2',
+        kind: 'pro',
+        label: 'Pro',
+        templateId: 'tpl-d',
+        validityDays: null,
+        issuers: ['PUBLISHER_GRANT'],
+        status: 'ACTIVE',
+        activeLicenses: 1,
+      },
+    ] satisfies PublisherTerm[],
     isPending: false,
-    error: tiersError,
+    error: null,
   }),
+  usePublisherTemplates: () => ({
+    data: [
+      { id: 'tpl-s', mode: 'SHARED' },
+      { id: 'tpl-d', mode: 'DEDICATED' },
+    ] as PublisherTemplate[],
+    isPending: false,
+    error: null,
+  }),
+  usePublisherAllowList: () => ({ data: [], isPending: false, error: null }),
 }))
 vi.mock('../hooks/use-publisher-mutations', () => ({
-  useIssueGrant: () => ({ mutateAsync: issueGrant, isPending: false }),
+  useIssueGrant: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useReplaceGrant: () => ({ mutateAsync: replaceGrant, isPending: false }),
   useRevokeLicense: () => ({ mutateAsync: revoke, isPending: false }),
+  useAddToAllowList: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useRemoveFromAllowList: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
-vi.mock('@/shared/components/ui/select', () => {
-  const Trigger = (_: { 'aria-label'?: string }) => null
-  return {
-    // Native stand-in: Radix Select is not drivable in jsdom. Takes its label from the trigger.
-    Select: ({
-      value,
-      onValueChange,
-      children,
-    }: {
-      value?: string
-      onValueChange: (v: string) => void
-      children: React.ReactNode
-    }) => {
-      // The trigger may be wrapped (FormControl), so search the tree for it.
-      const find = (n: React.ReactNode): string | undefined => {
-        for (const c of React.Children.toArray(n)) {
-          if (!React.isValidElement(c)) continue
-          const el = c as React.ReactElement<{ 'aria-label'?: string; children?: React.ReactNode }>
-          if (el.type === Trigger) return el.props['aria-label']
-          const inner = find(el.props.children)
-          if (inner) return inner
-        }
-      }
-      const trigger = { props: { 'aria-label': find(children) } }
-      return (
-        <select
-          aria-label={trigger?.props['aria-label']}
-          value={value ?? ''}
-          onChange={(e) => onValueChange(e.target.value)}
-        >
-          <option value="" />
-          {children}
-        </select>
-      )
-    },
-    SelectTrigger: Trigger,
-    SelectValue: () => null,
-    SelectContent: ({ children }: { children: React.ReactNode }) => <>{children}</>,
-    SelectItem: ({ value, children }: { value: string; children: React.ReactNode }) => (
-      <option value={value}>{children}</option>
-    ),
-  }
-})
+vi.mock(
+  '@/modules/shared/components/ui/select',
+  () => import('@/modules/shared/test/native-select'),
+)
 
-import { HoldersTab } from '../components/holders-tab'
+import { HoldersTab } from '../components/holders/holders-tab'
 
-const HOLDER = '0xAbCdEf0123456789aBcDeF0123456789AbCdEf01'
-const OTHER = '0x1111111111111111111111111111111111111111'
-
-const lic = (over: Record<string, unknown> = {}) => ({
-  id: 'lic-1',
-  user: HOLDER.toLowerCase(),
-  licenseTypeId: 'lt-1',
+const lic = (over: Partial<PublisherLicense>): PublisherLicense => ({
+  id: 'l1',
+  user: 'did:pkh:eip155:1:0xabcdef0123456789abcdef0123456789abcdef01',
+  kind: 'pro',
+  issuer: 'PUBLISHER_GRANT',
   status: 'ACTIVE',
-  start: null,
+  start: '2026-10-01T00:00:00Z',
   end: null,
   environmentId: 'env-1',
+  replacedBy: null,
   ...over,
 })
-const tier = (over: Record<string, unknown> = {}) => ({
-  id: 'lt-1',
-  label: 'Pro',
-  kind: 'PRO',
-  status: 'ACTIVE',
-  validityDays: 365,
-  templateHash: 'h',
-  services: [],
-  packages: [],
-  ...over,
-})
-
-beforeEach(() => {
-  allError = null
-  allPending = false
-  tiersError = null
-  cleanup()
-  licenses = []
-  tiers = [tier()]
-  licenseQueries.length = 0
-  for (const m of [issueGrant, revoke, toastError, toastSuccess]) m.mockReset()
-})
-
-const openGrant = () => fireEvent.click(screen.getByRole('button', { name: /grant/i }))
-const typeAddress = (v: string) =>
-  fireEvent.change(screen.getByLabelText(/address/i), { target: { value: v } })
-const WARNING = /already holds an active or pending licence/i
 
 describe('HoldersTab', () => {
-  it('warns before granting a SECOND licence to an address that already holds one', async () => {
-    licenses = [lic()]
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    typeAddress(HOLDER)
-    expect(await screen.findByText(WARNING)).toBeTruthy()
-    expect(screen.getByText(/which one applies is not deterministic/i)).toBeTruthy()
+  beforeEach(() => {
+    cleanup()
+    vi.clearAllMocks()
+    environments = []
   })
 
-  it('matches the existing holder case-insensitively', async () => {
-    licenses = [lic()]
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    typeAddress(HOLDER.toUpperCase().replace('0X', '0x'))
-    expect(await screen.findByText(WARNING)).toBeTruthy()
+  it('invites a first grant when nobody holds a licence', () => {
+    licenses = []
+    render(<HoldersTab appId="app-1" />)
+    expect(screen.getByText('Nobody holds a licence yet')).toBeTruthy()
   })
 
-  it('matches when the server copy is checksummed and the typed one is lowercase', async () => {
-    licenses = [lic({ user: HOLDER })]
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    typeAddress(HOLDER.toLowerCase())
-    expect(await screen.findByText(WARNING)).toBeTruthy()
-  })
-
-  it('ignores surrounding whitespace when matching', async () => {
-    licenses = [lic()]
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    typeAddress(`  ${HOLDER}  `)
-    expect(await screen.findByText(WARNING)).toBeTruthy()
-  })
-
-  it('finds the duplicate among several licences, not just the first', async () => {
-    licenses = [lic({ id: 'a', user: OTHER }), lic({ id: 'b', user: HOLDER.toLowerCase() })]
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    typeAddress(HOLDER)
-    expect(await screen.findByText(WARNING)).toBeTruthy()
-  })
-
-  it('warns for an address whose licence is still ISSUED (keeper has not activated it yet)', async () => {
-    licenses = [lic({ status: 'ISSUED', environmentId: null })]
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    typeAddress(HOLDER)
-    expect(await screen.findByText(WARNING)).toBeTruthy()
-    expect(screen.getByText(/not deterministic/i)).toBeTruthy()
-  })
-
-  it('does NOT warn for an address holding only a revoked licence', async () => {
+  it('shows each holder’s environment state as text, never as a link', () => {
     licenses = [lic({ status: 'REVOKED' })]
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    typeAddress(HOLDER)
-    await waitFor(() =>
-      expect((screen.getByLabelText(/address/i) as HTMLInputElement).value).toBe(HOLDER),
-    )
-    expect(screen.queryByText(WARNING)).toBeNull()
-  })
-
-  it('does NOT warn for a different address, or before anything is typed', async () => {
-    licenses = [lic()]
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    expect(screen.queryByText(WARNING)).toBeNull()
-    typeAddress(OTHER)
-    await waitFor(() =>
-      expect((screen.getByLabelText(/address/i) as HTMLInputElement).value).toBe(OTHER),
-    )
-    expect(screen.queryByText(WARNING)).toBeNull()
-  })
-
-  it('still warns when the status filter hides the existing ACTIVE licence', async () => {
-    // The duplicate check must read the unfiltered list, not the rows on screen.
-    licenses = [lic(), lic({ id: 'lic-2', user: OTHER, status: 'REVOKED' })]
-    render(<HoldersTab appId="a1" />)
-    fireEvent.change(screen.getByLabelText('Status filter'), { target: { value: 'REVOKED' } })
-    expect(screen.queryByText(HOLDER.toLowerCase())).toBeNull() // really hidden
-    openGrant()
-    typeAddress(HOLDER)
-    expect(await screen.findByText(WARNING)).toBeTruthy()
-  })
-
-  it('the status filter queries the server with that status', () => {
-    render(<HoldersTab appId="a1" />)
-    fireEvent.change(screen.getByLabelText('Status filter'), { target: { value: 'EXPIRED' } })
-    expect(licenseQueries).toContain('EXPIRED')
-  })
-
-  it('grants exactly the address and tier the publisher chose', async () => {
-    tiers = [tier({ id: 'lt-1', label: 'Pro' }), tier({ id: 'lt-2', label: 'Team', kind: 'TEAM' })]
-    issueGrant.mockResolvedValue('new-id')
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    typeAddress(`  ${HOLDER}  `)
-    fireEvent.change(screen.getByLabelText('Tier'), { target: { value: 'lt-2' } })
-    fireEvent.click(screen.getAllByRole('button', { name: /grant licence/i }).at(-1)!)
-    await waitFor(() => expect(issueGrant).toHaveBeenCalledTimes(1))
-    expect(issueGrant).toHaveBeenCalledWith({ appId: 'a1', licenseTypeId: 'lt-2', user: HOLDER })
-    await waitFor(() => expect(toastSuccess).toHaveBeenCalled())
-  })
-
-  it('offers only published (ACTIVE) tiers', () => {
-    tiers = [
-      tier({ id: 'lt-1', label: 'Live' }),
-      tier({ id: 'lt-2', label: 'Drafty', status: 'DRAFT' }),
-      tier({ id: 'lt-3', label: 'Gone', status: 'RETIRED' }),
-    ]
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    const tier_ = screen.getByLabelText('Tier')
-    expect(within(tier_).queryByText('Live')).toBeTruthy()
-    expect(within(tier_).queryByText('Drafty')).toBeNull()
-    expect(within(tier_).queryByText('Gone')).toBeNull()
-  })
-
-  it('does not call the server for a malformed address or a missing tier', async () => {
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    typeAddress('0x123')
-    fireEvent.change(screen.getByLabelText('Tier'), { target: { value: 'lt-1' } })
-    fireEvent.click(screen.getAllByRole('button', { name: /grant licence/i }).at(-1)!)
-    expect(await screen.findByText(/0x wallet address/i)).toBeTruthy()
-    typeAddress(HOLDER)
-    fireEvent.change(screen.getByLabelText('Tier'), { target: { value: '' } })
-    fireEvent.click(screen.getAllByRole('button', { name: /grant licence/i }).at(-1)!)
-    expect(await screen.findByText(/choose a tier/i)).toBeTruthy()
-    expect(issueGrant).not.toHaveBeenCalled()
-  })
-
-  it('shows the server sentence verbatim when a grant is refused', async () => {
-    issueGrant.mockRejectedValue(new Error('licensing is disabled on this deployment'))
-    render(<HoldersTab appId="a1" />)
-    openGrant()
-    typeAddress(HOLDER)
-    fireEvent.change(screen.getByLabelText('Tier'), { target: { value: 'lt-1' } })
-    fireEvent.click(screen.getAllByRole('button', { name: /grant licence/i }).at(-1)!)
-    await waitFor(() =>
-      expect(toastError).toHaveBeenCalledWith('licensing is disabled on this deployment'),
-    )
-    expect(toastSuccess).not.toHaveBeenCalled()
-  })
-
-  it('revoking asks for confirmation before calling the server', () => {
-    licenses = [lic()]
-    render(<HoldersTab appId="a1" />)
-    fireEvent.click(screen.getByRole('button', { name: /revoke/i }))
-    expect(revoke).not.toHaveBeenCalled()
-    expect(screen.getByText(/release their environment/i)).toBeTruthy()
-  })
-
-  it('cancelling the revoke confirmation never calls the server', () => {
-    licenses = [lic()]
-    render(<HoldersTab appId="a1" />)
-    fireEvent.click(screen.getByRole('button', { name: /revoke/i }))
-    fireEvent.click(screen.getByRole('button', { name: /cancel/i }))
-    expect(revoke).not.toHaveBeenCalled()
-  })
-
-  it('confirming revokes the clicked row (not another) and sends the reason', async () => {
-    revoke.mockResolvedValue(true)
-    licenses = [lic({ id: 'lic-A', user: OTHER }), lic({ id: 'lic-B' })]
-    render(<HoldersTab appId="a1" />)
-    const row = screen.getByText(HOLDER.toLowerCase()).closest('tr') as HTMLElement
-    fireEvent.click(within(row).getByRole('button', { name: /revoke/i }))
-    fireEvent.change(screen.getByLabelText(/reason/i), { target: { value: ' stopped paying ' } })
-    fireEvent.click(screen.getByRole('button', { name: /revoke licence/i }))
-    await waitFor(() => expect(revoke).toHaveBeenCalledTimes(1))
-    expect(revoke).toHaveBeenCalledWith({ licenseId: 'lic-B', reason: 'stopped paying' })
-  })
-
-  it('sends a null reason when none is given', async () => {
-    revoke.mockResolvedValue(true)
-    licenses = [lic()]
-    render(<HoldersTab appId="a1" />)
-    fireEvent.click(screen.getByRole('button', { name: /revoke/i }))
-    fireEvent.click(screen.getByRole('button', { name: /revoke licence/i }))
-    await waitFor(() => expect(revoke).toHaveBeenCalledWith({ licenseId: 'lic-1', reason: null }))
-  })
-
-  it('shows the server sentence verbatim when a revoke is refused', async () => {
-    revoke.mockRejectedValue(new Error('licence already revoked'))
-    licenses = [lic()]
-    render(<HoldersTab appId="a1" />)
-    fireEvent.click(screen.getByRole('button', { name: /revoke/i }))
-    fireEvent.click(screen.getByRole('button', { name: /revoke licence/i }))
-    await waitFor(() => expect(toastError).toHaveBeenCalledWith('licence already revoked'))
-  })
-
-  it('offers Revoke only on ACTIVE and ISSUED rows, across several rows', () => {
-    licenses = [
-      lic({ id: '1', user: '0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa', status: 'ACTIVE' }),
-      lic({ id: '2', user: '0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb', status: 'ISSUED' }),
-      lic({ id: '3', user: '0xcccccccccccccccccccccccccccccccccccccccc', status: 'REVOKED' }),
-      lic({ id: '4', user: '0xdddddddddddddddddddddddddddddddddddddddd', status: 'EXPIRED' }),
-    ]
-    render(<HoldersTab appId="a1" />)
-    const has = (u: string) =>
-      !!within(screen.getByText(u).closest('tr') as HTMLElement).queryByRole('button', {
-        name: /revoke/i,
-      })
-    expect(has('0xaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')).toBe(true)
-    expect(has('0xbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb')).toBe(true)
-    expect(has('0xcccccccccccccccccccccccccccccccccccccccc')).toBe(false)
-    expect(has('0xdddddddddddddddddddddddddddddddddddddddd')).toBe(false)
-  })
-
-  it('shows the tier label, status and environment for each holder', () => {
-    licenses = [lic({ environmentId: 'env-xyz' })]
-    render(<HoldersTab appId="a1" />)
-    const row = screen.getByText(HOLDER.toLowerCase()).closest('tr') as HTMLElement
-    expect(within(row).getByText('Pro')).toBeTruthy()
-    expect(within(row).getByText('Active')).toBeTruthy()
-    expect(within(row).getByText('env-xyz')).toBeTruthy()
-  })
-
-  it('renders an empty state when nobody holds a licence', () => {
-    render(<HoldersTab appId="a1" />)
-    expect(screen.getByText(/no licences/i)).toBeTruthy()
-  })
-
-  it('explains why Grant is disabled when the full licence list fails to load', () => {
-    allError = new Error('permission denied for app a1')
-    render(<HoldersTab appId="a1" />)
-    expect(
-      (screen.getByRole('button', { name: /grant licence/i }) as HTMLButtonElement).disabled,
-    ).toBe(true)
-    expect(screen.getByText(/granting is unavailable/i).textContent).toContain(
-      'permission denied for app a1',
-    )
-  })
-
-  it('gives a loading reason, not an error, while the full list is still loading', () => {
-    allPending = true
-    render(<HoldersTab appId="a1" />)
-    const grant = screen.getByRole('button', { name: /grant licence/i }) as HTMLButtonElement
-    expect(grant.disabled).toBe(true)
-    expect(grant.title).toMatch(/loading/i)
-    expect(screen.queryByText(/granting is unavailable/i)).toBeNull()
-  })
-})
-
-describe('HoldersTab degraded reads', () => {
-  it('says tier names failed to load instead of silently showing raw ids', () => {
-    tiersError = new Error('tiers are temporarily unavailable')
-    licenses = [
+    environments = [
       {
-        id: 'l1',
-        user: 'did:key:z6Mk',
-        licenseTypeId: 'lt-9',
-        status: 'ACTIVE',
-        start: null,
-        end: null,
-        environmentId: null,
+        environmentId: 'env-1',
+        user: 'u',
+        licenseId: 'l1',
+        rootLicenseId: 'l1',
+        label: 'Acme vault',
+        templateHash: 'h',
+        stoppedAt: '2026-10-20T00:00:00Z',
+        deleteAfter: '2027-01-10T00:00:00Z',
       },
     ]
-    render(<HoldersTab appId="a1" />)
-    expect(screen.getByText(/tier names are unavailable/i).textContent).toContain(
-      'tiers are temporarily unavailable',
-    )
-    // the id is still shown, but it is now labelled as an id rather than passing for a name
-    expect(screen.getByText('lt-9')).toBeTruthy()
+    render(<HoldersTab appId="app-1" />)
+    const row = screen.getByTestId('holder-l1')
+    expect(within(row).getByText('Acme vault')).toBeTruthy()
+    expect(within(row).getByText(/stopped/i)).toBeTruthy()
+    expect(within(row).getByText(/deleted on/i)).toBeTruthy()
+    expect(within(row).queryByRole('link')).toBeNull()
+    expect(document.querySelector('a[href*="/user/environments"]')).toBeNull()
   })
 
-  it('offers every licence status the model can produce', () => {
-    render(<HoldersTab appId="a1" />)
-    const select = screen.getByLabelText('Status filter') as HTMLSelectElement
+  it('says a running environment is running', () => {
+    licenses = [lic({})]
+    environments = [
+      {
+        environmentId: 'env-1',
+        user: 'u',
+        licenseId: 'l1',
+        rootLicenseId: 'l1',
+        label: 'Acme vault',
+        templateHash: 'h',
+        stoppedAt: null,
+        deleteAfter: null,
+      },
+    ]
+    render(<HoldersTab appId="app-1" />)
+    expect(within(screen.getByTestId('holder-l1')).getByText('Running')).toBeTruthy()
+  })
+
+  it('says a dedicated environment is on its way, and a shared plan has none of its own', () => {
+    licenses = [
+      lic({ id: 'l1', environmentId: null, status: 'ISSUED' }),
+      lic({ id: 'l2', kind: 'free', environmentId: null }),
+    ]
+    render(<HoldersTab appId="app-1" />)
+    expect(within(screen.getByTestId('holder-l1')).getByText('Being set up…')).toBeTruthy()
+    expect(within(screen.getByTestId('holder-l2')).getByText('Shared environment')).toBeTruthy()
+  })
+
+  it('filters by status', () => {
+    licenses = [lic({ id: 'l1' }), lic({ id: 'l2', status: 'EXPIRED' })]
+    render(<HoldersTab appId="app-1" />)
+    fireEvent.change(screen.getByLabelText('Status'), { target: { value: 'EXPIRED' } })
+    expect(screen.queryByTestId('holder-l1')).toBeNull()
+    expect(screen.getByTestId('holder-l2')).toBeTruthy()
+  })
+
+  it('moves a holder to another plan in place', async () => {
+    licenses = [lic({})]
+    replaceGrant.mockResolvedValue('l9')
+    render(<HoldersTab appId="app-1" />)
+    fireEvent.click(
+      within(screen.getByTestId('holder-l1')).getByRole('button', { name: 'Change plan' }),
+    )
+    fireEvent.change(screen.getByLabelText('New plan'), { target: { value: 'free' } })
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Move to Free' })))
+    expect(replaceGrant).toHaveBeenCalledWith({ licenseId: 'l1', kind: 'free' })
+  })
+
+  it('offers Change plan only on the newest ACTIVE, EXPIRED or REVOKED licence of a chain', () => {
+    licenses = [
+      lic({ id: 'active' }),
+      lic({ id: 'issued', status: 'ISSUED' }),
+      lic({ id: 'expired', status: 'EXPIRED' }),
+      lic({ id: 'revoked', status: 'REVOKED' }),
+      lic({ id: 'replaced', status: 'REPLACED', replacedBy: 'active' }),
+    ]
+    render(<HoldersTab appId="app-1" />)
+    const has = (id: string, name: string) =>
+      within(screen.getByTestId(`holder-${id}`)).queryByRole('button', { name }) !== null
     expect(
-      Array.from(select.options)
-        .map((o) => o.value)
-        .filter(Boolean),
-    ).toEqual(['ALL', 'ISSUED', 'ACTIVE', 'EXPIRED', 'REVOKED', 'REPLACED'])
+      ['active', 'issued', 'expired', 'revoked', 'replaced'].map((id) => has(id, 'Change plan')),
+    ).toEqual([true, false, true, true, false])
+    // Revoking stays for licences that are still running.
+    expect(['active', 'issued', 'expired'].map((id) => has(id, 'Revoke'))).toEqual([
+      true,
+      true,
+      false,
+    ])
+  })
+
+  it('brings an expired holder back on the same plan', async () => {
+    licenses = [lic({ status: 'EXPIRED' })]
+    replaceGrant.mockResolvedValue('l9')
+    render(<HoldersTab appId="app-1" />)
+    fireEvent.click(
+      within(screen.getByTestId('holder-l1')).getByRole('button', { name: 'Change plan' }),
+    )
+    fireEvent.change(screen.getByLabelText('New plan'), { target: { value: 'pro' } })
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: /^Move to / })))
+    expect(replaceGrant).toHaveBeenCalledWith({ licenseId: 'l1', kind: 'pro' })
+  })
+
+  it('revokes with an optional reason and tells what happens to the environment', async () => {
+    licenses = [lic({})]
+    revoke.mockResolvedValue(true)
+    render(<HoldersTab appId="app-1" />)
+    fireEvent.click(within(screen.getByTestId('holder-l1')).getByRole('button', { name: 'Revoke' }))
+    expect(screen.getByText(/stops in 14 days/i)).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Reason (optional)'), { target: { value: 'refund' } })
+    await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Revoke licence' })))
+    expect(revoke).toHaveBeenCalledWith({ licenseId: 'l1', reason: 'refund' })
   })
 })

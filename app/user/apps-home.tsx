@@ -5,6 +5,9 @@ import Link from 'next/link'
 
 import { AppCard } from '@/modules/apps/components/app-card'
 import { AppsEmptyState } from '@/modules/apps/components/apps-empty-state'
+import { LicensingOnlyAppCard } from '@/modules/apps/components/licensing-only-app-card'
+import { licensingOnlyApps } from '@/modules/apps/lib/licensing-only'
+import { usePublisherApps } from '@/modules/publisher/hooks/use-publisher'
 import { describeAppsError, isAppsError } from '@/modules/apps/graphql'
 import { useMyApps, useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
 import { Alert, AlertDescription, AlertTitle } from '@/modules/shared/components/ui/alert'
@@ -46,6 +49,9 @@ function NewAppTile() {
 
 function AppsSection() {
   const { data: apps, isPending, error, refetch, isRefetching } = useMyApps()
+  // Apps published for licensing only (no repository) appear next to the git-connected ones.
+  const published = usePublisherApps()
+  const licensingOnly = apps ? licensingOnlyApps(published.data, apps) : []
 
   if (isAppsError(error, 'APPS_UNAVAILABLE')) {
     return (
@@ -91,13 +97,28 @@ function AppsSection() {
     )
   }
 
-  if (!apps || apps.length === 0) return <AppsEmptyState />
+  const licensingOnlyCards = licensingOnly.map((app) => (
+    <LicensingOnlyAppCard key={app.id} app={app} />
+  ))
+
+  if (!apps || apps.length === 0) {
+    if (licensingOnlyCards.length === 0) return <AppsEmptyState />
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+          {licensingOnlyCards}
+        </div>
+        <AppsEmptyState />
+      </div>
+    )
+  }
 
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
       {apps.map((app) => (
         <AppCard key={app.id} app={app} />
       ))}
+      {licensingOnlyCards}
       <NewAppTile />
     </div>
   )

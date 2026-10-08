@@ -17,6 +17,7 @@ import { Footer } from '@/shared/components/footer/footer'
 import Navbar from '@/shared/components/navbar/navbar'
 import { QueryClientProvider } from '@/shared/providers/query-client'
 import { verifySession } from '@/modules/shared/lib/renown-session'
+import { UMAMI_BEFORE_SEND, UMAMI_BEFORE_SEND_JS } from '@/modules/shared/lib/analytics-privacy'
 import type { Metadata } from 'next'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 
@@ -49,6 +50,8 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <head>
+        {/* Before any analytics script loads: hides invite codes in /redeem/<code> URLs. */}
+        <script dangerouslySetInnerHTML={{ __html: UMAMI_BEFORE_SEND_JS }} />
         <script
           dangerouslySetInnerHTML={{
             __html: `window.__ENV=${JSON.stringify({
@@ -107,6 +110,7 @@ export default async function RootLayout({
           data-do-not-track="true"
           data-exclude-search="true"
           data-performance="true"
+          data-before-send={UMAMI_BEFORE_SEND}
           strategy="afterInteractive"
         />
         <Script
@@ -117,6 +121,7 @@ export default async function RootLayout({
           data-do-not-track="true"
           data-exclude-search="true"
           data-performance="true"
+          data-before-send={UMAMI_BEFORE_SEND}
           strategy="afterInteractive"
         />
         <AmbientBackground />

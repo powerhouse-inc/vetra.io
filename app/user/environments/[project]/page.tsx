@@ -1,5 +1,6 @@
 'use client'
 
+import { EnvironmentLicenceBanner } from '@/modules/subscriptions/components/environment-licence'
 import { ArrowLeft, ExternalLink, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
@@ -327,6 +328,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           <ArrowLeft className="h-4 w-4" />
           Back to Cloud
         </Link>
+        <EnvironmentLicenceBanner environmentId={documentId} />
         <HeroCard glass>
           <div className="flex flex-wrap items-center gap-3 p-6">
             <div className="min-w-0 flex-1 space-y-1">

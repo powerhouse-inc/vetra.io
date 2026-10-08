@@ -3,80 +3,159 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import * as api from '../graphql'
 import type {
-  CreateLicenseTypeInput,
-  SetLicenseTypeDetailsInput,
-  SetLicenseTypeTemplateInput,
-  AddLicenseTypeServiceInput,
-  AddLicenseTypePackageInput,
+  AddTemplateInput,
+  AddTemplatePackageInput,
+  AddTemplateServiceInput,
+  AddTermInput,
+  CreateInviteCodeInput,
   IssueGrantInput,
+  PublisherInviteCode,
+  RemoveTemplateEntryInput,
+  ReplaceGrantInput,
   RevokeLicenseInput,
+  SetTemplateDetailsInput,
+  SetTermDetailsInput,
 } from '../types'
-import { publisherKeys } from './keys'
+import { publisherKeys, type PublisherResource } from './keys'
 import { usePublisherToken } from './use-publisher'
-import { useViewerDid } from './use-viewer-did'
 
-// No mutation passes `retry: retryPublisher`: retrying a grant could issue two
-// licences for one click. useMutation defaults to retry: 0, which is what we want.
-// Errors are not caught or rewritten: the UI surfaces the server's sentence verbatim.
+// No mutation retries: retrying a grant could issue two licences for one click.
+// Errors are not caught here; the UI shows the server's sentence verbatim.
 
-/** Tier mutations invalidate the tier list. */
-function useTierMutation<V, R>(appId: string, fn: (vars: V, token: string | null) => Promise<R>) {
-  const qc = useQueryClient()
-  const { keyDid: did } = useViewerDid()
-  const token = usePublisherToken()
-  return useMutation<R, Error, V>({
-    mutationFn: async (vars: V) => fn(vars, await token()),
-    onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: publisherKeys.types(appId, did) })
-    },
-  })
-}
+type NoApp<T> = Omit<T, 'appId'>
 
-/**
- * Licence mutations invalidate licences and environments: the provisioning keeper
- * turns a licence change into an environment change on its next tick. Licences are
- * invalidated by PREFIX so every status filter variant is dropped, not just ALL/ACTIVE.
- */
-function useLicenceMutation<V, R>(
+function usePublisherMutation<V, R>(
   appId: string,
   fn: (vars: V, token: string | null) => Promise<R>,
+  invalidates: readonly PublisherResource[],
 ) {
   const qc = useQueryClient()
-  const { keyDid: did } = useViewerDid()
   const token = usePublisherToken()
   return useMutation<R, Error, V>({
-    mutationFn: async (vars: V) => fn(vars, await token()),
+    mutationFn: async (vars) => fn(vars, await token()),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: publisherKeys.licensesOf(appId) })
-      void qc.invalidateQueries({ queryKey: publisherKeys.environments(appId, did) })
+      for (const r of invalidates)
+        void qc.invalidateQueries({ queryKey: publisherKeys.of(r, appId) })
     },
   })
 }
 
-export const useCreateLicenseType = (appId: string) =>
-  useTierMutation<CreateLicenseTypeInput, string>(appId, (v, t) => api.createLicenseType(v, t))
-export const useSetLicenseTypeDetails = (appId: string) =>
-  useTierMutation<SetLicenseTypeDetailsInput, boolean>(appId, (v, t) =>
-    api.setLicenseTypeDetails(v, t),
+const TEMPLATE_WRITES = ['templates'] as const
+// A template edit re-applies to its environments, so their hashes change too.
+const TEMPLATE_CONTENT_WRITES = ['templates', 'environments'] as const
+const TERM_WRITES = ['terms'] as const
+// Licence changes move counts on plans (activeLicenses) and templates (environmentCount).
+const LICENCE_WRITES = ['licenses', 'environments', 'terms', 'templates'] as const
+
+export const useAddTemplate = (appId: string) =>
+  usePublisherMutation<NoApp<AddTemplateInput>, string>(
+    appId,
+    (v, t) => api.addTemplate({ appId, ...v }, t),
+    TEMPLATE_WRITES,
   )
-export const useSetLicenseTypeTemplate = (appId: string) =>
-  useTierMutation<SetLicenseTypeTemplateInput, boolean>(appId, (v, t) =>
-    api.setLicenseTypeTemplate(v, t),
+export const useSetTemplateDetails = (appId: string) =>
+  usePublisherMutation<NoApp<SetTemplateDetailsInput>, boolean>(
+    appId,
+    (v, t) => api.setTemplateDetails({ appId, ...v }, t),
+    TEMPLATE_CONTENT_WRITES,
   )
-export const useAddLicenseTypeService = (appId: string) =>
-  useTierMutation<AddLicenseTypeServiceInput, boolean>(appId, (v, t) =>
-    api.addLicenseTypeService(v, t),
+export const useAddTemplateService = (appId: string) =>
+  usePublisherMutation<NoApp<AddTemplateServiceInput>, boolean>(
+    appId,
+    (v, t) => api.addTemplateService({ appId, ...v }, t),
+    TEMPLATE_CONTENT_WRITES,
   )
-export const useAddLicenseTypePackage = (appId: string) =>
-  useTierMutation<AddLicenseTypePackageInput, boolean>(appId, (v, t) =>
-    api.addLicenseTypePackage(v, t),
+export const useRemoveTemplateService = (appId: string) =>
+  usePublisherMutation<NoApp<RemoveTemplateEntryInput>, boolean>(
+    appId,
+    (v, t) => api.removeTemplateService({ appId, ...v }, t),
+    TEMPLATE_CONTENT_WRITES,
   )
-export const usePublishLicenseType = (appId: string) =>
-  useTierMutation<string, boolean>(appId, (id, t) => api.publishLicenseType(id, t))
-export const useRetireLicenseType = (appId: string) =>
-  useTierMutation<string, boolean>(appId, (id, t) => api.retireLicenseType(id, t))
+export const useAddTemplatePackage = (appId: string) =>
+  usePublisherMutation<NoApp<AddTemplatePackageInput>, boolean>(
+    appId,
+    (v, t) => api.addTemplatePackage({ appId, ...v }, t),
+    TEMPLATE_CONTENT_WRITES,
+  )
+export const useRemoveTemplatePackage = (appId: string) =>
+  usePublisherMutation<NoApp<RemoveTemplateEntryInput>, boolean>(
+    appId,
+    (v, t) => api.removeTemplatePackage({ appId, ...v }, t),
+    TEMPLATE_CONTENT_WRITES,
+  )
+export const useDeleteTemplate = (appId: string) =>
+  usePublisherMutation<{ templateId: string }, boolean>(
+    appId,
+    (v, t) => api.deleteTemplate({ appId, ...v }, t),
+    TEMPLATE_WRITES,
+  )
+
+export const useAddTerm = (appId: string) =>
+  usePublisherMutation<NoApp<AddTermInput>, string>(
+    appId,
+    (v, t) => api.addTerm({ appId, ...v }, t),
+    TERM_WRITES,
+  )
+export const useSetTermDetails = (appId: string) =>
+  usePublisherMutation<NoApp<SetTermDetailsInput>, boolean>(
+    appId,
+    (v, t) => api.setTermDetails({ appId, ...v }, t),
+    TERM_WRITES,
+  )
+export const usePublishTerm = (appId: string) =>
+  usePublisherMutation<{ termId: string }, boolean>(
+    appId,
+    (v, t) => api.publishTerm({ appId, ...v }, t),
+    TERM_WRITES,
+  )
+export const useRetireTerm = (appId: string) =>
+  usePublisherMutation<{ termId: string }, boolean>(
+    appId,
+    (v, t) => api.retireTerm({ appId, ...v }, t),
+    TERM_WRITES,
+  )
 
 export const useIssueGrant = (appId: string) =>
-  useLicenceMutation<IssueGrantInput, string>(appId, (v, t) => api.issueGrant(v, t))
+  usePublisherMutation<NoApp<IssueGrantInput>, string>(
+    appId,
+    (v, t) => api.issueGrant({ appId, ...v }, t),
+    LICENCE_WRITES,
+  )
+export const useReplaceGrant = (appId: string) =>
+  usePublisherMutation<ReplaceGrantInput, string>(
+    appId,
+    (v, t) => api.replaceGrant(v, t),
+    LICENCE_WRITES,
+  )
 export const useRevokeLicense = (appId: string) =>
-  useLicenceMutation<RevokeLicenseInput, boolean>(appId, (v, t) => api.revokeLicense(v, t))
+  usePublisherMutation<RevokeLicenseInput, boolean>(
+    appId,
+    (v, t) => api.revokeLicense(v, t),
+    LICENCE_WRITES,
+  )
+
+export const useCreateInviteCode = (appId: string) =>
+  usePublisherMutation<NoApp<CreateInviteCodeInput>, PublisherInviteCode>(
+    appId,
+    (v, t) => api.createInviteCode({ appId, ...v }, t),
+    ['inviteCodes'],
+  )
+export const useSetInviteCodeActive = (appId: string) =>
+  usePublisherMutation<{ code: string; active: boolean }, boolean>(
+    appId,
+    (v, t) => api.setInviteCodeActive({ appId, ...v }, t),
+    ['inviteCodes'],
+  )
+
+export const useAddToAllowList = (appId: string) =>
+  usePublisherMutation<{ user: string }, boolean>(
+    appId,
+    (v, t) => api.addToAllowList({ appId, ...v }, t),
+    ['allowList'],
+  )
+export const useRemoveFromAllowList = (appId: string) =>
+  usePublisherMutation<{ user: string }, boolean>(
+    appId,
+    (v, t) => api.removeFromAllowList({ appId, ...v }, t),
+    ['allowList'],
+  )

@@ -7,7 +7,7 @@ import { fetchMyStudioProducts, type StudioProductSummary } from '@/modules/clou
 import { maxStudiosPerUser } from '@/modules/cloud/switchboard-url'
 import { queryKeys } from '@/modules/cloud/query/keys'
 import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
-import { myAccessStatus } from '@/modules/invites/lib/client'
+import { useStudioAccess } from '@/modules/subscriptions/hooks/use-subscriptions'
 import { STUDIO_AGENT_PREFIX, STUDIO_ENV_LABEL } from './constants'
 import { type ProductStatus, studioPollIntervalMs } from './studio-readiness'
 import { useCreateStudioEnvironment } from './use-create-studio-environment'
@@ -48,11 +48,11 @@ export type StudioProductsState = {
   createError: string | null
   /**
    * Provision a new product env; resolves to the new env id for navigation.
-   * Omit the key when the caller's invite code carries one (`hasAttachedKey`) —
+   * Omit the key when the caller's studio licence carries one (`hasAttachedKey`) —
    * the subgraph then injects it server-side.
    */
   createProduct: (anthropicApiKey?: string) => Promise<string>
-  /** True when the caller's redeemed code has a Claude key, so no manual entry is needed. */
+  /** True when the caller's studio licence has a Claude key, so no manual entry is needed. */
   hasAttachedKey: boolean
   did: string | undefined
 }
@@ -127,22 +127,10 @@ export function useStudioProducts(): StudioProductsState {
   const limit = maxStudiosPerUser()
   const atLimit = limit > 0 && products.length >= limit
 
-  // Whether the caller's redeemed code carries a key, so the create flow can
-  // skip the manual Anthropic-key prompt and let the subgraph inject it.
-  // Self-heal: this can resolve to null when the bearer token isn't ready yet
-  // at first fetch (right after the gate grants). A null result is "unknown",
-  // not "no key" — so keep refetching every 2s until we get a real status,
-  // otherwise the create card would wrongly prompt for a key the invite code
-  // already carries. Stops polling once a status object resolves.
-  const { data: access } = useAuthedQuery(
-    ['vetra-access-status', did],
-    (token) => (token ? myAccessStatus(token) : Promise.resolve(null)),
-    {
-      enabled: isAuthed,
-      staleTime: 0,
-      refetchInterval: (query) => (query.state.data == null ? 2000 : false),
-    },
-  )
+  // Whether the caller's studio licence carries a Claude key, so creating a studio
+  // can skip the manual key prompt. useStudioAccess polls while the answer is
+  // still unknown (null), so a fresh login never wrongly prompts for a key.
+  const { data: access } = useStudioAccess()
   const hasAttachedKey = access?.hasAttachedKey ?? false
 
   const createProduct = useCallback(

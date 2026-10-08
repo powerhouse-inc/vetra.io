@@ -5,15 +5,14 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { NewEnvironmentForm } from '@/app/user/environments/new-project-form'
-import { EarlyAccessGate } from '@/modules/invites/early-access-gate'
+import { StudioLicenseGate } from '@/modules/studio-license/components/studio-license-gate'
 
 export default function CreateEnvironmentPage() {
   const router = useRouter()
 
-  // Gated behind the early-access invite code (same as /user/products) so the
-  // create-environment form is unreachable without a redeemed code.
+  // Creating an environment by hand is a builder action, gated on the Vetra Studio licence (decision D2).
   return (
-    <EarlyAccessGate>
+    <StudioLicenseGate>
       <main className="mx-auto mt-20 max-w-lg px-6 py-8">
         <Link
           href="/user/environments"
@@ -28,6 +27,6 @@ export default function CreateEnvironmentPage() {
         </p>
         <NewEnvironmentForm onCreated={(id) => router.push(`/user/environments/${id}`)} />
       </main>
-    </EarlyAccessGate>
+    </StudioLicenseGate>
   )
 }

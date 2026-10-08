@@ -11,16 +11,17 @@ vi.mock('@/modules/cloud/subdomain', () => ({ generateSubdomain: vi.fn(() => 'wa
 // client.ts calls createClient() at module load; the hook only needs DRIVE_ID.
 vi.mock('@/modules/cloud/client', () => ({ DRIVE_ID: 'powerhouse' }))
 vi.mock('@/modules/cloud/graphql', () => ({ getAuthToken: vi.fn().mockResolvedValue('tok') }))
-vi.mock('@/modules/invites/lib/client', () => ({
-  applyInviteCodeSecret: vi.fn(),
+vi.mock('@/modules/cloud/studio/pool-client', () => ({
   claimStudioEnvironment: vi.fn(),
   fetchStudioPoolVersion: vi.fn().mockResolvedValue(null),
 }))
+vi.mock('@/modules/subscriptions/graphql', () => ({ applyStudioKey: vi.fn() }))
 
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { createNewEnvironmentController } from '@/modules/cloud/controller'
 import { applyConfigChanges } from '@/modules/cloud/config/apply'
-import { applyInviteCodeSecret, claimStudioEnvironment } from '@/modules/invites/lib/client'
+import { claimStudioEnvironment } from '@/modules/cloud/studio/pool-client'
+import { applyStudioKey } from '@/modules/subscriptions/graphql'
 import { STUDIO_AGENT_PACKAGE, STUDIO_AGENT_VERSION } from '@/modules/cloud/studio/constants'
 import { useCreateStudioEnvironment } from '@/modules/cloud/studio/use-create-studio-environment'
 
@@ -103,7 +104,7 @@ describe('useCreateStudioEnvironment', () => {
 
     expect(approveChanges).toHaveBeenCalledOnce()
     expect(push).toHaveBeenCalledTimes(2)
-    expect(applyInviteCodeSecret).not.toHaveBeenCalled()
+    expect(applyStudioKey).not.toHaveBeenCalled()
     expect(res).toEqual({
       documentId: 'aa726a95-1111-2222-3333-444455556666',
       subdomain: 'warm-newt-75',
@@ -114,10 +115,7 @@ describe('useCreateStudioEnvironment', () => {
   it('injects the invite-code key server-side when no key is passed', async () => {
     const ctrl = mockController()
     vi.mocked(claimStudioEnvironment).mockResolvedValue(null) // pool empty → cold path
-    vi.mocked(applyInviteCodeSecret).mockResolvedValue({
-      injected: true,
-      secretNames: ['ANTHROPIC_API_KEY'],
-    })
+    vi.mocked(applyStudioKey).mockResolvedValue(true)
 
     const { result } = renderHook(() => useCreateStudioEnvironment())
     let res: { tenantId: string } | undefined
@@ -131,8 +129,8 @@ describe('useCreateStudioEnvironment', () => {
       ['VETRA_CLOUD_SWITCHBOARD_URL', 'VETRA_ENVIRONMENT_ID'].sort(),
     )
     expect(githubChanges.every((c) => c.kind === 'setVar')).toBe(true)
-    expect(applyInviteCodeSecret).toHaveBeenCalledOnce()
-    const [tenantId, secretNames] = vi.mocked(applyInviteCodeSecret).mock.calls[0]
+    expect(applyStudioKey).toHaveBeenCalledOnce()
+    const [tenantId, secretNames] = vi.mocked(applyStudioKey).mock.calls[0]
     expect(tenantId).toBe('warm-newt-75-aa726a95')
     expect([...secretNames].sort()).toEqual(
       ['ANTHROPIC_API_KEY', 'VETRA_ANTHROPIC_API_KEY', 'VETRA_CLI_ANTHROPIC_API_KEY'].sort(),
@@ -145,7 +143,7 @@ describe('useCreateStudioEnvironment', () => {
   it('throws when no key is passed and the code carries none', async () => {
     mockController()
     vi.mocked(claimStudioEnvironment).mockResolvedValue(null) // pool empty → cold path
-    vi.mocked(applyInviteCodeSecret).mockResolvedValue({ injected: false, secretNames: [] })
+    vi.mocked(applyStudioKey).mockResolvedValue(false)
 
     const { result } = renderHook(() => useCreateStudioEnvironment())
     await expect(result.current()).rejects.toThrow(/no anthropic api key/i)
@@ -168,7 +166,7 @@ describe('useCreateStudioEnvironment', () => {
 
     expect(claimStudioEnvironment).toHaveBeenCalledOnce()
     expect(ctrl.push).not.toHaveBeenCalled()
-    expect(applyInviteCodeSecret).not.toHaveBeenCalled()
+    expect(applyStudioKey).not.toHaveBeenCalled()
     expect(res).toEqual({
       documentId: 'warm-doc',
       subdomain: 'warm-newt-99',
@@ -179,10 +177,7 @@ describe('useCreateStudioEnvironment', () => {
   it('falls back to cold provisioning when the pool is empty (claim returns null)', async () => {
     const ctrl = mockController()
     vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
-    vi.mocked(applyInviteCodeSecret).mockResolvedValue({
-      injected: true,
-      secretNames: ['ANTHROPIC_API_KEY'],
-    })
+    vi.mocked(applyStudioKey).mockResolvedValue(true)
 
     const { result } = renderHook(() => useCreateStudioEnvironment())
     await act(async () => {
@@ -191,6 +186,6 @@ describe('useCreateStudioEnvironment', () => {
 
     expect(claimStudioEnvironment).toHaveBeenCalledOnce()
     expect(ctrl.push).toHaveBeenCalledTimes(2) // cold path ran
-    expect(applyInviteCodeSecret).toHaveBeenCalledOnce()
+    expect(applyStudioKey).toHaveBeenCalledOnce()
   })
 })

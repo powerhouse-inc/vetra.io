@@ -8,11 +8,8 @@ import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { applyConfigChanges, type ConfigChange } from '@/modules/cloud/config/apply'
 import { getAuthToken } from '@/modules/cloud/graphql'
 import { cloudSwitchboardUrl, studioRegistry } from '@/modules/cloud/switchboard-url'
-import {
-  applyInviteCodeSecret,
-  claimStudioEnvironment,
-  fetchStudioPoolVersion,
-} from '@/modules/invites/lib/client'
+import { claimStudioEnvironment, fetchStudioPoolVersion } from './pool-client'
+import { applyStudioKey } from '@/modules/subscriptions/graphql'
 import { generateSubdomain } from '@/modules/cloud/subdomain'
 import { deriveTenantId } from './studio-tenant'
 import {
@@ -37,9 +34,9 @@ export type CreateStudioResult = { documentId: string; subdomain: string; tenant
  * Two ways the key is supplied:
  *  - `anthropicApiKey` passed in → written client-side via applyConfigChanges
  *    (manual entry / fallback path).
- *  - omitted → asked of the vetra-access-codes subgraph, which writes the key
- *    attached to the caller's redeemed invite code into the tenant secret store
- *    server-side. The key never reaches this client.
+ *  - omitted → `vetraSubscriptions.applyStudioKey` writes the key attached to the
+ *    caller's studio licence into the tenant secret store server-side. The key
+ *    never reaches this client.
  */
 export function useCreateStudioEnvironment() {
   const { signer } = useCanSign()
@@ -50,7 +47,7 @@ export function useCreateStudioEnvironment() {
       const ownerAddress = signer.user?.address
       if (!ownerAddress) throw new Error('Signer has no user address — cannot claim ownership')
 
-      // Invite-code path: try to claim a pre-provisioned ("warm") env first.
+      // Licence-key path: try to claim a pre-provisioned ("warm") env first.
       // On null (pool empty / no server-side key) fall through to cold provisioning.
       if (!input.anthropicApiKey) {
         const token = await getAuthToken(renown)
@@ -104,7 +101,7 @@ export function useCreateStudioEnvironment() {
           value: input.anthropicApiKey as string,
         }))
         // Per-env random secret gating vetra-cli's session-export endpoints. The
-        // invite paths set this server-side; this covers manual key entry.
+        // licence-key paths set this server-side; this covers manual key entry.
         changes.push({
           kind: 'setSecret',
           name: 'VETRA_SESSION_EXPORT_SECRET',
@@ -112,16 +109,12 @@ export function useCreateStudioEnvironment() {
         })
         await applyConfigChanges(tenantId, changes, renown)
       } else {
-        // Inject the key attached to the caller's invite code, server-side.
+        // Inject the Claude key attached to the caller's studio licence, server-side.
         const token = await getAuthToken(renown)
         if (!token) throw new Error('Could not authenticate to provision the studio key')
-        const result = await applyInviteCodeSecret(
-          tenantId,
-          [...STUDIO_ANTHROPIC_SECRET_NAMES],
-          token,
-        )
-        if (!result?.injected) {
-          throw new Error('No Anthropic API key is available for your invite code')
+        const injected = await applyStudioKey(tenantId, [...STUDIO_ANTHROPIC_SECRET_NAMES], token)
+        if (!injected) {
+          throw new Error('No Anthropic API key is available for your studio licence')
         }
       }
 

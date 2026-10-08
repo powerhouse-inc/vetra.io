@@ -10,14 +10,26 @@ import {
   Loader2,
   RefreshCw,
   Trash2,
+  TriangleAlert,
   Unplug,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useMemo, useRef } from 'react'
+import { Fragment, useEffect, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 
+import { HoldersTab } from '@/modules/publisher/components/holders/holders-tab'
+import { InviteCodesTab } from '@/modules/publisher/components/invite-codes/invite-codes-tab'
+import { PlansTab } from '@/modules/publisher/components/plans/plans-tab'
+import { TemplatesTab } from '@/modules/publisher/components/templates/templates-tab'
+import { ArtifactsTab } from '@/modules/publisher/components/artifacts/artifacts-tab'
+import { LicensingUnavailableBanner } from '@/modules/publisher/components/licensing-unavailable-banner'
+import { TabSkeleton } from '@/modules/publisher/components/primitives'
+import { describePublisherError, isPublisherError } from '@/modules/publisher/graphql'
+import { useAppPublisher } from '@/modules/publisher/hooks/use-publisher'
+import type { PublisherApp } from '@/modules/publisher/types'
 import { Button } from '@/modules/shared/components/ui/button'
+import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/components/ui/tabs'
 
 import { describeAppsError, isAppsError } from '../graphql'
@@ -43,52 +55,143 @@ import { AppDeployments } from './app-deployments'
 import { AppOverview } from './app-overview'
 import { AppSettings } from './app-settings'
 import { GithubFlowLink } from './github-flow-link'
+import { Banner } from './banner'
 import { StatusPill } from './status'
 
-const TABS = ['overview', 'deployments', 'settings'] as const
-type Tab = (typeof TABS)[number]
+/** Owner-only tabs, in display order. Tasks append to this as each tab lands. */
+export const LICENSING_TABS = [
+  'artifacts',
+  'templates',
+  'plans',
+  'holders',
+  'invite-codes',
+] as const
+const ALL_TABS = ['overview', 'deployments', ...LICENSING_TABS, 'settings'] as const
+export type AppTab = (typeof ALL_TABS)[number]
 
-function Banner({
-  tone,
-  icon: Icon,
-  title,
-  children,
-  actions,
+export const APP_TAB_LABEL: Record<AppTab, string> = {
+  overview: 'Overview',
+  deployments: 'Deployments',
+  artifacts: 'Artifacts',
+  templates: 'Templates',
+  plans: 'Plans',
+  holders: 'Holders',
+  'invite-codes': 'Invite codes',
+  settings: 'Settings',
+}
+
+const isLicensingTab = (t: AppTab): boolean => (LICENSING_TABS as readonly string[]).includes(t)
+
+/**
+ * Tabs of a licensing-only app: one that exists only as a licensing document (Vetra Studio),
+ * with no repository, so no Overview, Deployments, Artifacts or Settings. Opens on Plans.
+ */
+export const LICENSING_ONLY_TABS = ['templates', 'plans', 'holders', 'invite-codes'] as const
+type LicensingOnlyTab = (typeof LICENSING_ONLY_TABS)[number]
+const LICENSING_ONLY_DEFAULT: LicensingOnlyTab = 'plans'
+
+/**
+ * Which page to show when the apps API does not have the app: the licensing-only page when the
+ * caller publishes it (it is in myApps), a wait while that is still being checked, and "not
+ * found" only when both agree.
+ */
+export function missingAppView({
+  notFound,
+  publisherPending,
+  isPublisher,
+  publisherError = false,
 }: {
-  tone: 'warning' | 'danger' | 'neutral'
-  icon: typeof Fingerprint
-  title: string
-  children: React.ReactNode
-  actions?: React.ReactNode
-}) {
+  notFound: boolean
+  publisherPending: boolean
+  isPublisher: boolean
+  /** The myApps check failed: we cannot tell whether they publish it, so never "not found". */
+  publisherError?: boolean
+}): 'licensing-only' | 'checking' | 'unchecked' | 'not-found' | 'error' {
+  if (!notFound) return 'error'
+  if (isPublisher) return 'licensing-only'
+  if (publisherPending) return 'checking'
+  return publisherError ? 'unchecked' : 'not-found'
+}
+
+const TAB_LIST_CLASS =
+  'h-auto w-full justify-start gap-6 overflow-x-auto rounded-none bg-transparent p-0 shadow-[inset_0_-1px_0_var(--border)] [scrollbar-width:none]'
+const TAB_TRIGGER_CLASS =
+  'data-[state=active]:border-b-foreground text-muted-foreground data-[state=active]:text-foreground dark:data-[state=active]:border-b-foreground h-10 flex-none shrink-0 rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 shadow-none data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent'
+
+/** `/user/apps/[id]` for an app that exists only for licensing: its plans, holders and codes. */
+function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const params = useSearchParams()
+  const tabParam = params.get('tab') ?? ''
+  const tab: LicensingOnlyTab = (LICENSING_ONLY_TABS as readonly string[]).includes(tabParam)
+    ? (tabParam as LicensingOnlyTab)
+    : LICENSING_ONLY_DEFAULT
+  const setTab = (value: string) => {
+    const next = new URLSearchParams(params.toString())
+    next.set('tab', value)
+    router.replace(`${pathname}?${next.toString()}`, { scroll: false })
+  }
   return (
-    <div
-      role="status"
-      className={
-        tone === 'warning'
-          ? 'border-warning/40 bg-warning/10 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center'
-          : tone === 'danger'
-            ? 'border-destructive/40 bg-destructive/10 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center'
-            : 'border-border bg-muted/50 flex flex-col gap-4 rounded-xl border p-4 sm:flex-row sm:items-center'
-      }
-    >
-      <Icon
-        className={
-          tone === 'warning'
-            ? 'text-warning h-5 w-5 shrink-0'
-            : tone === 'danger'
-              ? 'text-destructive h-5 w-5 shrink-0'
-              : 'text-muted-foreground h-5 w-5 shrink-0'
-        }
-        aria-hidden
-      />
-      <div className="min-w-0 flex-1 space-y-0.5">
-        <p className="text-sm font-semibold">{title}</p>
-        <p className="text-muted-foreground text-sm">{children}</p>
+    <div className="space-y-8">
+      <div className="space-y-6">
+        <Link
+          href="/user"
+          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Apps
+        </Link>
+        <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
+          <AppAvatar name={app.name} seed={app.id} size="lg" />
+          <div className="min-w-0 flex-1 space-y-2">
+            <h1 className="truncate text-3xl font-bold tracking-tight">{app.name}</h1>
+            <p className="text-muted-foreground text-sm">
+              Managed here for licensing only: its plans, who holds them and its invite codes.
+            </p>
+          </div>
+        </div>
       </div>
-      {actions && <div className="flex shrink-0 flex-wrap gap-2">{actions}</div>}
+
+      {app.status !== 'ACTIVE' && <LicensingUnavailableBanner status={app.status} />}
+
+      <Tabs value={tab} onValueChange={setTab} className="gap-8">
+        <TabsList className={TAB_LIST_CLASS}>
+          {LICENSING_ONLY_TABS.map((t) => (
+            <TabsTrigger key={t} value={t} className={TAB_TRIGGER_CLASS}>
+              {APP_TAB_LABEL[t]}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsContent value="templates">
+          <TemplatesTab appId={app.id} />
+        </TabsContent>
+        <TabsContent value="plans">
+          <PlansTab appId={app.id} />
+        </TabsContent>
+        <TabsContent value="holders">
+          <HoldersTab appId={app.id} />
+        </TabsContent>
+        <TabsContent value="invite-codes">
+          <InviteCodesTab appId={app.id} />
+        </TabsContent>
+      </Tabs>
     </div>
   )
+}
+
+/** Licensing tabs only for the app's publisher; nothing editable on a deleted app. */
+export function visibleAppTabs({
+  readOnly,
+  isPublisher,
+}: {
+  readOnly: boolean
+  isPublisher: boolean
+}): AppTab[] {
+  const tabs: AppTab[] = ['overview', 'deployments']
+  if (isPublisher && !readOnly) tabs.push(...LICENSING_TABS)
+  if (!readOnly) tabs.push('settings')
+  return tabs
 }
 
 function Header({ app }: { app: App }) {
@@ -161,13 +264,30 @@ export function AppDetail({ appId }: { appId: string }) {
   const githubInfo = useGithubDeployAppInfo()
   const confirm = useConfirmAppIdentity()
   const app = appQuery.data
+  const publisher = useAppPublisher(appId)
 
   const tabParam = params.get('tab')
   const readOnly = app ? isAppReadOnly(app) : false
   const identity = app ? identityState(app) : ({ kind: 'unknown' } as const)
   // A deleted app is read-only: no Settings tab, no actions.
-  const visibleTabs: readonly Tab[] = readOnly ? TABS.filter((t) => t !== 'settings') : TABS
-  const tab: Tab = visibleTabs.includes(tabParam as Tab) ? (tabParam as Tab) : 'overview'
+  const visibleTabs = visibleAppTabs({ readOnly, isPublisher: publisher.isPublisher })
+  // While ownership is still being checked, a deep link to a licensing tab waits on a skeleton
+  // instead of flashing Overview.
+  const checkingLicensing = publisher.isPending && !readOnly
+  const awaitingTab =
+    checkingLicensing && isLicensingTab(tabParam as AppTab) ? (tabParam as AppTab) : null
+  const tab: AppTab =
+    awaitingTab ?? (visibleTabs.includes(tabParam as AppTab) ? (tabParam as AppTab) : 'overview')
+  const showLicensing = publisher.isPublisher && !readOnly
+  // A failed ownership check hides the licensing tabs; say so, with a retry. "Not deployed here
+  // yet" is only worth a banner when they came for a licensing tab.
+  const licensingError =
+    !readOnly &&
+    publisher.error &&
+    (!isPublisherError(publisher.error, 'PUBLISHER_UNAVAILABLE') ||
+      isLicensingTab(tabParam as AppTab))
+      ? publisher.error
+      : null
 
   const deployments = useMemo(
     () =>
@@ -252,6 +372,37 @@ export function AppDetail({ appId }: { appId: string }) {
 
   if (!app) {
     const notFound = !appQuery.error || isAppsError(appQuery.error, 'NOT_FOUND')
+    const view = missingAppView({
+      notFound,
+      publisherPending: publisher.isPending,
+      isPublisher: publisher.isPublisher,
+      publisherError: !!publisher.error,
+    })
+    if (view === 'licensing-only' && publisher.app) {
+      return <LicensingOnlyAppDetail app={publisher.app} />
+    }
+    if (view === 'unchecked') {
+      return (
+        <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+          <p className="text-lg font-semibold">We couldn’t check whether you publish this app</p>
+          <p className="text-muted-foreground max-w-sm text-sm">
+            {describePublisherError(publisher.error)}
+          </p>
+          <Button variant="outline" onClick={publisher.retry} disabled={publisher.retrying}>
+            <RefreshCw className={publisher.retrying ? 'h-4 w-4 animate-spin' : 'h-4 w-4'} />
+            Try again
+          </Button>
+        </div>
+      )
+    }
+    if (view === 'checking') {
+      return (
+        <div className="text-muted-foreground flex min-h-[50vh] items-center justify-center gap-2 text-sm">
+          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+          Loading app…
+        </div>
+      )
+    }
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
         <p className="text-lg font-semibold">{notFound ? 'App not found' : 'Could not load app'}</p>
@@ -344,23 +495,61 @@ export function AppDetail({ appId }: { appId: string }) {
         )}
       </div>
 
-      <Tabs value={tab} onValueChange={setTab} className="gap-8">
-        <TabsList className="border-border h-auto w-full justify-start gap-6 rounded-none border-b bg-transparent p-0">
-          {visibleTabs.map((t) => (
-            <TabsTrigger
-              key={t}
-              value={t}
-              className="data-[state=active]:border-b-foreground text-muted-foreground data-[state=active]:text-foreground dark:data-[state=active]:border-b-foreground -mb-px h-10 flex-none rounded-none border-0 border-b-2 border-transparent bg-transparent px-0 capitalize shadow-none data-[state=active]:bg-transparent data-[state=active]:shadow-none dark:data-[state=active]:bg-transparent"
+      {showLicensing &&
+        isLicensingTab(tab) &&
+        publisher.app &&
+        publisher.app.status !== 'ACTIVE' && (
+          <LicensingUnavailableBanner status={publisher.app.status} />
+        )}
+
+      {licensingError && (
+        <Banner
+          tone="warning"
+          icon={TriangleAlert}
+          title="Your plans and invite codes did not load"
+          actions={
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={publisher.retry}
+              disabled={publisher.retrying}
             >
-              {t}
-              {t === 'deployments' && deployments.length > 0 && (
-                <span className="bg-muted text-muted-foreground rounded-full px-1.5 text-[10px] font-semibold">
-                  {deployments.length}
-                </span>
-              )}
-            </TabsTrigger>
+              <RefreshCw
+                className={publisher.retrying ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'}
+              />
+              Try again
+            </Button>
+          }
+        >
+          {describePublisherError(licensingError)}
+        </Banner>
+      )}
+
+      <Tabs value={tab} onValueChange={setTab} className="gap-8">
+        {/* The baseline is an inset shadow, not a border: a scrolling list clips anything that
+            hangs below it, which would cut off the active underline. */}
+        <TabsList className={TAB_LIST_CLASS}>
+          {visibleTabs.map((t) => (
+            <Fragment key={t}>
+              {/* Placeholders where the licensing tabs appear, while ownership is checked. */}
+              {t === 'settings' &&
+                checkingLicensing &&
+                LICENSING_TABS.map((l) => (
+                  <Skeleton key={l} aria-hidden className="h-4 w-16 shrink-0 self-center" />
+                ))}
+              <TabsTrigger value={t} className={TAB_TRIGGER_CLASS}>
+                {APP_TAB_LABEL[t]}
+                {t === 'deployments' && deployments.length > 0 && (
+                  <span className="bg-muted text-muted-foreground rounded-full px-1.5 text-[10px] font-semibold">
+                    {deployments.length}
+                  </span>
+                )}
+              </TabsTrigger>
+            </Fragment>
           ))}
         </TabsList>
+
+        {awaitingTab && <TabSkeleton label={`Loading ${APP_TAB_LABEL[awaitingTab]}`} />}
 
         <TabsContent value="overview">
           <AppOverview
@@ -378,6 +567,31 @@ export function AppDetail({ appId }: { appId: string }) {
             error={deploymentsQuery.error}
           />
         </TabsContent>
+        {showLicensing && (
+          <TabsContent value="artifacts">
+            <ArtifactsTab appId={appId} />
+          </TabsContent>
+        )}
+        {showLicensing && (
+          <TabsContent value="templates">
+            <TemplatesTab appId={appId} />
+          </TabsContent>
+        )}
+        {showLicensing && (
+          <TabsContent value="plans">
+            <PlansTab appId={appId} />
+          </TabsContent>
+        )}
+        {showLicensing && (
+          <TabsContent value="holders">
+            <HoldersTab appId={appId} />
+          </TabsContent>
+        )}
+        {showLicensing && (
+          <TabsContent value="invite-codes">
+            <InviteCodesTab appId={appId} />
+          </TabsContent>
+        )}
         {!readOnly && (
           <TabsContent value="settings">
             <AppSettings app={app} onAuthorize={authorize} />
