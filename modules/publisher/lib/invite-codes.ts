@@ -1,8 +1,14 @@
 import { z } from 'zod'
 import type { CreateInviteCodeInput, PublisherInviteCode, PublisherTerm } from '../types'
 
-/** URL-safe without encoding, so a shared link reads exactly like the code. */
-export const CODE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{3,63}$/
+/**
+ * URL-safe without encoding, so a shared link reads exactly like the code. Mirrors the server:
+ * 8 to 64 of [A-Za-z0-9_-], starting with a letter or number.
+ */
+export const CODE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9_-]{7,63}$/
+
+/** A sane ceiling for one code; the server stores a 32-bit integer. */
+export const MAX_USES_LIMIT = 1_000_000
 
 export const redeemPath = (code: string): string => `/redeem/${encodeURIComponent(code)}`
 export const redeemUrl = (origin: string, code: string): string =>
@@ -34,14 +40,14 @@ export const inviteCodeSchema = z.object({
     .trim()
     .refine(
       (v) => v === '' || CODE_PATTERN.test(v),
-      '4–64 letters, numbers, dashes or underscores',
+      '8–64 letters, numbers, dashes or underscores',
     ),
   maxUses: z
     .string()
     .trim()
     .refine(
-      (v) => v === '' || (/^\d+$/.test(v) && Number(v) > 0),
-      'A whole number above zero, or empty for no limit',
+      (v) => v === '' || (/^\d+$/.test(v) && Number(v) > 0 && Number(v) <= MAX_USES_LIMIT),
+      'A whole number from 1 to 1,000,000, or empty for no limit',
     ),
   expiresOn: z.string().refine((v) => v === '' || v >= today(), 'Pick today or a later date'),
   anthropicKey: z.string().trim(),

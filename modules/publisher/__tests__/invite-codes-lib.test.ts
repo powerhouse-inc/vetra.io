@@ -29,6 +29,11 @@ describe('invite codes', () => {
 
   it('refuses codes that would not survive a URL or are too short', () => {
     expect(CODE_PATTERN.test('abc')).toBe(false)
+    // The server requires 8 to 64 characters.
+    expect(CODE_PATTERN.test('VIP-2026')).toBe(true)
+    expect(CODE_PATTERN.test('VIP-206')).toBe(false)
+    expect(CODE_PATTERN.test('a'.repeat(64))).toBe(true)
+    expect(CODE_PATTERN.test('a'.repeat(65))).toBe(false)
     expect(CODE_PATTERN.test('has space')).toBe(false)
     expect(CODE_PATTERN.test('a/b/c/d')).toBe(false)
     expect(CODE_PATTERN.test('-leading')).toBe(false)
@@ -81,9 +86,9 @@ describe('invite codes', () => {
       expiresAt: null,
     })
     expect(
-      inviteCodeInput({ ...form, code: ' VIP-1 ', maxUses: '50', anthropicKey: ' sk-ant ' }),
+      inviteCodeInput({ ...form, code: ' VIP-2026 ', maxUses: '50', anthropicKey: ' sk-ant ' }),
     ).toMatchObject({
-      code: 'VIP-1',
+      code: 'VIP-2026',
       maxUses: 50,
       anthropicKey: 'sk-ant',
     })
@@ -102,5 +107,15 @@ describe('invite codes', () => {
     expect(result.success).toBe(false)
     const paths = result.success ? [] : result.error.issues.map((i) => i.path[0])
     expect(paths).toEqual(expect.arrayContaining(['maxUses', 'expiresOn']))
+  })
+
+  it('caps the number of uses and explains the code length', () => {
+    const form = { kind: 'conf', label: '', code: '', maxUses: '', expiresOn: '', anthropicKey: '' }
+    expect(inviteCodeSchema.safeParse({ ...form, maxUses: '1000000' }).success).toBe(true)
+    expect(inviteCodeSchema.safeParse({ ...form, maxUses: '1000001' }).success).toBe(false)
+    const short = inviteCodeSchema.safeParse({ ...form, code: 'VIP-1' })
+    expect(short.success ? '' : short.error.issues[0].message).toBe(
+      '8–64 letters, numbers, dashes or underscores',
+    )
   })
 })

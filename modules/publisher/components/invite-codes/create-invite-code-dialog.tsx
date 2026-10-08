@@ -2,7 +2,7 @@
 
 import { zodResolver } from '@hookform/resolvers/zod'
 import { CheckCircle2, Loader2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { CopyButton } from '@/modules/apps/components/copy-button'
 import { Button } from '@/modules/shared/components/ui/button'
@@ -69,21 +69,40 @@ export function CreateInviteCodeDialog({
     defaultValues: EMPTY,
   })
   const [created, setCreated] = useState<PublisherInviteCode | null>(null)
+  // Each opening is a session; a result that lands after the dialog closed belongs to an old one.
+  const session = useRef(0)
+  const openRef = useRef(open)
+  useEffect(() => {
+    openRef.current = open
+  }, [open])
+
+  // The "ready" view stays up while the dialog animates out, and is cleared on the next open.
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) setCreated(null)
+  }
+
+  useEffect(() => {
+    // Fresh form each time it opens.
+    if (!open) return
+    session.current += 1
+    form.reset(EMPTY)
+  }, [open, form])
 
   const only = plans.length === 1 ? plans[0].kind : ''
   useEffect(() => {
-    // Fresh form each time; a single plan is chosen for them.
-    if (open) form.reset({ ...EMPTY, kind: only })
+    // A single plan is chosen for them, also when the plans arrive after opening. Only fills an
+    // empty field, so it never wipes what they typed.
+    if (open && only && !form.getValues('kind')) form.setValue('kind', only)
   }, [open, only, form])
 
-  const close = (o: boolean) => {
-    if (!o) setCreated(null)
-    onOpenChange(o)
-  }
-
   const submit = async (v: InviteCodeForm) => {
+    const mine = session.current
     await runWithToast(async () => {
-      setCreated(await create.mutateAsync(inviteCodeInput(v)))
+      const code = await create.mutateAsync(inviteCodeInput(v))
+      if (session.current !== mine || !openRef.current) return
+      setCreated(code)
       // The Claude key is write-only: drop it from the form as soon as it is sent.
       form.reset({ ...EMPTY, kind: only })
     }, 'Invite code created')
@@ -94,7 +113,7 @@ export function CreateInviteCodeDialog({
     : ''
 
   return (
-    <Dialog open={open} onOpenChange={close}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[85vh] overflow-y-auto sm:max-w-lg">
         {created ? (
           <>
@@ -124,7 +143,7 @@ export function CreateInviteCodeDialog({
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={() => close(false)}>Done</Button>
+              <Button onClick={() => onOpenChange(false)}>Done</Button>
             </DialogFooter>
           </>
         ) : (
@@ -193,6 +212,9 @@ export function CreateInviteCodeDialog({
                           {...field}
                         />
                       </FormControl>
+                      <FormDescription>
+                        8–64 letters, numbers, dashes or underscores. Capitals count.
+                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
@@ -205,7 +227,12 @@ export function CreateInviteCodeDialog({
                       <FormItem>
                         <FormLabel>Maximum uses</FormLabel>
                         <FormControl>
-                          <Input inputMode="numeric" placeholder="No limit" {...field} />
+                          <Input
+                            inputMode="numeric"
+                            placeholder="No limit"
+                            autoComplete="off"
+                            {...field}
+                          />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
