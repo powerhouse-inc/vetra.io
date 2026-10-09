@@ -29,6 +29,7 @@ import {
 import { formatTimestamp, timeAgo } from '../lib/time'
 import type { App, AppDeployment, AppPreview } from '../types'
 import { AppAvatar } from './app-avatar'
+import { AppProfileCard } from './profile/app-profile-card'
 import { SetupDeploys } from './setup-deploys'
 import { StatusDot, StatusInline, StatusPill } from './status'
 import { UrlList } from './url-list'
@@ -360,11 +361,14 @@ export function AppOverview({
   deployments,
   deploymentsLoaded,
   onAuthorize,
+  onEditProfile,
 }: {
   app: App
   deployments: AppDeployment[]
   deploymentsLoaded: boolean
   onAuthorize: () => void
+  /** Opens the Profile tab; absent on read-only apps. */
+  onEditProfile?: () => void
 }) {
   const production =
     deployments.find((d) => d.kind === 'PRODUCTION') ??
@@ -383,6 +387,7 @@ export function AppOverview({
         <GettingStarted app={app} hasDeployments={hasDeployments} onAuthorize={onAuthorize} />
       )}
       <ProductionCard app={app} deployment={production} />
+      <AppProfileCard appDid={app.identityDid} appName={app.name} onEdit={onEditProfile} />
       {!readOnly && <PreviewsSection app={app} />}
     </div>
   )
