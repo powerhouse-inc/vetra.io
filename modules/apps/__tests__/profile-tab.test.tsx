@@ -128,6 +128,14 @@ describe('AppProfileTab hardening', () => {
     expect(refetch).toHaveBeenCalledTimes(1)
   })
 
+  it('keeps a dirty form when a background refresh fails', () => {
+    profile = { data: STORED, isPending: false, error: new Error('x'), refetch: vi.fn() }
+    render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
+    fireEvent.change(screen.getByLabelText('Tagline'), { target: { value: 'Typed' } })
+    expect((screen.getByLabelText('Tagline') as HTMLInputElement).value).toBe('Typed')
+    expect(screen.getByText(/Couldn’t refresh/)).toBeTruthy()
+  })
+
   it('links each field error through aria-describedby', () => {
     render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
     fireEvent.change(screen.getByLabelText('Website'), { target: { value: 'javascript:alert(1)' } })

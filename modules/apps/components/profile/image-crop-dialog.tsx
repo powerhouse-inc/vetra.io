@@ -77,10 +77,10 @@ export function ImageCropDialog({
     const shown = e.currentTarget.clientWidth || VIEWPORT_WIDTH
     const step = e.shiftKey ? PAN_STEP * 4 : PAN_STEP
     const moves: Record<string, [number, number]> = {
-      ArrowLeft: [step, 0],
-      ArrowRight: [-step, 0],
-      ArrowUp: [0, step],
-      ArrowDown: [0, -step],
+      ArrowLeft: [-step, 0],
+      ArrowRight: [step, 0],
+      ArrowUp: [0, -step],
+      ArrowDown: [0, step],
     }
     const move = moves[e.key]
     if (move) {

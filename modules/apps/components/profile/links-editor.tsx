@@ -4,7 +4,7 @@ import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
 import {
-  isHttpUrl,
+  isLinkValid,
   newLinkId,
   PROFILE_LIMITS,
   type AppProfileLinkDraft,
@@ -40,9 +40,7 @@ export function LinksEditor({
         </p>
       )}
       {links.map((link, index) => {
-        const bad =
-          !!error &&
-          (!link.label.trim() || link.label.trim().length > 40 || !isHttpUrl(link.url.trim()))
+        const bad = !!error && !isLinkValid(link)
         return (
           <div key={link.id} className="flex flex-col gap-2 sm:flex-row sm:items-center">
             <Input

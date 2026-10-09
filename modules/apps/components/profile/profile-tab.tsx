@@ -8,7 +8,7 @@ import {
   RotateCcw,
   TriangleAlert,
 } from 'lucide-react'
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
 import { TabHeader, TabSkeleton } from '@/modules/publisher/components/primitives'
@@ -73,7 +73,7 @@ function ProfileEditor({
 }) {
   const profile = useAppProfile(appDid)
   if (profile.isPending) return <TabSkeleton rows={2} label="Loading profile" />
-  if (profile.error) {
+  if (profile.error && !profile.data) {
     return (
       <Banner
         tone="warning"
@@ -99,6 +99,7 @@ function ProfileEditor({
       appName={appName}
       appDid={appDid}
       stored={stored}
+      refreshFailed={!!profile.error}
     />
   )
 }
@@ -108,11 +109,14 @@ function ProfileForm({
   appName,
   appDid,
   stored,
+  refreshFailed = false,
 }: {
   appId: string
   appName: string
   appDid: string
   stored: RenownAppProfile | null
+  /** A background refresh failed; the form keeps the last loaded profile. */
+  refreshFailed?: boolean
 }) {
   const initial = useMemo(() => formFromProfile(stored), [stored])
   // An empty profile starts with the app's Vetra name, so the first save names it.
@@ -137,6 +141,16 @@ function ProfileForm({
   const canSave = dirty && !busy && Object.keys(problems).length === 0
   const documentId = stored?.documentId ?? null
   const saving = useRef(false)
+  const previewsRef = useRef<ImagePreviews>(NO_PREVIEWS)
+  useEffect(() => {
+    previewsRef.current = previews
+  }, [previews])
+  useEffect(
+    () => () => {
+      for (const url of Object.values(previewsRef.current)) if (url) URL.revokeObjectURL(url)
+    },
+    [],
+  )
   useUnsavedChangesGuard(dirty)
 
   const errorFor = (field: AppProfileField): string | undefined =>
@@ -148,11 +162,14 @@ function ProfileForm({
   }
 
   function setImage(kind: ImageKind, ref: string | null, previewUrl: string | null) {
+    const old = previewsRef.current[kind]
+    if (old && old !== previewUrl) URL.revokeObjectURL(old)
     set(kind === 'logo' ? 'logoRef' : 'coverRef', ref)
     setPreviews((current) => ({ ...current, [kind]: previewUrl }))
   }
 
   function reset() {
+    for (const url of Object.values(previewsRef.current)) if (url) URL.revokeObjectURL(url)
     setForm(fresh)
     setPreviews(NO_PREVIEWS)
     setServerError(null)
@@ -199,6 +216,11 @@ function ProfileForm({
           if (canSave) void save()
         }}
       >
+        {refreshFailed && (
+          <p className="text-muted-foreground text-sm" role="status">
+            Couldn’t refresh — showing last loaded profile.
+          </p>
+        )}
         <TabHeader
           title="Public profile"
           description={

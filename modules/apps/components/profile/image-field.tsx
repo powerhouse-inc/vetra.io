@@ -13,7 +13,11 @@ function loadImage(file: File): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file)
     const image = new Image()
-    image.onload = () => resolve(image)
+    image.onload = () => {
+      // Decoded: the pixels stay available without the object URL.
+      URL.revokeObjectURL(url)
+      resolve(image)
+    }
     image.onerror = () => {
       URL.revokeObjectURL(url)
       reject(new Error('This file could not be read as an image.'))
@@ -107,9 +111,11 @@ export function ImageField({
         <button
           type="button"
           aria-label={shown ? `Replace ${kind}` : `Add ${kind}`}
-          disabled={uploading}
+          aria-disabled={uploading || undefined}
           aria-describedby={message ? errorId : undefined}
-          onClick={() => input.current?.click()}
+          onClick={() => {
+            if (!uploading) input.current?.click()
+          }}
           onDragOver={(e) => {
             e.preventDefault()
             setDragging(true)
@@ -143,8 +149,10 @@ export function ImageField({
             type="button"
             size="sm"
             variant="outline"
-            disabled={uploading}
-            onClick={() => input.current?.click()}
+            aria-disabled={uploading || undefined}
+            onClick={() => {
+              if (!uploading) input.current?.click()
+            }}
           >
             <Upload className="h-3.5 w-3.5" />
             {shown ? 'Replace' : 'Upload'}

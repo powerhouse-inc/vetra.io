@@ -38,14 +38,7 @@ export type AppProfileForm = {
 }
 
 export type AppProfileField =
-  | 'name'
-  | 'tagline'
-  | 'website'
-  | 'description'
-  | 'category'
-  | 'logo'
-  | 'cover'
-  | 'links'
+  'name' | 'tagline' | 'website' | 'description' | 'category' | 'logo' | 'cover' | 'links'
 
 /** What updateAppProfile receives: absent = unchanged, "" = clear, links = the whole list. */
 export type AppProfileChanges = {
@@ -83,6 +76,18 @@ export function isHttpUrl(value: string): boolean {
   }
 }
 
+/** Whether one link row satisfies the server's rules (label 1–40, http(s) URL ≤ 2048). */
+export function isLinkValid(link: AppProfileLinkDraft): boolean {
+  const label = link.label.trim()
+  const url = link.url.trim()
+  return (
+    label.length > 0 &&
+    label.length <= PROFILE_LIMITS.linkLabel &&
+    isHttpUrl(url) &&
+    url.length <= PROFILE_LIMITS.linkUrl
+  )
+}
+
 /** Every problem the server would refuse, per field (empty when the form can be saved). */
 export function formProblems(form: AppProfileForm): Partial<Record<AppProfileField, string>> {
   const out: Partial<Record<AppProfileField, string>> = {}
@@ -90,14 +95,19 @@ export function formProblems(form: AppProfileForm): Partial<Record<AppProfileFie
   if (form.name.trim().length > max.name) out.name = `At most ${max.name} characters.`
   if (form.tagline.trim().length > max.tagline) out.tagline = `At most ${max.tagline} characters.`
   const website = form.website.trim()
-  if (website && (!isHttpUrl(website) || website.length > max.website)) out.website = 'Use an http(s) URL.'
-  if (form.description.trim().length > max.description) out.description = `At most ${max.description} characters.`
-  if (form.category.trim().length > max.category) out.category = `At most ${max.category} characters.`
+  if (website && (!isHttpUrl(website) || website.length > max.website))
+    out.website = 'Use an http(s) URL.'
+  if (form.description.trim().length > max.description)
+    out.description = `At most ${max.description} characters.`
+  if (form.category.trim().length > max.category)
+    out.category = `At most ${max.category} characters.`
   if (form.links.length > max.links) {
     out.links = `At most ${max.links} links.`
   } else if (form.links.some((l) => !l.label.trim() || l.label.trim().length > max.linkLabel)) {
     out.links = `Every link needs a label of 1–${max.linkLabel} characters.`
-  } else if (form.links.some((l) => !isHttpUrl(l.url.trim()) || l.url.trim().length > max.linkUrl)) {
+  } else if (
+    form.links.some((l) => !isHttpUrl(l.url.trim()) || l.url.trim().length > max.linkUrl)
+  ) {
     out.links = 'Every link needs an http(s) URL.'
   }
   return out
