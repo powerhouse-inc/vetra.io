@@ -65,6 +65,7 @@ export async function reportUserStat(
     throw new ReportUserStatError("INVALID_INPUT", "value must be a finite number");
   }
   let res: Response;
+  let text: string;
   try {
     res = await (options.fetch ?? fetch)(url, {
       method: "POST",
@@ -72,10 +73,16 @@ export async function reportUserStat(
       body: JSON.stringify({ query: MUTATION, variables: { user, metric, value } }),
       signal: AbortSignal.timeout(options.timeoutMs ?? 10000),
     });
+    text = await res.text();
   } catch (error) {
     throw new ReportUserStatError("NETWORK", error instanceof Error ? error.message : "request failed");
   }
-  const answer = (await res.json().catch(() => null)) as Answer;
+  let answer: Answer = null;
+  try {
+    answer = JSON.parse(text) as Answer;
+  } catch {
+    answer = null;
+  }
   const error = answer?.errors?.[0];
   if (error) {
     const code = typeof error.extensions?.code === "string" ? error.extensions.code : "ERROR";
