@@ -19,6 +19,7 @@ import type {
   RevokeLicenseInput,
   SetTemplateDetailsInput,
   SetTermDetailsInput,
+  UpdateAppProfileInput,
 } from './types'
 
 export type FetchLike = (input: string, init: RequestInit) => Promise<Response>
@@ -35,6 +36,9 @@ export type PublisherErrorCode =
   | 'LICENSING_DISABLED'
   | 'INVALID_CODE'
   | 'ALREADY_HOLDS'
+  | 'RATE_LIMITED'
+  | 'PROFILE_UNAVAILABLE'
+  | 'NO_IDENTITY'
   | 'PUBLISHER_UNAVAILABLE'
   | 'NETWORK'
   | 'UNKNOWN'
@@ -53,19 +57,30 @@ const KNOWN_CODES = new Set<string>([
   'LICENSING_DISABLED',
   'INVALID_CODE',
   'ALREADY_HOLDS',
+  'RATE_LIMITED',
+  'PROFILE_UNAVAILABLE',
+  'NO_IDENTITY',
 ])
 
-type GqlError = { message?: string; extensions?: { code?: unknown } }
+type GqlError = { message?: string; extensions?: { code?: unknown; field?: unknown } }
 type GqlBody<T> = { data?: T | null; errors?: GqlError[] }
 
 export class PublisherApiError extends Error {
   code: PublisherErrorCode
   status: number | null
-  constructor(code: PublisherErrorCode, message: string, status: number | null) {
+  /** The input a refusal names (extensions.field), so a form can show it inline. */
+  field: string | null
+  constructor(
+    code: PublisherErrorCode,
+    message: string,
+    status: number | null,
+    field: string | null = null,
+  ) {
     super(message)
     this.name = 'PublisherApiError'
     this.code = code
     this.status = status
+    this.field = field
   }
 }
 
@@ -83,13 +98,19 @@ export function isPublisherError(
  * The message is trimmed, so "verbatim" means trimmed-verbatim.
  */
 export function toPublisherError(
-  gqlError: { message?: string; extensions?: { code?: unknown } } | undefined,
+  gqlError: GqlError | undefined,
   status: number | null,
 ): PublisherApiError {
   const message = (gqlError?.message ?? '').trim() || 'Request failed'
   const raw = gqlError?.extensions?.code
   if (typeof raw === 'string' && KNOWN_CODES.has(raw)) {
-    return new PublisherApiError(raw as PublisherErrorCode, message, status)
+    const field = gqlError?.extensions?.field
+    return new PublisherApiError(
+      raw as PublisherErrorCode,
+      message,
+      status,
+      typeof field === 'string' ? field : null,
+    )
   }
   if (/Cannot query field|Unknown type|Unknown argument/i.test(message)) {
     return new PublisherApiError('PUBLISHER_UNAVAILABLE', message, status)
@@ -154,6 +175,10 @@ export const ERROR_COPY: Partial<Record<PublisherErrorCode, string>> = {
     'Licensing is switched off on this deployment right now. You can look, but not change anything.',
   INVALID_CODE: 'This code can’t be used. It may be mistyped, paused, expired or used up.',
   ALREADY_HOLDS: 'You already have this plan. Nothing to renew.',
+  RATE_LIMITED: 'Too many saves in a short time. Wait a minute and try again.',
+  PROFILE_UNAVAILABLE:
+    'Renown is not reachable right now, so the profile was not saved. Try again in a minute.',
+  NO_IDENTITY: 'This app has no Renown identity yet. Authorize its deploy identity first.',
 }
 
 export function describePublisherError(err: unknown): string {
@@ -182,7 +207,7 @@ export function retryPublisher(failureCount: number, error: unknown): boolean {
 // argument: the server derives it from the caller's wallet.
 // ---------------------------------------------------------------------------
 
-const APP_FIELDS = `id name status`
+const APP_FIELDS = `id name status identityDid`
 const TEMPLATE_FIELDS = `id name mode sharedEnvironment size baseDomain packageRegistry
   templateHash environmentCount
   services { id type prefix artifactName artifactChannel }
@@ -378,6 +403,12 @@ export const createInviteCode = inputWrite<CreateInviteCodeInput, PublisherInvit
   'createInviteCode',
   'CreateInviteCodeInput',
   INVITE_CODE_FIELDS,
+)
+
+/** The app's public Renown profile; Vetra relays it to Renown (see vetra-cloud-package renown-profile.ts). */
+export const updateAppProfile = inputWrite<UpdateAppProfileInput, boolean>(
+  'updateAppProfile',
+  'UpdateAppProfileInput',
 )
 
 export const deleteTemplate = argsWrite<{ appId: string; templateId: string }>('deleteTemplate', {

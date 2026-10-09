@@ -4,7 +4,13 @@
  * in vetra-cloud-package exactly. Enum-valued fields arrive as strings.
  */
 
-export type PublisherApp = { id: string; name: string; status: string }
+export type PublisherApp = {
+  id: string
+  name: string
+  status: string
+  /** The app's Renown identity (did:key); null before one is registered. Older servers omit it. */
+  identityDid?: string | null
+}
 
 export type TemplateMode = 'SHARED' | 'DEDICATED'
 export type TermStatus = 'DRAFT' | 'ACTIVE' | 'RETIRED'
@@ -159,4 +165,19 @@ export type CreateInviteCodeInput = {
   maxUses?: number | null
   /** Write-only; stored encrypted, never returned. */
   anthropicKey?: string | null
+}
+
+export type PublisherAppLinkInput = { id: string; label: string; url: string }
+
+/** Absent: unchanged. Empty string: clear. links: the whole list. */
+export type UpdateAppProfileInput = {
+  appId: string
+  name?: string
+  tagline?: string
+  website?: string
+  description?: string
+  category?: string
+  logoRef?: string
+  coverRef?: string
+  links?: PublisherAppLinkInput[]
 }
