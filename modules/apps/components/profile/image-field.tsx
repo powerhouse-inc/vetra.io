@@ -56,7 +56,8 @@ export function ImageField({
   const [uploading, setUploading] = useState(false)
   const [problem, setProblem] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
-  const shown = previewUrl ?? (value ? (documentId ? renownMediaUrl(documentId, kind) : null) : fallbackUrl)
+  const shown =
+    previewUrl ?? (value ? (documentId ? renownMediaUrl(documentId, kind) : null) : fallbackUrl)
 
   async function choose(file: File | undefined) {
     if (!file) return
@@ -95,6 +96,7 @@ export function ImageField({
   }
 
   const message = problem ?? error
+  const errorId = `image-${kind}-error`
   return (
     <div className="space-y-2">
       <div className="flex flex-wrap items-baseline justify-between gap-2">
@@ -106,6 +108,7 @@ export function ImageField({
           type="button"
           aria-label={shown ? `Replace ${kind}` : `Add ${kind}`}
           disabled={uploading}
+          aria-describedby={message ? errorId : undefined}
           onClick={() => input.current?.click()}
           onDragOver={(e) => {
             e.preventDefault()
@@ -136,7 +139,13 @@ export function ImageField({
           )}
         </button>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" size="sm" variant="outline" disabled={uploading} onClick={() => input.current?.click()}>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            disabled={uploading}
+            onClick={() => input.current?.click()}
+          >
             <Upload className="h-3.5 w-3.5" />
             {shown ? 'Replace' : 'Upload'}
           </Button>
@@ -154,18 +163,24 @@ export function ImageField({
         accept="image/png,image/jpeg,image/webp"
         className="sr-only"
         aria-label={`Upload ${kind}`}
+        aria-describedby={message ? errorId : undefined}
         onChange={(e) => {
           void choose(e.target.files?.[0])
           e.target.value = ''
         }}
       />
       {message && (
-        <p className="text-destructive text-sm" role="alert">
+        <p id={errorId} className="text-destructive text-sm" role="alert">
           {message}
         </p>
       )}
       {source && (
-        <ImageCropDialog image={source} kind={kind} onCancel={() => setSource(null)} onDone={(blob) => void upload(blob)} />
+        <ImageCropDialog
+          image={source}
+          kind={kind}
+          onCancel={() => setSource(null)}
+          onDone={(blob) => void upload(blob)}
+        />
       )}
     </div>
   )

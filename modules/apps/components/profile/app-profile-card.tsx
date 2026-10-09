@@ -56,14 +56,17 @@ export function AppProfileCard({
           />
         </div>
       ) : profile.error ? (
-        <p className="text-muted-foreground text-sm">The Renown profile could not be loaded right now.</p>
+        <p className="text-muted-foreground text-sm">
+          The Renown profile could not be loaded right now.
+        </p>
       ) : (
         <div className="border-border bg-card flex max-w-md flex-col items-start gap-3 rounded-2xl border border-dashed p-6">
           <Sparkles className="text-primary h-5 w-5" aria-hidden />
           <div className="space-y-1">
             <p className="font-medium">Give {appName} a public face</p>
             <p className="text-muted-foreground text-sm">
-              Add a logo, a cover, a description and links. They show on Renown, on the app’s page and on your profile.
+              Add a logo, a cover, a description and links. They show on Renown, on the app’s page
+              and on your profile.
             </p>
           </div>
           {onEdit && (

@@ -1,7 +1,7 @@
 'use client'
 
 import { Loader2, ZoomIn, ZoomOut } from 'lucide-react'
-import { useEffect, useRef, useState, type PointerEvent } from 'react'
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   Dialog,
@@ -72,6 +72,29 @@ export function ImageCropDialog({
     setCrop((c) => panBy(c, width, height, spec.aspect, shown, dx, dy))
   }
 
+  const PAN_STEP = 12
+  function onKeyDown(e: KeyboardEvent<HTMLCanvasElement>) {
+    const shown = e.currentTarget.clientWidth || VIEWPORT_WIDTH
+    const step = e.shiftKey ? PAN_STEP * 4 : PAN_STEP
+    const moves: Record<string, [number, number]> = {
+      ArrowLeft: [step, 0],
+      ArrowRight: [-step, 0],
+      ArrowUp: [0, step],
+      ArrowDown: [0, -step],
+    }
+    const move = moves[e.key]
+    if (move) {
+      e.preventDefault()
+      setCrop((c) => panBy(c, width, height, spec.aspect, shown, move[0], move[1]))
+    } else if (e.key === '+' || e.key === '=') {
+      e.preventDefault()
+      setCrop((c) => ({ ...c, zoom: Math.min(MAX_ZOOM, c.zoom + 0.1) }))
+    } else if (e.key === '-') {
+      e.preventDefault()
+      setCrop((c) => ({ ...c, zoom: Math.max(MIN_ZOOM, c.zoom - 0.1) }))
+    }
+  }
+
   function endDrag() {
     drag.current = null
   }
@@ -92,14 +115,29 @@ export function ImageCropDialog({
     <Dialog
       open
       onOpenChange={(open) => {
-        if (!open) onCancel()
+        if (!open && !busy) onCancel()
       }}
     >
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+        showCloseButton={!busy}
+        onOpenAutoFocus={(e) => {
+          // Land on the crop area so the arrow keys work straight away.
+          e.preventDefault()
+          canvas.current?.focus()
+        }}
+        onEscapeKeyDown={(e) => {
+          if (busy) e.preventDefault()
+        }}
+        onInteractOutside={(e) => {
+          if (busy) e.preventDefault()
+        }}
+      >
         <DialogHeader>
           <DialogTitle>Position the {kind}</DialogTitle>
           <DialogDescription>
-            Drag to move it and use the slider to zoom. It is saved at {spec.width}×{spec.height}.
+            Drag or use the arrow keys to move it, the slider or + and - to zoom. It is saved at{' '}
+            {spec.width}×{spec.height}.
           </DialogDescription>
         </DialogHeader>
         <div className="flex justify-center">
@@ -107,11 +145,14 @@ export function ImageCropDialog({
             ref={canvas}
             width={VIEWPORT_WIDTH}
             height={viewportHeight}
-            aria-label={`Drag to position the ${kind}`}
+            tabIndex={0}
+            role="img"
+            aria-label={`Crop area for the ${kind}. Arrow keys move it, plus and minus zoom.`}
             className={cn(
-              'bg-muted ring-border h-auto w-full max-w-[360px] cursor-grab touch-none ring-1 active:cursor-grabbing',
+              'bg-muted ring-border focus-visible:ring-ring h-auto w-full max-w-[360px] cursor-grab touch-none ring-1 focus-visible:ring-2 focus-visible:outline-none active:cursor-grabbing',
               kind === 'logo' ? 'rounded-2xl' : 'rounded-xl',
             )}
+            onKeyDown={onKeyDown}
             onPointerDown={onPointerDown}
             onPointerMove={onPointerMove}
             onPointerUp={endDrag}

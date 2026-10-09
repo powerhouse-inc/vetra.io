@@ -43,7 +43,13 @@ function block(node: Block, i: number): ReactNode {
   switch (node.type) {
     case 'heading':
       return (
-        <p key={i} className={cn('text-foreground font-semibold', node.level === 1 ? 'text-base' : 'text-sm')}>
+        <p
+          key={i}
+          className={cn(
+            'text-foreground font-semibold',
+            node.level === 1 ? 'text-base' : 'text-sm',
+          )}
+        >
           {inline(node.children)}
         </p>
       )
@@ -70,5 +76,9 @@ function block(node: Block, i: number): ReactNode {
 
 /** A description in Renown's markdown subset, as React elements only (as renown.id renders it). */
 export function MarkdownLite({ text, className }: { text: string; className?: string }) {
-  return <div className={cn('text-foreground/90 space-y-2 break-words', className)}>{parseMarkdownLite(text).map(block)}</div>
+  return (
+    <div className={cn('text-foreground/90 space-y-2 break-words', className)}>
+      {parseMarkdownLite(text).map(block)}
+    </div>
+  )
 }

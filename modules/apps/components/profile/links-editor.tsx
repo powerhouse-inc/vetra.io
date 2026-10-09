@@ -30,13 +30,17 @@ export function LinksEditor({
   return (
     <div className="space-y-2">
       {links.length === 0 && (
-        <p className="text-muted-foreground text-sm">No links yet. Add docs, source code or socials.</p>
+        <p className="text-muted-foreground text-sm">
+          No links yet. Add docs, source code or socials.
+        </p>
       )}
       {links.map((link, index) => (
         <div key={link.id} className="flex flex-col gap-2 sm:flex-row sm:items-center">
           <Input
             aria-label={`Link ${index + 1} label`}
             placeholder="Label"
+            aria-describedby={error ? 'profile-links-error' : undefined}
+            aria-invalid={!!error}
             value={link.label}
             className="sm:w-40"
             onChange={(e) => update(index, { label: e.target.value })}
@@ -44,6 +48,8 @@ export function LinksEditor({
           <Input
             aria-label={`Link ${index + 1} URL`}
             placeholder="https://"
+            aria-describedby={error ? 'profile-links-error' : undefined}
+            aria-invalid={!!error}
             type="url"
             inputMode="url"
             value={link.url}
@@ -94,7 +100,7 @@ export function LinksEditor({
         Add link
       </Button>
       {error && (
-        <p className="text-destructive text-sm" role="alert">
+        <p id="profile-links-error" className="text-destructive text-sm" role="alert">
           {error}
         </p>
       )}

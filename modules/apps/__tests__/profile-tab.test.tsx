@@ -116,6 +116,51 @@ describe('AppProfileTab', () => {
   })
 })
 
+describe('AppProfileTab hardening', () => {
+  it('shows an error with Retry, not an editable form, when the read fails', () => {
+    const refetch = vi.fn()
+    profile = { data: null, isPending: false, error: new Error('boom'), refetch }
+    render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
+    expect(screen.getByText('boom')).toBeTruthy()
+    expect(screen.queryByRole('button', { name: 'Save profile' })).toBeNull()
+    expect(screen.queryByLabelText('Name')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /Try again/ }))
+    expect(refetch).toHaveBeenCalledTimes(1)
+  })
+
+  it('links each field error through aria-describedby', () => {
+    render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
+    fireEvent.change(screen.getByLabelText('Website'), { target: { value: 'javascript:alert(1)' } })
+    const website = screen.getByLabelText('Website')
+    const id = website.getAttribute('aria-describedby')
+    expect(id).toBe('profile-website-error')
+    expect(document.getElementById(id as string)?.textContent).toBe('Use an http(s) URL.')
+  })
+
+  it('submits once even when Save is clicked twice', async () => {
+    let release: (v: boolean) => void = () => {}
+    mutateAsync.mockReturnValue(new Promise<boolean>((r) => (release = r)))
+    render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
+    fireEvent.change(screen.getByLabelText('Tagline'), { target: { value: 'Shared notes' } })
+    fireEvent.click(saveButton())
+    fireEvent.click(saveButton())
+    expect(mutateAsync).toHaveBeenCalledTimes(1)
+    release(true)
+    await waitFor(() => expect(mutateAsync).toHaveBeenCalledTimes(1))
+  })
+
+  it('warns before leaving with unsaved changes', () => {
+    render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
+    const clean = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(clean)
+    expect(clean.defaultPrevented).toBe(false)
+    fireEvent.change(screen.getByLabelText('Tagline'), { target: { value: 'Shared notes' } })
+    const dirty = new Event('beforeunload', { cancelable: true })
+    window.dispatchEvent(dirty)
+    expect(dirty.defaultPrevented).toBe(true)
+  })
+})
+
 describe('AppProfileCard', () => {
   it('previews the profile with edit and Renown links', () => {
     const onEdit = vi.fn()

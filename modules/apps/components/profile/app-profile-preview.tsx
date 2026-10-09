@@ -33,10 +33,15 @@ export function AppProfilePreview({
   const category = form.category.trim()
   const tagline = form.tagline.trim()
   const description = form.description.trim()
-  const coverSrc = previews.cover ?? (form.coverRef && documentId ? renownMediaUrl(documentId, 'cover') : null)
+  const coverSrc =
+    previews.cover ?? (form.coverRef && documentId ? renownMediaUrl(documentId, 'cover') : null)
   const logoSrc =
     previews.logo ??
-    (form.logoRef ? (documentId ? renownMediaUrl(documentId, 'logo') : null) : safeLegacyLogo(legacyLogo))
+    (form.logoRef
+      ? documentId
+        ? renownMediaUrl(documentId, 'logo')
+        : null
+      : safeLegacyLogo(legacyLogo))
   const links = form.links.filter((link) => link.label.trim() && isHttpUrl(link.url.trim()))
   const hue = hueFor(appDid)
 
@@ -47,7 +52,9 @@ export function AppProfilePreview({
         style={
           coverSrc
             ? undefined
-            : { backgroundImage: `linear-gradient(135deg, hsl(${hue} 70% 55%), hsl(${(hue + 40) % 360} 75% 35%))` }
+            : {
+                backgroundImage: `linear-gradient(135deg, hsl(${hue} 70% 55%), hsl(${(hue + 40) % 360} 75% 35%))`,
+              }
         }
       >
         {coverSrc && (
@@ -64,7 +71,9 @@ export function AppProfilePreview({
           </div>
           {tagline && <p className="text-muted-foreground text-sm">{tagline}</p>}
         </div>
-        {description && <MarkdownLite text={description} className={cn('text-sm', compact && 'line-clamp-4')} />}
+        {description && (
+          <MarkdownLite text={description} className={cn('text-sm', compact && 'line-clamp-4')} />
+        )}
         {links.length > 0 && (
           <ul className="flex flex-wrap gap-2" aria-label="Links">
             {links.map((link) => (
