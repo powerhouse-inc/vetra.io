@@ -113,6 +113,31 @@ describe('Profile tab metrics', () => {
     await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ metrics: [] }))
   })
 
+  it('moves a metric and keeps keyboard focus on a live control at the edge', () => {
+    const STREAK = { ...NOTES, id: 'm2', key: 'streak', label: 'Best streak', aggregation: 'MAX' as const }
+    profile = { data: { ...STORED, metrics: [NOTES, STREAK] }, isPending: false, error: null, refetch: vi.fn() }
+    render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
+    const btn = (name: string) => screen.getByRole('button', { name }) as HTMLButtonElement
+    expect(btn('Move metric 1 up').disabled).toBe(true)
+    expect(btn('Move metric 2 down').disabled).toBe(true)
+
+    const up = btn('Move metric 2 up')
+    up.focus()
+    fireEvent.click(up)
+
+    expect((screen.getByLabelText('Metric 1 key') as HTMLInputElement).value).toBe('streak')
+    expect((screen.getByLabelText('Metric 2 key') as HTMLInputElement).value).toBe('notes')
+    expect(btn('Move metric 1 up').disabled).toBe(true)
+    expect(btn('Move metric 2 down').disabled).toBe(true)
+    expect(btn('Move metric 2 up').disabled).toBe(false)
+    // The moved row is first now: focus goes to its enabled "down" button, never to <body>.
+    expect(document.activeElement).toBe(btn('Move metric 1 down'))
+
+    fireEvent.click(btn('Move metric 1 down'))
+    expect((screen.getByLabelText('Metric 1 key') as HTMLInputElement).value).toBe('notes')
+    expect(document.activeElement).toBe(btn('Move metric 2 up'))
+  })
+
   it('shows Renown refusing the list under Metrics', async () => {
     mutateAsync.mockRejectedValue(
       new PublisherApiError(

@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useRef } from 'react'
 import { ChevronDown, ChevronUp, Plus, Trash2 } from 'lucide-react'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
@@ -27,11 +28,30 @@ export function MetricsEditor({
     onChange(metrics.map((metric, i) => (i === index ? { ...metric, ...patch } : metric)))
   }
 
+  // After a move, keyboard focus follows the row: the pressed button, or its opposite when the
+  // row landed on an edge and the pressed one is now disabled (never drops to <body>).
+  const focusAfterMove = useRef<{ id: string; by: -1 | 1 } | null>(null)
+  useEffect(() => {
+    const request = focusAfterMove.current
+    if (!request) return
+    focusAfterMove.current = null
+    const index = metrics.findIndex((m) => m.id === request.id)
+    if (index === -1) return
+    const atEdge = request.by === -1 ? index === 0 : index === metrics.length - 1
+    const direction = atEdge ? -request.by : request.by
+    document
+      .querySelector<HTMLButtonElement>(
+        `[data-metric-id="${CSS.escape(request.id)}"] [data-move="${direction === -1 ? 'up' : 'down'}"]`,
+      )
+      ?.focus()
+  }, [metrics])
+
   function move(index: number, by: -1 | 1) {
     const next = [...metrics]
     const [item] = next.splice(index, 1)
     if (!item) return
     next.splice(index + by, 0, item)
+    focusAfterMove.current = { id: item.id, by }
     onChange(next)
   }
 
@@ -51,7 +71,7 @@ export function MetricsEditor({
       {metrics.map((metric, index) => {
         const n = index + 1
         return (
-          <fieldset key={metric.id} className="border-border space-y-3 rounded-xl border p-4">
+          <fieldset key={metric.id} data-metric-id={metric.id} className="border-border space-y-3 rounded-xl border p-4">
             <legend className="sr-only">Metric {n}</legend>
             <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_7rem]">
               <Input
@@ -114,6 +134,7 @@ export function MetricsEditor({
                   type="button"
                   size="icon"
                   variant="ghost"
+                  data-move="up"
                   aria-label={`Move metric ${n} up`}
                   disabled={index === 0}
                   onClick={() => move(index, -1)}
@@ -124,6 +145,7 @@ export function MetricsEditor({
                   type="button"
                   size="icon"
                   variant="ghost"
+                  data-move="down"
                   aria-label={`Move metric ${n} down`}
                   disabled={index === metrics.length - 1}
                   onClick={() => move(index, 1)}
