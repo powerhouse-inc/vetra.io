@@ -97,9 +97,16 @@ export function panBy(
   }
 }
 
+function encode(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
+  return new Promise<Blob>((resolve, reject) =>
+    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not encode the image.'))), type, quality),
+  )
+}
+
 /**
- * Draws the crop at the kind's output size and encodes WebP (PNG where the
- * browser cannot encode WebP), lowering the quality until it fits the cap.
+ * Draws the crop at the kind's output size and encodes WebP (JPEG where the
+ * browser cannot encode WebP and silently answers PNG, e.g. Safari), lowering the
+ * quality until it fits the cap.
  */
 export async function renderImage(image: HTMLImageElement, kind: ImageKind, crop: CropState): Promise<Blob> {
   const spec = IMAGE_SPECS[kind]
@@ -111,9 +118,14 @@ export async function renderImage(image: HTMLImageElement, kind: ImageKind, crop
   if (!context) throw new Error('This browser cannot resize images.')
   context.imageSmoothingQuality = 'high'
   context.drawImage(image, sx, sy, sw, sh, 0, 0, spec.width, spec.height)
+  let type = 'image/webp'
   for (const quality of [0.9, 0.75, 0.6]) {
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, 'image/webp', quality))
-    if (!blob) throw new Error('Could not encode the image.')
+    let blob = await encode(canvas, type, quality)
+    if (blob.type !== type && type === 'image/webp') {
+      // The browser ignored the WebP request (it falls back to PNG): use JPEG, which honours quality.
+      type = 'image/jpeg'
+      blob = await encode(canvas, type, quality)
+    }
     if (blob.size <= spec.maxBytes) return blob
   }
   throw new Error(`This ${kind} is still too large after compression. Try a simpler image.`)

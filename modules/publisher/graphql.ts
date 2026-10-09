@@ -207,7 +207,8 @@ export function retryPublisher(failureCount: number, error: unknown): boolean {
 // argument: the server derives it from the caller's wallet.
 // ---------------------------------------------------------------------------
 
-const APP_FIELDS = `id name status identityDid`
+const APP_FIELDS_BASE = `id name status`
+const APP_FIELDS = `${APP_FIELDS_BASE} identityDid`
 const TEMPLATE_FIELDS = `id name mode sharedEnvironment size baseDomain packageRegistry
   templateHash environmentCount
   services { id type prefix artifactName artifactChannel }
@@ -238,8 +239,37 @@ async function read<T>(
 
 const APP_ID = '($appId: String!)'
 
-export const fetchPublisherApps = (token: string | null, fetchImpl?: FetchLike) =>
-  read<PublisherApp[]>('myApps', '', `myApps { ${APP_FIELDS} }`, {}, token, fetchImpl)
+// Switchboards older than identity hub phase 3 do not serve PublisherApp.identityDid.
+// The first "Cannot query field" answer downgrades this session to the old selection.
+let identityDidSupported = true
+/** Test hook: forget a remembered downgrade. */
+export const resetIdentityDidSupport = () => {
+  identityDidSupported = true
+}
+
+export async function fetchPublisherApps(
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<PublisherApp[]> {
+  if (identityDidSupported) {
+    try {
+      return await read<PublisherApp[]>('myApps', '', `myApps { ${APP_FIELDS} }`, {}, token, fetchImpl)
+    } catch (err) {
+      if (!(isPublisherError(err) && /identityDid/.test(err.message) && /Cannot query field/i.test(err.message)))
+        throw err
+      identityDidSupported = false
+    }
+  }
+  const apps = await read<PublisherApp[]>(
+    'myApps',
+    '',
+    `myApps { ${APP_FIELDS_BASE} }`,
+    {},
+    token,
+    fetchImpl,
+  )
+  return apps.map((app) => ({ ...app, identityDid: null }))
+}
 
 export const fetchTemplates = (appId: string, token: string | null, fetchImpl?: FetchLike) =>
   read<PublisherTemplate[]>(

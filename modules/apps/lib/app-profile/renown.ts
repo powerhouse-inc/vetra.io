@@ -25,7 +25,13 @@ export function appPageUrl(appDid: string): string {
   return `${renownWebUrl()}/app/${appDid}`
 }
 
-/** Stable URL of a profile image (302s to storage; 404 when unset). */
-export function renownMediaUrl(documentId: string, field: 'logo' | 'cover'): string {
-  return `${renownWebUrl()}/media/${encodeURIComponent(documentId)}/${field}`
+/** First 12 hex of the sha256 inside an `attachment://v1:<sha256>` ref, else null. */
+export function mediaVersion(ref: string | null | undefined): string | null {
+  return /^attachment:\/\/v1:([0-9a-f]{64})$/.exec(ref ?? '')?.[1].slice(0, 12) ?? null
+}
+
+/** Stable URL of a profile image (302s to storage; 404 when unset). Pass the ref to bust caches on replace. */
+export function renownMediaUrl(documentId: string, field: 'logo' | 'cover', ref?: string | null): string {
+  const version = mediaVersion(ref)
+  return `${renownWebUrl()}/media/${encodeURIComponent(documentId)}/${field}${version ? `?v=${version}` : ''}`
 }

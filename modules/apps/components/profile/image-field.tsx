@@ -61,7 +61,7 @@ export function ImageField({
   const [problem, setProblem] = useState<string | null>(null)
   const [dragging, setDragging] = useState(false)
   const shown =
-    previewUrl ?? (value ? (documentId ? renownMediaUrl(documentId, kind) : null) : fallbackUrl)
+    previewUrl ?? (value ? (documentId ? renownMediaUrl(documentId, kind, value) : null) : fallbackUrl)
 
   async function choose(file: File | undefined) {
     if (!file) return

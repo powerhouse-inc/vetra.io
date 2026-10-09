@@ -139,9 +139,10 @@ function ProfileForm({
 
   const problems = formProblems(form)
   const changes = changedFields(initial, form)
-  const dirty = hasChanges(changes)
+  // Dirty is measured against the prefilled baseline; saving still sends what differs from Renown's copy.
+  const dirty = hasChanges(changedFields(fresh, form))
   const busy = uploading.logo || uploading.cover || update.isPending
-  const canSave = dirty && !busy && Object.keys(problems).length === 0
+  const canSave = hasChanges(changes) && !busy && Object.keys(problems).length === 0
   const documentId = stored?.documentId ?? null
   const saving = useRef(false)
   const previewsRef = useRef<ImagePreviews>(NO_PREVIEWS)

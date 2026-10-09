@@ -156,7 +156,7 @@ describe('client operations against the licensing contract', () => {
     const writes = Object.entries(publisher)
       .filter(([, v]) => typeof v === 'function')
       .map(([k]) => k)
-      .filter((k) => !/^(fetch|is|to|describe|retry|publisherGql|PublisherApiError)/.test(k))
+      .filter((k) => !/^(fetch|is|to|describe|retry|reset|publisherGql|PublisherApiError)/.test(k))
     for (const w of writes) expect(CALLS, `missing a call for ${w}`).toHaveProperty(w)
   })
 
