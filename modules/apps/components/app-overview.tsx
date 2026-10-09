@@ -30,6 +30,7 @@ import { formatTimestamp, timeAgo } from '../lib/time'
 import type { App, AppDeployment, AppPreview } from '../types'
 import { AppAvatar } from './app-avatar'
 import { AppProfileCard } from './profile/app-profile-card'
+import { AppStatsCard } from './stats/app-stats-card'
 import { SetupDeploys } from './setup-deploys'
 import { StatusDot, StatusInline, StatusPill } from './status'
 import { UrlList } from './url-list'
@@ -388,6 +389,7 @@ export function AppOverview({
       )}
       <ProductionCard app={app} deployment={production} />
       <AppProfileCard appDid={app.identityDid} appName={app.name} onEdit={onEditProfile} />
+      <AppStatsCard appDid={app.identityDid} onEdit={onEditProfile} />
       {!readOnly && <PreviewsSection app={app} />}
     </div>
   )
