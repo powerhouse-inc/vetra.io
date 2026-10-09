@@ -54,6 +54,7 @@ import { AppAvatar } from './app-avatar'
 import { AppDeployments } from './app-deployments'
 import { AppOverview } from './app-overview'
 import { AppSettings } from './app-settings'
+import { AppProfileTab } from './profile/profile-tab'
 import { GithubFlowLink } from './github-flow-link'
 import { Banner } from './banner'
 import { StatusPill } from './status'
@@ -66,12 +67,13 @@ export const LICENSING_TABS = [
   'holders',
   'invite-codes',
 ] as const
-const ALL_TABS = ['overview', 'deployments', ...LICENSING_TABS, 'settings'] as const
+const ALL_TABS = ['overview', 'deployments', 'profile', ...LICENSING_TABS, 'settings'] as const
 export type AppTab = (typeof ALL_TABS)[number]
 
 export const APP_TAB_LABEL: Record<AppTab, string> = {
   overview: 'Overview',
   deployments: 'Deployments',
+  profile: 'Profile',
   artifacts: 'Artifacts',
   templates: 'Templates',
   plans: 'Plans',
@@ -86,7 +88,7 @@ const isLicensingTab = (t: AppTab): boolean => (LICENSING_TABS as readonly strin
  * Tabs of a licensing-only app: one that exists only as a licensing document (Vetra Studio),
  * with no repository, so no Overview, Deployments, Artifacts or Settings. Opens on Plans.
  */
-export const LICENSING_ONLY_TABS = ['templates', 'plans', 'holders', 'invite-codes'] as const
+export const LICENSING_ONLY_TABS = ['profile', 'templates', 'plans', 'holders', 'invite-codes'] as const
 type LicensingOnlyTab = (typeof LICENSING_ONLY_TABS)[number]
 const LICENSING_ONLY_DEFAULT: LicensingOnlyTab = 'plans'
 
@@ -163,6 +165,9 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
             </TabsTrigger>
           ))}
         </TabsList>
+        <TabsContent value="profile">
+          <AppProfileTab appId={app.id} appName={app.name} appDid={app.identityDid ?? null} />
+        </TabsContent>
         <TabsContent value="templates">
           <TemplatesTab appId={app.id} />
         </TabsContent>
@@ -189,6 +194,7 @@ export function visibleAppTabs({
   isPublisher: boolean
 }): AppTab[] {
   const tabs: AppTab[] = ['overview', 'deployments']
+  if (!readOnly) tabs.push('profile')
   if (isPublisher && !readOnly) tabs.push(...LICENSING_TABS)
   if (!readOnly) tabs.push('settings')
   return tabs
@@ -557,6 +563,7 @@ export function AppDetail({ appId }: { appId: string }) {
             deployments={deployments}
             deploymentsLoaded={!deploymentsQuery.isPending}
             onAuthorize={authorize}
+            onEditProfile={readOnly ? undefined : () => setTab('profile')}
           />
         </TabsContent>
         <TabsContent value="deployments">
@@ -567,6 +574,11 @@ export function AppDetail({ appId }: { appId: string }) {
             error={deploymentsQuery.error}
           />
         </TabsContent>
+        {!readOnly && (
+          <TabsContent value="profile">
+            <AppProfileTab appId={appId} appName={app.name} appDid={app.identityDid} />
+          </TabsContent>
+        )}
         {showLicensing && (
           <TabsContent value="artifacts">
             <ArtifactsTab appId={appId} />

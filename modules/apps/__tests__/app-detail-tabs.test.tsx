@@ -45,6 +45,9 @@ vi.mock('../components/app-deployments', () => ({
   AppDeployments: () => <div>deployments-content</div>,
 }))
 vi.mock('../components/app-settings', () => ({ AppSettings: () => <div>settings-content</div> }))
+vi.mock('../components/profile/profile-tab', () => ({
+  AppProfileTab: ({ appDid }: { appDid: string | null }) => <div>profile-content {appDid ?? 'none'}</div>,
+}))
 vi.mock('../components/github-flow-link', () => ({ GithubFlowLink: () => null }))
 vi.mock('@/modules/publisher/components/plans/plans-tab', () => ({
   PlansTab: () => <div>plans-content</div>,
@@ -112,6 +115,7 @@ describe('AppDetail tabs', () => {
     expect(visibleAppTabs({ readOnly: false, isPublisher: true })).toEqual([
       'overview',
       'deployments',
+      'profile',
       'artifacts',
       'templates',
       'plans',
@@ -122,6 +126,7 @@ describe('AppDetail tabs', () => {
     expect(visibleAppTabs({ readOnly: false, isPublisher: false })).toEqual([
       'overview',
       'deployments',
+      'profile',
       'settings',
     ])
     expect(visibleAppTabs({ readOnly: true, isPublisher: true })).toEqual([
@@ -135,6 +140,7 @@ describe('AppDetail tabs', () => {
     expect(tabNames()).toEqual([
       'Overview',
       'Deployments',
+      'Profile',
       'Artifacts',
       'Templates',
       'Plans',
@@ -150,11 +156,25 @@ describe('AppDetail tabs', () => {
     expect(screen.getByText('artifacts-content')).toBeTruthy()
   })
 
+  it('opens the Profile tab with the app identity', () => {
+    searchParams = new URLSearchParams('tab=profile')
+    render(<AppDetail appId="app-1" />)
+    expect(screen.getByText(`profile-content ${app.identityDid}`)).toBeTruthy()
+  })
+
+  it('gives a licensing-only app a Profile tab too', () => {
+    appError = new AppsApiError('NOT_FOUND', 'no such app', 404)
+    publisher = { isPublisher: true, app: { id: 'studio-1', name: 'Vetra Studio', status: 'ACTIVE' }, isPending: false }
+    searchParams = new URLSearchParams('tab=profile')
+    render(<AppDetail appId="studio-1" />)
+    expect(screen.getByText('profile-content none')).toBeTruthy()
+  })
+
   it('hides licensing tabs from anyone else and ignores a deep link to them', () => {
     publisher = { isPublisher: false, app: undefined, isPending: false }
     searchParams = new URLSearchParams('tab=artifacts')
     render(<AppDetail appId="app-1" />)
-    expect(tabNames()).toEqual(['Overview', 'Deployments', 'Settings'])
+    expect(tabNames()).toEqual(['Overview', 'Deployments', 'Profile', 'Settings'])
     expect(screen.queryByText('artifacts-content')).toBeNull()
     expect(screen.getByText('overview-content')).toBeTruthy()
   })
@@ -260,7 +280,7 @@ describe('AppDetail tabs', () => {
       publisher = { isPublisher: true, app: studio, isPending: false }
       render(<AppDetail appId="studio-1" />)
       expect(screen.getByRole('heading', { name: 'Vetra Studio' })).toBeTruthy()
-      expect(tabNames()).toEqual(['Templates', 'Plans', 'Holders', 'Invite codes'])
+      expect(tabNames()).toEqual(['Profile', 'Templates', 'Plans', 'Holders', 'Invite codes'])
       expect(screen.getByRole('tab', { name: 'Plans' }).getAttribute('aria-selected')).toBe('true')
       expect(screen.getByText('plans-content')).toBeTruthy()
       expect(screen.queryByRole('link', { name: /visit/i })).toBeNull()

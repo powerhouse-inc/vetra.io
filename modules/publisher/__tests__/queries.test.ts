@@ -50,7 +50,7 @@ const READS: Read[] = [
     field: 'myApps',
     call: (f) => api.fetchPublisherApps('t', f),
     variables: {},
-    fields: ['id', 'name', 'status'],
+    fields: ['id', 'name', 'status', 'identityDid'],
   },
   {
     name: 'fetchTemplates',

@@ -12,6 +12,25 @@ type PublisherApp {
   id: String!
   name: String!
   status: String!
+  identityDid: String
+}
+
+input PublisherAppLinkInput {
+  id: String!
+  label: String!
+  url: String!
+}
+
+input UpdateAppProfileInput {
+  appId: String!
+  name: String
+  tagline: String
+  website: String
+  description: String
+  category: String
+  logoRef: String
+  coverRef: String
+  links: [PublisherAppLinkInput!]
 }
 
 type PublisherTemplate {
@@ -204,6 +223,7 @@ type VetraPublisherMutations {
   setInviteCodeActive(appId: String!, code: String!, active: Boolean!): Boolean!
   addToAllowList(appId: String!, user: String!): Boolean!
   removeFromAllowList(appId: String!, user: String!): Boolean!
+  updateAppProfile(input: UpdateAppProfileInput!): Boolean!
 }
 
 # ---- unchanged artifact types (publisher-schema.ts) ----
