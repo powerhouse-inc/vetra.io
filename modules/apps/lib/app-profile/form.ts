@@ -1,6 +1,14 @@
 // The Profile tab's form model: what the publisher edits, what is checked
 // before saving, and the patch that is sent (only what changed).
 import type { RenownAppProfile } from './api'
+import {
+  metricChanges,
+  metricDraftsFrom,
+  metricsChanged,
+  metricsProblem,
+  type AppMetricChange,
+  type AppMetricDraft,
+} from './metrics'
 
 export const PROFILE_LIMITS = {
   name: 120,
@@ -35,10 +43,19 @@ export type AppProfileForm = {
   logoRef: string | null
   coverRef: string | null
   links: AppProfileLinkDraft[]
+  metrics: AppMetricDraft[]
 }
 
 export type AppProfileField =
-  'name' | 'tagline' | 'website' | 'description' | 'category' | 'logo' | 'cover' | 'links'
+  | 'name'
+  | 'tagline'
+  | 'website'
+  | 'description'
+  | 'category'
+  | 'logo'
+  | 'cover'
+  | 'links'
+  | 'metrics'
 
 /** What updateAppProfile receives: absent = unchanged, "" = clear, links = the whole list. */
 export type AppProfileChanges = {
@@ -50,6 +67,7 @@ export type AppProfileChanges = {
   logoRef?: string
   coverRef?: string
   links?: AppProfileLinkDraft[]
+  metrics?: AppMetricChange[]
 }
 
 const TEXT_FIELDS = ['name', 'tagline', 'website', 'description', 'category'] as const
@@ -64,6 +82,7 @@ export function formFromProfile(profile: RenownAppProfile | null): AppProfileFor
     logoRef: profile?.logoRef ?? null,
     coverRef: profile?.coverRef ?? null,
     links: (profile?.links ?? []).map(({ id, label, url }) => ({ id, label, url })),
+    metrics: metricDraftsFrom(profile?.metrics),
   }
 }
 
@@ -110,6 +129,8 @@ export function formProblems(form: AppProfileForm): Partial<Record<AppProfileFie
   ) {
     out.links = 'Every link needs an http(s) URL.'
   }
+  const metrics = metricsProblem(form.metrics)
+  if (metrics) out.metrics = metrics
   return out
 }
 
@@ -128,6 +149,7 @@ export function changedFields(initial: AppProfileForm, current: AppProfileForm):
   if (current.coverRef !== initial.coverRef) out.coverRef = current.coverRef ?? ''
   const links = trimmedLinks(current.links)
   if (JSON.stringify(links) !== JSON.stringify(trimmedLinks(initial.links))) out.links = links
+  if (metricsChanged(initial.metrics, current.metrics)) out.metrics = metricChanges(current.metrics)
   return out
 }
 
@@ -149,6 +171,7 @@ export function fieldForServer(field: string | null | undefined): AppProfileFiel
     case 'description':
     case 'category':
     case 'links':
+    case 'metrics':
       return field
     default:
       return null

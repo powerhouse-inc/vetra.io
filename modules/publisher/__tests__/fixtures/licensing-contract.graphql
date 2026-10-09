@@ -31,6 +31,24 @@ input UpdateAppProfileInput {
   logoRef: String
   coverRef: String
   links: [PublisherAppLinkInput!]
+  metrics: [PublisherAppMetricInput!]
+}
+
+enum PublisherMetricAggregation {
+  SUM
+  MAX
+  AVG
+  COUNT_USERS
+}
+
+input PublisherAppMetricInput {
+  id: String!
+  key: String!
+  label: String!
+  unit: String
+  description: String
+  aggregation: PublisherMetricAggregation!
+  public: Boolean!
 }
 
 type PublisherTemplate {

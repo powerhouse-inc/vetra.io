@@ -149,6 +149,7 @@ describe('profile form', () => {
       logoRef: null,
       coverRef: null,
       links: [],
+      metrics: [],
     })
   })
 

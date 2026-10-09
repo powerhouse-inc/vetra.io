@@ -180,4 +180,16 @@ export type UpdateAppProfileInput = {
   logoRef?: string
   coverRef?: string
   links?: PublisherAppLinkInput[]
+  /** The whole metric list; [] clears. */
+  metrics?: PublisherAppMetricInput[]
+}
+
+export type PublisherAppMetricInput = {
+  id: string
+  key: string
+  label: string
+  unit: string | null
+  description: string | null
+  aggregation: 'SUM' | 'MAX' | 'AVG' | 'COUNT_USERS'
+  public: boolean
 }
