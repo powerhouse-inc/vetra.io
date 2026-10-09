@@ -202,11 +202,15 @@ describe('fetchPublisherApps identityDid downgrade', () => {
       queries.push(query)
       if (query.includes('identityDid'))
         return new Response(
-          JSON.stringify({ errors: [{ message: 'Cannot query field "identityDid" on type "PublisherApp".' }] }),
+          JSON.stringify({
+            errors: [{ message: 'Cannot query field "identityDid" on type "PublisherApp".' }],
+          }),
           { status: 400 },
         )
       return new Response(
-        JSON.stringify({ data: { vetraPublisher: { myApps: [{ id: 'a', name: 'A', status: 'ACTIVE' }] } } }),
+        JSON.stringify({
+          data: { vetraPublisher: { myApps: [{ id: 'a', name: 'A', status: 'ACTIVE' }] } },
+        }),
         { status: 200 },
       )
     }) as unknown as FetchLike
@@ -222,7 +226,9 @@ describe('fetchPublisherApps identityDid downgrade', () => {
   it('does not swallow unrelated errors', async () => {
     api.resetIdentityDidSupport()
     const fetchImpl = (async () =>
-      new Response(JSON.stringify({ errors: [{ message: 'boom' }] }), { status: 200 })) as unknown as FetchLike
+      new Response(JSON.stringify({ errors: [{ message: 'boom' }] }), {
+        status: 200,
+      })) as unknown as FetchLike
     await expect(api.fetchPublisherApps('t', fetchImpl)).rejects.toThrow('boom')
   })
 })

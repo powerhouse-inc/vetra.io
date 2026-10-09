@@ -34,7 +34,8 @@ export function AppProfilePreview({
   const tagline = form.tagline.trim()
   const description = form.description.trim()
   const coverSrc =
-    previews.cover ?? (form.coverRef && documentId ? renownMediaUrl(documentId, 'cover', form.coverRef) : null)
+    previews.cover ??
+    (form.coverRef && documentId ? renownMediaUrl(documentId, 'cover', form.coverRef) : null)
   const logoSrc =
     previews.logo ??
     (form.logoRef

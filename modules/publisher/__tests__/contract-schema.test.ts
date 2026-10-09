@@ -137,7 +137,12 @@ const CALLS: Record<string, (f: publisher.FetchLike) => Promise<unknown>> = {
     publisher.removeFromAllowList({ appId: A, user: '0x' + 'a'.repeat(40) }, 't', f),
   updateAppProfile: (f) =>
     publisher.updateAppProfile(
-      { appId: A, name: 'Vault', logoRef: '', links: [{ id: 'l1', label: 'Docs', url: 'https://docs.example' }] },
+      {
+        appId: A,
+        name: 'Vault',
+        logoRef: '',
+        links: [{ id: 'l1', label: 'Docs', url: 'https://docs.example' }],
+      },
       't',
       f,
     ),

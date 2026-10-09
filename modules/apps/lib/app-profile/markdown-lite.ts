@@ -25,13 +25,16 @@ export type Block =
 export function safeHref(raw: string): string | null {
   try {
     const url = new URL(raw)
-    return url.protocol === 'https:' || url.protocol === 'http:' || url.protocol === 'mailto:' ? url.href : null
+    return url.protocol === 'https:' || url.protocol === 'http:' || url.protocol === 'mailto:'
+      ? url.href
+      : null
   } catch {
     return null
   }
 }
 
-const INLINE = /`[^`\n]+`|\*\*[^*\n]+\*\*|\[[^\]\n]+\]\([^()\s]+\)|\*[^*\s][^*\n]*\*|_[^_\s][^_\n]*_/
+const INLINE =
+  /`[^`\n]+`|\*\*[^*\n]+\*\*|\[[^\]\n]+\]\([^()\s]+\)|\*[^*\s][^*\n]*\*|_[^_\s][^_\n]*_/
 const LINK = /^\[([^\]\n]+)\]\(([^()\s]+)\)$/
 
 export function parseInline(source: string): Inline[] {
@@ -53,7 +56,9 @@ export function parseInline(source: string): Inline[] {
       const link = LINK.exec(token)
       const label = link ? link[1] : token
       const href = link ? safeHref(link[2]) : null
-      out.push(href ? { type: 'link', href, children: parseInline(label) } : { type: 'text', text: label })
+      out.push(
+        href ? { type: 'link', href, children: parseInline(label) } : { type: 'text', text: label },
+      )
     } else {
       out.push({ type: 'em', children: parseInline(token.slice(1, -1)) })
     }
@@ -94,7 +99,11 @@ export function parseMarkdownLite(source: string): Block[] {
     const heading = HEADING.exec(line)
     if (heading) {
       const hashes = heading[1].length
-      blocks.push({ type: 'heading', level: hashes === 1 ? 1 : hashes === 2 ? 2 : 3, children: parseInline(heading[2].trim()) })
+      blocks.push({
+        type: 'heading',
+        level: hashes === 1 ? 1 : hashes === 2 ? 2 : 3,
+        children: parseInline(heading[2].trim()),
+      })
       i++
       continue
     }

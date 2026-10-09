@@ -46,7 +46,9 @@ vi.mock('../components/app-deployments', () => ({
 }))
 vi.mock('../components/app-settings', () => ({ AppSettings: () => <div>settings-content</div> }))
 vi.mock('../components/profile/profile-tab', () => ({
-  AppProfileTab: ({ appDid }: { appDid: string | null }) => <div>profile-content {appDid ?? 'none'}</div>,
+  AppProfileTab: ({ appDid }: { appDid: string | null }) => (
+    <div>profile-content {appDid ?? 'none'}</div>
+  ),
 }))
 vi.mock('../components/github-flow-link', () => ({ GithubFlowLink: () => null }))
 vi.mock('@/modules/publisher/components/plans/plans-tab', () => ({
@@ -164,7 +166,11 @@ describe('AppDetail tabs', () => {
 
   it('gives a licensing-only app a Profile tab too', () => {
     appError = new AppsApiError('NOT_FOUND', 'no such app', 404)
-    publisher = { isPublisher: true, app: { id: 'studio-1', name: 'Vetra Studio', status: 'ACTIVE' }, isPending: false }
+    publisher = {
+      isPublisher: true,
+      app: { id: 'studio-1', name: 'Vetra Studio', status: 'ACTIVE' },
+      isPending: false,
+    }
     searchParams = new URLSearchParams('tab=profile')
     render(<AppDetail appId="studio-1" />)
     expect(screen.getByText('profile-content none')).toBeTruthy()

@@ -50,12 +50,19 @@ export async function uploadRenownImage(
   // length, type and checksum). A filesystem switchboard (local development)
   // takes the bytes on its own reservation route.
   const put = body.uploadTarget
-    ? await fetchImpl(body.uploadTarget.url, { method: 'PUT', headers: body.uploadTarget.headers, body: blob })
+    ? await fetchImpl(body.uploadTarget.url, {
+        method: 'PUT',
+        headers: body.uploadTarget.headers,
+        body: blob,
+      })
     : await fetchImpl(
         `${renownSwitchboardOrigin()}/attachments/reservations/${encodeURIComponent(body.reservationId ?? '')}`,
         {
           method: 'PUT',
-          headers: { authorization: `Bearer ${bearer}`, 'content-type': 'application/octet-stream' },
+          headers: {
+            authorization: `Bearer ${bearer}`,
+            'content-type': 'application/octet-stream',
+          },
           body: blob,
         },
       )
