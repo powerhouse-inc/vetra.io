@@ -348,7 +348,7 @@ function ProfileForm({
         </div>
       </form>
 
-      <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start" aria-label="Preview">
+      <aside className="min-w-0 space-y-3 lg:sticky lg:top-24 lg:self-start" aria-label="Preview">
         <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">Preview</p>
         <AppProfilePreview
           appName={appName}

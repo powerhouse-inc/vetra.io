@@ -66,10 +66,16 @@ export function AppProfilePreview({
         <AppLogo name={name} seed={appDid} src={logoSrc} className="ring-card -mt-8 ring-4" />
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
-            <h3 className="text-lg leading-tight font-semibold">{name}</h3>
+            <h3 className="text-lg leading-tight font-semibold [overflow-wrap:anywhere] break-words">
+              {name}
+            </h3>
             {category && <Badge variant="secondary">{category}</Badge>}
           </div>
-          {tagline && <p className="text-muted-foreground text-sm">{tagline}</p>}
+          {tagline && (
+            <p className="text-muted-foreground text-sm [overflow-wrap:anywhere] break-words">
+              {tagline}
+            </p>
+          )}
         </div>
         {description && (
           <MarkdownLite text={description} className={cn('text-sm', compact && 'line-clamp-4')} />
