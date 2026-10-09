@@ -8,7 +8,7 @@ import {
   hasChanges,
   type AppProfileForm,
 } from '../lib/app-profile/form'
-import { cropRegion, IMAGE_SPECS, INITIAL_CROP, panBy, sourceImageProblem } from '../lib/app-profile/image'
+import { cropRegion, IMAGE_SPECS, INITIAL_CROP, panBy, renderImage, sourceImageProblem } from '../lib/app-profile/image'
 import { parseMarkdownLite } from '../lib/app-profile/markdown-lite'
 import {
   appPageUrl,
@@ -45,6 +45,13 @@ describe('Renown URLs', () => {
     expect(renownStatsEndpoint()).toBe('https://switchboard.renown.vetra.io/graphql/renown-stats')
     expect(appPageUrl(DID)).toBe(`https://www.renown.id/app/${DID}`)
     expect(renownMediaUrl('doc 9', 'cover')).toBe('https://www.renown.id/media/doc%209/cover')
+  })
+
+  it('versions media URLs from the attachment ref hash', () => {
+    const ref = `attachment://v1:${'ab12'.repeat(16)}`
+    expect(renownMediaUrl('doc-1', 'logo', ref)).toBe('https://www.renown.id/media/doc-1/logo?v=ab12ab12ab12')
+    expect(renownMediaUrl('doc-1', 'logo', 'https://x.example/a.png')).toBe('https://www.renown.id/media/doc-1/logo')
+    expect(renownMediaUrl('doc-1', 'logo', null)).toBe('https://www.renown.id/media/doc-1/logo')
   })
 })
 
@@ -149,6 +156,7 @@ describe('profile form', () => {
       logoRef: null,
       coverRef: null,
       links: [],
+      metrics: [],
     })
   })
 
@@ -224,5 +232,27 @@ describe('markdown-lite (copy of renown.id)', () => {
         ],
       },
     ])
+  })
+})
+
+describe('renderImage encoder fallback', () => {
+  it('retries as JPEG when the browser answers a WebP request with PNG', async () => {
+    const asked: string[] = []
+    const canvas = {
+      width: 0,
+      height: 0,
+      getContext: () => ({ drawImage: () => {}, imageSmoothingQuality: '' }),
+      toBlob: (cb: (b: Blob | null) => void, type: string) => {
+        asked.push(type)
+        cb(new Blob(['x'], { type: type === 'image/jpeg' ? 'image/jpeg' : 'image/png' }))
+      },
+    }
+    const spy = vi.spyOn(document, 'createElement').mockReturnValue(canvas as unknown as HTMLElement)
+    const image = { naturalWidth: 800, naturalHeight: 800 } as HTMLImageElement
+    const blob = await renderImage(image, 'logo', INITIAL_CROP)
+    spy.mockRestore()
+    expect(blob.type).toBe('image/jpeg')
+    expect(asked[0]).toBe('image/webp')
+    expect(asked).toContain('image/jpeg')
   })
 })

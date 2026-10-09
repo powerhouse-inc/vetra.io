@@ -77,6 +77,14 @@ describe('AppProfileTab', () => {
     await waitFor(() => expect(mutateAsync).toHaveBeenCalledWith({ name: 'Vault' }))
   })
 
+  it('does not call a name-prefilled empty profile unsaved', () => {
+    profile = { ...profile, data: null }
+    render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
+    expect(screen.queryByText('Unsaved changes')).toBeNull()
+    fireEvent.change(screen.getByLabelText('Tagline'), { target: { value: 'x' } })
+    expect(screen.getByText('Unsaved changes')).toBeTruthy()
+  })
+
   it('blocks saving an unsafe website and says why', () => {
     render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
     fireEvent.change(screen.getByLabelText('Website'), { target: { value: 'javascript:alert(1)' } })

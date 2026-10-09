@@ -8,7 +8,8 @@ export type PublisherApp = {
   id: string
   name: string
   status: string
-  /** The app's Renown identity (did:key); null before one is registered. Older servers omit it. */
+  /** The app's Renown identity (did:key); null before one is registered. Never absent from fetchPublisherApps: for a server that does not
+   * serve the field yet, the client retries without it and fills null. */
   identityDid?: string | null
 }
 
@@ -180,4 +181,16 @@ export type UpdateAppProfileInput = {
   logoRef?: string
   coverRef?: string
   links?: PublisherAppLinkInput[]
+  /** The whole metric list; [] clears. */
+  metrics?: PublisherAppMetricInput[]
+}
+
+export type PublisherAppMetricInput = {
+  id: string
+  key: string
+  label: string
+  unit: string | null
+  description: string | null
+  aggregation: 'SUM' | 'MAX' | 'AVG' | 'COUNT_USERS'
+  public: boolean
 }

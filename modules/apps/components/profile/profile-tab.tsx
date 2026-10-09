@@ -8,6 +8,7 @@ import {
   RotateCcw,
   TriangleAlert,
 } from 'lucide-react'
+import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { toast } from 'sonner'
 
@@ -31,11 +32,13 @@ import {
   type AppProfileForm,
 } from '../../lib/app-profile/form'
 import type { ImageKind } from '../../lib/app-profile/image'
+import { METRIC_LIMITS } from '../../lib/app-profile/metrics'
 import { appPageUrl } from '../../lib/app-profile/renown'
 import { Banner } from '../banner'
 import { AppProfilePreview, type ImagePreviews } from './app-profile-preview'
 import { ImageField } from './image-field'
 import { LinksEditor } from './links-editor'
+import { MetricsEditor } from './metrics-editor'
 import { describedBy, ProfileField } from './profile-field'
 import { useUnsavedChangesGuard } from './use-unsaved-guard'
 
@@ -136,9 +139,10 @@ function ProfileForm({
 
   const problems = formProblems(form)
   const changes = changedFields(initial, form)
-  const dirty = hasChanges(changes)
+  // Dirty is measured against the prefilled baseline; saving still sends what differs from Renown's copy.
+  const dirty = hasChanges(changedFields(fresh, form))
   const busy = uploading.logo || uploading.cover || update.isPending
-  const canSave = dirty && !busy && Object.keys(problems).length === 0
+  const canSave = hasChanges(changes) && !busy && Object.keys(problems).length === 0
   const documentId = stored?.documentId ?? null
   const saving = useRef(false)
   const previewsRef = useRef<ImagePreviews>(NO_PREVIEWS)
@@ -349,6 +353,29 @@ function ProfileForm({
             links={form.links}
             onChange={(links) => set('links', links)}
             error={errorFor('links')}
+          />
+        </section>
+
+        <section className="space-y-3" aria-labelledby="profile-metrics-heading">
+          <div className="flex items-baseline justify-between gap-3">
+            <h3 id="profile-metrics-heading" className="text-sm font-medium">
+              Metrics
+            </h3>
+            <span className="text-muted-foreground text-xs tabular-nums">
+              {form.metrics.length}/{METRIC_LIMITS.metrics}
+            </span>
+          </div>
+          <p className="text-muted-foreground text-xs">
+            What your environments report for each user, and how Renown shows it on the app page and
+            on users’ profiles.{' '}
+            <Link href="/docs/app-stats" className="text-primary hover:underline">
+              How to report stats
+            </Link>
+          </p>
+          <MetricsEditor
+            metrics={form.metrics}
+            onChange={(metrics) => set('metrics', metrics)}
+            error={errorFor('metrics')}
           />
         </section>
 

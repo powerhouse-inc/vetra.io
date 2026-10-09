@@ -192,3 +192,37 @@ describe('nested selections', () => {
     expect(calls[0].query).toContain('licenses(appId: $appId, status: $status)')
   })
 })
+
+describe('fetchPublisherApps identityDid downgrade', () => {
+  it('retries without identityDid on an old switchboard, and remembers it', async () => {
+    api.resetIdentityDidSupport()
+    const queries: string[] = []
+    const fetchImpl = (async (_u: string, init: RequestInit) => {
+      const { query } = JSON.parse(init.body as string)
+      queries.push(query)
+      if (query.includes('identityDid'))
+        return new Response(
+          JSON.stringify({ errors: [{ message: 'Cannot query field "identityDid" on type "PublisherApp".' }] }),
+          { status: 400 },
+        )
+      return new Response(
+        JSON.stringify({ data: { vetraPublisher: { myApps: [{ id: 'a', name: 'A', status: 'ACTIVE' }] } } }),
+        { status: 200 },
+      )
+    }) as unknown as FetchLike
+    const apps = await api.fetchPublisherApps('t', fetchImpl)
+    expect(apps).toEqual([{ id: 'a', name: 'A', status: 'ACTIVE', identityDid: null }])
+    expect(queries).toHaveLength(2)
+    await api.fetchPublisherApps('t', fetchImpl)
+    expect(queries).toHaveLength(3)
+    expect(queries[2]).not.toContain('identityDid')
+    api.resetIdentityDidSupport()
+  })
+
+  it('does not swallow unrelated errors', async () => {
+    api.resetIdentityDidSupport()
+    const fetchImpl = (async () =>
+      new Response(JSON.stringify({ errors: [{ message: 'boom' }] }), { status: 200 })) as unknown as FetchLike
+    await expect(api.fetchPublisherApps('t', fetchImpl)).rejects.toThrow('boom')
+  })
+})

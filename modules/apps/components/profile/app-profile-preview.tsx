@@ -34,12 +34,12 @@ export function AppProfilePreview({
   const tagline = form.tagline.trim()
   const description = form.description.trim()
   const coverSrc =
-    previews.cover ?? (form.coverRef && documentId ? renownMediaUrl(documentId, 'cover') : null)
+    previews.cover ?? (form.coverRef && documentId ? renownMediaUrl(documentId, 'cover', form.coverRef) : null)
   const logoSrc =
     previews.logo ??
     (form.logoRef
       ? documentId
-        ? renownMediaUrl(documentId, 'logo')
+        ? renownMediaUrl(documentId, 'logo', form.logoRef)
         : null
       : safeLegacyLogo(legacyLogo))
   const links = form.links.filter((link) => link.label.trim() && isHttpUrl(link.url.trim()))
