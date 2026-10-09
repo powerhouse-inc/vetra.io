@@ -88,7 +88,13 @@ const isLicensingTab = (t: AppTab): boolean => (LICENSING_TABS as readonly strin
  * Tabs of a licensing-only app: one that exists only as a licensing document (Vetra Studio),
  * with no repository, so no Overview, Deployments, Artifacts or Settings. Opens on Plans.
  */
-export const LICENSING_ONLY_TABS = ['profile', 'templates', 'plans', 'holders', 'invite-codes'] as const
+export const LICENSING_ONLY_TABS = [
+  'profile',
+  'templates',
+  'plans',
+  'holders',
+  'invite-codes',
+] as const
 type LicensingOnlyTab = (typeof LICENSING_ONLY_TABS)[number]
 const LICENSING_ONLY_DEFAULT: LicensingOnlyTab = 'plans'
 

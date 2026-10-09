@@ -20,7 +20,12 @@ const STORED: RenownAppProfile = {
   links: [{ id: 'l1', label: 'Docs', url: 'https://docs.vault.example' }],
 }
 
-let profile: { data: RenownAppProfile | null; isPending: boolean; error: Error | null; refetch: () => void }
+let profile: {
+  data: RenownAppProfile | null
+  isPending: boolean
+  error: Error | null
+  refetch: () => void
+}
 const mutateAsync = vi.fn()
 
 vi.mock('../hooks/use-app-profile', () => ({
@@ -94,7 +99,12 @@ describe('AppProfileTab', () => {
 
   it('shows a field error from the server next to the field', async () => {
     mutateAsync.mockRejectedValue(
-      new PublisherApiError('INVALID_INPUT', 'Description must be at most 2000 characters', 200, 'description'),
+      new PublisherApiError(
+        'INVALID_INPUT',
+        'Description must be at most 2000 characters',
+        200,
+        'description',
+      ),
     )
     render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
     fireEvent.change(screen.getByLabelText('Description'), { target: { value: 'Shorter' } })
@@ -114,12 +124,16 @@ describe('AppProfileTab', () => {
     render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
     fireEvent.click(screen.getByRole('button', { name: 'Add link' }))
     fireEvent.change(screen.getByLabelText('Link 2 label'), { target: { value: 'Blog' } })
-    fireEvent.change(screen.getByLabelText('Link 2 URL'), { target: { value: 'https://blog.example' } })
+    fireEvent.change(screen.getByLabelText('Link 2 URL'), {
+      target: { value: 'https://blog.example' },
+    })
     fireEvent.click(screen.getByRole('button', { name: 'Move link 2 up' }))
     fireEvent.click(screen.getByRole('button', { name: 'Remove link 2' }))
     fireEvent.click(saveButton())
     await waitFor(() =>
-      expect(mutateAsync).toHaveBeenCalledWith({ links: [{ id: expect.any(String), label: 'Blog', url: 'https://blog.example' }] }),
+      expect(mutateAsync).toHaveBeenCalledWith({
+        links: [{ id: expect.any(String), label: 'Blog', url: 'https://blog.example' }],
+      }),
     )
   })
 })
@@ -184,7 +198,9 @@ describe('AppProfileCard', () => {
     expect(screen.getByRole('heading', { name: 'Vault' })).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: /Edit profile/ }))
     expect(onEdit).toHaveBeenCalledTimes(1)
-    expect(screen.getByRole('link', { name: /View on Renown/ }).getAttribute('href')).toBe(`https://www.renown.id/app/${DID}`)
+    expect(screen.getByRole('link', { name: /View on Renown/ }).getAttribute('href')).toBe(
+      `https://www.renown.id/app/${DID}`,
+    )
   })
 
   it('invites setting up a missing profile, and renders nothing without an identity', () => {

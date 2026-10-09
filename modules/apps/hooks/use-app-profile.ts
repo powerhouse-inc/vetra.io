@@ -27,7 +27,8 @@ export function useUpdateAppProfile(appId: string, appDid: string | null | undef
   return useMutation<boolean, Error, AppProfileChanges>({
     mutationFn: async (changes) => updateAppProfile({ appId, ...changes }, await token()),
     // Returned so the mutation stays pending until the refetch lands (no "Unsaved changes" flash).
-    onSuccess: () => (appDid ? qc.invalidateQueries({ queryKey: appProfileKey(appDid) }) : undefined),
+    onSuccess: () =>
+      appDid ? qc.invalidateQueries({ queryKey: appProfileKey(appDid) }) : undefined,
   })
 }
 

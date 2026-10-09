@@ -253,9 +253,20 @@ export async function fetchPublisherApps(
 ): Promise<PublisherApp[]> {
   if (identityDidSupported) {
     try {
-      return await read<PublisherApp[]>('myApps', '', `myApps { ${APP_FIELDS} }`, {}, token, fetchImpl)
+      return await read<PublisherApp[]>(
+        'myApps',
+        '',
+        `myApps { ${APP_FIELDS} }`,
+        {},
+        token,
+        fetchImpl,
+      )
     } catch (err) {
-      if (!(isPublisherError(err) && /identityDid/.test(err.message) && /Cannot query field/i.test(err.message)))
+      if (!(
+        isPublisherError(err) &&
+        /identityDid/.test(err.message) &&
+        /Cannot query field/i.test(err.message)
+      ))
         throw err
       identityDidSupported = false
     }

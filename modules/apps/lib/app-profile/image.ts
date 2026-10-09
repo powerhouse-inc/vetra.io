@@ -68,7 +68,12 @@ function geometry(width: number, height: number, aspect: number, zoom: number) {
 }
 
 /** The largest centred `aspect` (width/height) region, shrunk by zoom and moved by pan; always inside the image. */
-export function cropRegion(width: number, height: number, aspect: number, crop: CropState): CropRegion {
+export function cropRegion(
+  width: number,
+  height: number,
+  aspect: number,
+  crop: CropState,
+): CropRegion {
   const { sw, sh, slackX, slackY } = geometry(width, height, aspect, crop.zoom)
   return {
     sx: Math.round(slackX + clamp(crop.panX, -1, 1) * slackX),
@@ -99,7 +104,11 @@ export function panBy(
 
 function encode(canvas: HTMLCanvasElement, type: string, quality: number): Promise<Blob> {
   return new Promise<Blob>((resolve, reject) =>
-    canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('Could not encode the image.'))), type, quality),
+    canvas.toBlob(
+      (b) => (b ? resolve(b) : reject(new Error('Could not encode the image.'))),
+      type,
+      quality,
+    ),
   )
 }
 
@@ -108,7 +117,11 @@ function encode(canvas: HTMLCanvasElement, type: string, quality: number): Promi
  * browser cannot encode WebP and silently answers PNG, e.g. Safari), lowering the
  * quality until it fits the cap.
  */
-export async function renderImage(image: HTMLImageElement, kind: ImageKind, crop: CropState): Promise<Blob> {
+export async function renderImage(
+  image: HTMLImageElement,
+  kind: ImageKind,
+  crop: CropState,
+): Promise<Blob> {
   const spec = IMAGE_SPECS[kind]
   const { sx, sy, sw, sh } = cropRegion(image.naturalWidth, image.naturalHeight, spec.aspect, crop)
   const canvas = document.createElement('canvas')

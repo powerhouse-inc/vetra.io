@@ -8,7 +8,14 @@ import {
   hasChanges,
   type AppProfileForm,
 } from '../lib/app-profile/form'
-import { cropRegion, IMAGE_SPECS, INITIAL_CROP, panBy, renderImage, sourceImageProblem } from '../lib/app-profile/image'
+import {
+  cropRegion,
+  IMAGE_SPECS,
+  INITIAL_CROP,
+  panBy,
+  renderImage,
+  sourceImageProblem,
+} from '../lib/app-profile/image'
 import { parseMarkdownLite } from '../lib/app-profile/markdown-lite'
 import {
   appPageUrl,
@@ -49,8 +56,12 @@ describe('Renown URLs', () => {
 
   it('versions media URLs from the attachment ref hash', () => {
     const ref = `attachment://v1:${'ab12'.repeat(16)}`
-    expect(renownMediaUrl('doc-1', 'logo', ref)).toBe('https://www.renown.id/media/doc-1/logo?v=ab12ab12ab12')
-    expect(renownMediaUrl('doc-1', 'logo', 'https://x.example/a.png')).toBe('https://www.renown.id/media/doc-1/logo')
+    expect(renownMediaUrl('doc-1', 'logo', ref)).toBe(
+      'https://www.renown.id/media/doc-1/logo?v=ab12ab12ab12',
+    )
+    expect(renownMediaUrl('doc-1', 'logo', 'https://x.example/a.png')).toBe(
+      'https://www.renown.id/media/doc-1/logo',
+    )
     expect(renownMediaUrl('doc-1', 'logo', null)).toBe('https://www.renown.id/media/doc-1/logo')
   })
 })
@@ -58,13 +69,21 @@ describe('Renown URLs', () => {
 describe('fetchAppProfile', () => {
   it('reads a profile, null for none, and throws on a GraphQL error', async () => {
     const answer = (body: unknown) =>
-      vi.fn(async (_url: string, _init: RequestInit) => new Response(JSON.stringify(body), { status: 200 }))
+      vi.fn(
+        async (_url: string, _init: RequestInit) =>
+          new Response(JSON.stringify(body), { status: 200 }),
+      )
     const ok = answer({ data: { appProfile: PROFILE } })
     expect(await fetchAppProfile(DID, ok as unknown as typeof fetch)).toEqual(PROFILE)
-    const sent = JSON.parse(ok.mock.calls[0]![1].body as string) as { query: string; variables: unknown }
+    const sent = JSON.parse(ok.mock.calls[0]![1].body as string) as {
+      query: string
+      variables: unknown
+    }
     expect(sent.variables).toEqual({ appDid: DID })
     expect(sent.query).toContain('appProfile(appDid: $appDid)')
-    expect(await fetchAppProfile(DID, answer({ data: { appProfile: null } }) as unknown as typeof fetch)).toBeNull()
+    expect(
+      await fetchAppProfile(DID, answer({ data: { appProfile: null } }) as unknown as typeof fetch),
+    ).toBeNull()
     await expect(
       fetchAppProfile(DID, answer({ errors: [{ message: 'boom' }] }) as unknown as typeof fetch),
     ).rejects.toThrow('boom')
@@ -74,20 +93,49 @@ describe('fetchAppProfile', () => {
 describe('image crop math', () => {
   it('accepts PNG, JPEG and WebP sources up to 2 MB only', () => {
     expect(sourceImageProblem({ type: 'image/png', size: 2 * 1024 * 1024 })).toBeNull()
-    expect(sourceImageProblem({ type: 'image/svg+xml', size: 10 })).toBe('Choose a PNG, JPEG or WebP image.')
-    expect(sourceImageProblem({ type: 'image/webp', size: 2 * 1024 * 1024 + 1 })).toBe('Choose an image of at most 2 MB.')
+    expect(sourceImageProblem({ type: 'image/svg+xml', size: 10 })).toBe(
+      'Choose a PNG, JPEG or WebP image.',
+    )
+    expect(sourceImageProblem({ type: 'image/webp', size: 2 * 1024 * 1024 + 1 })).toBe(
+      'Choose an image of at most 2 MB.',
+    )
   })
 
   it('selects the largest centred region of the aspect ratio, zoomed and panned', () => {
-    expect(IMAGE_SPECS.logo).toMatchObject({ aspect: 1, width: 512, height: 512, maxBytes: 1024 * 1024 })
-    expect(IMAGE_SPECS.cover).toMatchObject({ aspect: 3, width: 1500, height: 500, maxBytes: 2 * 1024 * 1024 })
+    expect(IMAGE_SPECS.logo).toMatchObject({
+      aspect: 1,
+      width: 512,
+      height: 512,
+      maxBytes: 1024 * 1024,
+    })
+    expect(IMAGE_SPECS.cover).toMatchObject({
+      aspect: 3,
+      width: 1500,
+      height: 500,
+      maxBytes: 2 * 1024 * 1024,
+    })
     expect(cropRegion(1000, 1000, 3, INITIAL_CROP)).toEqual({ sx: 0, sy: 333, sw: 1000, sh: 333 })
     expect(cropRegion(3000, 1000, 3, INITIAL_CROP)).toEqual({ sx: 0, sy: 0, sw: 3000, sh: 1000 })
     expect(cropRegion(1000, 500, 1, INITIAL_CROP)).toEqual({ sx: 250, sy: 0, sw: 500, sh: 500 })
-    expect(cropRegion(1000, 1000, 1, { zoom: 2, panX: 0, panY: 0 })).toEqual({ sx: 250, sy: 250, sw: 500, sh: 500 })
-    expect(cropRegion(1000, 1000, 1, { zoom: 2, panX: 1, panY: -1 })).toEqual({ sx: 500, sy: 0, sw: 500, sh: 500 })
+    expect(cropRegion(1000, 1000, 1, { zoom: 2, panX: 0, panY: 0 })).toEqual({
+      sx: 250,
+      sy: 250,
+      sw: 500,
+      sh: 500,
+    })
+    expect(cropRegion(1000, 1000, 1, { zoom: 2, panX: 1, panY: -1 })).toEqual({
+      sx: 500,
+      sy: 0,
+      sw: 500,
+      sh: 500,
+    })
     // Out-of-range values are clamped.
-    expect(cropRegion(1000, 1000, 1, { zoom: 9, panX: 5, panY: 0 })).toEqual({ sx: 750, sy: 375, sw: 250, sh: 250 })
+    expect(cropRegion(1000, 1000, 1, { zoom: 9, panX: 5, panY: 0 })).toEqual({
+      sx: 750,
+      sy: 375,
+      sw: 250,
+      sh: 250,
+    })
   })
 
   it('pans by screen pixels within the image', () => {
@@ -111,34 +159,62 @@ describe('uploadRenownImage', () => {
             JSON.stringify({
               ref: `attachment://v1:${SHA}`,
               reservationId: 'r1',
-              uploadTarget: { method: 'PUT', url: 'https://s3.example/put', headers: { 'content-type': 'image/webp' } },
+              uploadTarget: {
+                method: 'PUT',
+                url: 'https://s3.example/put',
+                headers: { 'content-type': 'image/webp' },
+              },
             }),
             { status: 201 },
           )
         : new Response(null, { status: 200 }),
     )
-    expect(await uploadRenownImage(blob(), 'logo', 'tok', fetchImpl as unknown as typeof fetch)).toBe(
-      `attachment://v1:${SHA}`,
-    )
+    expect(
+      await uploadRenownImage(blob(), 'logo', 'tok', fetchImpl as unknown as typeof fetch),
+    ).toBe(`attachment://v1:${SHA}`)
     const [reserveUrl, reserve] = fetchImpl.mock.calls[0]!
-    expect(reserveUrl).toBe('https://switchboard.renown.vetra.io/api/@powerhousedao/renown-package/media/uploads')
+    expect(reserveUrl).toBe(
+      'https://switchboard.renown.vetra.io/api/@powerhousedao/renown-package/media/uploads',
+    )
     expect(reserve.headers).toMatchObject({ authorization: 'Bearer tok' })
-    expect(JSON.parse(reserve.body as string)).toEqual({ purpose: 'logo', mimeType: 'image/webp', sizeBytes: 3, sha256: SHA })
+    expect(JSON.parse(reserve.body as string)).toEqual({
+      purpose: 'logo',
+      mimeType: 'image/webp',
+      sizeBytes: 3,
+      sha256: SHA,
+    })
     const [putUrl, put] = fetchImpl.mock.calls[1]!
     expect(putUrl).toBe('https://s3.example/put')
     expect(put).toMatchObject({ method: 'PUT', headers: { 'content-type': 'image/webp' } })
   })
 
   it('skips the PUT for bytes Renown already has, and reports refusals with their code', async () => {
-    const deduped = vi.fn(async () => new Response(JSON.stringify({ ref: 'attachment://v1:x', deduped: true }), { status: 200 }))
-    expect(await uploadRenownImage(blob(), 'cover', 'tok', deduped as unknown as typeof fetch)).toBe('attachment://v1:x')
-    expect(deduped).toHaveBeenCalledTimes(1)
-    const refused = vi.fn(async () =>
-      new Response(JSON.stringify({ code: 'TOO_LARGE', error: 'A logo may be at most 1048576 bytes' }), { status: 413 }),
+    const deduped = vi.fn(
+      async () =>
+        new Response(JSON.stringify({ ref: 'attachment://v1:x', deduped: true }), { status: 200 }),
     )
-    const error = await uploadRenownImage(blob(), 'logo', 'tok', refused as unknown as typeof fetch).catch((e: unknown) => e)
+    expect(
+      await uploadRenownImage(blob(), 'cover', 'tok', deduped as unknown as typeof fetch),
+    ).toBe('attachment://v1:x')
+    expect(deduped).toHaveBeenCalledTimes(1)
+    const refused = vi.fn(
+      async () =>
+        new Response(
+          JSON.stringify({ code: 'TOO_LARGE', error: 'A logo may be at most 1048576 bytes' }),
+          { status: 413 },
+        ),
+    )
+    const error = await uploadRenownImage(
+      blob(),
+      'logo',
+      'tok',
+      refused as unknown as typeof fetch,
+    ).catch((e: unknown) => e)
     expect(error).toBeInstanceOf(ImageUploadError)
-    expect(error).toMatchObject({ code: 'TOO_LARGE', message: 'A logo may be at most 1048576 bytes' })
+    expect(error).toMatchObject({
+      code: 'TOO_LARGE',
+      message: 'A logo may be at most 1048576 bytes',
+    })
   })
 })
 
@@ -146,7 +222,12 @@ describe('profile form', () => {
   const base: AppProfileForm = formFromProfile(PROFILE)
 
   it('starts from the stored profile, or empty', () => {
-    expect(base).toMatchObject({ name: 'Vault', category: 'Tools', logoRef: 'attachment://v1:aa', coverRef: null })
+    expect(base).toMatchObject({
+      name: 'Vault',
+      category: 'Tools',
+      logoRef: 'attachment://v1:aa',
+      coverRef: null,
+    })
     expect(formFromProfile(null)).toEqual({
       name: '',
       tagline: '',
@@ -170,7 +251,10 @@ describe('profile form', () => {
         category: '',
         logoRef: null,
         coverRef: 'attachment://v1:bb',
-        links: [{ id: 'l1', label: ' Docs ', url: 'https://docs.example' }, { id: 'l2', label: 'Blog', url: 'https://blog.example' }],
+        links: [
+          { id: 'l1', label: ' Docs ', url: 'https://docs.example' },
+          { id: 'l2', label: 'Blog', url: 'https://blog.example' },
+        ],
       }),
     ).toEqual({
       name: 'Vault Pro',
@@ -204,10 +288,14 @@ describe('profile form', () => {
       category: 'At most 40 characters.',
       links: 'Every link needs an http(s) URL.',
     })
-    expect(formProblems({ ...base, links: [{ id: 'x', label: ' ', url: 'https://x.example' }] }).links).toBe(
-      'Every link needs a label of 1–40 characters.',
-    )
-    const nine = Array.from({ length: 9 }, (_, i) => ({ id: `${i}`, label: 'L', url: 'https://x.example' }))
+    expect(
+      formProblems({ ...base, links: [{ id: 'x', label: ' ', url: 'https://x.example' }] }).links,
+    ).toBe('Every link needs a label of 1–40 characters.')
+    const nine = Array.from({ length: 9 }, (_, i) => ({
+      id: `${i}`,
+      label: 'L',
+      url: 'https://x.example',
+    }))
     expect(formProblems({ ...base, links: nine }).links).toBe('At most 8 links.')
   })
 
@@ -247,7 +335,9 @@ describe('renderImage encoder fallback', () => {
         cb(new Blob(['x'], { type: type === 'image/jpeg' ? 'image/jpeg' : 'image/png' }))
       },
     }
-    const spy = vi.spyOn(document, 'createElement').mockReturnValue(canvas as unknown as HTMLElement)
+    const spy = vi
+      .spyOn(document, 'createElement')
+      .mockReturnValue(canvas as unknown as HTMLElement)
     const image = { naturalWidth: 800, naturalHeight: 800 } as HTMLImageElement
     const blob = await renderImage(image, 'logo', INITIAL_CROP)
     spy.mockRestore()

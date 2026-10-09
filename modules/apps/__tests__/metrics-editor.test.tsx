@@ -114,8 +114,19 @@ describe('Profile tab metrics', () => {
   })
 
   it('moves a metric and keeps keyboard focus on a live control at the edge', () => {
-    const STREAK = { ...NOTES, id: 'm2', key: 'streak', label: 'Best streak', aggregation: 'MAX' as const }
-    profile = { data: { ...STORED, metrics: [NOTES, STREAK] }, isPending: false, error: null, refetch: vi.fn() }
+    const STREAK = {
+      ...NOTES,
+      id: 'm2',
+      key: 'streak',
+      label: 'Best streak',
+      aggregation: 'MAX' as const,
+    }
+    profile = {
+      data: { ...STORED, metrics: [NOTES, STREAK] },
+      isPending: false,
+      error: null,
+      refetch: vi.fn(),
+    }
     render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
     const btn = (name: string) => screen.getByRole('button', { name }) as HTMLButtonElement
     expect(btn('Move metric 1 up').disabled).toBe(true)

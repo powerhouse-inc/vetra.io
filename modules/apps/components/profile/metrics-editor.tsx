@@ -71,7 +71,11 @@ export function MetricsEditor({
       {metrics.map((metric, index) => {
         const n = index + 1
         return (
-          <fieldset key={metric.id} data-metric-id={metric.id} className="border-border space-y-3 rounded-xl border p-4">
+          <fieldset
+            key={metric.id}
+            data-metric-id={metric.id}
+            className="border-border space-y-3 rounded-xl border p-4"
+          >
             <legend className="sr-only">Metric {n}</legend>
             <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_7rem]">
               <Input
