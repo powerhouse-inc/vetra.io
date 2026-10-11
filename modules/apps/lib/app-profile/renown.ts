@@ -33,7 +33,7 @@ export function mediaVersion(ref: string | null | undefined): string | null {
 /** Stable URL of a profile image (302s to storage; 404 when unset). Pass the ref to bust caches on replace. */
 export function renownMediaUrl(
   documentId: string,
-  field: 'logo' | 'cover',
+  field: 'avatar' | 'logo' | 'cover',
   ref?: string | null,
 ): string {
   const version = mediaVersion(ref)

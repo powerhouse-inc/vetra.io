@@ -22,6 +22,7 @@ import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useSyncExternalStore, useState } from 'react'
 import { useOpenLogin } from '@/modules/shared/components/renown/login-modal-context'
+import { useRenownAvatarUrl } from '@/modules/shared/hooks/use-renown-avatar'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -67,6 +68,7 @@ function CopyAddressButton({ address }: { address: string }) {
 
 function RenownButton() {
   const auth = useRenownAuthAsync()
+  const avatarUrl = useRenownAvatarUrl()
   const openLogin = useOpenLogin()
   const { resolvedTheme, setTheme } = useTheme()
   const mounted = useSyncExternalStore(
@@ -92,7 +94,7 @@ function RenownButton() {
         <DropdownMenuTrigger asChild>
           <button type="button" className={btnSecondary}>
             <Avatar className="h-5 w-5">
-              <AvatarImage src={auth.avatarUrl} alt={auth.displayName ?? 'Account'} />
+              <AvatarImage src={avatarUrl} alt={auth.displayName ?? 'Account'} />
               <AvatarFallback className="bg-transparent p-0">
                 <User className="h-4 w-4" />
               </AvatarFallback>
@@ -107,7 +109,7 @@ function RenownButton() {
           <DropdownMenuLabel className="px-3 py-2">
             <div className="flex items-center gap-2.5">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={auth.avatarUrl} alt={auth.displayName ?? 'Account'} />
+                <AvatarImage src={avatarUrl} alt={auth.displayName ?? 'Account'} />
                 <AvatarFallback>
                   <User className="h-4 w-4" />
                 </AvatarFallback>

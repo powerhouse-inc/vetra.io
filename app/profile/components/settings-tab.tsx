@@ -4,6 +4,7 @@ import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import { Avatar, AvatarFallback, AvatarImage } from '@/modules/shared/components/ui/avatar'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Card, CardContent } from '@/modules/shared/components/ui/card'
+import { useRenownAvatarUrl } from '@/modules/shared/hooks/use-renown-avatar'
 
 function Row({ label, value }: { label: string; value: string | undefined | null }) {
   return (
@@ -20,6 +21,7 @@ function Row({ label, value }: { label: string; value: string | undefined | null
 
 export function SettingsTab() {
   const auth = useRenownAuth()
+  const avatarUrl = useRenownAvatarUrl()
   // `status` stays "initial" after a reload even with a restored user, so key
   // off the user rather than the resolved status.
   if (!auth.user) return null
@@ -29,7 +31,7 @@ export function SettingsTab() {
       <CardContent className="flex flex-col gap-6 p-6">
         <div className="flex items-center gap-4">
           <Avatar className="size-16">
-            {auth.avatarUrl && <AvatarImage src={auth.avatarUrl} alt={auth.displayName ?? ''} />}
+            <AvatarImage src={avatarUrl} alt={auth.displayName ?? ''} />
             <AvatarFallback>
               <IdCard className="size-7" />
             </AvatarFallback>
