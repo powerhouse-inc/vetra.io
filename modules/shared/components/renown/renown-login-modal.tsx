@@ -12,7 +12,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/modules/shared/components/ui/dialog'
-import { rememberLoginMethod } from '@/modules/shared/lib/wallet-switch'
+import { setPendingLoginMethod } from '@/modules/shared/lib/wallet-switch'
 
 // Open state lives in LoginModalProvider (React, not the URL). `from` carries the
 // page a proxy redirect came from, used for the post-login navigation.
@@ -33,8 +33,9 @@ export function RenownLoginModal() {
   // Trigger the method's adapter; its own modal (Privy, RainbowKit) opens on top.
   const startLogin = (method?: LoginMethod) => {
     setActive(method ?? null)
-    // WalletSwitchGuard only follows the browser wallet for wallet sign-ins.
-    rememberLoginMethod(method)
+    // Stored by WalletSwitchGuard once the sign-in succeeds: it only follows the
+    // browser wallet for wallet sign-ins.
+    setPendingLoginMethod(method)
     login(undefined, method)
   }
 

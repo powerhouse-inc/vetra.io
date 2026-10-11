@@ -12,6 +12,7 @@ vi.mock('@powerhousedao/reactor-browser', () => ({
   useRenownAuthAsync: () => ({ ...auth, logout, login }),
 }))
 
+import { setPendingLoginMethod } from '@/modules/shared/lib/wallet-switch'
 import { WalletSwitchGuard } from '../wallet-switch-guard'
 
 type Listener = (accounts: string[]) => void
@@ -128,6 +129,52 @@ describe('WalletSwitchGuard', () => {
     render(<WalletSwitchGuard />)
     await act(() => Promise.resolve())
     expect(screen.queryByRole('alertdialog')).toBeNull()
+  })
+
+  it('forgets "stay" when the session ends', async () => {
+    const eth = fakeEthereum([OLD])
+    install(eth)
+    const { rerender } = render(<WalletSwitchGuard />)
+    await waitFor(() => expect(eth.listenerCount()).toBe(1))
+    act(() => eth.switchTo([NEW]))
+    fireEvent.click(await screen.findByRole('button', { name: 'Stay as 0xf39F…2266' }))
+    await waitFor(() => expect(screen.queryByRole('alertdialog')).toBeNull())
+
+    auth = { state: 'unauthenticated', address: undefined }
+    rerender(<WalletSwitchGuard />)
+    localStorage.setItem('vetra:renown-login-method', 'wallet')
+    auth = { state: 'authenticated', address: OLD }
+    rerender(<WalletSwitchGuard />)
+    expect(await screen.findByRole('alertdialog')).toBeTruthy()
+  })
+
+  it('keeps the dialog usable when signing out fails', async () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {})
+    logout.mockImplementationOnce(() => Promise.reject(new Error('network down')))
+    const eth = fakeEthereum([NEW])
+    install(eth)
+    render(<WalletSwitchGuard />)
+    const signIn = await screen.findByRole('button', { name: 'Sign in as 0x7099…79C8' })
+    fireEvent.click(signIn)
+    await waitFor(() => expect(warn).toHaveBeenCalled())
+    expect(login).not.toHaveBeenCalled()
+    await waitFor(() => expect((signIn as HTMLButtonElement).disabled).toBe(false))
+    expect(screen.getByRole('alertdialog')).toBeTruthy()
+    warn.mockRestore()
+  })
+
+  it('stores the login method on a successful sign-in and clears it on sign-out', async () => {
+    localStorage.clear()
+    auth = { state: 'unauthenticated', address: undefined }
+    const { rerender } = render(<WalletSwitchGuard />)
+    setPendingLoginMethod('email')
+    expect(localStorage.getItem('vetra:renown-login-method')).toBeNull()
+    auth = { state: 'authenticated', address: OLD }
+    rerender(<WalletSwitchGuard />)
+    await waitFor(() => expect(localStorage.getItem('vetra:renown-login-method')).toBe('email'))
+    auth = { state: 'unauthenticated', address: undefined }
+    rerender(<WalletSwitchGuard />)
+    await waitFor(() => expect(localStorage.getItem('vetra:renown-login-method')).toBeNull())
   })
 
   it('unsubscribes on unmount', async () => {

@@ -4,11 +4,20 @@ import React from 'react'
 import { Avatar, AvatarFallback, AvatarImage } from '../avatar'
 
 /** Pretends the browser already settled the <img> before React attached its handlers (SSR). */
-function stubImage({ complete, naturalWidth }: { complete: boolean; naturalWidth: number }) {
+function stubImage({
+  complete,
+  naturalWidth,
+  naturalHeight = naturalWidth,
+}: {
+  complete: boolean
+  naturalWidth: number
+  naturalHeight?: number
+}) {
   const proto = HTMLImageElement.prototype
   const restore = [
     vi.spyOn(proto, 'complete', 'get').mockReturnValue(complete),
     vi.spyOn(proto, 'naturalWidth', 'get').mockReturnValue(naturalWidth),
+    vi.spyOn(proto, 'naturalHeight', 'get').mockReturnValue(naturalHeight),
   ]
   return () => restore.forEach((spy) => spy.mockRestore())
 }
@@ -41,6 +50,32 @@ describe('AvatarImage', () => {
     const { container, getByText } = renderAvatar('https://x/broken.png')
     expect(container.querySelector('img')).toBeNull()
     expect(getByText('FB')).toBeTruthy()
+  })
+
+  it('keeps a loaded image that reports no width but a height (some SVGs)', () => {
+    restore = stubImage({ complete: true, naturalWidth: 0, naturalHeight: 24 })
+    const { getByRole } = renderAvatar('https://x/icon.svg')
+    expect(getByRole('img', { name: 'Me' })).toBeTruthy()
+  })
+
+  it("passes the caller's ref through and still recovers a pre-hydration failure", () => {
+    restore = stubImage({ complete: true, naturalWidth: 0 })
+    const callerRef = React.createRef<HTMLImageElement>()
+    const { container } = render(
+      <Avatar>
+        <AvatarImage ref={callerRef} src="https://x/broken.png" alt="Me" />
+        <AvatarFallback>FB</AvatarFallback>
+      </Avatar>,
+    )
+    expect(container.querySelector('img')).toBeNull()
+    restore()
+    restore = stubImage({ complete: false, naturalWidth: 0 })
+    const ok = render(
+      <Avatar>
+        <AvatarImage ref={callerRef} src="https://x/ok.png" alt="Me2" />
+      </Avatar>,
+    )
+    expect(callerRef.current).toBe(ok.getByRole('img', { name: 'Me2' }))
   })
 
   it('leaves a still-loading image alone', () => {

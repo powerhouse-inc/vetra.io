@@ -17,34 +17,51 @@ function Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimi
 
 // Radix's Image renders null until an onload fires in the browser, so the server
 // HTML never carries the src and every avatar paints its fallback first.
-function AvatarImage({ className, alt = '', src, onError, ...props }: React.ComponentProps<'img'>) {
+function AvatarImage({
+  className,
+  alt = '',
+  src,
+  onError,
+  ref: callerRef,
+  ...props
+}: React.ComponentProps<'img'>) {
   // The src that failed; a new src gets a fresh try.
   const [failedSrc, setFailedSrc] = React.useState<typeof src>()
-  const ref = React.useRef<HTMLImageElement>(null)
+  const ownRef = React.useRef<HTMLImageElement | null>(null)
+  // Both refs see the element: ours for the check below, the caller's for theirs.
+  const ref = React.useCallback(
+    (img: HTMLImageElement | null) => {
+      ownRef.current = img
+      if (typeof callerRef === 'function') return callerRef(img)
+      if (callerRef) callerRef.current = img
+    },
+    [callerRef],
+  )
 
   // An <img> from the server HTML can fail before hydration attaches onError,
-  // leaving the browser's broken-image icon. A settled image with no pixels failed.
+  // leaving the browser's broken-image icon. A settled image without any intrinsic
+  // size failed (width alone is 0 for some loaded SVGs).
   React.useEffect(() => {
-    const img = ref.current
-    if (img?.complete && img.naturalWidth === 0) setFailedSrc(src)
+    const img = ownRef.current
+    if (img?.complete && img.naturalWidth === 0 && img.naturalHeight === 0) setFailedSrc(src)
   }, [src])
 
   if (!src || failedSrc === src) return null
   return (
     // eslint-disable-next-line @next/next/no-img-element -- next/image can't SSR-paint here; hosts are unbounded
     <img
-      ref={ref}
       data-slot="avatar-image"
       alt={alt}
-      src={src}
       // Opaque, so a transparent source doesn't composite over the fallback behind it.
       className={cn('bg-muted absolute inset-0 aspect-square size-full', className)}
+      {...props}
+      ref={ref}
+      src={src}
       // Uncover the fallback underneath when the source is broken.
       onError={(event) => {
         setFailedSrc(src)
         onError?.(event)
       }}
-      {...props}
     />
   )
 }

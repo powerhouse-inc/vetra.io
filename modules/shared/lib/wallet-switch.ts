@@ -23,7 +23,8 @@ export function shortAddress(address: string): string {
  *   wallet, so an unrelated browser extension says nothing about them;
  * - a session of unknown origin (signed in before this was recorded) counts as
  *   the extension's only when the extension also holds the session account;
- * - "stay" (`dismissed`) holds until the wallet moves to yet another account.
+ * - "stay" (`dismissed`, a {@link dismissalKey}) holds for that signed-in account
+ *   until the wallet moves to yet another account.
  */
 export function walletSwitchTarget({
   sessionAddress,
@@ -35,6 +36,7 @@ export function walletSwitchTarget({
   loginMethod: SessionLoginMethod | undefined
   /** eth_accounts / accountsChanged: the active account first. */
   accounts: readonly string[]
+  /** {@link dismissalKey} of the pair the user chose to stay on. */
   dismissed: string | null
 }): string | null {
   const active = accounts[0]
@@ -42,11 +44,31 @@ export function walletSwitchTarget({
   if (loginMethod && loginMethod !== 'wallet') return null
   if (sameAddress(active, sessionAddress)) return null
   if (!loginMethod && !accounts.some((a) => sameAddress(a, sessionAddress))) return null
-  if (sameAddress(active, dismissed)) return null
+  if (dismissed === dismissalKey(sessionAddress, active)) return null
   return active
 }
 
-/** Records the method the user picked in the login modal (undefined clears it). */
+/** Identifies a "stay" choice: this signed-in account, this wallet account. */
+export function dismissalKey(sessionAddress: string, target: string): string {
+  return `${sessionAddress.toLowerCase()}|${target.toLowerCase()}`
+}
+
+// The method of the sign-in in flight; stored only once it succeeds.
+let pendingLoginMethod: string | undefined
+
+/** Notes the method a sign-in was started with (login modal, wallet switch). */
+export function setPendingLoginMethod(method: string | undefined): void {
+  pendingLoginMethod = method
+}
+
+/** On a successful sign-in: stores the pending method, if any. */
+export function commitPendingLoginMethod(): void {
+  if (pendingLoginMethod === undefined) return
+  rememberLoginMethod(pendingLoginMethod)
+  pendingLoginMethod = undefined
+}
+
+/** Stores the session's login method (undefined clears it: unknown is the safe default). */
 export function rememberLoginMethod(method: string | undefined): void {
   try {
     if (method && METHODS.includes(method)) localStorage.setItem(LOGIN_METHOD_KEY, method)
