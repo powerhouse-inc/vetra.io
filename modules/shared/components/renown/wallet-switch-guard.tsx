@@ -14,8 +14,11 @@ import {
   AlertDialogTitle,
 } from '@/modules/shared/components/ui/alert-dialog'
 import {
+  commitPendingLoginMethod,
+  dismissalKey,
   readLoginMethod,
   rememberLoginMethod,
+  setPendingLoginMethod,
   shortAddress,
   walletSwitchTarget,
   type SessionLoginMethod,
@@ -54,6 +57,13 @@ export function WalletSwitchGuard() {
   const [dismissed, setDismissed] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
+  // The login method is stored on a successful sign-in and forgotten on sign-out,
+  // so a later session of unknown origin gets the cautious rule.
+  useEffect(() => {
+    if (auth.state === 'authenticated') commitPendingLoginMethod()
+    else if (auth.state === 'unauthenticated') rememberLoginMethod(undefined)
+  }, [auth.state])
+
   useEffect(() => {
     if (!signedIn) return
     const eth = injectedProvider()
@@ -74,6 +84,8 @@ export function WalletSwitchGuard() {
       eth.removeListener?.('accountsChanged', update)
       window.removeEventListener('focus', read)
       setWallet({ accounts: [], loginMethod: undefined })
+      // A "stay" belongs to the session that chose it.
+      setDismissed(null)
     }
   }, [signedIn])
 
@@ -82,20 +94,25 @@ export function WalletSwitchGuard() {
     : null
 
   if (!target || !auth.address) return null
+  const sessionAddress = auth.address
+  const stay = () => setDismissed(dismissalKey(sessionAddress, target))
 
   const switchAccount = async () => {
     setBusy(true)
     try {
       await auth.logout()
-      rememberLoginMethod('wallet')
+      setPendingLoginMethod('wallet')
       auth.login(undefined, 'wallet')
+    } catch {
+      // Still signed in as before: leave the choice open (no account details logged).
+      console.warn('Wallet switch: signing out failed; still signed in as before.')
     } finally {
       setBusy(false)
     }
   }
 
   return (
-    <AlertDialog open onOpenChange={(open) => !open && setDismissed(target)}>
+    <AlertDialog open onOpenChange={(open) => !open && stay()}>
       <AlertDialogContent>
         <AlertDialogHeader icon={<Wallet />}>
           <AlertDialogTitle>Wallet account changed</AlertDialogTitle>
@@ -106,7 +123,7 @@ export function WalletSwitchGuard() {
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel disabled={busy} onClick={() => setDismissed(target)}>
+          <AlertDialogCancel disabled={busy} onClick={stay}>
             Stay as {shortAddress(auth.address)}
           </AlertDialogCancel>
           <AlertDialogAction

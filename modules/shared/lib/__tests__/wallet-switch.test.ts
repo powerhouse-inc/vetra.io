@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it } from 'vitest'
 import {
+  commitPendingLoginMethod,
+  dismissalKey,
   readLoginMethod,
+  setPendingLoginMethod,
   rememberLoginMethod,
   sameAddress,
   shortAddress,
@@ -57,12 +60,33 @@ describe('walletSwitchTarget', () => {
     expect(walletSwitchTarget({ ...unknown, accounts: [NEW, OLD.toLowerCase()] })).toBe(NEW)
   })
 
-  it('respects "stay" for that account until the wallet moves to another one', () => {
+  it('respects "stay" for that session and account until the wallet moves to another one', () => {
     expect(
-      walletSwitchTarget({ ...base, accounts: [NEW], dismissed: NEW.toLowerCase() }),
+      walletSwitchTarget({ ...base, accounts: [NEW], dismissed: dismissalKey(OLD, NEW) }),
     ).toBeNull()
     const third = '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
-    expect(walletSwitchTarget({ ...base, accounts: [third], dismissed: NEW })).toBe(third)
+    expect(
+      walletSwitchTarget({ ...base, accounts: [third], dismissed: dismissalKey(OLD, NEW) }),
+    ).toBe(third)
+  })
+
+  it('does not carry a "stay" over to another signed-in account', () => {
+    const third = '0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC'
+    expect(
+      walletSwitchTarget({
+        ...base,
+        sessionAddress: third,
+        accounts: [NEW],
+        dismissed: dismissalKey(OLD, NEW),
+      }),
+    ).toBe(NEW)
+  })
+
+  it('keys a dismissal by the lower-cased session and target pair', () => {
+    expect(dismissalKey(OLD, NEW)).toBe(`${OLD.toLowerCase()}|${NEW.toLowerCase()}`)
+    expect(dismissalKey(OLD.toLowerCase(), NEW.toUpperCase().replace('0X', '0x'))).toBe(
+      dismissalKey(OLD, NEW),
+    )
   })
 })
 
@@ -79,5 +103,22 @@ describe('login method memory', () => {
     expect(readLoginMethod()).toBeUndefined()
     rememberLoginMethod(undefined)
     expect(readLoginMethod()).toBeUndefined()
+  })
+})
+
+describe('pending login method', () => {
+  afterEach(() => {
+    localStorage.clear()
+    setPendingLoginMethod(undefined)
+  })
+
+  it('is stored only once the sign-in succeeds, and only once', () => {
+    setPendingLoginMethod('google')
+    expect(readLoginMethod()).toBeUndefined()
+    commitPendingLoginMethod()
+    expect(readLoginMethod()).toBe('google')
+    // A restored session later (nothing pending) keeps what was stored.
+    commitPendingLoginMethod()
+    expect(readLoginMethod()).toBe('google')
   })
 })
