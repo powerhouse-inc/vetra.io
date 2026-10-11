@@ -17,17 +17,31 @@ function Avatar({ className, ...props }: React.ComponentProps<typeof AvatarPrimi
 
 // Radix's Image renders null until an onload fires in the browser, so the server
 // HTML never carries the src and every avatar paints its fallback first.
-function AvatarImage({ className, alt = '', onError, ...props }: React.ComponentProps<'img'>) {
+function AvatarImage({ className, alt = '', src, onError, ...props }: React.ComponentProps<'img'>) {
+  // The src that failed; a new src gets a fresh try.
+  const [failedSrc, setFailedSrc] = React.useState<typeof src>()
+  const ref = React.useRef<HTMLImageElement>(null)
+
+  // An <img> from the server HTML can fail before hydration attaches onError,
+  // leaving the browser's broken-image icon. A settled image with no pixels failed.
+  React.useEffect(() => {
+    const img = ref.current
+    if (img?.complete && img.naturalWidth === 0) setFailedSrc(src)
+  }, [src])
+
+  if (!src || failedSrc === src) return null
   return (
     // eslint-disable-next-line @next/next/no-img-element -- next/image can't SSR-paint here; hosts are unbounded
     <img
+      ref={ref}
       data-slot="avatar-image"
       alt={alt}
+      src={src}
       // Opaque, so a transparent source doesn't composite over the fallback behind it.
       className={cn('bg-muted absolute inset-0 aspect-square size-full', className)}
       // Uncover the fallback underneath when the source is broken.
       onError={(event) => {
-        event.currentTarget.style.display = 'none'
+        setFailedSrc(src)
         onError?.(event)
       }}
       {...props}
