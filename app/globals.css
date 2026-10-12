@@ -169,6 +169,19 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
   --font-serif: var(--font-serif);
+  --font-console-sans: var(--font-geist), ui-sans-serif, system-ui, sans-serif;
+  --font-console-mono: var(--font-jetbrains), ui-monospace, monospace;
+
+  --color-console-bg: var(--console-bg);
+  --color-console-surface: var(--console-surface);
+  --color-console-raised: var(--console-raised);
+  --color-console-line: var(--console-line);
+  --color-console-line-strong: var(--console-line-strong);
+  --color-console-ink: var(--console-ink);
+  --color-console-muted: var(--console-muted);
+  --color-console-faint: var(--console-faint);
+  --color-console-signal: var(--console-signal);
+  --color-console-warn: var(--console-warn);
 
   --radius-sm: 6px;
   --radius-md: 8px;
@@ -198,5 +211,67 @@
   }
   100% {
     transform: translateX(350%);
+  }
+}
+
+/* Console look for the public landing pages (/, /cloud, /studio). Dark-only by design. */
+:root {
+  --console-bg: #08090a;
+  --console-surface: #0e1113;
+  --console-raised: #161b1e;
+  --console-line: #1c2024;
+  --console-line-strong: #23292e;
+  --console-ink: #e4e8e6;
+  --console-muted: #9aa5a1;
+  --console-faint: #6f7a77;
+  --console-signal: #3be38a;
+  --console-warn: #f2c14e;
+}
+
+.console-grid {
+  background-image:
+    linear-gradient(#ffffff08 1px, transparent 1px),
+    linear-gradient(90deg, #ffffff08 1px, transparent 1px);
+  background-size: 48px 48px;
+}
+
+@keyframes console-caret {
+  0%,
+  49% {
+    opacity: 1;
+  }
+  50%,
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes console-grow {
+  from {
+    transform: scaleY(0.2);
+  }
+  to {
+    transform: scaleY(1);
+  }
+}
+
+.console-caret {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.1em;
+  background: var(--console-signal);
+  vertical-align: -0.2em;
+  animation: console-caret 1s steps(1) infinite;
+}
+
+.console-bar {
+  transform-origin: bottom;
+  animation: console-grow 1.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .console-caret,
+  .console-bar {
+    animation: none;
   }
 }

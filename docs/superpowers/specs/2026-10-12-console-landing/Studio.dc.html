@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vetra Studio</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F6F7F6}
+a{color:#037A3E}a:hover{color:#025A2E}
+@keyframes vtBreath{0%,100%{box-shadow:0 0 0 0 #04C16155}50%{box-shadow:0 0 0 14px #04C16100}}
+.vt-breath{animation:vtBreath 2.8s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.vt-breath{animation:none}}
+</style>
+</helmet>
+<div style="font-family:'Geist',ui-sans-serif,system-ui,sans-serif;color:#12161A;background:#F6F7F6;min-height:100vh">
+
+<header style="border-bottom:1px solid #E1E5E3">
+<nav aria-label="Main" style="max-width:1200px;margin:0 auto;padding:16px 24px;display:flex;flex-wrap:wrap;align-items:center;gap:16px 32px">
+<a href="Main.dc.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#12161A;font-weight:650;font-size:20px">
+<svg width="26" height="26" viewBox="0 0 44 44" aria-hidden="true"><path d="M0 26.35C0 24.61 1.41 23.2 3.15 23.2H5.06C13.75 23.2 20.8 30.25 20.8 38.94V40.85C20.8 42.59 19.39 44 17.65 44H3.15C1.41 44 0 42.59 0 40.85V26.35Z" fill="#04C161"/><path d="M0 3.15C0 1.41 1.41 0 3.15 0H17.65C19.39 0 20.8 1.41 20.8 3.15V5.06C20.8 13.75 13.75 20.8 5.06 20.8H3.15C1.41 20.8 0 19.39 0 17.65V3.15Z" fill="#04C161"/><path d="M23.2 38.94C23.2 30.25 30.25 23.2 38.94 23.2H40.85C42.59 23.2 44 24.61 44 26.35V40.85C44 42.59 42.59 44 40.85 44H26.35C24.61 44 23.2 42.59 23.2 40.85V38.94Z" fill="#04C161"/><path d="M23.2 3.15C23.2 1.41 24.61 0 26.35 0H40.85C42.59 0 44 1.41 44 3.15V17.65C44 19.39 42.59 20.8 40.85 20.8H38.94C30.25 20.8 23.2 13.75 23.2 5.06V3.15Z" fill="#04C161"/></svg>Vetra</a>
+<div style="display:flex;flex-wrap:wrap;gap:4px 24px;font-size:15px;flex:1 1 auto">
+<a href="Studio.dc.html" style="color:#12161A;font-weight:600;text-decoration:none;padding:10px 0;border-bottom:2px solid #04C161">Studio</a>
+<a href="Cloud.dc.html" style="color:#3A434C;text-decoration:none;padding:10px 0">Cloud</a>
+<a href="#" style="color:#3A434C;text-decoration:none;padding:10px 0">Docs</a>
+<a href="#" style="color:#3A434C;text-decoration:none;padding:10px 0">Pricing</a>
+</div>
+<a href="#" style="background:#12161A;color:#FFFFFF;text-decoration:none;font-size:15px;font-weight:500;padding:11px 18px;border-radius:10px">Open my studio</a>
+</nav>
+</header>
+
+<!-- Hero -->
+<section style="max-width:1200px;margin:0 auto;padding:80px 24px 40px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:24px">
+<span style="font-family:'Geist Mono',ui-monospace,monospace;font-size:13px;background:#FFF4DC;color:#7A4B00;border:1px solid #F2D9A0;padding:6px 12px;border-radius:999px">Early access · pre-alpha</span>
+<h1 style="margin:0;font-size:clamp(44px,6.5vw,84px);line-height:1;letter-spacing:-0.045em;font-weight:650;max-width:980px">A studio of your own, with an agent that builds alongside you</h1>
+<p style="margin:0;font-size:20px;line-height:1.55;color:#4A535D;max-width:680px">Vetra Studio turns a conversation into a working Powerhouse package: document models, editors, APIs and tests. You approve every plan and keep every line.</p>
+<div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">
+<a href="#" style="background:#04C161;color:#06240F;text-decoration:none;font-weight:600;padding:15px 22px;border-radius:12px">Request access</a>
+<a href="#" style="border:1px solid #D5DBD8;background:#FFFFFF;color:#12161A;text-decoration:none;padding:15px 22px;border-radius:12px">I have an access code</a>
+</div>
+</section>
+
+<!-- Studio UI mock -->
+<section style="max-width:1240px;margin:0 auto;padding:24px 24px 96px">
+<div role="img" aria-label="Studio with a chat, an approved plan and a live preview of a generated editor" style="background:#FFFFFF;border:1px solid #DCE1DF;border-radius:24px;overflow:hidden;box-shadow:0 40px 100px -50px #12161A55">
+<div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid #E6EAE8;font-size:13px;color:#56606B">
+<span style="display:flex;align-items:center;gap:10px"><span class="vt-breath" style="width:8px;height:8px;border-radius:50%;background:#04C161"></span>frank-studio · awake</span>
+<span style="font-family:'Geist Mono',ui-monospace,monospace">@acme/loans · branch studio/overdue</span>
+</div>
+<div style="display:flex;flex-wrap:wrap">
+<div style="flex:1 1 320px;min-width:0;padding:20px;border-right:1px solid #E6EAE8;display:flex;flex-direction:column;gap:12px;font-size:14px;background:#FAFBFA">
+<div style="align-self:flex-end;background:#12161A;color:#FFFFFF;border-radius:14px 14px 4px 14px;padding:10px 14px;max-width:90%;line-height:1.5">Loans should turn overdue on their own and notify the borrower.</div>
+<div style="align-self:flex-start;background:#FFFFFF;border:1px solid #E6EAE8;border-radius:14px 14px 14px 4px;padding:12px 14px;max-width:92%;line-height:1.5;color:#3A434C">I'll add a scheduled processor and a <code style="font-family:'Geist Mono',monospace;font-size:13px">MARK_OVERDUE</code> operation. Plan is on the right.</div>
+<div style="margin-top:auto;border:1px solid #DCE1DF;border-radius:12px;padding:12px 14px;color:#8A939C;background:#FFFFFF">Reply to Studio…</div>
+</div>
+<div style="flex:1 1 300px;min-width:0;padding:20px;border-right:1px solid #E6EAE8;display:flex;flex-direction:column;gap:10px;font-size:14px">
+<div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;color:#56606B">PLAN · approved by you</div>
+<div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#037A3E">✓</span>Add <b style="font-weight:600">MARK_OVERDUE</b> to the loan model</div>
+<div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#037A3E">✓</span>Processor <b style="font-weight:600">overdue-check</b>, hourly</div>
+<div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#037A3E">✓</span>Overdue badge in the editor</div>
+<div style="display:flex;gap:10px;align-items:flex-start"><span style="color:#B07A00">●</span>Write 4 tests</div>
+<div style="margin-top:8px;background:#0F1316;color:#C9D2D0;border-radius:12px;padding:12px;font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;line-height:1.7;overflow-x:auto">
+<span style="color:#5BE39A">+</span> markOverdue(state, action) {<br>
+<span style="color:#5BE39A">+</span> &#160;&#160;if (state.dueDate &lt; action.timestamp)<br>
+<span style="color:#5BE39A">+</span> &#160;&#160;&#160;&#160;state.status = "OVERDUE";<br>
+<span style="color:#5BE39A">+</span> }
+</div>
+</div>
+<div style="flex:1 1 340px;min-width:0;padding:20px;display:flex;flex-direction:column;gap:12px">
+<div style="font-family:'Geist Mono',ui-monospace,monospace;font-size:12px;color:#56606B">PREVIEW · loan-editor</div>
+<div style="border:1px solid #E6EAE8;border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px">
+<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap"><span style="font-weight:600;font-size:17px">Loan #118</span><span style="font-size:12px;background:#FDE7E4;color:#9B1C12;padding:4px 10px;border-radius:999px">Overdue · 3 days</span></div>
+<div style="font-size:14px;color:#56606B">Borrower</div><div style="font-size:15px;margin-top:-8px">J. Okafor</div>
+<div style="font-size:14px;color:#56606B">Items</div><div style="font-size:15px;margin-top:-8px">ThinkPad X1 · USB-C dock</div>
+<div style="display:flex;gap:8px;flex-wrap:wrap"><span style="background:#12161A;color:#FFFFFF;padding:8px 12px;border-radius:8px;font-size:14px">Mark returned</span><span style="border:1px solid #DCE1DF;padding:8px 12px;border-radius:8px;font-size:14px">Extend</span></div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Session flow -->
+<section style="background:#FFFFFF;border-top:1px solid #E1E5E3;border-bottom:1px solid #E1E5E3">
+<div style="max-width:1200px;margin:0 auto;padding:96px 24px;display:flex;flex-direction:column;gap:48px">
+<h2 style="margin:0;font-size:clamp(32px,4vw,48px);letter-spacing:-0.035em;line-height:1.05;font-weight:650;max-width:640px">How a session goes</h2>
+<ol style="margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:0;border-top:1px solid #E1E5E3">
+<li style="padding:24px 20px 0 0;display:flex;flex-direction:column;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#037A3E">01 Brief</span><span style="font-size:16px;line-height:1.5;color:#3A434C">Describe the process, paste a spreadsheet, or point at an existing package.</span></li>
+<li style="padding:24px 20px 0 0;display:flex;flex-direction:column;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#037A3E">02 Plan</span><span style="font-size:16px;line-height:1.5;color:#3A434C">Studio proposes models and operations. Nothing is written until you approve.</span></li>
+<li style="padding:24px 20px 0 0;display:flex;flex-direction:column;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#037A3E">03 Build</span><span style="font-size:16px;line-height:1.5;color:#3A434C">Models, reducers, editors and tests, committed step by step.</span></li>
+<li style="padding:24px 20px 0 0;display:flex;flex-direction:column;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#037A3E">04 Preview</span><span style="font-size:16px;line-height:1.5;color:#3A434C">Use the app live inside your studio while it is being built.</span></li>
+<li style="padding:24px 0 0 0;display:flex;flex-direction:column;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#037A3E">05 Publish</span><span style="font-size:16px;line-height:1.5;color:#3A434C">Version it to the registry and roll it out to a Cloud environment.</span></li>
+</ol>
+</div>
+</section>
+
+<!-- What it writes -->
+<section style="max-width:1200px;margin:0 auto;padding:96px 24px;display:flex;flex-direction:column;gap:40px">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px 48px;align-items:flex-end">
+<h2 style="margin:0;font-size:clamp(32px,4vw,48px);letter-spacing:-0.035em;line-height:1.05;font-weight:650;max-width:560px">Real building blocks, not a demo</h2>
+<p style="margin:0;font-size:18px;line-height:1.55;color:#4A535D;max-width:440px">Studio writes the same parts a Powerhouse developer would, so your team can pick up where it stopped.</p>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px">
+<div style="background:#FFFFFF;border:1px solid #E1E5E3;border-radius:18px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:20px;font-weight:600">Document models</h3><p style="margin:0;color:#4A535D;line-height:1.55">Typed state and named operations with a complete, replayable history.</p></div>
+<div style="background:#FFFFFF;border:1px solid #E1E5E3;border-radius:18px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:20px;font-weight:600">Editors</h3><p style="margin:0;color:#4A535D;line-height:1.55">React interfaces your team uses in Connect, styled and accessible.</p></div>
+<div style="background:#FFFFFF;border:1px solid #E1E5E3;border-radius:18px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:20px;font-weight:600">APIs</h3><p style="margin:0;color:#4A535D;line-height:1.55">GraphQL subgraphs served by Switchboard, ready for other systems.</p></div>
+<div style="background:#FFFFFF;border:1px solid #E1E5E3;border-radius:18px;padding:28px;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:20px;font-weight:600">Processors</h3><p style="margin:0;color:#4A535D;line-height:1.55">Background logic that reacts to changes, from reminders to reports.</p></div>
+</div>
+</section>
+
+<!-- Your studio -->
+<section style="background:#0F1316;color:#E7ECEA">
+<div style="max-width:1200px;margin:0 auto;padding:96px 24px;display:flex;flex-wrap:wrap;gap:56px;align-items:center">
+<div style="flex:1 1 400px;min-width:0;display:flex;flex-direction:column;gap:18px">
+<span style="font-family:'Geist Mono',monospace;font-size:13px;color:#5BE39A">YOUR STUDIO, NOT A SHARED SANDBOX</span>
+<h2 style="margin:0;font-size:clamp(32px,4vw,48px);letter-spacing:-0.035em;line-height:1.05;font-weight:650">It sleeps when you do</h2>
+<p style="margin:0;font-size:18px;line-height:1.55;color:#AEB8B5">Each studio is an isolated environment with its own workspace and repository. It hibernates when you step away and wakes, with your session intact, when you come back.</p>
+</div>
+<div style="flex:1 1 440px;min-width:0;display:flex;flex-direction:column;gap:12px">
+<div style="border:1px solid #2A3238;border-radius:16px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span style="display:flex;gap:12px;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:#56606B"></span>Hibernating</span><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#8C97A1">no compute used</span></div>
+<div style="border:1px solid #2A3238;border-radius:16px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span style="display:flex;gap:12px;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:#F2C14E"></span>Waking your studio…</span><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#8C97A1">~[N] seconds</span></div>
+<div style="border:1px solid #04C161;background:#04C16112;border-radius:16px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap"><span style="display:flex;gap:12px;align-items:center"><span style="width:10px;height:10px;border-radius:50%;background:#04C161"></span>Awake</span><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#5BE39A">session restored</span></div>
+</div>
+</div>
+</section>
+
+<!-- Control -->
+<section style="max-width:1200px;margin:0 auto;padding:96px 24px;display:flex;flex-direction:column;gap:40px">
+<h2 style="margin:0;font-size:clamp(32px,4vw,48px);letter-spacing:-0.035em;line-height:1.05;font-weight:650">You stay in charge</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));border-top:1px solid #E1E5E3">
+<div style="padding:28px 28px 0 0;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:19px;font-weight:600">Plans before code</h3><p style="margin:0;color:#4A535D;line-height:1.55">Studio asks before it changes your models.</p></div>
+<div style="padding:28px 28px 0 0;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:19px;font-weight:600">Every step is a commit</h3><p style="margin:0;color:#4A535D;line-height:1.55">Review, revert or continue by hand in your IDE.</p></div>
+<div style="padding:28px 28px 0 0;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:19px;font-weight:600">Signed with your identity</h3><p style="margin:0;color:#4A535D;line-height:1.55">Sign in with Renown. Published packages carry your signature.</p></div>
+<div style="padding:28px 0 0 0;display:flex;flex-direction:column;gap:10px"><h3 style="margin:0;font-size:19px;font-weight:600">Your model key, your call</h3><p style="margin:0;color:#4A535D;line-height:1.55">Runs on Anthropic Claude. Use the key in your licence or bring your own.</p></div>
+</div>
+</section>
+
+<!-- Honest status -->
+<section style="max-width:1200px;margin:0 auto;padding:0 24px 96px">
+<div style="background:#FFFFFF;border:1px solid #E1E5E3;border-radius:28px;padding:40px;display:flex;flex-direction:column;gap:28px">
+<div style="display:flex;flex-wrap:wrap;gap:12px 32px;justify-content:space-between;align-items:flex-end">
+<h2 style="margin:0;font-size:clamp(28px,3.5vw,40px);letter-spacing:-0.035em;font-weight:650">Where Studio is today</h2>
+<span style="font-size:14px;color:#56606B">Updated [DATE]</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:24px">
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#037A3E">WORKS TODAY</span><span style="color:#3A434C;line-height:1.6">Models, editors and subgraphs from a conversation · Live preview · Publish to the registry</span></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#7A4B00">STILL ROUGH</span><span style="color:#3A434C;line-height:1.6">Large refactors · Data may be lost between versions, so keep exports</span></div>
+<div style="display:flex;flex-direction:column;gap:10px"><span style="font-family:'Geist Mono',monospace;font-size:13px;color:#56606B">NEXT</span><span style="color:#3A434C;line-height:1.6">[ROADMAP ITEM] · [ROADMAP ITEM] · [ROADMAP ITEM]</span></div>
+</div>
+</div>
+</section>
+
+<!-- CTA -->
+<section style="max-width:1200px;margin:0 auto;padding:0 24px 96px">
+<div style="background:#0F1316;color:#E7ECEA;border-radius:28px;padding:64px 40px;display:flex;flex-wrap:wrap;gap:24px 48px;align-items:center;justify-content:space-between">
+<div style="display:flex;flex-direction:column;gap:12px;max-width:620px">
+<h2 style="margin:0;font-size:clamp(32px,4vw,48px);letter-spacing:-0.04em;line-height:1.05;font-weight:650">Get your studio</h2>
+<p style="margin:0;font-size:18px;color:#AEB8B5">We are opening access in small groups. Tell us what you want to build.</p>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:12px">
+<a href="#" style="background:#04C161;color:#06240F;text-decoration:none;font-weight:600;padding:15px 22px;border-radius:12px">Request access</a>
+<a href="#" style="border:1px solid #3A434C;color:#E7ECEA;text-decoration:none;padding:15px 22px;border-radius:12px">Run it locally instead</a>
+</div>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":5000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

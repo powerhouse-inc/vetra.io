@@ -1,0 +1,286 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vetra Cloud — Console</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#08090A}
+a{color:#3BE38A}a:hover{color:#8EF0BA}
+@keyframes vtCaret{0%,49%{opacity:1}50%,100%{opacity:0}}
+@keyframes vtGrow{from{transform:scaleY(.2)}to{transform:scaleY(1)}}
+.vt-caret{display:inline-block;width:9px;height:18px;background:#3BE38A;vertical-align:-3px;animation:vtCaret 1s steps(1) infinite}
+.vt-bar{transform-origin:bottom;animation:vtGrow 1.2s cubic-bezier(.16,1,.3,1) both}
+@media (prefers-reduced-motion:reduce){.vt-caret,.vt-bar{animation:none}}
+</style>
+</helmet>
+<div style="font-family:'Geist',ui-sans-serif,system-ui,sans-serif;color:#E4E8E6;background:#08090A;min-height:100vh;background-image:linear-gradient(#ffffff08 1px,transparent 1px),linear-gradient(90deg,#ffffff08 1px,transparent 1px);background-size:48px 48px">
+
+<header style="border-bottom:1px solid #1C2024;background:#08090Ae6">
+<div style="max-width:1280px;margin:0 auto;padding:14px 24px;display:flex;flex-wrap:wrap;gap:12px 28px;align-items:center;font-family:'JetBrains Mono',monospace;font-size:14px">
+<a href="HomeConsole.dc.html" style="display:flex;align-items:center;gap:10px;text-decoration:none;color:#E4E8E6;font-weight:700">
+<svg width="22" height="22" viewBox="0 0 44 44" aria-hidden="true"><path d="M0 26.35C0 24.61 1.41 23.2 3.15 23.2H5.06C13.75 23.2 20.8 30.25 20.8 38.94V40.85C20.8 42.59 19.39 44 17.65 44H3.15C1.41 44 0 42.59 0 40.85V26.35Z" fill="#04C161"/><path d="M0 3.15C0 1.41 1.41 0 3.15 0H17.65C19.39 0 20.8 1.41 20.8 3.15V5.06C20.8 13.75 13.75 20.8 5.06 20.8H3.15C1.41 20.8 0 19.39 0 17.65V3.15Z" fill="#04C161"/><path d="M23.2 38.94C23.2 30.25 30.25 23.2 38.94 23.2H40.85C42.59 23.2 44 24.61 44 26.35V40.85C44 42.59 42.59 44 40.85 44H26.35C24.61 44 23.2 42.59 23.2 40.85V38.94Z" fill="#04C161"/><path d="M23.2 3.15C23.2 1.41 24.61 0 26.35 0H40.85C42.59 0 44 1.41 44 3.15V17.65C44 19.39 42.59 20.8 40.85 20.8H38.94C30.25 20.8 23.2 13.75 23.2 5.06V3.15Z" fill="#04C161"/></svg>vetra</a>
+<nav aria-label="Main" style="display:flex;flex-wrap:wrap;gap:4px 22px;flex:1 1 auto">
+<a href="Studio.dc.html" style="color:#9AA5A1;text-decoration:none;padding:10px 0">/studio</a>
+<a href="CloudConsole.dc.html" style="color:#3BE38A;text-decoration:none;padding:10px 0">/cloud</a>
+<a href="#" style="color:#9AA5A1;text-decoration:none;padding:10px 0">/docs</a>
+<a href="#" style="color:#9AA5A1;text-decoration:none;padding:10px 0">/pricing</a>
+</nav>
+<a href="#" style="color:#08090A;background:#3BE38A;text-decoration:none;font-weight:700;padding:10px 16px;border-radius:6px">open console ↵</a>
+</div>
+</header>
+
+<!-- Hero -->
+<section style="max-width:1280px;margin:0 auto;padding:72px 24px 48px;display:flex;flex-direction:column;gap:28px">
+<div style="font-family:'JetBrains Mono',monospace;font-size:14px;color:#3BE38A">~/vetra $ cloud --help <span class="vt-caret"></span></div>
+<h1 style="margin:0;font-size:clamp(44px,6.5vw,88px);line-height:1;letter-spacing:-0.045em;font-weight:700;max-width:1100px">Managed hosting for Powerhouse apps.<br><span style="color:#6F7A77">Without the lock-in.</span></h1>
+<div style="display:flex;flex-wrap:wrap;gap:12px 32px;align-items:center">
+<p style="margin:0;font-size:19px;line-height:1.5;color:#9AA5A1;max-width:640px">Environments with a team workspace, APIs and agents. Your domain, your packages, nightly backups. We operate it; your app stays on the open Powerhouse platform, so self-hosting is always an option.</p>
+<div style="display:flex;flex-wrap:wrap;gap:10px">
+<a href="#" style="background:#3BE38A;color:#08090A;text-decoration:none;font-weight:600;padding:14px 20px;border-radius:8px">Redeem access code</a>
+<a href="#" style="border:1px solid #2A3036;color:#E4E8E6;text-decoration:none;padding:14px 20px;border-radius:8px">Book a walkthrough</a>
+</div>
+</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#6F7A77;display:flex;flex-wrap:wrap;gap:8px 24px"><span><span style="color:#F2C14E">●</span> beta · invite only</span><span>status.vetra.io ↗</span></div>
+</section>
+
+<!-- Environment window -->
+<section style="max-width:1280px;margin:0 auto;padding:0 24px 96px">
+<div role="img" aria-label="An environment screen in the Vetra console: services, resources, recent events" style="border:1px solid #23292E;border-radius:16px;background:#0E1113;overflow:hidden;box-shadow:0 40px 120px -40px #3BE38A40">
+<div style="display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid #1C2024;font-family:'JetBrains Mono',monospace;font-size:12px;color:#6F7A77;flex-wrap:wrap">
+<span style="width:10px;height:10px;border-radius:50%;background:#2A3036"></span><span style="width:10px;height:10px;border-radius:50%;background:#2A3036"></span><span style="width:10px;height:10px;border-radius:50%;background:#2A3036"></span>
+<span style="margin-left:12px">vetra.io/console/env/acme-ops</span>
+<span style="margin-left:auto;border:1px solid #2A3036;border-radius:6px;padding:3px 8px">⌘K</span>
+</div>
+<div style="display:flex;flex-wrap:wrap">
+<!-- side nav -->
+<div style="flex:0 1 200px;min-width:0;border-right:1px solid #1C2024;padding:16px 12px;display:flex;flex-direction:column;gap:2px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#9AA5A1">
+<div style="font-size:11px;color:#6F7A77;padding:4px 10px 10px">ENVIRONMENTS</div>
+<div style="background:#161B1E;color:#E4E8E6;border-radius:6px;padding:8px 10px;display:flex;justify-content:space-between">acme-ops<span style="color:#3BE38A">●</span></div>
+<div style="padding:8px 10px;display:flex;justify-content:space-between">acme-staging<span style="color:#3BE38A">●</span></div>
+<div style="padding:8px 10px;display:flex;justify-content:space-between">frank-studio<span style="color:#6F7A77">◐</span></div>
+<div style="padding:8px 10px;color:#3BE38A">+ new environment</div>
+</div>
+<!-- main -->
+<div style="flex:1 1 640px;min-width:0;padding:20px;display:flex;flex-direction:column;gap:16px">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:8px;align-items:baseline">
+<div style="font-size:22px;font-weight:600">acme-ops</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#3BE38A">ops.acme.com ↗ <span style="color:#6F7A77">· tall-duck-ab12.vetra.io</span></div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:4px 20px;border-bottom:1px solid #1C2024;font-family:'JetBrains Mono',monospace;font-size:13px;color:#6F7A77">
+<span style="color:#E4E8E6;border-bottom:2px solid #3BE38A;padding:8px 0">overview</span><span style="padding:8px 0">packages</span><span style="padding:8px 0">domains</span><span style="padding:8px 0">secrets</span><span style="padding:8px 0">backups</span><span style="padding:8px 0">logs</span><span style="padding:8px 0">database</span>
+</div>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:10px">
+<div style="background:#161B1E;border-radius:10px;padding:14px"><div style="font-size:12px;color:#6F7A77">Connect</div><div style="font-size:15px;margin-top:4px"><span style="color:#3BE38A">●</span> running</div></div>
+<div style="background:#161B1E;border-radius:10px;padding:14px"><div style="font-size:12px;color:#6F7A77">Switchboard</div><div style="font-size:15px;margin-top:4px"><span style="color:#3BE38A">●</span> running</div></div>
+<div style="background:#161B1E;border-radius:10px;padding:14px"><div style="font-size:12px;color:#6F7A77">Fusion</div><div style="font-size:15px;margin-top:4px"><span style="color:#3BE38A">●</span> running</div></div>
+<div style="background:#161B1E;border-radius:10px;padding:14px"><div style="font-size:12px;color:#6F7A77">Agent</div><div style="font-size:15px;margin-top:4px"><span style="color:#3BE38A">●</span> running</div></div>
+</div>
+<div style="display:flex;flex-wrap:wrap;gap:12px">
+<div style="flex:1 1 280px;border:1px solid #23292E;border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:10px">
+<div style="display:flex;justify-content:space-between;font-family:'JetBrains Mono',monospace;font-size:12px;color:#6F7A77"><span>cpu · 24h</span><span>size M</span></div>
+<div aria-hidden="true" style="display:flex;align-items:flex-end;gap:4px;height:64px">
+<div class="vt-bar" style="flex:1;height:30%;background:#2A3A33;border-radius:2px"></div><div class="vt-bar" style="flex:1;height:42%;background:#2A3A33;border-radius:2px"></div><div class="vt-bar" style="flex:1;height:38%;background:#2A3A33;border-radius:2px"></div><div class="vt-bar" style="flex:1;height:55%;background:#2A3A33;border-radius:2px"></div><div class="vt-bar" style="flex:1;height:70%;background:#2A3A33;border-radius:2px"></div><div class="vt-bar" style="flex:1;height:62%;background:#2A3A33;border-radius:2px"></div><div class="vt-bar" style="flex:1;height:48%;background:#2A3A33;border-radius:2px"></div><div class="vt-bar" style="flex:1;height:35%;background:#2A3A33;border-radius:2px"></div><div class="vt-bar" style="flex:1;height:44%;background:#2A3A33;border-radius:2px"></div><div class="vt-bar" style="flex:1;height:58%;background:#2A3A33;border-radius:2px"></div><div class="vt-bar" style="flex:1;height:66%;background:#3BE38A;border-radius:2px"></div><div class="vt-bar" style="flex:1;height:52%;background:#3BE38A;border-radius:2px"></div>
+</div>
+</div>
+<div style="flex:1 1 280px;border:1px solid #23292E;border-radius:10px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.9;color:#9AA5A1">
+<div style="color:#6F7A77;margin-bottom:4px">events</div>
+<div><span style="color:#6F7A77">02:00</span> <span style="color:#3BE38A">backup</span> completed · 184 MB</div>
+<div><span style="color:#6F7A77">11:41</span> <span style="color:#3BE38A">package</span> @acme/loans 0.1.0 installed</div>
+<div><span style="color:#6F7A77">11:38</span> <span style="color:#3BE38A">domain</span> ops.acme.com certificate issued</div>
+<div><span style="color:#6F7A77">09:02</span> <span style="color:#F2C14E">update</span> platform update available</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+
+<!-- Lifecycle log -->
+<section style="border-top:1px solid #1C2024;border-bottom:1px solid #1C2024;background:#0B0D0F">
+<div style="max-width:1280px;margin:0 auto;padding:96px 24px;display:flex;flex-wrap:wrap;gap:48px;align-items:center">
+<div style="flex:1 1 360px;min-width:0;display:flex;flex-direction:column;gap:16px">
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#3BE38A">// from zero to production</span>
+<h2 style="margin:0;font-size:clamp(32px,4vw,52px);letter-spacing:-0.04em;line-height:1.02;font-weight:700">An afternoon, not a project.</h2>
+<p style="margin:0;font-size:17px;line-height:1.55;color:#9AA5A1">Everything below is a click in the console. No tickets, no YAML, no cluster to babysit.</p>
+</div>
+<div style="flex:1 1 560px;min-width:0;background:#0E1113;border:1px solid #23292E;border-radius:14px;padding:22px;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:2;color:#C5CDCA;overflow-x:auto">
+<div><span style="color:#6F7A77">14:02</span> <span style="color:#3BE38A">✓</span> environment <b style="color:#E4E8E6;font-weight:500">acme-ops</b> created · size M</div>
+<div><span style="color:#6F7A77">14:03</span> <span style="color:#3BE38A">✓</span> connect, switchboard, fusion up</div>
+<div><span style="color:#6F7A77">14:05</span> <span style="color:#3BE38A">✓</span> installed @acme/invoices 1.4.0 from registry</div>
+<div><span style="color:#6F7A77">14:09</span> <span style="color:#3BE38A">✓</span> secret STRIPE_KEY stored</div>
+<div><span style="color:#6F7A77">14:21</span> <span style="color:#3BE38A">✓</span> ops.acme.com verified · certificate issued</div>
+<div><span style="color:#6F7A77">14:22</span> <span style="color:#3BE38A">✓</span> nightly backup scheduled</div>
+<div><span style="color:#6F7A77">14:22</span> <span style="color:#3BE38A">→</span> team invited · signing in with Renown<span class="vt-caret" style="margin-left:6px"></span></div>
+</div>
+</div>
+</section>
+
+<!-- Capabilities -->
+<section style="max-width:1280px;margin:0 auto;padding:96px 24px;display:flex;flex-direction:column;gap:40px">
+<h2 style="margin:0;font-size:clamp(32px,4vw,52px);letter-spacing:-0.04em;line-height:1.02;font-weight:700;max-width:760px">Day two, handled</h2>
+<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1px;background:#1C2024;border:1px solid #1C2024;border-radius:14px;overflow:hidden">
+<div style="background:#0E1113;padding:28px;display:flex;flex-direction:column;gap:10px"><code style="font-family:'JetBrains Mono',monospace;color:#3BE38A;font-size:14px">domains</code><h3 style="margin:0;font-size:20px;font-weight:600">Bring your domain</h3><p style="margin:0;color:#9AA5A1;line-height:1.55">Instant subdomain on day one. Add two DNS records for your own; certificates are automatic.</p></div>
+<div style="background:#0E1113;padding:28px;display:flex;flex-direction:column;gap:10px"><code style="font-family:'JetBrains Mono',monospace;color:#3BE38A;font-size:14px">packages</code><h3 style="margin:0;font-size:20px;font-weight:600">Install from the registry</h3><p style="margin:0;color:#9AA5A1;line-height:1.55">Packages from Studio or your CI. Pin a version or let it update.</p></div>
+<div style="background:#0E1113;padding:28px;display:flex;flex-direction:column;gap:10px"><code style="font-family:'JetBrains Mono',monospace;color:#3BE38A;font-size:14px">secrets</code><h3 style="margin:0;font-size:20px;font-weight:600">Secrets in a vault</h3><p style="margin:0;color:#9AA5A1;line-height:1.55">Stored in OpenBao, injected at start, never shown twice.</p></div>
+<div style="background:#0E1113;padding:28px;display:flex;flex-direction:column;gap:10px"><code style="font-family:'JetBrains Mono',monospace;color:#3BE38A;font-size:14px">backups</code><h3 style="margin:0;font-size:20px;font-weight:600">Backups you can download</h3><p style="margin:0;color:#9AA5A1;line-height:1.55">Nightly by default. Restore here, or on your own setup.</p></div>
+<div style="background:#0E1113;padding:28px;display:flex;flex-direction:column;gap:10px"><code style="font-family:'JetBrains Mono',monospace;color:#3BE38A;font-size:14px">logs · metrics</code><h3 style="margin:0;font-size:20px;font-weight:600">See what is happening</h3><p style="margin:0;color:#9AA5A1;line-height:1.55">Per-service logs and resource graphs in the console.</p></div>
+<div style="background:#0E1113;padding:28px;display:flex;flex-direction:column;gap:10px"><code style="font-family:'JetBrains Mono',monospace;color:#3BE38A;font-size:14px">database</code><h3 style="margin:0;font-size:20px;font-weight:600">Look inside your data</h3><p style="margin:0;color:#9AA5A1;line-height:1.55">A database explorer, right in the browser.</p></div>
+</div>
+</section>
+
+<!-- Add-ons -->
+<section style="max-width:1280px;margin:0 auto;padding:0 24px 96px;display:flex;flex-direction:column;gap:32px">
+<h2 style="margin:0;font-size:clamp(28px,3.5vw,44px);letter-spacing:-0.035em;line-height:1.05;font-weight:700">Add-ons, one switch each</h2>
+<div style="border:1px solid #23292E;border-radius:14px;background:#0E1113;overflow-x:auto">
+<table style="width:100%;border-collapse:collapse;font-size:15px;min-width:620px">
+<thead><tr style="text-align:left;color:#6F7A77;font-family:'JetBrains Mono',monospace;font-size:12px"><th style="padding:14px 20px;font-weight:500">add-on</th><th style="padding:14px 20px;font-weight:500">what it does</th><th style="padding:14px 20px;font-weight:500;text-align:right">state</th></tr></thead>
+<tbody>
+<tr style="border-top:1px solid #1C2024"><td style="padding:16px 20px;font-family:'JetBrains Mono',monospace">agent</td><td style="padding:16px 20px;color:#9AA5A1">Automations with their own signed identity</td><td style="padding:16px 20px;text-align:right"><span style="display:inline-flex;align-items:center;width:40px;height:22px;border-radius:999px;background:#3BE38A;padding:2px;box-sizing:border-box;justify-content:flex-end"><span style="width:18px;height:18px;border-radius:50%;background:#08090A"></span></span></td></tr>
+<tr style="border-top:1px solid #1C2024"><td style="padding:16px 20px;font-family:'JetBrains Mono',monospace">docling</td><td style="padding:16px 20px;color:#9AA5A1">PDFs and scans into structured data</td><td style="padding:16px 20px;text-align:right"><span style="display:inline-flex;align-items:center;width:40px;height:22px;border-radius:999px;background:#3BE38A;padding:2px;box-sizing:border-box;justify-content:flex-end"><span style="width:18px;height:18px;border-radius:50%;background:#08090A"></span></span></td></tr>
+<tr style="border-top:1px solid #1C2024"><td style="padding:16px 20px;font-family:'JetBrains Mono',monospace">paperless</td><td style="padding:16px 20px;color:#9AA5A1">A searchable archive for incoming documents</td><td style="padding:16px 20px;text-align:right"><span style="display:inline-flex;align-items:center;width:40px;height:22px;border-radius:999px;background:#2A3036;padding:2px;box-sizing:border-box"><span style="width:18px;height:18px;border-radius:50%;background:#6F7A77"></span></span></td></tr>
+<tr style="border-top:1px solid #1C2024"><td style="padding:16px 20px;font-family:'JetBrains Mono',monospace">speckle</td><td style="padding:16px 20px;color:#9AA5A1">3D and building data, linked to your models</td><td style="padding:16px 20px;text-align:right"><span style="display:inline-flex;align-items:center;width:40px;height:22px;border-radius:999px;background:#2A3036;padding:2px;box-sizing:border-box"><span style="width:18px;height:18px;border-radius:50%;background:#6F7A77"></span></span></td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<!-- Plans -->
+<section style="border-top:1px solid #1C2024">
+<div style="max-width:1280px;margin:0 auto;padding:96px 24px;display:flex;flex-direction:column;gap:32px">
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;align-items:flex-end">
+<div style="display:flex;flex-direction:column;gap:14px;max-width:720px">
+<h2 style="margin:0;font-size:clamp(32px,4vw,52px);letter-spacing:-0.04em;line-height:1.02;font-weight:700">Pay for capacity.<br><span style="color:#6F7A77">Your packages decide how much.</span></h2>
+<p style="margin:0;font-size:17px;line-height:1.55;color:#9AA5A1">Every environment runs on a resource bundle. The solution and the packages you install determine the size you need, and the price scales linearly with it.</p>
+</div>
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#6F7A77">// beta: access by invite code</span>
+</div>
+
+<div style="display:flex;flex-wrap:wrap;gap:16px;align-items:stretch">
+<!-- Capacity picker -->
+<div style="flex:1 1 460px;min-width:0;border:1px solid #23292E;background:#0E1113;border-radius:14px;padding:28px;display:flex;flex-direction:column;gap:24px">
+<div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#6F7A77">capacity</div>
+<div role="group" aria-label="Choose capacity" style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+<sc-for list="{{tiers}}" as="t" hint-placeholder-count="4">
+<sc-if value="{{t.selected}}" hint-placeholder-val="{{false}}">
+<button type="button" aria-pressed="true" onClick="{{t.pick}}" style="min-height:48px;border:1px solid #3BE38A;background:#3BE38A1A;color:#3BE38A;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;cursor:pointer">{{t.label}}</button>
+</sc-if>
+<sc-if value="{{t.unselected}}" hint-placeholder-val="{{true}}">
+<button type="button" aria-pressed="false" onClick="{{t.pick}}" style="min-height:48px;border:1px solid #2A3036;background:transparent;color:#C5CDCA;border-radius:8px;font-family:'JetBrains Mono',monospace;font-size:14px;cursor:pointer">{{t.label}}</button>
+</sc-if>
+</sc-for>
+</div>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1px;background:#1C2024;border:1px solid #1C2024;border-radius:10px;overflow:hidden">
+<div style="background:#0E1113;padding:16px"><div style="font-size:12px;color:#6F7A77">CPU</div><div style="font-size:24px;font-weight:600;margin-top:4px">{{current.cpu}} vCPU</div></div>
+<div style="background:#0E1113;padding:16px"><div style="font-size:12px;color:#6F7A77">Memory</div><div style="font-size:24px;font-weight:600;margin-top:4px">{{current.mem}} GB</div></div>
+<div style="background:#0E1113;padding:16px"><div style="font-size:12px;color:#6F7A77">NVMe</div><div style="font-size:24px;font-weight:600;margin-top:4px">{{current.disk}} GB</div></div>
+</div>
+<div style="display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:8px">
+<div style="font-size:56px;font-weight:700;letter-spacing:-0.04em;line-height:1">€{{current.price}}<span style="font-size:16px;color:#6F7A77;font-weight:400;letter-spacing:0"> / month</span></div>
+<div style="font-size:14px;color:#9AA5A1">{{current.fit}}</div>
+</div>
+<div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#6F7A77;border-top:1px solid #1C2024;padding-top:14px">€40 per 2 vCPU · 4 GB · 80 GB NVMe · scale up or down anytime</div>
+</div>
+
+<!-- Estimate -->
+<div style="flex:1 1 460px;min-width:0;background:#0E1113;border:1px solid #23292E;border-radius:14px;overflow:hidden;display:flex;flex-direction:column">
+<div style="padding:10px 16px;border-bottom:1px solid #1C2024;font-family:'JetBrains Mono',monospace;font-size:12px;color:#6F7A77">estimate before you install</div>
+<pre style="margin:0;padding:20px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.9;color:#C5CDCA;overflow-x:auto;flex:1"><span style="color:#3BE38A">$</span> estimate <span style="color:#E4E8E6">invoice-approval</span> + docling
+
+  <span style="color:#6F7A77">solution</span>
+  connect · switchboard · fusion   [N] vCPU  [N] GB
+  @acme/invoices                   [N] vCPU  [N] GB
+  <span style="color:#6F7A77">add-ons</span>
+  docling                          [N] vCPU  [N] GB
+  <span style="color:#6F7A77">────────────────────────────────────────────</span>
+  <span style="color:#3BE38A">→ recommended</span>  4 vCPU · 8 GB · 160 GB
+                   <span style="color:#E4E8E6">€80 / month</span></pre>
+<div style="padding:14px 16px;border-top:1px solid #1C2024;font-size:14px;color:#9AA5A1">The console shows this before every install, so the bill never surprises you.</div>
+</div>
+</div>
+<div style="font-size:14px;color:#6F7A77">Need dedicated nodes or more than 16 vCPU? <a href="#" style="color:#3BE38A">Talk to us</a>.</div>
+</div>
+</section>
+
+<!-- Security, honest -->
+<section style="max-width:1280px;margin:0 auto;padding:0 24px 96px;display:flex;flex-wrap:wrap;gap:16px">
+<div style="flex:1 1 440px;background:#0E1113;border:1px solid #23292E;border-radius:14px;padding:28px;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:2;color:#C5CDCA">
+<div style="color:#3BE38A">// what we do today</div>
+<div>isolated namespace per environment</div>
+<div>secrets in OpenBao, not config files</div>
+<div>every document change signed (Renown)</div>
+<div>backups you can download</div>
+</div>
+<div style="flex:1 1 440px;background:#0E1113;border:1px solid #23292E;border-radius:14px;padding:28px;font-family:'JetBrains Mono',monospace;font-size:14px;line-height:2;color:#C5CDCA">
+<div style="color:#F2C14E">// not yet</div>
+<div>formal certification ([CERTIFICATION])</div>
+<div>uptime SLA (status page instead)</div>
+<div>region choice beyond [REGION]</div>
+</div>
+</section>
+
+<!-- Exit door -->
+<section style="border-top:1px solid #1C2024;background:#0B0D0F">
+<div style="max-width:1280px;margin:0 auto;padding:96px 24px;display:flex;flex-wrap:wrap;gap:48px;align-items:center">
+<div style="flex:1 1 380px;min-width:0;display:flex;flex-direction:column;gap:16px">
+<span style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#3BE38A">// the exit door</span>
+<h2 style="margin:0;font-size:clamp(32px,4vw,52px);letter-spacing:-0.04em;line-height:1.02;font-weight:700">Leaving is a feature.</h2>
+<p style="margin:0;font-size:17px;line-height:1.55;color:#9AA5A1">How we run Vetra Cloud is our job. What runs your app is the open-source Powerhouse platform. Take your packages and a backup, and self-host with Docker or Kubernetes.</p>
+</div>
+<div style="flex:1 1 520px;min-width:0;background:#0E1113;border:1px solid #23292E;border-radius:14px;overflow:hidden">
+<div style="padding:10px 16px;border-bottom:1px solid #1C2024;font-family:'JetBrains Mono',monospace;font-size:12px;color:#6F7A77">your machine</div>
+<pre style="margin:0;padding:18px 16px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.8;color:#C5CDCA;overflow-x:auto"><span style="color:#6F7A77"># 1. install the platform</span>
+<span style="color:#3BE38A">$</span> curl -fsSL get.vetra.io | sh
+<span style="color:#6F7A77"># 2. restore your backup + packages</span>
+<span style="color:#3BE38A">$</span> [RESTORE COMMAND] acme-ops-backup.tar.gz</pre>
+</div>
+</div>
+</section>
+
+<!-- Final -->
+<section style="border-top:1px solid #1C2024">
+<div style="max-width:1280px;margin:0 auto;padding:88px 24px;display:flex;flex-direction:column;gap:24px">
+<div style="font-family:'JetBrains Mono',monospace;font-size:clamp(22px,3vw,36px);line-height:1.4">~/vetra $ <span style="color:#3BE38A">env create</span><span class="vt-caret"></span></div>
+<div style="display:flex;flex-wrap:wrap;gap:10px">
+<a href="#" style="background:#3BE38A;color:#08090A;text-decoration:none;font-weight:600;padding:14px 20px;border-radius:8px">Redeem access code</a>
+<a href="#" style="border:1px solid #2A3036;color:#E4E8E6;text-decoration:none;padding:14px 20px;border-radius:8px">Request access</a>
+<a href="#" style="border:1px solid #2A3036;color:#E4E8E6;text-decoration:none;padding:14px 20px;border-radius:8px">Book a walkthrough</a>
+</div>
+</div>
+<div style="max-width:1280px;margin:0 auto;padding:24px;border-top:1px solid #1C2024;display:flex;flex-wrap:wrap;justify-content:space-between;gap:16px;font-family:'JetBrains Mono',monospace;font-size:13px;color:#6F7A77">
+<span>open by default · sovereign by design</span>
+<div style="display:flex;flex-wrap:wrap;gap:20px"><a href="#" style="color:#6F7A77">github</a><a href="#" style="color:#6F7A77">discord</a><a href="#" style="color:#6F7A77">status</a><a href="#" style="color:#6F7A77">privacy</a></div>
+</div>
+</section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":5400}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const tiers = [
+      { cpu: 2, mem: 4, disk: 80, price: 40, fit: 'A workspace and a few packages' },
+      { cpu: 4, mem: 8, disk: 160, price: 80, fit: 'Several packages and an agent' },
+      { cpu: 8, mem: 16, disk: 320, price: 160, fit: 'Document processing add-ons' },
+      { cpu: 16, mem: 32, disk: 640, price: 320, fit: 'Heavy processing and 3D data' },
+    ];
+    const step = this.state && this.state.step !== undefined ? this.state.step : 1;
+    return {
+      tiers: tiers.map((t, k) => ({
+        label: t.cpu + ' vCPU',
+        selected: k === step,
+        unselected: k !== step,
+        pick: () => this.setState({ step: k }),
+      })),
+      current: tiers[step],
+    };
+  }
+}
+</script>
+</body>
+</html>
