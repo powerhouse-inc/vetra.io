@@ -1,6 +1,6 @@
 'use client'
 import { usePHToast, useRenownAuthAsync } from '@powerhousedao/reactor-browser'
-import { ArrowLeft, ExternalLink, Loader2 } from 'lucide-react'
+import { ArrowLeft, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
 import { Suspense, useEffect, useMemo } from 'react'
@@ -28,12 +28,12 @@ function ManageTeamInner() {
     return team.members.some((m) => m.ethAddress.toLowerCase() === me)
   }, [team, auth.address])
 
-  // Redirect non-members to the public page once we know.
+  // Send non-members back to their teams list once we know (public team pages are retired).
   useEffect(() => {
     if (!team || !auth.address || isLoading) return
     if (!isMember) {
       toast?.('Only members can manage this team', { type: 'error' })
-      router.replace(`/builders/${slug}`)
+      router.replace('/profile?tab=teams')
     }
   }, [team, auth.address, isLoading, isMember, toast, router, slug])
 
@@ -108,12 +108,6 @@ function ManageTeamInner() {
             Edit your team&apos;s profile, members, and packages.
           </p>
         </div>
-        <Button variant="outline" asChild>
-          <Link href={`/builders/${team.profileSlug}`} target="_blank" rel="noopener noreferrer">
-            Open public page
-            <ExternalLink className="ml-1.5 size-3.5" />
-          </Link>
-        </Button>
       </div>
 
       <TeamTabs slug={team.profileSlug}>

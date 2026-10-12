@@ -62,12 +62,6 @@ export function TeamProfileCard({ team }: { team: ProfileTeam }) {
         </div>
 
         <div className="flex gap-2 pt-2">
-          <Button asChild variant="outline" size="sm" className="flex-1">
-            <Link href={`/builders/${team.profileSlug}`}>
-              Open
-              <ArrowRight className="ml-1 size-3.5" />
-            </Link>
-          </Button>
           <Button variant="ghost" size="sm" className="flex-1" asChild>
             <Link href={`/profile/teams/${team.profileSlug}`}>
               Manage

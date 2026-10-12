@@ -107,7 +107,7 @@ function CreateTeamInner() {
       }
       await createTeam(cleaned)
       toast?.('Team created', { type: 'success' })
-      router.push(`/builders/${form.slug}`)
+      router.push(`/profile/teams/${form.slug}`)
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Something went wrong'
       toast?.(`Couldn't create team — ${msg}`, { type: 'error' })
