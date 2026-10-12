@@ -1,5 +1,11 @@
 import { CloudLanding } from '@/modules/cloud/components/cloud-landing'
 
+export const metadata = {
+  title: 'Vetra Cloud | Managed hosting for Powerhouse apps',
+  description:
+    'Environments with a team workspace, APIs and agents, your own domain and nightly backups. Priced by capacity from €40 per month, with self-hosting always an option.',
+}
+
 /**
  * Public Vetra Cloud landing page. Always renders the marketing landing —
  * including for signed-in users — so `/cloud` is a stable, shareable page.
