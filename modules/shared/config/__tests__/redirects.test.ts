@@ -12,9 +12,9 @@ function target(path: string) {
 }
 
 describe('legacy redirects', () => {
-  it('sends the retired Packages listing and package pages to the signed-in registry', () => {
-    expect(target('/packages')).toBe('/user/packages')
-    expect(target('/packages/@acme/invoices')).toBe('/user/packages')
+  it('sends the retired Packages pages to Cloud, where packages are installed', () => {
+    expect(target('/packages')).toBe('/cloud')
+    expect(target('/packages/@acme/invoices')).toBe('/cloud')
   })
 
   it('sends Builders and team pages home', () => {
