@@ -1,5 +1,6 @@
 import { RENOWN_SESSION_COOKIE, verifyRenownSession } from '@renown/sdk/node'
 import { NextResponse, type NextRequest } from 'next/server'
+import { loggedOutDestination } from '@/modules/landing/lib/routes'
 
 // Gate the authenticated areas: verify the session cookie's JWT signature +
 // expiry (no network check; page + DAL stay authoritative), else bounce to sign-in.
@@ -11,9 +12,10 @@ export async function proxy(request: NextRequest) {
 
   if (session) return NextResponse.next()
 
-  // Send logged-out visitors to the public home; login is an explicit action
-  // there (no auto-open param, which otherwise re-fires on the post-logout refetch).
-  return NextResponse.redirect(new URL('/', request.url))
+  // Send logged-out visitors to the public home (or the Studio page for studio
+  // routes); login is an explicit action there (no auto-open param, which
+  // otherwise re-fires on the post-logout refetch).
+  return NextResponse.redirect(new URL(loggedOutDestination(request.nextUrl.pathname), request.url))
 }
 
 export const config = {

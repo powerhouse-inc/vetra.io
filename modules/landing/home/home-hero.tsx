@@ -17,7 +17,7 @@ export function HomeHero() {
             Studio writes an open-source package. Vetra Cloud hosts it for you, or you self-host it
             on the open Powerhouse platform.
           </p>
-          <div className="flex flex-wrap gap-3">
+          <div className="flex max-w-full min-w-0 flex-wrap gap-3">
             <CtaLink href={EARLY_ACCESS_HREF} variant="primary">
               Get early access
             </CtaLink>

@@ -3,7 +3,7 @@ import { INSTALL_CMD } from '../lib/links'
 
 export function InstallChip() {
   return (
-    <div className="border-console-line-strong bg-console-surface/60 flex min-h-12 max-w-full items-center gap-2 rounded-lg border py-1 pr-1 pl-4">
+    <div className="border-console-line-strong bg-console-surface/60 flex min-h-12 w-full max-w-full min-w-0 items-center gap-2 rounded-lg border py-1 pr-1 pl-4 sm:w-auto">
       <span className="text-console-signal font-console-mono text-sm" aria-hidden>
         $
       </span>

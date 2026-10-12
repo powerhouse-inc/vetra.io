@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isConsoleRoute } from '@/modules/landing/lib/routes'
+import { isConsoleRoute, loggedOutDestination } from '@/modules/landing/lib/routes'
 
 describe('isConsoleRoute', () => {
   it('matches the three public console pages', () => {
@@ -12,5 +12,18 @@ describe('isConsoleRoute', () => {
     expect(isConsoleRoute('/user')).toBe(false)
     expect(isConsoleRoute('/cloud/x')).toBe(false)
     expect(isConsoleRoute('/studio/waking')).toBe(false)
+  })
+})
+
+describe('loggedOutDestination', () => {
+  it('sends logged-out studio visitors to the public Studio page', () => {
+    expect(loggedOutDestination('/user/studio')).toBe('/studio')
+    expect(loggedOutDestination('/user/studio/abc')).toBe('/studio')
+  })
+
+  it('sends every other gated route home', () => {
+    expect(loggedOutDestination('/user')).toBe('/')
+    expect(loggedOutDestination('/user/environments')).toBe('/')
+    expect(loggedOutDestination('/profile')).toBe('/')
   })
 })

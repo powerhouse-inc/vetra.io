@@ -4,6 +4,7 @@ import { useRenownAuthAsync, useRenownSessionSynced } from '@powerhousedao/react
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useRef } from 'react'
 import { useLoginModal } from '@/modules/shared/components/renown/login-modal-context'
+import { loggedOutDestination } from '@/modules/landing/lib/routes'
 
 // Handles the client-side auth transitions the server redirects miss (those only
 // run on a fresh request): after login enter the dashboard, after logout leave gated.
@@ -25,10 +26,10 @@ export function AuthRedirect() {
 
     if (state === 'unauthenticated') {
       navigated.current = false
-      // Logout while on a gated route: close the modal and return to home.
+      // Logout while on a gated route: close the modal and leave the gated area.
       if (onGated) {
         closeLogin()
-        router.replace('/')
+        router.replace(loggedOutDestination(pathname))
       }
       return
     }
