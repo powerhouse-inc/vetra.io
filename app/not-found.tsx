@@ -63,7 +63,7 @@ export default function NotFound() {
           <span className="text-foreground text-[13px] font-semibold">Documentation</span>
         </Link>
         <Link
-          href="/packages"
+          href="/studio"
           className="bg-card border-border hover:border-primary-30 flex flex-col items-center gap-2.5 rounded-xl border p-6 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
           <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-[10px]">
@@ -82,7 +82,7 @@ export default function NotFound() {
               />
             </svg>
           </div>
-          <span className="text-foreground text-[13px] font-semibold">Packages</span>
+          <span className="text-foreground text-[13px] font-semibold">Studio</span>
         </Link>
         <Link
           href="/cloud"

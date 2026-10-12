@@ -13,13 +13,12 @@ import {
 import Link from 'next/link'
 import { CopyButton } from '@/modules/apps/components/copy-button'
 import { Button } from '@/modules/shared/components/ui/button'
+import { WAITLIST_ACTION } from '@/modules/studio-license/lib/waitlist'
 
 const DISCORD_URL = 'https://discord.gg/Py28EMafEr'
 const CURL_CMD = 'curl -fsSL https://get.vetra.io | sh'
 const NPM_CMD = 'npm install -g ph-cmd vetra'
 const GITHUB_URL = 'https://github.com/powerhouse-inc/vetra-cli'
-const WAITLIST_ACTION =
-  'https://gmail.us21.list-manage.com/subscribe/post?u=a65ca7e437961008f5f5c1bad&id=c8ea339c46&f_id=00fda7e6f0'
 const ACADEMY_URL =
   'https://academy.vetra.io/academy/GetStarted/VetraStudio#running-vetra-studio-locally'
 

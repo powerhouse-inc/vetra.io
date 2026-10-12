@@ -1,0 +1,66 @@
+import { Container, SectionHeading } from '../components/section-heading'
+
+const POINTS = [
+  { title: 'Plans before code', body: 'Studio asks before it changes your models.' },
+  { title: 'Every step is a commit', body: 'Review, revert or continue by hand in your IDE.' },
+  {
+    title: 'Signed with your identity',
+    body: 'Sign in with Renown. Every change carries your signature.',
+  },
+  {
+    title: 'Your model key, your call',
+    body: 'Runs on Anthropic Claude. Use the key in your licence or bring your own.',
+  },
+]
+
+const STATUS = [
+  {
+    title: '// works today',
+    tone: 'text-console-signal',
+    items: [
+      'Models, editors and subgraphs from a conversation',
+      'Live preview',
+      'Publish to the registry',
+    ],
+  },
+  {
+    title: '// still rough',
+    tone: 'text-console-warn',
+    items: ['Large refactors', 'Data may be lost between versions, so keep exports'],
+  },
+]
+
+export function StudioControl() {
+  return (
+    <section>
+      <Container className="flex flex-col gap-10 py-24">
+        <SectionHeading title="You stay in charge" />
+        <ul className="border-console-line grid grid-cols-1 border-t sm:grid-cols-2 lg:grid-cols-4">
+          {POINTS.map((p) => (
+            <li key={p.title} className="flex flex-col gap-2 py-6 pr-6">
+              <h3 className="text-lg font-semibold">{p.title}</h3>
+              <p className="text-console-muted leading-relaxed">{p.body}</p>
+            </li>
+          ))}
+        </ul>
+        <div className="border-console-line-strong bg-console-surface flex flex-col gap-6 rounded-2xl border p-7">
+          <h2 className="text-[clamp(24px,3vw,34px)] font-bold tracking-[-0.03em]">
+            Where Studio is today
+          </h2>
+          <div className="flex flex-wrap gap-8">
+            {STATUS.map((s) => (
+              <div key={s.title} className="font-console-mono min-w-0 flex-[1_1_280px] text-sm">
+                <h3 className={`${s.tone} font-normal`}>{s.title}</h3>
+                <ul className="mt-2 leading-loose text-[#c5cdca]">
+                  {s.items.map((i) => (
+                    <li key={i}>{i}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </div>
+      </Container>
+    </section>
+  )
+}

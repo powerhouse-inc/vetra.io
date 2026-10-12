@@ -3,7 +3,7 @@
 import { Loader2, Ticket } from 'lucide-react'
 import Link from 'next/link'
 import { Banner } from '@/modules/apps/components/banner'
-import { CloudLanding } from '@/modules/cloud/components/cloud-landing'
+import { StudioLanding } from '@/modules/landing/studio/studio-landing'
 import { Button } from '@/modules/shared/components/ui/button'
 import { NoLicencePanel } from '@/modules/studio-license/components/no-licence-panel'
 import {
@@ -79,7 +79,7 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
     did,
   } = useStudioProducts()
 
-  if (gate === 'unauthenticated') return <CloudLanding />
+  if (gate === 'unauthenticated') return <StudioLanding />
   if (gate === 'loading') return <StudioBootScreen title="Loading…" />
 
   // Provision a new product; it surfaces in the list optimistically (as

@@ -6,7 +6,7 @@
  *    corners, providing soft pools of brand colour.
  *  - Low-opacity SVG noise tile to break banding and add film grain.
  *
- * Pages that paint their own background (e.g. CloudLanding hero) layer
+ * Pages that paint their own background (e.g. the console landing pages) layer
  * naturally above this. Pointer-events disabled so it never intercepts
  * clicks.
  */

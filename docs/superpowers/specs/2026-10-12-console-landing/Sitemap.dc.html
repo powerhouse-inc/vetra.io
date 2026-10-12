@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Vetra navigation and sitemap</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&amp;family=Geist+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#037A3E}a:hover{color:#025A2E}
+</style>
+</helmet>
+<div style="width:1440px;height:1240px;box-sizing:border-box;padding:64px;background:#F6F7F6;color:#12161A;font-family:'Geist',ui-sans-serif,system-ui,sans-serif;display:flex;flex-direction:column;gap:40px">
+
+<h1 style="margin:0;font-size:44px;letter-spacing:-0.035em;font-weight:650">Navigation: from five doors to two</h1>
+
+<!-- Nav before / after -->
+<div style="display:flex;flex-direction:column;gap:14px">
+<div style="display:flex;align-items:center;gap:20px">
+<span style="width:80px;font-family:'Geist Mono',monospace;font-size:13px;color:#56606B">TODAY</span>
+<div style="flex:1;background:#FFFFFF;border:1px solid #E1E5E3;border-radius:14px;padding:16px 24px;display:flex;align-items:center;gap:28px;font-size:15px;color:#56606B">
+<b style="color:#12161A;font-weight:650">Vetra</b><span style="text-decoration:line-through">Packages</span><span style="text-decoration:line-through">Builders</span><span>Academy ↗</span><span>Cloud</span><span style="margin-left:auto">Login</span>
+</div>
+</div>
+<div style="display:flex;align-items:center;gap:20px">
+<span style="width:80px;font-family:'Geist Mono',monospace;font-size:13px;color:#037A3E">PROPOSED</span>
+<div style="flex:1;background:#FFFFFF;border:1px solid #04C161;border-radius:14px;padding:16px 24px;display:flex;align-items:center;gap:28px;font-size:15px">
+<b style="font-weight:650">Vetra</b><span style="font-weight:600">Studio</span><span style="font-weight:600">Cloud</span><span>Docs</span><span>Pricing</span><span style="margin-left:auto">Sign in</span><span style="background:#12161A;color:#FFFFFF;padding:8px 14px;border-radius:8px">Get early access</span>
+</div>
+</div>
+</div>
+
+<!-- Tree -->
+<div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;align-items:start">
+<div style="background:#12161A;color:#FFFFFF;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px">
+<span style="font-family:'Geist Mono',monospace;font-size:13px;color:#5BE39A">/</span><span style="font-size:18px;font-weight:600">Home</span><span style="font-size:14px;color:#AEB8B5;line-height:1.5">The loop: describe, build, run, own. Six sections, down from twelve.</span>
+</div>
+<div style="background:#FFFFFF;border:1px solid #E1E5E3;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px">
+<span style="font-family:'Geist Mono',monospace;font-size:13px;color:#037A3E">/studio</span><span style="font-size:18px;font-weight:600">Studio</span><span style="font-size:14px;color:#4A535D;line-height:1.5">New. The first public page for the core product.</span>
+<span style="font-family:'Geist Mono',monospace;font-size:12px;color:#56606B">/studio/waking stays</span>
+</div>
+<div style="background:#FFFFFF;border:1px solid #E1E5E3;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px">
+<span style="font-family:'Geist Mono',monospace;font-size:13px;color:#037A3E">/cloud</span><span style="font-size:18px;font-weight:600">Cloud</span><span style="font-size:14px;color:#4A535D;line-height:1.5">Rewritten around environments, day-2 ops and add-ons.</span>
+</div>
+<div style="background:#FFFFFF;border:1px solid #E1E5E3;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px">
+<span style="font-family:'Geist Mono',monospace;font-size:13px;color:#037A3E">/pricing</span><span style="font-size:18px;font-weight:600">Pricing &amp; access</span><span style="font-size:14px;color:#4A535D;line-height:1.5">Self-host, Studio, Cloud. Redeem code and waitlist live here, once.</span>
+</div>
+<div style="background:#FFFFFF;border:1px solid #E1E5E3;border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:8px">
+<span style="font-family:'Geist Mono',monospace;font-size:13px;color:#037A3E">/docs</span><span style="font-size:18px;font-weight:600">Docs</span><span style="font-size:14px;color:#4A535D;line-height:1.5">Academy and deploy guide, behind one label.</span>
+</div>
+</div>
+
+<!-- Redirects -->
+<div style="display:flex;gap:24px;flex:1;min-height:0">
+<div style="flex:3;background:#FFFFFF;border:1px solid #E1E5E3;border-radius:16px;overflow:hidden">
+<table style="width:100%;border-collapse:collapse;font-size:15px">
+<thead><tr style="text-align:left;color:#56606B;font-size:13px;background:#FAFBFA"><th style="padding:14px 20px;font-weight:500">Retired route</th><th style="padding:14px 20px;font-weight:500">Goes to</th><th style="padding:14px 20px;font-weight:500">Why</th></tr></thead>
+<tbody>
+<tr style="border-top:1px solid #EEF1F0"><td style="padding:14px 20px;font-family:'Geist Mono',monospace">/packages</td><td style="padding:14px 20px;font-family:'Geist Mono',monospace">/cloud#add-ons · /user/packages</td><td style="padding:14px 20px;color:#4A535D">Registry stays inside the app for signed-in users</td></tr>
+<tr style="border-top:1px solid #EEF1F0"><td style="padding:14px 20px;font-family:'Geist Mono',monospace">/packages/[name]</td><td style="padding:14px 20px;font-family:'Geist Mono',monospace">/user/packages/[name]</td><td style="padding:14px 20px;color:#4A535D">Keep deep links working</td></tr>
+<tr style="border-top:1px solid #EEF1F0"><td style="padding:14px 20px;font-family:'Geist Mono',monospace">/builders</td><td style="padding:14px 20px;font-family:'Geist Mono',monospace">/</td><td style="padding:14px 20px;color:#4A535D">Hidden until the directory has a purpose again</td></tr>
+<tr style="border-top:1px solid #EEF1F0"><td style="padding:14px 20px;font-family:'Geist Mono',monospace">/contributors, /finances</td><td style="padding:14px 20px;font-family:'Geist Mono',monospace">[DECIDE]</td><td style="padding:14px 20px;color:#4A535D">Not linked today; check usage before removing</td></tr>
+</tbody>
+</table>
+</div>
+<div style="flex:2;background:#0F1316;color:#E7ECEA;border-radius:16px;padding:24px;display:flex;flex-direction:column;gap:12px">
+<span style="font-family:'Geist Mono',monospace;font-size:13px;color:#5BE39A">FOOTER</span>
+<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;font-size:14px;line-height:1.9;color:#AEB8B5">
+<div><div style="color:#E7ECEA;font-weight:600">Product</div>Studio<br>Cloud<br>Pricing<br>Status</div>
+<div><div style="color:#E7ECEA;font-weight:600">Learn</div>Docs<br>Academy<br>LLM docs<br>Changelog</div>
+<div><div style="color:#E7ECEA;font-weight:600">Powerhouse</div>Renown<br>Connect<br>GitHub<br>Discord</div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1240}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

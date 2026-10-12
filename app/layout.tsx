@@ -15,6 +15,7 @@ import { AppStateCoordinator } from '@/modules/shared/state'
 import { Toaster } from '@/modules/shared/components/ui/sonner'
 import { ThemeProvider } from '@/modules/shared/providers/theme-provider'
 import { Footer } from '@/shared/components/footer/footer'
+import { FooterScope } from '@/shared/components/footer/footer-scope'
 import Navbar from '@/shared/components/navbar/navbar'
 import { QueryClientProvider } from '@/shared/providers/query-client'
 import { verifySession } from '@/modules/shared/lib/renown-session'
@@ -151,7 +152,9 @@ export default async function RootLayout({
                     <div className="items-right flex min-h-screen flex-col">
                       <Navbar />
                       <main className="flex-1">{children}</main>
-                      <Footer />
+                      <FooterScope>
+                        <Footer />
+                      </FooterScope>
                     </div>
                     <Toaster />
                   </AppStateCoordinator>

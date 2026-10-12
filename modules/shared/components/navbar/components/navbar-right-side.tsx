@@ -32,6 +32,8 @@ import {
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar'
+import { cn } from '@/modules/shared/lib/utils'
+import { useConsoleMenuClass } from '../use-console-menu-class'
 import ThemeIconLabel from './toogle-theme-label'
 
 const btnSecondary =
@@ -67,6 +69,7 @@ function CopyAddressButton({ address }: { address: string }) {
 }
 
 function RenownButton() {
+  const consoleMenu = useConsoleMenuClass()
   const auth = useRenownAuthAsync()
   const avatarUrl = useRenownAvatarUrl()
   const openLogin = useOpenLogin()
@@ -104,7 +107,7 @@ function RenownButton() {
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          className="bg-accent border-border/50 z-170 w-56 rounded-lg p-1.5"
+          className={cn('bg-accent border-border/50 z-170 w-56 rounded-lg p-1.5', consoleMenu)}
         >
           <DropdownMenuLabel className="px-3 py-2">
             <div className="flex items-center gap-2.5">
@@ -214,6 +217,7 @@ function RenownButton() {
 }
 
 function NavbarRightSide() {
+  const consoleMenu = useConsoleMenuClass()
   const { resolvedTheme, setTheme } = useTheme()
 
   const handleThemeToggle = () => {
@@ -243,7 +247,7 @@ function NavbarRightSide() {
               <span className="sr-only">Open menu</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className="z-160 w-56" align="end">
+          <DropdownMenuContent className={cn('z-160 w-56', consoleMenu)} align="end">
             <DropdownMenuItem className="p-0">
               <RenownButton />
             </DropdownMenuItem>
