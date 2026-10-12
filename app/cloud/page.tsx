@@ -1,4 +1,4 @@
-import { CloudLanding } from '@/modules/cloud/components/cloud-landing'
+import { CloudLanding } from '@/modules/landing/cloud/cloud-landing'
 
 export const metadata = {
   title: 'Vetra Cloud | Managed hosting for Powerhouse apps',

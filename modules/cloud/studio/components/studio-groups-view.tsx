@@ -2,7 +2,7 @@
 
 import { Plus } from 'lucide-react'
 import Link from 'next/link'
-import { CloudLanding } from '@/modules/cloud/components/cloud-landing'
+import { StudioLanding } from '@/modules/landing/studio/studio-landing'
 import { CloudEnvironmentCard } from '@/app/user/environments/cloud-projects'
 import { StudioBootScreen } from './studio-boot-screen'
 import { NewProductCard } from './new-product-card'
@@ -48,7 +48,7 @@ export function StudioGroupsView() {
     hasAttachedKey,
   } = useStudioGroups()
 
-  if (gate === 'unauthenticated') return <CloudLanding />
+  if (gate === 'unauthenticated') return <StudioLanding />
   if (gate === 'loading') return <StudioBootScreen title="Loading…" />
 
   const handleCreate = async (apiKey?: string) => {

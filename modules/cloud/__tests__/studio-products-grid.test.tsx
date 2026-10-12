@@ -52,6 +52,17 @@ const baseState: StudioProductsState = {
 }
 
 describe('StudioProductsGrid', () => {
+  it('shows the Studio landing to logged-out visitors', () => {
+    state = { ...baseState, gate: 'unauthenticated' }
+    const { getByRole } = render(<StudioProductsGrid />)
+    expect(
+      getByRole('heading', {
+        level: 1,
+        name: 'A studio of your own, with an agent that builds alongside you',
+      }),
+    ).toBeTruthy()
+  })
+
   it('renders a card per product plus the new-product card', () => {
     state = {
       ...baseState,
