@@ -13,6 +13,11 @@ const dirname =
 export default defineConfig({
   resolve: {
     alias: [
+      // next/font only runs inside the Next compiler; unit tests get a stub.
+      {
+        find: /^next\/font\/google$/,
+        replacement: path.join(dirname, 'test-stubs/next-font-google.ts'),
+      },
       // Map @/shared/* before @/* so the more specific alias wins
       { find: /^@\/shared\/(.*)$/, replacement: path.join(dirname, 'modules/shared/$1') },
       { find: /^@\/(.*)$/, replacement: path.join(dirname, '$1') },
