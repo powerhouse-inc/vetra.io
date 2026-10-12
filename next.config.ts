@@ -41,9 +41,7 @@ const nextConfig: NextConfig = {
     externalDir: true,
   },
   output: 'standalone',
-  async redirects() {
-    return LEGACY_REDIRECTS
-  },
+  redirects: () => Promise.resolve(LEGACY_REDIRECTS),
   turbopack: {
     root: projectRoot,
     resolveAlias: {
