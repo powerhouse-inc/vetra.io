@@ -4,21 +4,16 @@ import type { NavItem, NavbarConfig } from './types'
 
 export const PUBLIC_NAV_ITEMS: NavItem[] = [
   {
-    label: 'Packages',
-    href: '/packages',
-    isActive: (p) => p.includes('/packages'),
+    label: 'Studio',
+    href: '/studio',
+    isActive: (p) => p === '/studio',
   },
-  {
-    label: 'Builders',
-    href: '/builders',
-    isActive: (p) => p.includes('/builders'),
-  },
-  { label: 'Academy', href: 'https://academy.vetra.io/', isExternal: true },
   {
     label: 'Cloud',
     href: '/cloud',
-    isActive: (p) => p.includes('/cloud'),
+    isActive: (p) => p === '/cloud',
   },
+  { label: 'Docs', href: 'https://academy.vetra.io/', isExternal: true },
 ]
 
 export const PRIVATE_NAV_ITEMS: NavItem[] = [
@@ -66,11 +61,6 @@ export const NAVBAR_CONFIGS: Record<string, NavbarConfig> = {
         label: 'Packages',
         href: '/user/packages',
         isActive: (currentPath) => currentPath.includes('/user/packages'),
-      },
-      {
-        label: 'Builders',
-        href: '/builders',
-        isActive: (currentPath) => currentPath.includes('/builders'),
       },
       { label: 'Academy', href: 'https://academy.vetra.io/', isExternal: true },
       { label: 'Cloud', href: '/cloud', isActive: (currentPath) => currentPath.includes('/cloud') },

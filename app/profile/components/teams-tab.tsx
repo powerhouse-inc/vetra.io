@@ -57,9 +57,6 @@ export function TeamsTab({ address }: { address: string }) {
                 Create your first team
               </Link>
             </Button>
-            <Button variant="outline" asChild>
-              <Link href="/builders">Browse builders</Link>
-            </Button>
           </div>
         </CardContent>
       </Card>

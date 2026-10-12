@@ -27,8 +27,7 @@ function BuildTag() {
 
 const footerLinks = {
   product: [
-    { label: 'Packages', href: '/packages' },
-    { label: 'Builders', href: '/builders' },
+    { label: 'Studio', href: '/studio' },
     { label: 'Cloud', href: '/cloud' },
   ],
   resources: [

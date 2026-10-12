@@ -2,6 +2,7 @@ import type { NextConfig } from 'next'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import pkg from './package.json' with { type: 'json' }
+import { LEGACY_REDIRECTS } from './modules/shared/config/redirects'
 
 // Pin Next/Turbopack's workspace root to this project's directory. Without
 // it, Next walks up the parent dir trying to find lockfiles and ends up
@@ -40,6 +41,9 @@ const nextConfig: NextConfig = {
     externalDir: true,
   },
   output: 'standalone',
+  async redirects() {
+    return LEGACY_REDIRECTS
+  },
   turbopack: {
     root: projectRoot,
     resolveAlias: {
