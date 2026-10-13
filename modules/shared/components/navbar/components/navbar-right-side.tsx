@@ -21,6 +21,7 @@ import {
 import Link from 'next/link'
 import { useTheme } from 'next-themes'
 import { useSyncExternalStore, useState } from 'react'
+import { ActiveOrgLabel, OrgSwitcherMenuSection } from '@/modules/orgs/components/org-switcher'
 import { useOpenLogin } from '@/modules/shared/components/renown/login-modal-context'
 import { useRenownAvatarUrl } from '@/modules/shared/hooks/use-renown-avatar'
 import {
@@ -103,6 +104,7 @@ function RenownButton() {
               </AvatarFallback>
             </Avatar>
             {auth.displayName ?? auth.displayAddress ?? 'Account'}
+            <ActiveOrgLabel />
           </button>
         </DropdownMenuTrigger>
         <DropdownMenuContent
@@ -133,6 +135,7 @@ function RenownButton() {
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator className="bg-border/50" />
+          <OrgSwitcherMenuSection />
           <DropdownMenuItem
             asChild
             className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
