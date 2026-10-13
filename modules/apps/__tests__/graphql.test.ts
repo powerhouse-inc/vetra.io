@@ -209,10 +209,12 @@ describe('organisation apps', () => {
       'fetch',
       vi.fn((_url: string, init: RequestInit) => {
         bodies.push(JSON.parse(init.body as string) as (typeof bodies)[number])
-        return Promise.resolve(new Response(JSON.stringify({ data }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' },
-        }))
+        return Promise.resolve(
+          new Response(JSON.stringify({ data }), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' },
+          }),
+        )
       }),
     )
     return bodies
@@ -238,8 +240,24 @@ describe('organisation apps', () => {
   })
 
   it('words a FORBIDDEN create in an organisation as a role problem', () => {
-    const err = new AppsApiError('FORBIDDEN', 'no')
-    expect(describeCreateAppError(err, 'a/b', 'Acme')).toContain('all apps of Acme')
-    expect(describeCreateAppError(err, 'a/b')).toContain('GitHub')
+    const role = new AppsApiError(
+      'FORBIDDEN',
+      'Creating Apps in this organisation needs the publisher role with access to all its apps',
+    )
+    const github = new AppsApiError(
+      'FORBIDDEN',
+      'You do not have access to this repository on GitHub',
+    )
+    expect(describeCreateAppError(role, 'a/b', 'Acme')).toContain('all apps of Acme')
+    expect(describeCreateAppError(github, 'a/b', 'Acme')).toContain('GitHub')
+    expect(describeCreateAppError(github, 'a/b', 'Acme')).not.toContain('publisher role')
+  })
+
+  it('explains an identity owned by someone else', () => {
+    const err = new AppsApiError(
+      'BAD_USER_INPUT',
+      "This repository's Renown identity belongs to another owner; delete the old App or ask its creator",
+    )
+    expect(describeCreateAppError(err, 'a/b', 'Acme')).toContain('already belongs to another owner')
   })
 })

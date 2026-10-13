@@ -10,6 +10,7 @@ import { licensingOnlyApps } from '@/modules/apps/lib/licensing-only'
 import { usePublisherApps } from '@/modules/publisher/hooks/use-publisher'
 import { describeAppsError, isAppsError } from '@/modules/apps/graphql'
 import { useMyApps, useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
+import { canOfferCreateApp, type MyOrg } from '@/modules/orgs/types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { Alert, AlertDescription, AlertTitle } from '@/modules/shared/components/ui/alert'
 import { Button } from '@/modules/shared/components/ui/button'
@@ -34,7 +35,19 @@ function AppCardSkeleton() {
   )
 }
 
-function NewAppTile({ orgName }: { orgName?: string | null }) {
+function NewAppTile({ org }: { org?: MyOrg | null }) {
+  if (org && !canOfferCreateApp(org.role)) {
+    return (
+      <div
+        aria-disabled="true"
+        className="text-muted-foreground border-border flex min-h-[176px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-5 text-center text-sm"
+      >
+        <span className="max-w-full truncate font-medium">New app in {org.name}</span>
+        <span className="max-w-full">Ask an owner or admin of {org.name} to create apps</span>
+      </div>
+    )
+  }
+  const orgName = org?.name
   return (
     <Link
       href="/user/apps/new"
@@ -127,7 +140,7 @@ function AppsSection() {
           <AppCard key={app.id} app={app} />
         ))}
         {licensingOnlyCards}
-        <NewAppTile orgName={org?.name} />
+        <NewAppTile org={org} />
       </div>
     </div>
   )

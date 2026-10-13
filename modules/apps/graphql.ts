@@ -106,8 +106,20 @@ export function describeCreateAppError(
   repoFullName: string,
   orgName?: string | null,
 ): string {
-  if (isAppsError(err, 'FORBIDDEN') && orgName) {
-    return `You need the publisher role with access to all apps of ${orgName} to create apps there.`
+  // The server words its refusals; tell the role refusal from GitHub repo access by message.
+  if (
+    err instanceof AppsApiError &&
+    err.code === 'FORBIDDEN' &&
+    /publisher role|all its apps/i.test(err.message)
+  ) {
+    return `You need the publisher role with access to all apps of ${orgName ?? 'this organisation'} to create apps there. Ask an owner or admin.`
+  }
+  if (
+    err instanceof AppsApiError &&
+    err.code === 'BAD_USER_INPUT' &&
+    /Renown identity belongs to another owner/i.test(err.message)
+  ) {
+    return `This repository's Renown identity already belongs to another owner or organisation. Delete the old app, or ask its creator to, then try again.`
   }
   if (isAppsError(err, 'FORBIDDEN')) {
     return `Your GitHub account doesn't have access to ${repoFullName}. Ask a repository admin for access, or pick another repository.`

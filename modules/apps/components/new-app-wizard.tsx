@@ -17,6 +17,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environment'
+import { canOfferCreateApp } from '@/modules/orgs/types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
@@ -154,7 +155,10 @@ function ConfigureStep({
     : 'Pick the branch that deploys production'
   const envError =
     draft.envMode === 'existing' && !draft.existingEnvId ? 'Choose an environment' : null
-  const invalid = !!(nameError || branchError || envError)
+  // An org context whose details have not loaded yet cannot create: the copy and role are unknown.
+  const orgPending = !!orgId && !org
+  const roleBlocked = !!org && !canOfferCreateApp(org.role)
+  const invalid = !!(nameError || branchError || envError || orgPending || roleBlocked)
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -186,6 +190,14 @@ function ConfigureStep({
       <form onSubmit={submit} className="space-y-6" noValidate>
         <RepoChip repo={draft.repo} onChange={onBack} />
 
+        {roleBlocked && org && (
+          <p
+            role="alert"
+            className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm"
+          >
+            Ask an owner or admin of {org.name} to create apps.
+          </p>
+        )}
         {org && (
           <p className="text-sm">
             This app will belong to <strong className="font-medium">{org.name}</strong>.
