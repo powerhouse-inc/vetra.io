@@ -19,6 +19,7 @@ import { OrgBadge } from '@/modules/orgs/components/org-badge'
 import { useMyOrgs, useOrgSummary } from '@/modules/orgs/hooks/use-orgs'
 import {
   renownMeUrl,
+  renownCreateOrgUrl,
   renownOrgBringAppUrl,
   renownOrgManageUrl,
 } from '@/modules/orgs/lib/links'
@@ -426,16 +427,14 @@ export function OrganisationCard({ app }: { app: App }) {
       >
         <div className="flex flex-wrap items-center gap-3">
           <OrgBadge orgId={app.ownerOrgId} size="md" />
-          {owner && (
-            <a
-              className={linkClass}
-              href={renownOrgManageUrl(owner.handle, 'apps')}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Manage on Renown
-            </a>
-          )}
+          <a
+            className={linkClass}
+            href={owner ? renownOrgManageUrl(owner.handle, 'apps') : renownMeUrl('organisations')}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {owner ? 'Manage on Renown' : 'Your organisations on Renown'}
+          </a>
         </div>
       </SettingsCard>
     )
@@ -447,7 +446,17 @@ export function OrganisationCard({ app }: { app: App }) {
       description="Move this app to an organisation. You propose the transfer on Renown and an organisation admin accepts it; the app keeps its stats and history."
     >
       <div className="flex flex-col items-start gap-2">
-        {admins.map((o) => (
+        {admins.length === 0 && (
+          <a
+            className={linkClass}
+            href={renownCreateOrgUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Create an organisation
+          </a>
+        )}
+        {(app.identityDid ? admins : []).map((o) => (
           <a
             key={o.id}
             className={linkClass}
