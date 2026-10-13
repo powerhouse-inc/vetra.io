@@ -1,7 +1,6 @@
 'use client'
 
 import { useDid } from '@powerhousedao/reactor-browser'
-import { keepPreviousData } from '@tanstack/react-query'
 import { useMemo } from 'react'
 import { fetchMyEnvironments, fetchViewer } from '../graphql'
 import type { EnvironmentSummary, ListScope, Viewer } from '../graphql'
@@ -153,7 +152,11 @@ export function useEnvironments(
   // backend query (filtered in-memory below), so they dedupe to one fetch.
   const q = myEnvironmentsQuery(did, backendScope, orgId)
   const { data, isError, isPending } = useAuthedQuery<EnvironmentSummary[]>(q.queryKey, q.fetch, {
-    placeholderData: keepPreviousData,
+    // Keep the previous list only within the same context (the MINE/ALL toggle);
+    // a switch to another organisation (or to/from personal) shows loading
+    // rather than the previous context's environments.
+    placeholderData: (prev, prevQuery) =>
+      (prevQuery?.queryKey[3] ?? null) === orgId ? prev : undefined,
   })
 
   const environments = useMemo(() => {
