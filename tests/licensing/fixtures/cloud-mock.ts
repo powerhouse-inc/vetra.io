@@ -28,26 +28,52 @@ const defined = (o: Vars) =>
 const HANDLERS: Handler[] = [
   {
     match: /vetraPublisher\s*\{\s*myApps\(orgId:/,
-    reply: (v, s) => pub('myApps', (s.orgApps[v.orgId as string] ?? []).map((a) => ({ id: a.id, name: a.name, status: 'ACTIVE', identityDid: a.identityDid }))),
+    reply: (v, s) =>
+      pub(
+        'myApps',
+        (s.orgApps[v.orgId as string] ?? []).map((a) => ({
+          id: a.id,
+          name: a.name,
+          status: 'ACTIVE',
+          identityDid: a.identityDid,
+        })),
+      ),
   },
   { match: /\bmyApps\(orgId:/, reply: (v, s) => ({ myApps: s.orgApps[v.orgId as string] ?? [] }) },
   {
     match: /\bmyEnvironments\(/,
-    reply: (v, s) => ({ myEnvironments: v.scope === 'ORG' ? s.orgEnvironments.filter((e) => e.ownerOrgId === v.orgId) : [] }),
+    reply: (v, s) => ({
+      myEnvironments:
+        v.scope === 'ORG' ? s.orgEnvironments.filter((e) => e.ownerOrgId === v.orgId) : [],
+    }),
   },
   {
     match: /\bsyncEnvironmentOrg\(/,
     reply: (v, s) => {
       s.orgCalls.push(`sync:${v.environmentId}`)
       const env = s.orgEnvironments.find((e) => e.id === v.environmentId)
-      return { syncEnvironmentOrg: { environmentId: v.environmentId, ownerOrgId: env?.ownerOrgId ?? null, canOperate: true, canView: true } }
+      return {
+        syncEnvironmentOrg: {
+          environmentId: v.environmentId,
+          ownerOrgId: env?.ownerOrgId ?? null,
+          canOperate: true,
+          canView: true,
+        },
+      }
     },
   },
   {
     match: /\bsetEnvironmentOrg\(/,
     reply: (v, s) => {
       s.orgCalls.push(`set:${v.environmentId}:${v.orgId}`)
-      return { setEnvironmentOrg: { environmentId: v.environmentId, ownerOrgId: v.orgId, canOperate: true, canView: true } }
+      return {
+        setEnvironmentOrg: {
+          environmentId: v.environmentId,
+          ownerOrgId: v.orgId,
+          canOperate: true,
+          canView: true,
+        },
+      }
     },
   },
   { match: /vetraPublisher\s*\{\s*myApps/, reply: (_, s) => pub('myApps', s.publisherApps) },

@@ -9,7 +9,21 @@ const ACME = { id: 'org-acme', name: 'Acme Robotics', handle: 'acme', role: 'ADM
 function orgState() {
   const s = baseState()
   s.orgApps[ACME.id] = [{ ...app('app-robot', 'Robot Control'), ownerOrgId: ACME.id }]
-  s.orgEnvironments = [{ id: 'env-acme', name: 'Acme staging', subdomain: 'acme-staging', tenantId: null, customDomain: null, status: 'READY', owner: ME, createdBy: ME, ownerOrgId: ACME.id, packages: [], services: [] }]
+  s.orgEnvironments = [
+    {
+      id: 'env-acme',
+      name: 'Acme staging',
+      subdomain: 'acme-staging',
+      tenantId: null,
+      customDomain: null,
+      status: 'READY',
+      owner: ME,
+      createdBy: ME,
+      ownerOrgId: ACME.id,
+      packages: [],
+      services: [],
+    },
+  ]
   return s
 }
 
@@ -19,9 +33,14 @@ async function switchTo(page: Page, name: RegExp) {
 }
 
 test.describe('organisation context', () => {
-  test.skip(({ isMobile }) => isMobile, 'the account menu with the switcher sits in the desktop navbar')
+  test.skip(
+    ({ isMobile }) => isMobile,
+    'the account menu with the switcher sits in the desktop navbar',
+  )
 
-  test('switching to an organisation shows its apps and environments and survives a reload', async ({ page }) => {
+  test('switching to an organisation shows its apps and environments and survives a reload', async ({
+    page,
+  }) => {
     const s = orgState()
     await routeRenown(page)
     await routeRenownOrgs(page, [ACME])
@@ -46,7 +65,9 @@ test.describe('organisation context', () => {
     await expect(page.getByText('Acme staging')).toHaveCount(0)
   })
 
-  test('without Renown the switcher offers only Personal and the lists still load', async ({ page }) => {
+  test('without Renown the switcher offers only Personal and the lists still load', async ({
+    page,
+  }) => {
     const s = orgState()
     await routeRenown(page)
     await routeRenownOrgs(page, 'offline')

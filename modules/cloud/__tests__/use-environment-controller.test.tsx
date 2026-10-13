@@ -107,7 +107,10 @@ describe('useEnvironmentController', () => {
     vi.mocked(loadEnvironmentController).mockResolvedValue(makeController({}) as never)
     const client = new QueryClient()
     client.setQueryData(['environments', 'ORG', 'did:me', 'o1'], [{ id: 'doc1', ownerOrgId: 'o1' }])
-    client.setQueryData(['environments', 'MINE', 'did:me', null], [{ id: 'doc2', ownerOrgId: null }])
+    client.setQueryData(
+      ['environments', 'MINE', 'did:me', null],
+      [{ id: 'doc2', ownerOrgId: null }],
+    )
     const wrapper = ({ children }: { children: ReactNode }) => (
       <QueryClientProvider client={client}>{children}</QueryClientProvider>
     )

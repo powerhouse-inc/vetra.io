@@ -253,7 +253,8 @@ export async function fetchPublisherApps(
   orgId?: string | null,
 ): Promise<PublisherApp[]> {
   const declaration = orgId ? '($orgId: String)' : ''
-  const call = (fields: string) => (orgId ? `myApps(orgId: $orgId) { ${fields} }` : `myApps { ${fields} }`)
+  const call = (fields: string) =>
+    orgId ? `myApps(orgId: $orgId) { ${fields} }` : `myApps { ${fields} }`
   const variables = orgId ? { orgId } : {}
   if (identityDidSupported) {
     try {
