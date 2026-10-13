@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fetchAppProfile, renownSupportsContacts } from '../lib/app-profile/api'
+import {
+  fetchAppProfile,
+  renownSupportsContacts,
+  renownSupportsMetrics,
+} from '../lib/app-profile/api'
 import {
   changedFields,
   fieldForServer,
@@ -398,5 +402,20 @@ describe('contacts', () => {
     expect(f).toHaveBeenCalledTimes(2)
     expect(sentBodies[0]).toContain('supportContact')
     expect(sentBodies[1]).not.toContain('supportContact')
+  })
+
+  it('also drops metrics when Renown lacks them, one field at a time', async () => {
+    const bodies = [
+      { errors: [{ message: 'Cannot query field "metrics" on type "AppProfile".' }] },
+      { errors: [{ message: 'Cannot query field "securityContact" on type "AppProfile".' }] },
+      { data: { appProfile: PROFILE } },
+    ]
+    const f = vi.fn(() =>
+      Promise.resolve(new Response(JSON.stringify(bodies.shift()), { status: 200 })),
+    )
+    const got = await fetchAppProfile(DID, f as unknown as typeof fetch)
+    expect(got).toEqual({ ...PROFILE, contactsUnavailable: true, metricsUnavailable: true })
+    expect(renownSupportsMetrics()).toBe(false)
+    expect(f).toHaveBeenCalledTimes(3)
   })
 })

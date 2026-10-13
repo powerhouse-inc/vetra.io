@@ -74,6 +74,10 @@ describe('AppProfileTab', () => {
     profile = { ...profile, data: { ...STORED, contactsUnavailable: true } }
     render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
     expect(screen.queryByLabelText('Support contact')).toBeNull()
+    cleanup()
+    profile = { ...profile, data: { ...STORED, metricsUnavailable: true } }
+    render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
+    expect(screen.queryByRole('heading', { name: 'Metrics' })).toBeNull()
   })
 
   it('saves only what changed', async () => {
