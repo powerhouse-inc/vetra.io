@@ -25,24 +25,28 @@ describe('Renown organisations client', () => {
   })
 
   it('lists the viewer’s memberships with the bearer, without archived or taken-down orgs, by name', async () => {
-    const fetchImpl = vi.fn(async (_url: string, _init: RequestInit) =>
-      ok({
-        organizationsByMember: [
-          { role: 'MEMBER', org: org('o2', 'Zeta') },
-          { role: 'ADMIN', org: org('o1', 'Acme') },
-          { role: 'OWNER', org: org('o3', 'Gone', { archived: true }) },
-          { role: 'OWNER', org: org('o4', 'Down', { takenDown: true }) },
-        ],
-      }),
+    const fetchImpl = vi.fn<typeof fetch>(() =>
+      Promise.resolve(
+        ok({
+          organizationsByMember: [
+            { role: 'MEMBER', org: org('o2', 'Zeta') },
+            { role: 'ADMIN', org: org('o1', 'Acme') },
+            { role: 'OWNER', org: org('o3', 'Gone', { archived: true }) },
+            { role: 'OWNER', org: org('o4', 'Down', { takenDown: true }) },
+          ],
+        }),
+      ),
     )
-    const orgs = await fetchMyOrganizations(ME, 'tok', fetchImpl as unknown as typeof fetch)
+    const orgs = await fetchMyOrganizations(ME, 'tok', fetchImpl)
     expect(orgs.map((o) => [o.name, o.role])).toStrictEqual([
       ['Acme', 'ADMIN'],
       ['Zeta', 'MEMBER'],
     ])
-    const [, init] = fetchImpl.mock.calls[0]
+    const init = fetchImpl.mock.calls[0][1] as RequestInit
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer tok')
-    expect(JSON.parse(init.body as string).variables).toStrictEqual({ address: ME })
+    expect((JSON.parse(init.body as string) as { variables: unknown }).variables).toStrictEqual({
+      address: ME,
+    })
   })
 
   it('retries without the bearer when Renown refuses it', async () => {
@@ -59,13 +63,15 @@ describe('Renown organisations client', () => {
   })
 
   it('throws on GraphQL errors and answers null for an unknown org', async () => {
-    const failing = vi.fn(
-      async () => new Response(JSON.stringify({ errors: [{ message: 'boom' }] }), { status: 200 }),
+    const failing = vi.fn(() =>
+      Promise.resolve(
+        new Response(JSON.stringify({ errors: [{ message: 'boom' }] }), { status: 200 }),
+      ),
     )
     await expect(
       fetchMyOrganizations(ME, null, failing as unknown as typeof fetch),
     ).rejects.toThrow('boom')
-    const empty = vi.fn(async () => ok({ organization: null }))
+    const empty = vi.fn(() => Promise.resolve(ok({ organization: null })))
     expect(await fetchOrganizationSummary('nope', empty as unknown as typeof fetch)).toBeNull()
   })
 })
@@ -92,16 +98,15 @@ describe('R5: GraphQL-level refusal of the bearer', () => {
   })
 
   it('does not retry other GraphQL errors', async () => {
-    const fetchImpl = vi.fn(
-      async () =>
+    const fetchImpl = vi.fn<typeof fetch>(() =>
+      Promise.resolve(
         new Response(
           JSON.stringify({ errors: [{ message: 'boom', extensions: { code: 'INTERNAL' } }] }),
           { status: 200 },
         ),
+      ),
     )
-    await expect(
-      fetchMyOrganizations(ME, 'tok', fetchImpl as unknown as typeof fetch),
-    ).rejects.toThrow('boom')
+    await expect(fetchMyOrganizations(ME, 'tok', fetchImpl)).rejects.toThrow('boom')
     expect(fetchImpl).toHaveBeenCalledTimes(1)
   })
 })

@@ -45,11 +45,13 @@ export function useActiveOrg(): ActiveOrg {
   const mine = useMyOrgs()
   const loaded = mine.data
   const failed = mine.isError && !loaded
-  const orgId = resolveActiveOrgId(stored, loaded, failed)
+  const auth = useRenownAuthAsync()
+  const signedOut = auth.state !== 'authenticated' && auth.state !== 'resolving'
+  const orgId = signedOut ? null : resolveActiveOrgId(stored, loaded, failed)
   useEffect(() => {
-    // A stored org the viewer is not (or no longer) in is forgotten.
-    if (stored && loaded && orgId === null) writeActiveOrg(null)
-  }, [stored, loaded, orgId])
+    // Signed out, or a stored org the viewer is not (or no longer) in, is forgotten.
+    if (stored && (signedOut || (loaded && orgId === null))) writeActiveOrg(null)
+  }, [stored, loaded, orgId, signedOut])
   return {
     orgId,
     org: orgId ? (loaded?.find((o) => o.id === orgId) ?? null) : null,

@@ -67,7 +67,15 @@ export async function fetchMyOrganizations(
   }
   return dataOrThrow(answer)
     .organizationsByMember.filter((a) => !a.org.archived && !a.org.takenDown)
-    .map(({ role, org: { archived: _a, takenDown: _t, ...org } }) => ({ ...org, role }))
+    .map(({ role, org }) => ({
+      id: org.id,
+      did: org.did,
+      handle: org.handle,
+      name: org.name,
+      avatar: org.avatar,
+      verifiedDomains: org.verifiedDomains,
+      role,
+    }))
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
