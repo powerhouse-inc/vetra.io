@@ -47,8 +47,8 @@ importers:
         specifier: https://registry.dev.vetra.io/@powerhousedao/vetra-builder-package/-/vetra-builder-package-5.2.0-dev.66.tgz
         version: https://registry.dev.vetra.io/@powerhousedao/vetra-builder-package/-/vetra-builder-package-5.2.0-dev.66.tgz(eb18f19e3ff65a3f43e81bff53fd571c)
       '@powerhousedao/vetra-cloud-package':
-        specifier: https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.63-staging.0.tgz
-        version: https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.63-staging.0.tgz(53daf623d9539fe32e03e7f15b7d4917)
+        specifier: https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.64.tgz
+        version: https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.64.tgz(53daf623d9539fe32e03e7f15b7d4917)
       '@privy-io/react-auth':
         specifier: ^3.25.0
         version: 3.35.1(@date-fns/tz@1.5.0)(@solana-program/system@0.10.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)))(@solana-program/token@0.9.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)))(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10))(@solana/sysvars@5.5.1(typescript@6.0.2))(@tanstack/query-core@5.101.4)(@tanstack/react-query@5.101.4(react@19.2.6))(@types/react@19.2.17)(bufferutil@4.1.0)(date-fns@4.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@6.0.2)(use-sync-external-store@1.4.0(react@19.2.6))(utf-8-validate@5.0.10)(zod@4.4.3)
@@ -4194,9 +4194,9 @@ packages:
       react: ^19.2.0
       react-dom: ^19.2.0
 
-  '@powerhousedao/vetra-cloud-package@https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.63-staging.0.tgz':
-    resolution: {integrity: sha512-zNJd4i1HR2P+EKxXCzWvzZ5hPj2XVWP3GMekrtQbx4xwVs3JAqo2St++BxcaN0Qfho3/OdoEXN73Xdx3i1d8+g==, tarball: https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.63-staging.0.tgz}
-    version: 0.0.63-staging.0
+  '@powerhousedao/vetra-cloud-package@https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.64.tgz':
+    resolution: {integrity: sha512-mmNgAB+vTxAcCPQ8x0DaLtr6F4La6a4j3nZ5EoRXRPLhCs5vmM5MnJuWrQDe6mQuJ8laiOZ+GH4rjMDZnVJnng==, tarball: https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.64.tgz}
+    version: 0.0.64
     peerDependencies:
       react: ^19.2.0
       react-dom: ^19.2.0
@@ -22962,7 +22962,7 @@ snapshots:
       - wagmi
       - yaml
 
-  '@powerhousedao/vetra-cloud-package@https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.63-staging.0.tgz(53daf623d9539fe32e03e7f15b7d4917)':
+  '@powerhousedao/vetra-cloud-package@https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.64.tgz(53daf623d9539fe32e03e7f15b7d4917)':
     dependencies:
       '@aws-sdk/client-s3': 3.1087.0
       '@aws-sdk/s3-request-presigner': 3.1087.0
