@@ -47,8 +47,8 @@ importers:
         specifier: https://registry.dev.vetra.io/@powerhousedao/vetra-builder-package/-/vetra-builder-package-5.2.0-dev.66.tgz
         version: https://registry.dev.vetra.io/@powerhousedao/vetra-builder-package/-/vetra-builder-package-5.2.0-dev.66.tgz(eb18f19e3ff65a3f43e81bff53fd571c)
       '@powerhousedao/vetra-cloud-package':
-        specifier: https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.47.tgz
-        version: https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.47.tgz(1d9c9e4862d85417abeba7cd8d94acd0)
+        specifier: https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.63-staging.0.tgz
+        version: https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.63-staging.0.tgz(53daf623d9539fe32e03e7f15b7d4917)
       '@privy-io/react-auth':
         specifier: ^3.25.0
         version: 3.35.1(@date-fns/tz@1.5.0)(@solana-program/system@0.10.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)))(@solana-program/token@0.9.0(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)))(@solana/kit@5.5.1(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10))(@solana/sysvars@5.5.1(typescript@6.0.2))(@tanstack/query-core@5.101.4)(@tanstack/react-query@5.101.4(react@19.2.6))(@types/react@19.2.17)(bufferutil@4.1.0)(date-fns@4.4.0)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(typescript@6.0.2)(use-sync-external-store@1.4.0(react@19.2.6))(utf-8-validate@5.0.10)(zod@4.4.3)
@@ -4169,8 +4169,8 @@ packages:
       rolldown:
         optional: true
 
-  '@powerhousedao/shared@6.2.3-dev.47':
-    resolution: {integrity: sha512-+6sihZtPvU8UY6Tq8CScBSVqq739i3fyMuFQNstQhynTiyfg4XtW3rScei425Rgv0Hs2InLUfvLwyrRa/WDExw==}
+  '@powerhousedao/shared@6.2.3-dev.55':
+    resolution: {integrity: sha512-9LGJhnlA6jx6bWmF7AWLlMa5OJVAJOz+mmERIhTvKhLB3SmhtNlbvZt3aeamsto9idgUTvVNfV1+R1ulEQApPQ==}
     peerDependencies:
       '@sentry/node-core': ^10.52.0
       rolldown: 1.2.9
@@ -4194,9 +4194,9 @@ packages:
       react: ^19.2.0
       react-dom: ^19.2.0
 
-  '@powerhousedao/vetra-cloud-package@https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.47.tgz':
-    resolution: {integrity: sha512-BBA6zYDd+bZcTgAQGE1WiOsFSYJURVVrw4clw6OMct01AmJvA/KoMokTR7sYmirDGQD3SP4gQu3TUjJ8Ov+95A==, tarball: https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.47.tgz}
-    version: 0.0.47
+  '@powerhousedao/vetra-cloud-package@https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.63-staging.0.tgz':
+    resolution: {integrity: sha512-zNJd4i1HR2P+EKxXCzWvzZ5hPj2XVWP3GMekrtQbx4xwVs3JAqo2St++BxcaN0Qfho3/OdoEXN73Xdx3i1d8+g==, tarball: https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.63-staging.0.tgz}
+    version: 0.0.63-staging.0
     peerDependencies:
       react: ^19.2.0
       react-dom: ^19.2.0
@@ -5056,8 +5056,8 @@ packages:
       wagmi:
         optional: true
 
-  '@renown/sdk@6.2.3-dev.47':
-    resolution: {integrity: sha512-pBU/zmckItlo0fMDRGSwIpXagNRTWme10swc3nC+ZGBWt31ILJGkyaNpxANatdIdo6XrldLZ4Vwcf/NWHaV1AQ==}
+  '@renown/sdk@6.2.3-dev.55':
+    resolution: {integrity: sha512-woqVcFq043zRLdigdYbTYwqwmb3AbkW88vLInyTWLiVoYsqmVZ8Xql+MUKiDH+YLt2EiXh+hgD8dXu23HoN3xQ==}
     peerDependencies:
       '@privy-io/react-auth': ^3.25.0
       '@rainbow-me/rainbowkit': ^2.2.11
@@ -19916,7 +19916,7 @@ snapshots:
   '@metamask/json-rpc-engine@8.0.2':
     dependencies:
       '@metamask/rpc-errors': 6.4.0
-      '@metamask/safe-event-emitter': 3.1.2
+      '@metamask/safe-event-emitter': 3.1.3
       '@metamask/utils': 8.5.0
     transitivePeerDependencies:
       - supports-color
@@ -19924,7 +19924,7 @@ snapshots:
   '@metamask/json-rpc-middleware-stream@7.0.2':
     dependencies:
       '@metamask/json-rpc-engine': 8.0.2
-      '@metamask/safe-event-emitter': 3.1.2
+      '@metamask/safe-event-emitter': 3.1.3
       '@metamask/utils': 8.5.0
       readable-stream: 3.6.2
     transitivePeerDependencies:
@@ -22756,7 +22756,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@powerhousedao/shared@6.2.3-dev.47(@sentry/node-core@10.68.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1)))(rolldown@1.0.0-rc.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2))':
+  '@powerhousedao/shared@6.2.3-dev.55(@sentry/node-core@10.68.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1)))(rolldown@1.0.0-rc.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2))':
     dependencies:
       '@noble/hashes': 1.8.0
       '@sindresorhus/fnv1a': 3.1.0
@@ -22881,7 +22881,7 @@ snapshots:
       '@powerhousedao/design-system': 6.0.0-dev.244(@babel/runtime@8.0.0)(@electric-sql/pglite@0.3.15)(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2)(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@powerhousedao/document-engineering': 1.40.5(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(graphql@16.14.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(zod@4.4.3)
       '@powerhousedao/shared': 6.0.0-dev.244(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2)(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))
-      '@renown/sdk': 6.2.3-dev.47(dd69e6a90fb155108c85dd15f45149da)
+      '@renown/sdk': 6.2.3-dev.55(dd69e6a90fb155108c85dd15f45149da)
       cmd-ts: 0.15.0
       document-model: 6.0.0-dev.244(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2)(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))
       graphql: 16.14.2
@@ -22962,7 +22962,7 @@ snapshots:
       - wagmi
       - yaml
 
-  '@powerhousedao/vetra-cloud-package@https://registry.dev.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.47.tgz(1d9c9e4862d85417abeba7cd8d94acd0)':
+  '@powerhousedao/vetra-cloud-package@https://registry.vetra.io/@powerhousedao/vetra-cloud-package/-/vetra-cloud-package-0.0.63-staging.0.tgz(53daf623d9539fe32e03e7f15b7d4917)':
     dependencies:
       '@aws-sdk/client-s3': 3.1087.0
       '@aws-sdk/s3-request-presigner': 3.1087.0
@@ -22976,6 +22976,7 @@ snapshots:
       '@powerhousedao/design-system': 6.2.3-dev.2(d9bfec50ac7db3bc938d217adb49285d)
       '@powerhousedao/document-engineering': 1.40.5(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(graphql@16.14.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(zod@4.4.3)
       '@powerhousedao/shared': 6.2.3-dev.2(@sentry/node-core@10.68.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1)))(rolldown@1.0.0-rc.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2))
+      '@renown/sdk': 6.2.3-dev.2(dd69e6a90fb155108c85dd15f45149da)
       '@types/pg': 8.23.1
       ajv: 8.20.0
       cmd-ts: 0.15.0
@@ -23020,6 +23021,7 @@ snapshots:
       - '@solana/sysvars'
       - '@stripe/crypto'
       - '@tanstack/query-core'
+      - '@tanstack/react-query'
       - '@types/express'
       - '@types/koa'
       - '@types/node'
@@ -24312,10 +24314,10 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@renown/sdk@6.2.3-dev.47(dd69e6a90fb155108c85dd15f45149da)':
+  '@renown/sdk@6.2.3-dev.55(dd69e6a90fb155108c85dd15f45149da)':
     dependencies:
       '@didtools/key-webcrypto': 0.2.0
-      '@powerhousedao/shared': 6.2.3-dev.47(@sentry/node-core@10.68.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1)))(rolldown@1.0.0-rc.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2))
+      '@powerhousedao/shared': 6.2.3-dev.55(@sentry/node-core@10.68.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1)))(rolldown@1.0.0-rc.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2))
       did-jwt-vc: 4.0.16
       did-resolver: 4.1.0
       key-did-resolver: 4.0.0
