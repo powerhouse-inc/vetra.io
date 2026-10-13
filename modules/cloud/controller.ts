@@ -33,26 +33,29 @@ export function loadEnvironmentController(options: {
   documentId: string
   parentIdentifier: string
   signer: ISigner
+  /**
+   * The env's organisation when the caller already knows it (list / read
+   * model). Only then is the caller's operator entry refreshed before the
+   * pull; personal envs make no sync call. Unknown org envs are synced by the
+   * action gate (`ensureCanOperateEnvironment`) before their first action.
+   */
+  ownerOrgId?: string | null
 }) {
-  // Org environments: refresh the caller's operator entry first, so the pulled
-  // document already lists them and their signed actions are accepted.
+  const pull = () =>
+    RemoteDocumentController.pull(VetraCloudEnvironmentController, {
+      client,
+      documentId: options.documentId,
+      mode: 'batch',
+      parentIdentifier: options.parentIdentifier,
+      signer: options.signer,
+      onConflict: 'rebase',
+    })
+  if (!options.ownerOrgId) return pull()
   const caller = options.signer.user?.address ?? null
-  return withOrgSync(
-    options.documentId,
-    () =>
-      RemoteDocumentController.pull(VetraCloudEnvironmentController, {
-        client,
-        documentId: options.documentId,
-        mode: 'batch',
-        parentIdentifier: options.parentIdentifier,
-        signer: options.signer,
-        onConflict: 'rebase',
-      }),
-    {
-      sync: (id, token) => cachedSyncEnvironmentOrg(id, token, { caller, fresh: true }),
-      token: resolveAuthToken,
-    },
-  )
+  return withOrgSync(options.documentId, pull, {
+    sync: (id, token) => cachedSyncEnvironmentOrg(id, token, { caller, fresh: true }),
+    token: resolveAuthToken,
+  })
 }
 
 /** Create a controller for a new (not-yet-persisted) environment document. */

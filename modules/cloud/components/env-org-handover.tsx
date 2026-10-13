@@ -45,6 +45,7 @@ export function EnvOrgHandOver({
   status,
   appLinked,
   viewerAddress,
+  onHandedOver,
 }: {
   environmentId: string
   displayName: string
@@ -53,6 +54,8 @@ export function EnvOrgHandOver({
   status: string | null | undefined
   appLinked: boolean
   viewerAddress: string | null | undefined
+  /** After a successful move: refresh the loaded document so the org gate applies at once. */
+  onHandedOver?: () => void
 }) {
   const { orgs, orgId: activeOrgId } = useActiveOrg()
   const targets = handOverTargets({
@@ -83,6 +86,7 @@ export function EnvOrgHandOver({
     toast.success(`${displayName} now belongs to ${target.name}`)
     void qc.invalidateQueries({ queryKey: ['environment-org', environmentId] })
     void qc.invalidateQueries({ queryKey: ['environments'] })
+    onHandedOver?.()
   }
 
   return (

@@ -90,6 +90,7 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
         documentId: env.id,
         parentIdentifier: DRIVE_ID,
         signer,
+        ownerOrgId: env.ownerOrgId ?? null,
       })
       await ensureCanOperateEnvironment(env.id, ctrl, signer.user?.address)
       await ctrl.delete()

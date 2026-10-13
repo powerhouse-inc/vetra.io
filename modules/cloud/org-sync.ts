@@ -15,6 +15,13 @@ export function resetOrgSyncCache(): void {
   syncCache.clear()
 }
 
+/** Drop every cached sync answer for one environment (after a refusal or hand-over). */
+export function forgetOrgSync(environmentId: string): void {
+  for (const key of [...syncCache.keys()]) {
+    if (key.endsWith(`|${environmentId}`)) syncCache.delete(key)
+  }
+}
+
 /**
  * syncEnvironmentOrg with a short client-side cache keyed by caller and env.
  * Failures are not cached.
@@ -140,7 +147,7 @@ export async function handOverToOrg(
   for (let i = 1; ; i++) {
     try {
       await setEnvironmentOrg(environmentId, orgId, token)
-      syncCache.clear()
+      forgetOrgSync(environmentId)
       return
     } catch (err) {
       const message = err instanceof Error ? err.message : String(err)
@@ -194,4 +201,36 @@ export function describeEnvironmentOrgError(message: string, orgName = 'the orga
     return 'The environment was not found yet. Try again in a moment.'
   if (/UNAUTHENTICATED/.test(message)) return 'Log in with Renown to continue.'
   return message
+}
+
+/**
+ * One signed action on a loaded environment: the org gate, then dispatch and
+ * push. Any refusal on an organisation environment (from the gate or the
+ * server) drops the cached sync answer and calls `onOrgRefusal`, so the
+ * viewer's access (and the R6 edit gate) is asked again.
+ */
+export async function runSignedEnvironmentAction<
+  C extends GateableController & { push: () => Promise<unknown> },
+>(
+  environmentId: string,
+  controller: C,
+  caller: string | null | undefined,
+  dispatch: (controller: C) => void,
+  opts: {
+    onOrgRefusal?: () => void
+    gate?: typeof ensureCanOperateEnvironment
+  } = {},
+): Promise<void> {
+  const gate = opts.gate ?? ensureCanOperateEnvironment
+  try {
+    await gate(environmentId, controller, caller)
+    dispatch(controller)
+    await controller.push()
+  } catch (err) {
+    if (err instanceof EnvironmentAccessError || orgFields(controller.state.global).ownerOrgId) {
+      forgetOrgSync(environmentId)
+      opts.onOrgRefusal?.()
+    }
+    throw err
+  }
 }

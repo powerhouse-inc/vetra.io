@@ -9,6 +9,7 @@ import {
   handOverTargets,
   handOverToOrg,
   resetOrgSyncCache,
+  runSignedEnvironmentAction,
   withOrgSync,
 } from '@/modules/cloud/org-sync'
 
@@ -237,5 +238,86 @@ describe('hand-over to an organisation', () => {
     expect(describeEnvironmentOrgError('APP_ENVIRONMENT')).toMatch(/follow their app/)
     expect(describeEnvironmentOrgError('FORBIDDEN', 'Acme')).toMatch(/publisher or above \(Acme\)/)
     expect(describeEnvironmentOrgError('boom')).toBe('boom')
+  })
+})
+
+describe('signed action wiring (mutate)', () => {
+  type Ctrl = {
+    state: { global: unknown }
+    pull: () => Promise<unknown>
+    push: () => Promise<unknown>
+    setLabel: (i: { label: string }) => void
+  }
+  function ctrl(state: unknown, push: () => Promise<unknown> = () => Promise.resolve()) {
+    const order: string[] = []
+    const c: Ctrl = {
+      state: { global: state },
+      pull: () => Promise.resolve(),
+      push: () => {
+        order.push('push')
+        return push()
+      },
+      setLabel: () => order.push('dispatch'),
+    }
+    return { c, order }
+  }
+
+  it('gates, then dispatches and pushes', async () => {
+    const { c, order } = ctrl({ ownerOrgId: 'o1', orgOperators: ['0xme'] })
+    const gate = vi.fn(() => {
+      order.push('gate')
+      return Promise.resolve()
+    })
+    await runSignedEnvironmentAction('e1', c, '0xme', (x) => x.setLabel({ label: 'n' }), { gate })
+    expect(order).toStrictEqual(['gate', 'dispatch', 'push'])
+    expect(gate).toHaveBeenCalledWith('e1', c, '0xme')
+  })
+
+  it('a gate refusal dispatches nothing and re-asks the access', async () => {
+    const { c, order } = ctrl({ ownerOrgId: 'o1', orgOperators: [] })
+    const onOrgRefusal = vi.fn()
+    const gate = () => Promise.reject(new EnvironmentAccessError('e1', 'no'))
+    await expect(
+      runSignedEnvironmentAction('e1', c, '0xme', (x) => x.setLabel({ label: 'n' }), {
+        gate,
+        onOrgRefusal,
+      }),
+    ).rejects.toBeInstanceOf(EnvironmentAccessError)
+    expect(order).toStrictEqual([])
+    expect(onOrgRefusal).toHaveBeenCalledTimes(1)
+  })
+
+  it('a server refusal on an org env re-asks the access; personal envs do not', async () => {
+    const org = ctrl({ ownerOrgId: 'o1', orgOperators: ['0xme'] }, () =>
+      Promise.reject(new Error('NotOwnerError')),
+    )
+    const onOrgRefusal = vi.fn()
+    const gate = () => Promise.resolve()
+    await expect(
+      runSignedEnvironmentAction('e1', org.c, '0xme', (x) => x.setLabel({ label: 'n' }), {
+        gate,
+        onOrgRefusal,
+      }),
+    ).rejects.toThrow('NotOwnerError')
+    expect(onOrgRefusal).toHaveBeenCalledTimes(1)
+
+    const personal = ctrl({ owner: '0xme', ownerOrgId: null }, () =>
+      Promise.reject(new Error('offline')),
+    )
+    await expect(
+      runSignedEnvironmentAction('e1', personal.c, '0xme', (x) => x.setLabel({ label: 'n' }), {
+        gate,
+        onOrgRefusal,
+      }),
+    ).rejects.toThrow('offline')
+    expect(onOrgRefusal).toHaveBeenCalledTimes(1)
+  })
+
+  it('a personal env action makes no sync request', async () => {
+    const bodies = stub([])
+    const { c, order } = ctrl({ owner: '0xme', ownerOrgId: null })
+    await runSignedEnvironmentAction('e1', c, '0xme', (x) => x.setLabel({ label: 'n' }))
+    expect(order).toStrictEqual(['dispatch', 'push'])
+    expect(bodies).toHaveLength(0)
   })
 })

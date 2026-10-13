@@ -36,7 +36,8 @@ import { useDocumentSubscription } from './use-document-subscription'
 import { useEnvironmentController } from './use-environment-controller'
 import { useCanSign } from './use-can-sign'
 import { useRenown } from '@powerhousedao/reactor-browser'
-import { ensureCanOperateEnvironment } from '../org-sync'
+import { useQueryClient } from '@tanstack/react-query'
+import { runSignedEnvironmentAction } from '../org-sync'
 
 const NOT_LOGGED_IN_ERROR = 'You must be logged in with Renown to perform this action'
 
@@ -61,7 +62,10 @@ function projectFromController(
     createdAtUtcIso: metadata?.createdAtUtcIso ?? '',
     lastModifiedAtUtcIso: metadata?.lastModifiedAtUtcIso ?? '',
     revision: metadata?.revision ?? 0,
-    state: s,
+    // The controller holds the full document state: a missing ownerOrgId there
+    // means personal (null). The read-only fallback leaves it undefined
+    // ("not known"), which keeps the R6 edit gate closed until the controller loads.
+    state: s ? { ...s, ownerOrgId: s.ownerOrgId ?? null } : s,
   }
 }
 
@@ -72,6 +76,7 @@ export function useEnvironmentDetail(documentId: string) {
     renownRef.current = renown
   })
   const { canSign, signer } = useCanSign()
+  const queryClient = useQueryClient()
 
   const ctrlResult = useEnvironmentController(canSign ? documentId : null)
   const { controller, state: ctrlState, isLoading: ctrlLoading, error: ctrlError } = ctrlResult
@@ -172,12 +177,14 @@ export function useEnvironmentDetail(documentId: string) {
         throw new Error(NOT_LOGGED_IN_ERROR)
       }
       // Organisation envs: sync the caller's operator entry and refuse unless
-      // the backend says they can operate (C1 contract).
-      await ensureCanOperateEnvironment(documentId, controller, signer?.user?.address)
-      fn(controller)
-      await controller.push()
+      // the backend says they can operate (C1 contract). A refusal re-asks the
+      // viewer's access so the edit controls follow.
+      await runSignedEnvironmentAction(documentId, controller, signer?.user?.address, fn, {
+        onOrgRefusal: () =>
+          void queryClient.invalidateQueries({ queryKey: ['environment-org', documentId] }),
+      })
     },
-    [controller, documentId, signer],
+    [controller, documentId, signer, queryClient],
   )
 
   const setLabel = useCallback((label: string) => mutate((c) => c.setLabel({ label })), [mutate])
@@ -412,6 +419,8 @@ export function useEnvironmentDetail(documentId: string) {
 
   return {
     environment,
+    /** Re-pull the signed controller (e.g. after a hand-over). */
+    refresh: ctrlResult.refresh,
     isLoading,
     error,
     setLabel,

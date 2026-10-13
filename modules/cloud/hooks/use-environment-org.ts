@@ -7,28 +7,36 @@ import { useAuthedQuery } from '../query/use-authed-query'
 import { useCanSign } from './use-can-sign'
 
 /**
- * The env's organisation and the viewer's access (also refreshes their
- * operator entry). `data` is null on personal envs of older switchboards and
- * when the sync fails; callers then fall back to the personal rules.
+ * The viewer's access to an organisation env (also refreshes their operator
+ * entry). Only asked when the env is known to belong to an organisation:
+ * personal envs make no sync call. `data` is null when the sync fails.
  */
-export function useEnvironmentOrg(documentId: string | null) {
+export function useEnvironmentOrg(
+  documentId: string | null,
+  ownerOrgId: string | null | undefined,
+) {
   const did = useDid()
   return useAuthedQuery<EnvironmentOrgAccess | null>(
     queryKeys.environmentOrg(documentId ?? '', did),
     async (token) => (documentId ? syncEnvironmentOrg(documentId, token).catch(() => null) : null),
-    { enabled: !!documentId && !!did, staleTime: 30_000 },
+    { enabled: !!documentId && !!did && !!ownerOrgId, staleTime: 30_000 },
   )
 }
 
 /**
- * Whether env edit controls are shown/enabled (Ruling R6): the viewer can sign
- * and, on an organisation environment, the backend says they can operate.
- * Personal envs and older switchboards (no answer) keep the signer-only rule.
+ * Whether env edit controls are shown/enabled (Ruling R6).
+ * `ownerOrgId`: `null` = personal (signer alone decides), a string = org env
+ * (the backend's canOperate decides), `undefined` = not known yet (false, so
+ * an org env never flashes editable). False while the identity resolves.
  */
-export function useCanEditEnvironment(documentId: string | null): boolean {
+export function useCanEditEnvironment(
+  documentId: string | null,
+  ownerOrgId: string | null | undefined,
+): boolean {
   const { canSign } = useCanSign()
-  const { data, isLoading } = useEnvironmentOrg(canSign ? documentId : null)
-  // Disabled while the first answer is in flight, so an org env never flashes editable.
-  if (!canSign || isLoading) return false
-  return data ? data.canOperate : true
+  const did = useDid()
+  const { data } = useEnvironmentOrg(canSign ? documentId : null, ownerOrgId)
+  if (!canSign || !did || ownerOrgId === undefined) return false
+  if (ownerOrgId === null) return true
+  return data?.canOperate ?? false
 }

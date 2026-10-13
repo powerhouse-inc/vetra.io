@@ -92,6 +92,10 @@ type Props = {
   canEdit?: boolean
   /** Organisation owning the env (null = personal), for the hand-over offer. */
   ownerOrgId?: string | null
+  /** Tab shown when the drawer opens (default: domain). */
+  defaultTab?: 'domain' | 'updates' | 'activity' | 'metadata'
+  /** Called after a successful hand-over, to refresh the loaded document. */
+  onHandedOver?: () => void
 }
 
 const TERMINAL_STATUSES = new Set(['DRAFT', 'TERMINATING', 'DESTROYED', 'ARCHIVED'])
@@ -117,6 +121,8 @@ export function EnvSettingsDrawer({
   onTerminate,
   canEdit = true,
   ownerOrgId = null,
+  defaultTab = 'domain',
+  onHandedOver,
 }: Props) {
   const state = environment.state
   const { signer } = useCanSign()
@@ -134,7 +140,7 @@ export function EnvSettingsDrawer({
           <SheetDescription>Domain, updates, activity and admin actions.</SheetDescription>
         </SheetHeader>
 
-        <Tabs defaultValue="domain" className="flex flex-1 flex-col overflow-hidden">
+        <Tabs defaultValue={defaultTab} className="flex flex-1 flex-col overflow-hidden">
           <TabsList className="mx-6 mt-4 self-start">
             <TabsTrigger value="domain" className="gap-1.5">
               <Globe className="h-3.5 w-3.5" /> Domain
@@ -225,6 +231,7 @@ export function EnvSettingsDrawer({
                   status={envStatus}
                   appLinked={!!(environment.app ?? state.app)}
                   viewerAddress={signer?.user?.address}
+                  onHandedOver={onHandedOver}
                 />
               )}
               {canEdit && (
@@ -443,6 +450,7 @@ function DangerZone({
       documentId: environment.id,
       parentIdentifier: DRIVE_ID,
       signer,
+      ownerOrgId: environment.state.ownerOrgId ?? environment.ownerOrgId ?? null,
     })
     await ensureCanOperateEnvironment(environment.id, ctrl, signer.user?.address)
     await ctrl.delete()

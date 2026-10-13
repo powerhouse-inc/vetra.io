@@ -18,7 +18,7 @@ import { useClintPackages } from '@/modules/cloud/hooks/use-clint-packages'
 import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtime-endpoints'
 import { useDetailDrawer } from '@/modules/cloud/hooks/use-detail-drawer'
 import { useEnvironmentDetail } from '@/modules/cloud/hooks/use-environment-detail'
-import { useCanEditEnvironment, useEnvironmentOrg } from '@/modules/cloud/hooks/use-environment-org'
+import { useCanEditEnvironment } from '@/modules/cloud/hooks/use-environment-org'
 import { OrgBadge } from '@/modules/orgs/components/org-badge'
 import { useEnvironmentStatus } from '@/modules/cloud/hooks/use-environment-status'
 import { generateSubdomain } from '@/modules/cloud/subdomain'
@@ -129,11 +129,12 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
 
   const detail = useEnvironmentDetail(documentId)
   const { environment, isLoading } = detail
-  // Organisation badge + the viewer's access; edit controls need canOperate on
-  // an org env (Ruling R6), the signer alone on a personal one.
-  const orgAccess = useEnvironmentOrg(documentId)
-  const canEdit = useCanEditEnvironment(documentId)
-  const ownerOrgId = orgAccess.data?.ownerOrgId ?? environment?.state.ownerOrgId ?? null
+  // The env's organisation comes from the signed controller's document state
+  // (undefined until it loads). Edit controls need canOperate on an org env
+  // (Ruling R6), the signer alone on a personal one; personal envs never sync.
+  const knownOwnerOrgId = environment?.state.ownerOrgId
+  const canEdit = useCanEditEnvironment(documentId, knownOwnerOrgId)
+  const ownerOrgId = knownOwnerOrgId ?? null
 
   const state = environment?.state
   const subdomain = state?.genericSubdomain ?? null
@@ -186,7 +187,10 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   // states; the bar's own 3s window covers the early window in case the
   // useEffect below clears too early.
   const [intentDeploying, setIntentDeploying] = useState(false)
-  const [settingsOpen, setSettingsOpen] = useState(false)
+  // `?settings=organisation` (the retry link after a failed hand-over at create
+  // time) opens the settings drawer on the tab holding "Move to an organisation".
+  const settingsParam = searchParams.get('settings')
+  const [settingsOpen, setSettingsOpen] = useState(settingsParam === 'organisation')
   const statusStr = state?.status ?? 'DRAFT'
   useEffect(() => {
     if (intentDeploying && statusStr !== 'CHANGES_PENDING' && statusStr !== 'DRAFT') {
@@ -550,6 +554,8 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           onTerminate={detail.terminate}
           canEdit={canEdit}
           ownerOrgId={ownerOrgId}
+          defaultTab={settingsParam === 'organisation' ? 'metadata' : undefined}
+          onHandedOver={() => void detail.refresh()}
         />
       )}
     </>

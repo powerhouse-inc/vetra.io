@@ -1,8 +1,10 @@
 'use client'
 
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useForm } from 'react-hook-form'
+import { toast } from 'sonner'
 import { z } from 'zod'
 
 import { DRIVE_ID } from '@/modules/cloud/client'
@@ -10,7 +12,7 @@ import { loadEnvironmentController } from '@/modules/cloud/controller'
 import {
   EnvironmentHandOverError,
   describeEnvironmentOrgError,
-  ensureCanOperateEnvironment,
+  runSignedEnvironmentAction,
 } from '@/modules/cloud/org-sync'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
@@ -42,6 +44,12 @@ type NewEnvironmentFormProps = {
   onSuccess?: () => void
 }
 
+/** What the creator is told when the env was created but stayed personal. */
+export function handOverFailureMessage(orgName: string | undefined, reason: string): string {
+  const org = orgName ?? 'the organisation'
+  return `Your environment was created but could not be moved to ${org}: ${describeEnvironmentOrgError(reason, orgName)} Try again from Settings.`
+}
+
 export function NewEnvironmentForm(props: NewEnvironmentFormProps) {
   return (
     <RequireSigner>
@@ -58,6 +66,7 @@ function NewEnvironmentFormInner({
 }: NewEnvironmentFormProps) {
   const { signer } = useCanSign()
   const { orgId, org } = useActiveOrg()
+  const router = useRouter()
   const createEnv = useCreateEnvironment()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -93,9 +102,9 @@ function NewEnvironmentFormInner({
           parentIdentifier: DRIVE_ID,
           signer,
         })
-        await ensureCanOperateEnvironment(docId, ctrl, signer.user?.address)
-        ctrl.setLabel({ label: values.name })
-        await ctrl.push()
+        await runSignedEnvironmentAction(docId, ctrl, signer.user?.address, (c) =>
+          c.setLabel({ label: values.name }),
+        )
       } else {
         // Create new environment in a single signed batch
         const subdomain = generateSubdomain(crypto.randomUUID())
@@ -115,10 +124,19 @@ function NewEnvironmentFormInner({
     } catch (err) {
       if (err instanceof EnvironmentHandOverError) {
         // The env exists (personal); only the move to the organisation failed.
-        onCreated?.(err.environmentId)
-        setError(
-          `Created as a personal environment; moving it to ${org?.name ?? 'the organisation'} failed: ${describeEnvironmentOrgError(err.message, org?.name)}`,
-        )
+        // onCreated usually navigates away, so say it in a toast that stays
+        // until dismissed, with a way back to the retry in Settings.
+        const message = handOverFailureMessage(org?.name, err.message)
+        const envId = err.environmentId
+        toast.error(message, {
+          duration: Infinity,
+          action: {
+            label: 'Open Settings',
+            onClick: () => router.push(`/user/environments/${envId}?settings=organisation`),
+          },
+        })
+        setError(message)
+        onCreated?.(envId)
       } else {
         setError(err instanceof Error ? err.message : 'Failed to save environment')
       }

@@ -637,7 +637,7 @@ export function OverviewTab({
   addons,
 }: OverviewTabProps) {
   // Edit controls need the signer and, on an org env, operator access (R6).
-  const canEdit = useCanEditEnvironment(environment.id)
+  const canEdit = useCanEditEnvironment(environment.id, environment.state.ownerOrgId)
   const [addAgentOpen, setAddAgentOpen] = useState(false)
   const [fusionConfigOpen, setFusionConfigOpen] = useState(false)
   const { setSecret: setTenantSecret } = useTenantConfig(tenantId)
