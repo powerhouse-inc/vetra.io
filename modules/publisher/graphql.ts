@@ -250,14 +250,18 @@ export const resetIdentityDidSupport = () => {
 export async function fetchPublisherApps(
   token: string | null,
   fetchImpl?: FetchLike,
+  orgId?: string | null,
 ): Promise<PublisherApp[]> {
+  const declaration = orgId ? '($orgId: String)' : ''
+  const call = (fields: string) => (orgId ? `myApps(orgId: $orgId) { ${fields} }` : `myApps { ${fields} }`)
+  const variables = orgId ? { orgId } : {}
   if (identityDidSupported) {
     try {
       return await read<PublisherApp[]>(
         'myApps',
-        '',
-        `myApps { ${APP_FIELDS} }`,
-        {},
+        declaration,
+        call(APP_FIELDS),
+        variables,
         token,
         fetchImpl,
       )
@@ -273,9 +277,9 @@ export async function fetchPublisherApps(
   }
   const apps = await read<PublisherApp[]>(
     'myApps',
-    '',
-    `myApps { ${APP_FIELDS_BASE} }`,
-    {},
+    declaration,
+    call(APP_FIELDS_BASE),
+    variables,
     token,
     fetchImpl,
   )

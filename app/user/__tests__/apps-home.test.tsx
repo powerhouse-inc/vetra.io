@@ -4,6 +4,7 @@ import React from 'react'
 import type { App } from '@/modules/apps/types'
 
 let apps: Pick<App, 'id' | 'name'>[] = []
+let activeOrg: { id: string; name: string } | null = null
 let published: { id: string; name: string; status: string }[] = []
 
 vi.mock('@/modules/apps/hooks/use-apps', () => ({
@@ -15,6 +16,15 @@ vi.mock('@/modules/apps/hooks/use-apps', () => ({
     isRefetching: false,
   }),
   useStandaloneEnvFilter: () => ({ isStandalone: () => true }),
+}))
+vi.mock('@/modules/orgs/hooks/use-orgs', () => ({
+  useActiveOrg: () => ({
+    orgId: activeOrg?.id ?? null,
+    org: activeOrg,
+    orgs: [],
+    isLoading: false,
+    setActiveOrg: vi.fn(),
+  }),
 }))
 vi.mock('@/modules/publisher/hooks/use-publisher', () => ({
   usePublisherApps: () => ({ data: published }),
@@ -53,5 +63,14 @@ describe('AppsHome', () => {
     render(<AppsHome />)
     expect(screen.getByRole('link', { name: 'Vetra Studio' })).toBeTruthy()
     expect(screen.getByText('empty-state')).toBeTruthy()
+  })
+
+  it('names the organisation it is showing', () => {
+    activeOrg = { id: 'o1', name: 'Acme' }
+    apps = [{ id: 'a1', name: 'Shop' }]
+    render(<AppsHome />)
+    expect(screen.getByText(/Apps of/)).toBeTruthy()
+    expect(screen.getByText(/New app in Acme/)).toBeTruthy()
+    activeOrg = null
   })
 })

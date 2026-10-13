@@ -4,7 +4,8 @@
  */
 export const appsKeys = {
   all: ['apps'] as const,
-  list: (did: string | undefined) => ['apps', 'list', did ?? null] as const,
+  list: (did: string | undefined, orgId: string | null = null) =>
+    ['apps', 'list', did ?? null, orgId] as const,
   detail: (id: string, did: string | undefined) => ['apps', 'detail', id, did ?? null] as const,
   deployments: (id: string, did: string | undefined) =>
     ['apps', 'deployments', id, did ?? null] as const,

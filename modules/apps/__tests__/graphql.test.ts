@@ -1,9 +1,10 @@
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
   AppsApiError,
   appsGql,
   describeAppsError,
+  createApp,
   describeCreateAppError,
   fetchApp,
   fetchMyApps,
@@ -196,5 +197,49 @@ describe('optional App fields', () => {
     const fetchImpl = vi.fn<FetchLike>(() => Promise.resolve(jsonResponse({ data: { app: null } })))
     await fetchApp('a1', null, fetchImpl)
     expect(fetchImpl.mock.calls[0][1].body as string).toContain('identityExpiresAt')
+  })
+})
+
+describe('organisation apps', () => {
+  afterEach(() => vi.unstubAllGlobals())
+
+  function captureBodies(data: unknown) {
+    const bodies: { query: string; variables: Record<string, unknown> }[] = []
+    vi.stubGlobal(
+      'fetch',
+      vi.fn((_url: string, init: RequestInit) => {
+        bodies.push(JSON.parse(init.body as string) as (typeof bodies)[number])
+        return Promise.resolve(new Response(JSON.stringify({ data }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        }))
+      }),
+    )
+    return bodies
+  }
+
+  it('lists an organisation\u2019s apps with orgId, personal apps without', async () => {
+    resetOptionalAppFields()
+    const bodies = captureBodies({ myApps: [] })
+    await fetchMyApps('tok', undefined, 'o1')
+    await fetchMyApps('tok')
+    expect(bodies[0].query).toContain('myApps(orgId: $orgId)')
+    expect(bodies[0].variables).toStrictEqual({ orgId: 'o1' })
+    expect(bodies[1].query).not.toContain('orgId')
+  })
+
+  it('creates in an organisation only when one is given', async () => {
+    resetOptionalAppFields()
+    const bodies = captureBodies({ createApp: { id: 'a1' } })
+    await createApp({ name: 'Shop', installationId: '1', repositoryId: '2', orgId: 'o1' }, 'tok')
+    await createApp({ name: 'Shop', installationId: '1', repositoryId: '2', orgId: null }, 'tok')
+    expect(bodies[0].variables.input).toMatchObject({ orgId: 'o1' })
+    expect(bodies[1].variables.input).not.toHaveProperty('orgId')
+  })
+
+  it('words a FORBIDDEN create in an organisation as a role problem', () => {
+    const err = new AppsApiError('FORBIDDEN', 'no')
+    expect(describeCreateAppError(err, 'a/b', 'Acme')).toContain('all apps of Acme')
+    expect(describeCreateAppError(err, 'a/b')).toContain('GitHub')
   })
 })

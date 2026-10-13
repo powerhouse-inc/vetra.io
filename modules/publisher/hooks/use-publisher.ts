@@ -45,18 +45,18 @@ export function usePublisherToken(): () => Promise<string | null> {
   return useCallback(() => waitForToken(() => getAuthToken(ref.current)), [])
 }
 
-export function usePublisherApps() {
+export function usePublisherApps(orgId: string | null = null) {
   const { did, keyDid } = useViewerDid()
   return useAuthedQuery<PublisherApp[]>(
-    publisherKeys.apps(keyDid),
-    async (token) => (await fetchPublisherApps(token)) ?? [],
+    publisherKeys.apps(keyDid, orgId),
+    async (token) => (await fetchPublisherApps(token, undefined, orgId)) ?? [],
     { retry: retryPublisher, enabled: !!did },
   )
 }
 
 /** Is the viewer this app's publisher? Uses the server's own ownership rule (myApps). */
-export function useAppPublisher(appId: string) {
-  const apps = usePublisherApps()
+export function useAppPublisher(appId: string, orgId: string | null = null) {
+  const apps = usePublisherApps(orgId)
   const app = apps.data?.find((a) => a.id === appId)
   // A disabled query (signed out) is "pending" forever in React Query; it is not loading.
   const isPending = apps.isPending && apps.fetchStatus !== 'idle'

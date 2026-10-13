@@ -57,6 +57,8 @@ export type AppDeployment = {
 
 export type App = {
   id: string
+  /** Renown organisation owning the app; absent on older backends, null when personal. */
+  ownerOrgId?: string | null
   slug: string
   name: string
   ownerAddress: string
@@ -107,6 +109,8 @@ export type CreateAppInput = {
   repositoryId: string
   productionBranch?: string | null
   productionEnvironmentId?: string | null
+  /** Create the app for this organisation. */
+  orgId?: string | null
 }
 
 export type UpdateAppInput = {

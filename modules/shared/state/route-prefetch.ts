@@ -1,5 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { appsKeys } from '@/modules/apps/hooks/keys'
+import { readActiveOrg } from '@/modules/orgs/active-org'
 import { fetchMyApps } from '@/modules/apps/graphql'
 import { myEnvironmentsQuery } from '@/modules/cloud/hooks/use-environment'
 import { studioProductsQuery } from '@/modules/cloud/studio/use-studio-products'
@@ -15,8 +16,8 @@ export const ROUTE_PREFETCH: Record<string, (ctx: PrefetchCtx) => Promise<unknow
   '/user': ({ queryClient, did, token }) =>
     Promise.all([
       queryClient.prefetchQuery({
-        queryKey: appsKeys.list(did),
-        queryFn: () => fetchMyApps(token),
+        queryKey: appsKeys.list(did, readActiveOrg()),
+        queryFn: () => fetchMyApps(token, undefined, readActiveOrg()),
       }),
       queryClient.prefetchQuery({
         queryKey: myEnvironmentsQuery(did).queryKey,
