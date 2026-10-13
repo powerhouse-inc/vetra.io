@@ -1,5 +1,10 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fetchMyOrganizations, fetchOrganizationSummary, renownOrgsEndpoint } from '../graphql'
+import {
+  fetchMyOrganizations,
+  fetchMyOrganizationsAnswer,
+  fetchOrganizationSummary,
+  renownOrgsEndpoint,
+} from '../graphql'
 
 const ME = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
 const org = (id: string, name: string, extra: Record<string, unknown> = {}) => ({
@@ -95,6 +100,27 @@ describe('R5: GraphQL-level refusal of the bearer', () => {
       const second = fetchImpl.mock.calls[1][1] as RequestInit
       expect((second.headers as Record<string, string>).Authorization).toBeUndefined()
     }
+  })
+
+  it('marks the answer after a bearer refusal as partial (public memberships only)', async () => {
+    const refused = () =>
+      new Response(
+        JSON.stringify({ errors: [{ message: 'nope', extensions: { code: 'FORBIDDEN' } }] }),
+        { status: 200 },
+      )
+    const fetchImpl = vi
+      .fn()
+      .mockResolvedValueOnce(refused())
+      .mockResolvedValueOnce(ok({ organizationsByMember: [] }))
+      .mockResolvedValueOnce(ok({ organizationsByMember: [] }))
+    const degraded = await fetchMyOrganizationsAnswer(
+      ME,
+      'tok',
+      fetchImpl as unknown as typeof fetch,
+    )
+    expect(degraded.partial).toBe(true)
+    const full = await fetchMyOrganizationsAnswer(ME, 'tok', fetchImpl as unknown as typeof fetch)
+    expect(full.partial).toBe(false)
   })
 
   it('does not retry other GraphQL errors', async () => {

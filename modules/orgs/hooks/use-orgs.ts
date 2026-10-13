@@ -10,7 +10,7 @@ import {
   subscribeActiveOrg,
   writeActiveOrg,
 } from '../active-org'
-import { fetchMyOrganizations, fetchOrganizationSummary } from '../graphql'
+import { fetchMyOrganizationsAnswer, fetchOrganizationSummary } from '../graphql'
 import type { MyOrg, OrgSummary } from '../types'
 
 export const orgKeys = {
@@ -18,18 +18,34 @@ export const orgKeys = {
   summary: (id: string) => ['orgs', 'summary', id] as const,
 }
 
-export function useMyOrgs() {
+type MyOrgsAnswer = { orgs: MyOrg[]; partial: boolean }
+
+function useMyOrgsQuery<T>(select: (answer: MyOrgsAnswer) => T) {
   const did = useDid()
   const auth = useRenownAuthAsync()
   const address =
     auth.state === 'authenticated'
       ? ((auth.address ?? auth.displayAddress)?.toLowerCase() ?? null)
       : null
-  return useAuthedQuery<MyOrg[]>(
+  return useAuthedQuery<MyOrgsAnswer, T>(
     orgKeys.mine(did),
-    (token) => (address ? fetchMyOrganizations(address, token) : Promise.resolve([])),
-    { enabled: !!address, staleTime: 60_000, retry: 1 },
+    (token) =>
+      address
+        ? fetchMyOrganizationsAnswer(address, token)
+        : Promise.resolve({ orgs: [], partial: false }),
+    { enabled: !!address, staleTime: 60_000, retry: 1, select },
   )
+}
+
+// A cache entry from before the answer carried `partial` (a bare list) counts
+// as non-authoritative until it is refetched.
+const normalize = (answer: MyOrgsAnswer | MyOrg[]): MyOrgsAnswer =>
+  Array.isArray(answer) ? { orgs: answer, partial: true } : answer
+const selectOrgs = (answer: MyOrgsAnswer) => normalize(answer).orgs
+const selectAnswer = (answer: MyOrgsAnswer) => normalize(answer)
+
+export function useMyOrgs() {
+  return useMyOrgsQuery(selectOrgs)
 }
 
 export type ActiveOrg = {
@@ -42,16 +58,20 @@ export type ActiveOrg = {
 
 export function useActiveOrg(): ActiveOrg {
   const stored = useSyncExternalStore(subscribeActiveOrg, readActiveOrg, () => null)
-  const mine = useMyOrgs()
-  const loaded = mine.data
+  const mine = useMyOrgsQuery(selectAnswer)
+  const loaded = mine.data?.orgs
+  // A degraded answer (Renown refused the bearer) may omit hidden memberships:
+  // like a failure it falls back to personal without forgetting the stored org.
+  const partial = mine.data?.partial ?? false
   const failed = mine.isError && !loaded
   const auth = useRenownAuthAsync()
   const signedOut = auth.state !== 'authenticated' && auth.state !== 'resolving'
   const orgId = signedOut ? null : resolveActiveOrgId(stored, loaded, failed)
   useEffect(() => {
-    // Signed out, or a stored org the viewer is not (or no longer) in, is forgotten.
-    if (stored && (signedOut || (loaded && orgId === null))) writeActiveOrg(null)
-  }, [stored, loaded, orgId, signedOut])
+    // Signed out, or a stored org the viewer is not (or no longer) in per an
+    // authoritative answer, is forgotten.
+    if (stored && (signedOut || (loaded && !partial && orgId === null))) writeActiveOrg(null)
+  }, [stored, loaded, partial, orgId, signedOut])
   return {
     orgId,
     org: orgId ? (loaded?.find((o) => o.id === orgId) ?? null) : null,

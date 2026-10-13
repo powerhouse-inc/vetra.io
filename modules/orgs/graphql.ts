@@ -49,12 +49,14 @@ type Affiliation = { role: OrgRole; org: OrgSummary & { archived: boolean; taken
  * The viewer's ACTIVE memberships (hidden ones too when Renown accepts the bearer).
  * When Renown refuses the bearer the read is retried once without it: the public
  * memberships only, i.e. the viewer is treated as signed out for viewer-specific data.
+ * That degraded answer is marked `partial`: a membership missing from it may
+ * just be hidden, so it is not proof the viewer left.
  */
-export async function fetchMyOrganizations(
+export async function fetchMyOrganizationsAnswer(
   address: string,
   token: string | null,
   fetchImpl: typeof fetch = (input, init) => fetch(input, init),
-): Promise<MyOrg[]> {
+): Promise<{ orgs: MyOrg[]; partial: boolean }> {
   const query = `query VetraMyOrgs($address: String!) { organizationsByMember(address: $address) { role org { ${SUMMARY} archived takenDown } } }`
   let answer = await orgsGql<{ organizationsByMember: Affiliation[] }>(
     query,
@@ -62,10 +64,12 @@ export async function fetchMyOrganizations(
     token,
     fetchImpl,
   )
+  let partial = false
   if (token && bearerRefused(answer)) {
     answer = await orgsGql(query, { address }, null, fetchImpl)
+    partial = true
   }
-  return dataOrThrow(answer)
+  const orgs = dataOrThrow(answer)
     .organizationsByMember.filter((a) => !a.org.archived && !a.org.takenDown)
     .map(({ role, org }) => ({
       id: org.id,
@@ -77,6 +81,16 @@ export async function fetchMyOrganizations(
       role,
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
+  return { orgs, partial }
+}
+
+/** The viewer's ACTIVE memberships (see `fetchMyOrganizationsAnswer`). */
+export async function fetchMyOrganizations(
+  address: string,
+  token: string | null,
+  fetchImpl?: typeof fetch,
+): Promise<MyOrg[]> {
+  return (await fetchMyOrganizationsAnswer(address, token, fetchImpl)).orgs
 }
 
 /** Public data: no bearer is sent. */

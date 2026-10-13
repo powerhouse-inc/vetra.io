@@ -14,17 +14,17 @@ import { getAuthToken } from '../graphql'
  * ref so its frequent object churn (a new identity object on every "user"
  * event) never re-creates the query function or triggers refetch storms.
  */
-export function useAuthedQuery<T>(
+export function useAuthedQuery<T, TData = T>(
   queryKey: readonly unknown[],
   fetcher: (token: string | null) => Promise<T>,
-  options?: Omit<UseQueryOptions<T, Error, T, readonly unknown[]>, 'queryKey' | 'queryFn'>,
-): UseQueryResult<T, Error> {
+  options?: Omit<UseQueryOptions<T, Error, TData, readonly unknown[]>, 'queryKey' | 'queryFn'>,
+): UseQueryResult<TData, Error> {
   const renown = useRenown()
   const renownRef = useRef(renown)
   // eslint-disable-next-line react-hooks/refs
   renownRef.current = renown
 
-  return useQuery<T, Error, T, readonly unknown[]>({
+  return useQuery<T, Error, TData, readonly unknown[]>({
     queryKey,
     queryFn: async () => {
       const token = await getAuthToken(renownRef.current)
