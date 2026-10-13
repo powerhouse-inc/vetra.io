@@ -136,7 +136,6 @@ const SERVICE_FIELDS = `type prefix enabled url status version`
 const PACKAGE_FIELDS = `registry name version`
 const CUSTOM_DOMAIN_FIELDS = `enabled domain dnsRecords { type host value }`
 const STATE_FIELDS = `owner label genericSubdomain genericBaseDomain customDomain { ${CUSTOM_DOMAIN_FIELDS} } defaultPackageRegistry status apexService autoUpdateChannel services { ${SERVICE_FIELDS} } packages { ${PACKAGE_FIELDS} }`
-const DOCUMENT_FIELDS = `id documentType createdAtUtcIso lastModifiedAtUtcIso revisionsList { scope revision } state { global { ${STATE_FIELDS} } }`
 const LIST_ITEM_FIELDS = `id state { global { ${STATE_FIELDS} } }`
 
 // ---------------------------------------------------------------------------
@@ -213,30 +212,49 @@ export async function fetchEnvironments(token?: string | null): Promise<CloudEnv
   return data.VetraCloudEnvironment.findDocuments.items.map(mapListItem)
 }
 
+/**
+ * Whether the environment document schema knows `ownerOrgId` (C1). `null` =
+ * not probed yet; flips to `false` the first time the server rejects it.
+ */
+let environmentHasOwnerOrgId: boolean | null = null
+
 export async function fetchEnvironment(
   id: string,
   token?: string | null,
 ): Promise<CloudEnvironment | null> {
-  const data = await gql<
-    Namespaced<{
-      document: {
-        document: RawDocument
-      } | null
-    }>
-  >(
-    `query ($id: String!) {
+  const run = async (withOrg: boolean) => {
+    const stateFields = withOrg ? `${STATE_FIELDS} ownerOrgId` : STATE_FIELDS
+    const data = await gql<
+      Namespaced<{
+        document: {
+          document: RawDocument
+        } | null
+      }>
+    >(
+      `query ($id: String!) {
       VetraCloudEnvironment {
         document(identifier: $id) {
-          document { ${DOCUMENT_FIELDS} }
+          document { id documentType createdAtUtcIso lastModifiedAtUtcIso revisionsList { scope revision } state { global { ${stateFields} } } }
         }
       }
     }`,
-    { id },
-    token,
-  )
+      { id },
+      token,
+    )
+    const raw = data.VetraCloudEnvironment.document?.document
+    return raw ? mapDocument(raw) : null
+  }
 
-  const raw = data.VetraCloudEnvironment.document?.document
-  return raw ? mapDocument(raw) : null
+  if (environmentHasOwnerOrgId === false) return run(false)
+  try {
+    const env = await run(true)
+    environmentHasOwnerOrgId = true
+    return env
+  } catch (err) {
+    if (!isUnknownFieldError(err)) throw err
+    environmentHasOwnerOrgId = false
+    return run(false)
+  }
 }
 
 // ---------------------------------------------------------------------------

@@ -234,3 +234,18 @@ export async function runSignedEnvironmentAction<
     throw err
   }
 }
+
+/**
+ * The `ownerOrgId` the env detail page feeds the R6 edit gate. A personal
+ * answer (`null`) counts only once the signed controller has loaded (signed
+ * actions need it); an organisation id from the read-only fetch may open the
+ * sync-backed gate early. `undefined` keeps the gate closed.
+ */
+export function editGateOwnerOrgId(input: {
+  canSign: boolean
+  controllerLoaded: boolean
+  ownerOrgId: string | null | undefined
+}): string | null | undefined {
+  if (input.ownerOrgId === null && input.canSign && !input.controllerLoaded) return undefined
+  return input.ownerOrgId
+}

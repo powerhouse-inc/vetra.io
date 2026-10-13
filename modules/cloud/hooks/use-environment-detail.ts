@@ -37,7 +37,7 @@ import { useEnvironmentController } from './use-environment-controller'
 import { useCanSign } from './use-can-sign'
 import { useRenown } from '@powerhousedao/reactor-browser'
 import { useQueryClient } from '@tanstack/react-query'
-import { runSignedEnvironmentAction } from '../org-sync'
+import { editGateOwnerOrgId, runSignedEnvironmentAction } from '../org-sync'
 
 const NOT_LOGGED_IN_ERROR = 'You must be logged in with Renown to perform this action'
 
@@ -145,6 +145,12 @@ export function useEnvironmentDetail(documentId: string) {
     const interval = setInterval(() => void refetchFallback(), 30_000)
     return () => clearInterval(interval)
   }, [canSign, refetchFallback])
+
+  // A just-granted org member's first read-only fetch may have been refused
+  // before the controller load synced their grant: fetch the metadata again.
+  useEffect(() => {
+    if (controller && !fallbackRef.current) void refetchFallback()
+  }, [controller, refetchFallback])
 
   // Track controller revision to surface re-renders when state changes
   const [, setRev] = useState(0)
@@ -419,6 +425,12 @@ export function useEnvironmentDetail(documentId: string) {
 
   return {
     environment,
+    /** The env organisation for the R6 edit gate (see `editGateOwnerOrgId`). */
+    editGateOwnerOrgId: editGateOwnerOrgId({
+      canSign,
+      controllerLoaded: !!ctrlState,
+      ownerOrgId: environment?.state.ownerOrgId,
+    }),
     /** Re-pull the signed controller (e.g. after a hand-over). */
     refresh: ctrlResult.refresh,
     isLoading,

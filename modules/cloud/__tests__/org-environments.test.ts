@@ -1,5 +1,10 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
-import { fetchMyEnvironments, setEnvironmentOrg, syncEnvironmentOrg } from '@/modules/cloud/graphql'
+import {
+  fetchEnvironment,
+  fetchMyEnvironments,
+  setEnvironmentOrg,
+  syncEnvironmentOrg,
+} from '@/modules/cloud/graphql'
 import {
   EnvironmentAccessError,
   EnvironmentHandOverError,
@@ -43,6 +48,36 @@ describe('organisation environments', () => {
     expect(envs).toStrictEqual([{ id: 'e1', ownerOrgId: 'o1' }])
     expect(bodies[0].variables).toStrictEqual({ scope: 'ORG', orgId: 'o1' })
     expect(bodies[0].query).toContain('myEnvironments(scope: $scope, orgId: $orgId)')
+  })
+
+  it('reads the env organisation in the read-only fetch, without it on an older schema', async () => {
+    const doc = (global: Record<string, unknown>) => ({
+      data: {
+        VetraCloudEnvironment: {
+          document: {
+            document: {
+              id: 'e1',
+              documentType: 't',
+              createdAtUtcIso: '',
+              lastModifiedAtUtcIso: '',
+              revisionsList: [],
+              state: { global: { label: 'x', ...global } },
+            },
+          },
+        },
+      },
+    })
+    let bodies = stub([doc({ ownerOrgId: 'o1' })])
+    expect((await fetchEnvironment('e1', 'tok'))?.state.ownerOrgId).toBe('o1')
+    expect(bodies[0].query).toContain('ownerOrgId')
+
+    bodies = stub([
+      { errors: [{ message: 'Cannot query field "ownerOrgId" on type "X".' }] },
+      doc({}),
+    ])
+    const env = await fetchEnvironment('e1', 'tok')
+    expect(env?.state.ownerOrgId).toBeUndefined()
+    expect(bodies[1].query).not.toContain('ownerOrgId')
   })
 
   it('syncs and hands over through the observability mutations', async () => {

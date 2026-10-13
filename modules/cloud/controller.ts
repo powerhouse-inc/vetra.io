@@ -36,8 +36,8 @@ export function loadEnvironmentController(options: {
   /**
    * The env's organisation when the caller already knows it (list / read
    * model). Only then is the caller's operator entry refreshed before the
-   * pull; personal envs make no sync call. Unknown org envs are synced by the
-   * action gate (`ensureCanOperateEnvironment`) before their first action.
+   * pull; personal envs (`null`) make no sync call. When unknown
+   * (`undefined`), a refused first pull is followed by one sync and a retry.
    */
   ownerOrgId?: string | null
 }) {
@@ -50,12 +50,37 @@ export function loadEnvironmentController(options: {
       signer: options.signer,
       onConflict: 'rebase',
     })
-  if (!options.ownerOrgId) return pull()
   const caller = options.signer.user?.address ?? null
-  return withOrgSync(options.documentId, pull, {
-    sync: (id, token) => cachedSyncEnvironmentOrg(id, token, { caller, fresh: true }),
-    token: resolveAuthToken,
-  })
+  const sync = (id: string, token: string | null) =>
+    cachedSyncEnvironmentOrg(id, token, { caller, fresh: true })
+  if (options.ownerOrgId) {
+    return withOrgSync(options.documentId, pull, { sync, token: resolveAuthToken })
+  }
+  if (options.ownerOrgId === null) return pull()
+  return pullUnknownEnvironment(pull, async () =>
+    sync(options.documentId, await resolveAuthToken()),
+  )
+}
+
+/**
+ * Load an env whose organisation is not known yet. Personal envs (and org envs
+ * the caller already has a grant on) load on the first pull, with no sync. A
+ * refused first pull may be an org env whose grant the periodic job has not
+ * written yet (a just-added member or publisher): sync once (which writes the
+ * grant) and, when it names an organisation the caller may view, retry.
+ * Otherwise the first refusal is rethrown.
+ */
+export async function pullUnknownEnvironment<T>(
+  pull: () => Promise<T>,
+  sync: () => Promise<{ ownerOrgId: string | null; canView: boolean }>,
+): Promise<T> {
+  try {
+    return await pull()
+  } catch (first) {
+    const access = await sync().catch(() => null)
+    if (!access?.ownerOrgId || !access.canView) throw first
+    return pull()
+  }
 }
 
 /** Create a controller for a new (not-yet-persisted) environment document. */

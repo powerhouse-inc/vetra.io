@@ -129,12 +129,12 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
 
   const detail = useEnvironmentDetail(documentId)
   const { environment, isLoading } = detail
-  // The env's organisation comes from the signed controller's document state
-  // (undefined until it loads). Edit controls need canOperate on an org env
-  // (Ruling R6), the signer alone on a personal one; personal envs never sync.
-  const knownOwnerOrgId = environment?.state.ownerOrgId
-  const canEdit = useCanEditEnvironment(documentId, knownOwnerOrgId)
-  const ownerOrgId = knownOwnerOrgId ?? null
+  // The env's organisation comes from the signed controller's document state,
+  // or the read-only fetch before it loads (badge). Edit controls need
+  // canOperate on an org env (Ruling R6), the signer alone on a personal one
+  // (only once the controller has loaded); personal envs never sync.
+  const canEdit = useCanEditEnvironment(documentId, detail.editGateOwnerOrgId)
+  const ownerOrgId = environment?.state.ownerOrgId ?? null
 
   const state = environment?.state
   const subdomain = state?.genericSubdomain ?? null

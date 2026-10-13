@@ -1,5 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { renderHook, waitFor, act } from '@testing-library/react'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import type { ReactNode } from 'react'
 import { useEnvironmentController } from '../hooks/use-environment-controller'
 
 vi.mock('../hooks/use-can-sign', () => ({ useCanSign: vi.fn() }))
@@ -94,5 +96,32 @@ describe('useEnvironmentController', () => {
     const { result } = renderHook(() => useEnvironmentController('doc1'))
     await waitFor(() => expect(result.current.error).toBeInstanceOf(Error))
     expect(result.current.isLoading).toBe(false)
+  })
+
+  it('passes the env organisation from a cached env list to the load', async () => {
+    vi.mocked(useCanSign).mockReturnValue({
+      canSign: true,
+      signer: fakeSigner as never,
+      loading: false,
+    })
+    vi.mocked(loadEnvironmentController).mockResolvedValue(makeController({}) as never)
+    const client = new QueryClient()
+    client.setQueryData(['environments', 'ORG', 'did:me', 'o1'], [{ id: 'doc1', ownerOrgId: 'o1' }])
+    client.setQueryData(['environments', 'MINE', 'did:me', null], [{ id: 'doc2', ownerOrgId: null }])
+    const wrapper = ({ children }: { children: ReactNode }) => (
+      <QueryClientProvider client={client}>{children}</QueryClientProvider>
+    )
+
+    renderHook(() => useEnvironmentController('doc1'), { wrapper })
+    await waitFor(() => expect(loadEnvironmentController).toHaveBeenCalledTimes(1))
+    expect(vi.mocked(loadEnvironmentController).mock.calls[0][0].ownerOrgId).toBe('o1')
+
+    renderHook(() => useEnvironmentController('doc2'), { wrapper })
+    await waitFor(() => expect(loadEnvironmentController).toHaveBeenCalledTimes(2))
+    expect(vi.mocked(loadEnvironmentController).mock.calls[1][0].ownerOrgId).toBeNull()
+
+    renderHook(() => useEnvironmentController('doc3'), { wrapper })
+    await waitFor(() => expect(loadEnvironmentController).toHaveBeenCalledTimes(3))
+    expect(vi.mocked(loadEnvironmentController).mock.calls[2][0].ownerOrgId).toBeUndefined()
   })
 })
