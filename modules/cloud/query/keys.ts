@@ -10,8 +10,11 @@
  * uses to decide what is safe to write to localStorage (see `shouldPersistQuery`).
  */
 export const queryKeys = {
-  environments: (scope: string, did: string | undefined) =>
-    ['environments', scope, did ?? null] as const,
+  /** `orgId` is the active organisation (null = personal); switching org must change the key. */
+  environments: (scope: string, did: string | undefined, orgId: string | null = null) =>
+    ['environments', scope, did ?? null, orgId] as const,
+  environmentOrg: (envId: string, did: string | undefined) =>
+    ['environment-org', envId, did ?? null] as const,
   environment: (envId: string, did: string | undefined) =>
     ['environment', envId, did ?? null] as const,
   viewer: (did: string | undefined) => ['viewer', did ?? null] as const,

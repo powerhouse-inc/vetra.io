@@ -27,8 +27,18 @@ describe('queryKeys', () => {
     expect(queryKeys.viewer('did:a')).not.toEqual(queryKeys.viewer('did:b'))
   })
 
+  it('keys the env list by the active organisation', () => {
+    expect(queryKeys.environments('ORG', 'did:x', 'o1')).toEqual([
+      'environments',
+      'ORG',
+      'did:x',
+      'o1',
+    ])
+    expect(queryKeys.environmentOrg('e1', undefined)).toEqual(['environment-org', 'e1', null])
+  })
+
   it('normalizes an undefined DID to a stable anonymous bucket', () => {
-    expect(queryKeys.environments('MINE', undefined)).toEqual(['environments', 'MINE', null])
+    expect(queryKeys.environments('MINE', undefined)).toEqual(['environments', 'MINE', null, null])
     expect(queryKeys.studioProducts(undefined)).toEqual(['studio-products', null])
   })
 

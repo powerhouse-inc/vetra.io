@@ -1,8 +1,9 @@
 'use client'
 
 import { useCallback } from 'react'
-import { DRIVE_ID } from '../client'
+import { DRIVE_ID, resolveAuthToken } from '../client'
 import { createNewEnvironmentController } from '../controller'
+import { handOverToOrg } from '../org-sync'
 import { useCanSign } from './use-can-sign'
 
 export type CreateEnvironmentInput = {
@@ -11,6 +12,12 @@ export type CreateEnvironmentInput = {
   baseDomain: string
   defaultPackageRegistry?: string | null
   enabledServices: Array<{ type: 'CONNECT' | 'SWITCHBOARD' | 'FUSION'; prefix: string }>
+  /**
+   * Active organisation: the env is created personally, then handed over with
+   * setEnvironmentOrg (retried while the read model catches up). A failed
+   * hand-over throws `EnvironmentHandOverError` carrying the new env id.
+   */
+  orgId?: string | null
 }
 
 export type CreateEnvironmentResult = { documentId: string }
@@ -50,7 +57,9 @@ export function useCreateEnvironment() {
         controller.enableService({ type: svc.type, prefix: svc.prefix })
       }
       const result = await controller.push()
-      return { documentId: result.remoteDocument.id }
+      const documentId = result.remoteDocument.id
+      if (input.orgId) await handOverToOrg(documentId, input.orgId, await resolveAuthToken())
+      return { documentId }
     },
     [signer],
   )

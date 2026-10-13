@@ -36,6 +36,7 @@ import { useDocumentSubscription } from './use-document-subscription'
 import { useEnvironmentController } from './use-environment-controller'
 import { useCanSign } from './use-can-sign'
 import { useRenown } from '@powerhousedao/reactor-browser'
+import { ensureCanOperateEnvironment } from '../org-sync'
 
 const NOT_LOGGED_IN_ERROR = 'You must be logged in with Renown to perform this action'
 
@@ -70,7 +71,7 @@ export function useEnvironmentDetail(documentId: string) {
   useLayoutEffect(() => {
     renownRef.current = renown
   })
-  const { canSign } = useCanSign()
+  const { canSign, signer } = useCanSign()
 
   const ctrlResult = useEnvironmentController(canSign ? documentId : null)
   const { controller, state: ctrlState, isLoading: ctrlLoading, error: ctrlError } = ctrlResult
@@ -170,10 +171,13 @@ export function useEnvironmentDetail(documentId: string) {
       if (!controller) {
         throw new Error(NOT_LOGGED_IN_ERROR)
       }
+      // Organisation envs: sync the caller's operator entry and refuse unless
+      // the backend says they can operate (C1 contract).
+      await ensureCanOperateEnvironment(documentId, controller, signer?.user?.address)
       fn(controller)
       await controller.push()
     },
-    [controller],
+    [controller, documentId, signer],
   )
 
   const setLabel = useCallback((label: string) => mutate((c) => c.setLabel({ label })), [mutate])

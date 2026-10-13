@@ -21,10 +21,12 @@ import { useRenown } from '@powerhousedao/reactor-browser'
 
 import { AsyncButton } from '@/modules/cloud/components/async-button'
 import { AutoUpdateCard } from '@/modules/cloud/components/auto-update-card'
+import { EnvOrgHandOver } from '@/modules/cloud/components/env-org-handover'
 import { CustomDomainSection } from '@/modules/cloud/components/custom-domain-section'
 import { EventTimeline } from '@/modules/cloud/components/event-timeline'
 import { DRIVE_ID } from '@/modules/cloud/client'
 import { loadEnvironmentController } from '@/modules/cloud/controller'
+import { ensureCanOperateEnvironment } from '@/modules/cloud/org-sync'
 import { getAuthToken, resetEnvironment } from '@/modules/cloud/graphql'
 import { useAsyncAction } from '@/modules/cloud/hooks/use-async-action'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
@@ -83,6 +85,13 @@ type Props = {
   onRollbackRelease?: () => Promise<string[]>
   /** When unset, the Danger Zone hides the Terminate row. */
   onTerminate?: () => Promise<void>
+  /**
+   * Whether the viewer may change this env (signer, plus operator on an org
+   * env — Ruling R6). Edit controls are disabled otherwise. Defaults to true.
+   */
+  canEdit?: boolean
+  /** Organisation owning the env (null = personal), for the hand-over offer. */
+  ownerOrgId?: string | null
 }
 
 const TERMINAL_STATUSES = new Set(['DRAFT', 'TERMINATING', 'DESTROYED', 'ARCHIVED'])
@@ -106,8 +115,11 @@ export function EnvSettingsDrawer({
   onUpdateToLatest,
   onRollbackRelease,
   onTerminate,
+  canEdit = true,
+  ownerOrgId = null,
 }: Props) {
   const state = environment.state
+  const { signer } = useCanSign()
   const envStatus = state.status
   const genericDomain = subdomain ? `${subdomain}.vetra.io` : ''
 
@@ -144,22 +156,26 @@ export function EnvSettingsDrawer({
                 <label className="text-muted-foreground text-sm font-medium">Generic Domain</label>
                 <Input value={genericDomain} readOnly className="bg-muted font-mono text-sm" />
               </div>
-              <CustomDomainSection
-                customDomain={state.customDomain}
-                apexService={apexServiceForCustomDomain(state.apexService)}
-                enabledServices={apexCandidateServices(state.services)}
-                onSetCustomDomain={onSetCustomDomain}
-              />
+              <fieldset disabled={!canEdit} className="m-0 min-w-0 border-0 p-0">
+                <CustomDomainSection
+                  customDomain={state.customDomain}
+                  apexService={apexServiceForCustomDomain(state.apexService)}
+                  enabledServices={apexCandidateServices(state.services)}
+                  onSetCustomDomain={onSetCustomDomain}
+                />
+              </fieldset>
             </TabsContent>
 
             <TabsContent value="updates" className="mt-0">
               {onSetAutoUpdateChannel && onUpdateToLatest && onRollbackRelease ? (
-                <AutoUpdateCard
-                  environment={environment}
-                  onChangeChannel={onSetAutoUpdateChannel}
-                  onUpdateNow={onUpdateToLatest}
-                  onRollback={onRollbackRelease}
-                />
+                <fieldset disabled={!canEdit} className="m-0 min-w-0 border-0 p-0">
+                  <AutoUpdateCard
+                    environment={environment}
+                    onChangeChannel={onSetAutoUpdateChannel}
+                    onUpdateNow={onUpdateToLatest}
+                    onRollback={onRollbackRelease}
+                  />
+                </fieldset>
               ) : (
                 <p className="text-muted-foreground py-8 text-center text-sm">
                   Updates aren&rsquo;t available for this env right now.
@@ -200,14 +216,27 @@ export function EnvSettingsDrawer({
                   }
                 />
               </dl>
-              <DangerZone
-                displayName={state.label || environment.name}
-                environment={environment}
-                tenantId={tenantId}
-                canTerminate={!!onTerminate && !TERMINAL_STATUSES.has(envStatus)}
-                onTerminate={onTerminate}
-                onClose={() => onOpenChange(false)}
-              />
+              {canEdit && (
+                <EnvOrgHandOver
+                  environmentId={environment.id}
+                  displayName={state.label || environment.name}
+                  owner={state.owner}
+                  ownerOrgId={ownerOrgId ?? state.ownerOrgId ?? environment.ownerOrgId ?? null}
+                  status={envStatus}
+                  appLinked={!!(environment.app ?? state.app)}
+                  viewerAddress={signer?.user?.address}
+                />
+              )}
+              {canEdit && (
+                <DangerZone
+                  displayName={state.label || environment.name}
+                  environment={environment}
+                  tenantId={tenantId}
+                  canTerminate={!!onTerminate && !TERMINAL_STATUSES.has(envStatus)}
+                  onTerminate={onTerminate}
+                  onClose={() => onOpenChange(false)}
+                />
+              )}
             </TabsContent>
           </div>
         </Tabs>
@@ -415,6 +444,7 @@ function DangerZone({
       parentIdentifier: DRIVE_ID,
       signer,
     })
+    await ensureCanOperateEnvironment(environment.id, ctrl, signer.user?.address)
     await ctrl.delete()
     toast.success('Environment deleted')
     onClose()

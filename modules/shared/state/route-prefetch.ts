@@ -7,6 +7,12 @@ import { studioProductsQuery } from '@/modules/cloud/studio/use-studio-products'
 
 type PrefetchCtx = { queryClient: QueryClient; did: string | undefined; token: string | null }
 
+/** The env list the page will ask for: the active organisation's, or the personal one. */
+function envListQuery(did: string | undefined) {
+  const orgId = readActiveOrg()
+  return myEnvironmentsQuery(did, orgId ? 'ORG' : 'MINE', orgId)
+}
+
 /**
  * Maps a nav href to a data-prefetch action. Only authed client-query routes
  * are listed; RSC routes (packages/builders) rely on Next's built-in `<Link>`
@@ -20,8 +26,8 @@ export const ROUTE_PREFETCH: Record<string, (ctx: PrefetchCtx) => Promise<unknow
         queryFn: () => fetchMyApps(token, undefined, readActiveOrg()),
       }),
       queryClient.prefetchQuery({
-        queryKey: myEnvironmentsQuery(did).queryKey,
-        queryFn: () => myEnvironmentsQuery(did).fetch(token),
+        queryKey: envListQuery(did).queryKey,
+        queryFn: () => envListQuery(did).fetch(token),
       }),
     ]),
   '/user/studio': ({ queryClient, did, token }) => {
@@ -29,11 +35,11 @@ export const ROUTE_PREFETCH: Record<string, (ctx: PrefetchCtx) => Promise<unknow
     return queryClient.prefetchQuery({ queryKey: q.queryKey, queryFn: () => q.fetch(token) })
   },
   '/user/environments': ({ queryClient, did, token }) => {
-    const q = myEnvironmentsQuery(did)
+    const q = envListQuery(did)
     return queryClient.prefetchQuery({ queryKey: q.queryKey, queryFn: () => q.fetch(token) })
   },
   '/cloud': ({ queryClient, did, token }) => {
-    const q = myEnvironmentsQuery(did)
+    const q = envListQuery(did)
     return queryClient.prefetchQuery({ queryKey: q.queryKey, queryFn: () => q.fetch(token) })
   },
 }

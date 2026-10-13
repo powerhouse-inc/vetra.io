@@ -6,7 +6,8 @@ import type {
   VetraCloudEnvironmentAction,
   VetraCloudEnvironmentPHState,
 } from '@powerhousedao/vetra-cloud-package/document-models/vetra-cloud-environment'
-import { client } from './client'
+import { client, resolveAuthToken } from './client'
+import { cachedSyncEnvironmentOrg, withOrgSync } from './org-sync'
 
 /**
  * A controller class bound to our installed document-model version.
@@ -22,6 +23,7 @@ export type EnvironmentController = Awaited<ReturnType<typeof loadEnvironmentCon
 
 /**
  * Load an existing environment document and wrap it for signed pushes.
+ * Callers gate each signed action with `ensureCanOperateEnvironment`.
  *
  * `parentIdentifier` is the drive id that owns the document. Under the
  * multi-drive ownership model this will be `user:<eth>` or `team:<slug>`;
@@ -32,14 +34,25 @@ export function loadEnvironmentController(options: {
   parentIdentifier: string
   signer: ISigner
 }) {
-  return RemoteDocumentController.pull(VetraCloudEnvironmentController, {
-    client,
-    documentId: options.documentId,
-    mode: 'batch',
-    parentIdentifier: options.parentIdentifier,
-    signer: options.signer,
-    onConflict: 'rebase',
-  })
+  // Org environments: refresh the caller's operator entry first, so the pulled
+  // document already lists them and their signed actions are accepted.
+  const caller = options.signer.user?.address ?? null
+  return withOrgSync(
+    options.documentId,
+    () =>
+      RemoteDocumentController.pull(VetraCloudEnvironmentController, {
+        client,
+        documentId: options.documentId,
+        mode: 'batch',
+        parentIdentifier: options.parentIdentifier,
+        signer: options.signer,
+        onConflict: 'rebase',
+      }),
+    {
+      sync: (id, token) => cachedSyncEnvironmentOrg(id, token, { caller, fresh: true }),
+      token: resolveAuthToken,
+    },
+  )
 }
 
 /** Create a controller for a new (not-yet-persisted) environment document. */

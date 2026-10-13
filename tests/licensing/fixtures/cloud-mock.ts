@@ -212,6 +212,18 @@ const HANDLERS: Handler[] = [
   // vetra-cloud: the header and app page ask who we are and list our environments (none).
   { match: /\bviewer\s*\{/, reply: () => ({ viewer: { address: ME, isAdmin: false } }) },
   { match: /\bmyEnvironments\(/, reply: () => ({ myEnvironments: [] }) },
+  // Organisation access for an environment (asked before loading/signing); our envs are personal.
+  {
+    match: /\bsyncEnvironmentOrg\(/,
+    reply: (v) => ({
+      syncEnvironmentOrg: {
+        environmentId: v.environmentId,
+        ownerOrgId: null,
+        canOperate: true,
+        canView: true,
+      },
+    }),
+  },
   // The environment page reads the environment document (read path, also the header metadata).
   {
     match: /VetraCloudEnvironment\s*\{\s*document\(/,

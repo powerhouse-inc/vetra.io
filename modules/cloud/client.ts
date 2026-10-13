@@ -46,7 +46,7 @@ export function setAuthTokenProvider(provider: AuthTokenProvider | null): void {
  * fallback covers the race where the signer/controller is ready before
  * CloudAuthBridge's useEffect has fired.
  */
-async function resolveToken(): Promise<string | null> {
+export async function resolveAuthToken(): Promise<string | null> {
   if (authTokenProvider) {
     try {
       return await authTokenProvider()
@@ -79,7 +79,7 @@ async function resolveToken(): Promise<string | null> {
 async function withAuth<T>(
   action: (requestHeaders?: Record<string, string>) => Promise<T>,
 ): Promise<T> {
-  const token = await resolveToken()
+  const token = await resolveAuthToken()
   if (!token) return action()
   return action({ authorization: `Bearer ${token}` })
 }

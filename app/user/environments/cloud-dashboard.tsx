@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
 import { splitEnvironments } from '@/modules/apps/lib/split'
 import { useEnvironments } from '@/modules/cloud/hooks/use-environment'
+import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import {
   Breadcrumb,
   BreadcrumbList,
@@ -20,8 +21,9 @@ import { CloudEnvironments } from './cloud-projects'
 export function CloudDashboard() {
   // Envs managed by an App (production + previews) live on their App's page.
   const { appIds, isStandalone } = useStandaloneEnvFilter()
+  const { orgId, org } = useActiveOrg()
   const { standalone: environments, appOwned } = splitEnvironments(
-    useEnvironments().environments,
+    useEnvironments('MINE', null, { orgId }).environments,
     appIds,
   )
   const readyCount = environments.filter((e) => e.state.status === 'READY').length
@@ -31,7 +33,9 @@ export function CloudDashboard() {
     <main className="mx-auto mt-20 max-w-screen-xl space-y-8 px-6 py-8">
       <div className="flex items-start justify-between">
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Your Environments</h1>
+          <h1 className="text-3xl font-bold">
+            {org ? `${org.name} environments` : 'Your Environments'}
+          </h1>
           <Breadcrumb>
             <BreadcrumbList>
               <BreadcrumbItem>

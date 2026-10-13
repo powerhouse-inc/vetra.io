@@ -143,7 +143,13 @@ function ConfigureStep({
 }) {
   const { viewer } = useViewer()
   const { orgId, org } = useActiveOrg()
-  const { environments, isPending: envsPending } = useEnvironments('MINE', viewer?.address ?? null)
+  const { environments, isPending: envsPending } = useEnvironments(
+    'MINE',
+    viewer?.address ?? null,
+    {
+      orgId,
+    },
+  )
   // Only envs with no app link at all: createApp rejects any env still
   // carrying an appId, including the kept production env of a deleted app.
   const standalone = useMemo(() => attachableEnvironments(environments), [environments])

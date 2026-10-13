@@ -7,6 +7,12 @@ import { z } from 'zod'
 
 import { DRIVE_ID } from '@/modules/cloud/client'
 import { loadEnvironmentController } from '@/modules/cloud/controller'
+import {
+  EnvironmentHandOverError,
+  describeEnvironmentOrgError,
+  ensureCanOperateEnvironment,
+} from '@/modules/cloud/org-sync'
+import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { useCreateEnvironment } from '@/modules/cloud/hooks/use-create-environment'
 import { RequireSigner } from '@/modules/cloud/components/require-signer'
@@ -51,6 +57,7 @@ function NewEnvironmentFormInner({
   onSuccess,
 }: NewEnvironmentFormProps) {
   const { signer } = useCanSign()
+  const { orgId, org } = useActiveOrg()
   const createEnv = useCreateEnvironment()
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -64,6 +71,11 @@ function NewEnvironmentFormInner({
   })
 
   const isRenameMode = !!docId
+  // Creating in an organisation needs PUBLISHER or above there (setEnvironmentOrg).
+  const orgRefusal =
+    !isRenameMode && org?.role === 'MEMBER'
+      ? `Members of ${org.name} cannot create environments. Ask an organisation admin for publisher access, or switch to your personal account.`
+      : null
 
   const handleSubmit = async (values: EnvironmentFormValues) => {
     try {
@@ -81,6 +93,7 @@ function NewEnvironmentFormInner({
           parentIdentifier: DRIVE_ID,
           signer,
         })
+        await ensureCanOperateEnvironment(docId, ctrl, signer.user?.address)
         ctrl.setLabel({ label: values.name })
         await ctrl.push()
       } else {
@@ -92,6 +105,7 @@ function NewEnvironmentFormInner({
           baseDomain: 'vetra.io',
           defaultPackageRegistry: defaultPackageRegistry(),
           enabledServices: [{ type: 'CONNECT', prefix: 'connect' }],
+          orgId,
         })
         onCreated?.(documentId)
       }
@@ -99,7 +113,15 @@ function NewEnvironmentFormInner({
       setSuccess(true)
       onSuccess?.()
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to save environment')
+      if (err instanceof EnvironmentHandOverError) {
+        // The env exists (personal); only the move to the organisation failed.
+        onCreated?.(err.environmentId)
+        setError(
+          `Created as a personal environment; moving it to ${org?.name ?? 'the organisation'} failed: ${describeEnvironmentOrgError(err.message, org?.name)}`,
+        )
+      } else {
+        setError(err instanceof Error ? err.message : 'Failed to save environment')
+      }
       console.error('Failed to save environment:', err)
     } finally {
       setIsSubmitting(false)
@@ -130,8 +152,12 @@ function NewEnvironmentFormInner({
             Environment {isRenameMode ? 'updated' : 'created'} successfully!
           </div>
         )}
+        {!isRenameMode && org && !orgRefusal && (
+          <p className="text-muted-foreground mt-2 text-sm">It will belong to {org.name}.</p>
+        )}
+        {orgRefusal && <p className="text-muted-foreground mt-2 text-sm">{orgRefusal}</p>}
         <div className="mt-4">
-          <Button type="submit" disabled={isSubmitting} size="sm">
+          <Button type="submit" disabled={isSubmitting || !!orgRefusal} size="sm">
             {isSubmitting ? 'Saving...' : isRenameMode ? 'Update Name' : 'Create Environment'}
           </Button>
         </div>

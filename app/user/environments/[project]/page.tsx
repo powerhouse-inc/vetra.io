@@ -14,11 +14,12 @@ import { AddonsSection } from '@/modules/cloud/components/addons-section'
 import { EnvSettingsDrawer } from '@/modules/cloud/components/env-settings-drawer'
 import { ServiceDetailDrawer } from '@/modules/cloud/components/service-detail-drawer'
 import { StatusBadge } from '@/modules/cloud/components/status-badge'
-import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { useClintPackages } from '@/modules/cloud/hooks/use-clint-packages'
 import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtime-endpoints'
 import { useDetailDrawer } from '@/modules/cloud/hooks/use-detail-drawer'
 import { useEnvironmentDetail } from '@/modules/cloud/hooks/use-environment-detail'
+import { useCanEditEnvironment, useEnvironmentOrg } from '@/modules/cloud/hooks/use-environment-org'
+import { OrgBadge } from '@/modules/orgs/components/org-badge'
 import { useEnvironmentStatus } from '@/modules/cloud/hooks/use-environment-status'
 import { generateSubdomain } from '@/modules/cloud/subdomain'
 import { getTenantId } from '@/modules/cloud/tenant-id'
@@ -128,6 +129,11 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
 
   const detail = useEnvironmentDetail(documentId)
   const { environment, isLoading } = detail
+  // Organisation badge + the viewer's access; edit controls need canOperate on
+  // an org env (Ruling R6), the signer alone on a personal one.
+  const orgAccess = useEnvironmentOrg(documentId)
+  const canEdit = useCanEditEnvironment(documentId)
+  const ownerOrgId = orgAccess.data?.ownerOrgId ?? environment?.state.ownerOrgId ?? null
 
   const state = environment?.state
   const subdomain = state?.genericSubdomain ?? null
@@ -154,25 +160,25 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   // Auto-heal: set genericSubdomain if missing
   const subdomainHealedRef = useRef(false)
   useEffect(() => {
-    if (!environment || subdomainHealedRef.current) return
+    if (!environment || !canEdit || subdomainHealedRef.current) return
     if (environment.state.genericSubdomain === null) {
       subdomainHealedRef.current = true
-      void detail.setGenericSubdomain(generateSubdomain(environment.id))
+      detail.setGenericSubdomain(generateSubdomain(environment.id)).catch(() => undefined)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [environment, detail.setGenericSubdomain])
+  }, [environment, canEdit, detail.setGenericSubdomain])
 
   // Auto-heal: set defaultPackageRegistry if missing — to this deployment's
   // registry, never a hardcoded one (prod must not land on the dev registry).
   const registryHealedRef = useRef(false)
   useEffect(() => {
-    if (!environment || registryHealedRef.current) return
+    if (!environment || !canEdit || registryHealedRef.current) return
     if (environment.state.defaultPackageRegistry === null) {
       registryHealedRef.current = true
-      void detail.setDefaultPackageRegistry(defaultPackageRegistry())
+      detail.setDefaultPackageRegistry(defaultPackageRegistry()).catch(() => undefined)
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [environment, detail.setDefaultPackageRegistry])
+  }, [environment, canEdit, detail.setDefaultPackageRegistry])
 
   // Approve / Deploy intent lock. Flipped synchronously on click so the
   // floating action bar can speculatively render "Deploying…" through any
@@ -261,7 +267,6 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
     }),
   }
 
-  const { canSign } = useCanSign()
   const { clintPackages, isLoading: manifestsLoading } = useClintPackages({
     registry: state?.defaultPackageRegistry ?? null,
     packages: state?.packages ?? [],
@@ -333,7 +338,11 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           <div className="flex flex-wrap items-center gap-3 p-6">
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-center gap-3">
-                <InlineEditableTitle value={displayName} onSave={detail.setLabel} />
+                <InlineEditableTitle
+                  value={displayName}
+                  onSave={detail.setLabel}
+                  readOnly={!canEdit}
+                />
                 {state && (
                   <StatusBadge
                     environmentStatus={state.status}
@@ -342,6 +351,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
                     isLoading={statusLoading && !envStatus}
                   />
                 )}
+                <OrgBadge orgId={ownerOrgId} />
               </div>
               {subdomain && (
                 <p className="text-muted-foreground truncate font-mono text-xs">
@@ -440,11 +450,13 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
             onOpenServiceDetail={(kind) => drawer.open({ kind: 'service', id: kind }, 'logs')}
             onOpenAgentDetail={(prefix) => drawer.open({ kind: 'agent', id: prefix }, 'logs')}
             addons={
-              <AddonsSection
-                environmentStatus={state.status}
-                addons={addons}
-                configStore={addonConfigStore}
-              />
+              <fieldset disabled={!canEdit} className="m-0 min-w-0 border-0 p-0">
+                <AddonsSection
+                  environmentStatus={state.status}
+                  addons={addons}
+                  configStore={addonConfigStore}
+                />
+              </fieldset>
             }
           />
         </div>
@@ -465,7 +477,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           tenantId={tenantId}
           documentId={documentId}
           isStopped={isInactive}
-          canEdit={canSign && !isInactive}
+          canEdit={canEdit && !isInactive}
           pods={envPods}
           activeTab={drawer.tab ?? 'logs'}
           onTabChange={drawer.setTab}
@@ -486,7 +498,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           subdomain={subdomain}
           tenantId={tenantId}
           isStopped={isInactive}
-          canEdit={canSign}
+          canEdit={canEdit}
           manifest={
             drawerAgent.config
               ? (clintManifestsByName[drawerAgent.config.package.name] ?? null)
@@ -513,12 +525,14 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
         />
       )}
 
-      <EnvActionBar
-        status={state?.status}
-        intentDeploying={intentDeploying}
-        driftDetected={!!envStatus?.configDriftDetected}
-        onApprove={() => void handleApprove()}
-      />
+      {canEdit && (
+        <EnvActionBar
+          status={state?.status}
+          intentDeploying={intentDeploying}
+          driftDetected={!!envStatus?.configDriftDetected}
+          onApprove={() => void handleApprove()}
+        />
+      )}
 
       {environment && (
         <EnvSettingsDrawer
@@ -534,6 +548,8 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           onUpdateToLatest={detail.updateToLatest}
           onRollbackRelease={detail.rollbackRelease}
           onTerminate={detail.terminate}
+          canEdit={canEdit}
+          ownerOrgId={ownerOrgId}
         />
       )}
     </>

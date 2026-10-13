@@ -14,10 +14,14 @@ import type { CloudEnvironment } from '../types'
  * the nav intent-prefetch (modules/shared/state/route-prefetch.ts) so the key
  * and fetcher never drift.
  */
-export function myEnvironmentsQuery(did: string | undefined, scope: ListScope = 'MINE') {
+export function myEnvironmentsQuery(
+  did: string | undefined,
+  scope: ListScope = 'MINE',
+  orgId: string | null = null,
+) {
   return {
-    queryKey: queryKeys.environments(scope, did),
-    fetch: (token: string | null) => fetchMyEnvironments(scope, token),
+    queryKey: queryKeys.environments(scope, did, orgId),
+    fetch: (token: string | null) => fetchMyEnvironments(scope, token, orgId),
   }
 }
 
@@ -113,6 +117,7 @@ function summaryToCloudEnvironment(summary: EnvironmentSummary): CloudEnvironmen
       status: (summary.status ?? 'DRAFT') as CloudEnvironment['state']['status'],
       studioInstanceId: summary.studioInstanceId ?? null,
     },
+    ownerOrgId: summary.ownerOrgId ?? null,
     app: summary.appId
       ? { appId: summary.appId, role: summary.appRole ?? null, prNumber: summary.prNumber ?? null }
       : null,
@@ -135,22 +140,27 @@ function summaryToCloudEnvironment(summary: EnvironmentSummary): CloudEnvironmen
 export function useEnvironments(
   viewScope: ViewScope = 'MINE',
   viewerAddress: string | null = null,
+  options: { orgId?: string | null } = {},
 ): { environments: CloudEnvironment[]; isPending: boolean; isError: boolean } {
   const did = useDid()
-  const backendScope: ListScope = viewScope === 'ALL' ? 'ALL' : 'MINE'
+  // In an organisation context the list is that organisation's envs (server
+  // scope ORG); the personal MINE/UNCLAIMED/ALL views do not apply.
+  const orgId = options.orgId ?? null
+  const backendScope: ListScope = orgId ? 'ORG' : viewScope === 'ALL' ? 'ALL' : 'MINE'
 
   // SWR read: paints from the persisted/last-known list instantly, then
   // revalidates in the background. `MINE` and `UNCLAIMED` share the same
   // backend query (filtered in-memory below), so they dedupe to one fetch.
-  const q = myEnvironmentsQuery(did, backendScope)
+  const q = myEnvironmentsQuery(did, backendScope, orgId)
   const { data, isError, isPending } = useAuthedQuery<EnvironmentSummary[]>(q.queryKey, q.fetch, {
     placeholderData: keepPreviousData,
   })
 
   const environments = useMemo(() => {
     if (isError || !data) return []
+    if (orgId) return data.map(summaryToCloudEnvironment)
     return filterByScope(data, viewScope, viewerAddress).map(summaryToCloudEnvironment)
-  }, [data, isError, viewScope, viewerAddress])
+  }, [data, isError, orgId, viewScope, viewerAddress])
 
   return { environments, isPending, isError }
 }

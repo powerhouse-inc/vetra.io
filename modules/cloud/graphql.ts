@@ -243,7 +243,7 @@ export async function fetchEnvironment(
 // Per-user environment listing (vetra-cloud-observability subgraph)
 // ---------------------------------------------------------------------------
 
-export type ListScope = 'MINE' | 'ALL'
+export type ListScope = 'MINE' | 'ALL' | 'ORG'
 
 export type EnvironmentSummary = {
   id: string
@@ -271,6 +271,8 @@ export type EnvironmentSummary = {
   appId?: string | null
   appRole?: 'PRODUCTION' | 'PREVIEW' | null
   prNumber?: number | null
+  /** Renown organisation owning the env; null/absent when personal. */
+  ownerOrgId?: string | null
 }
 
 export type Viewer = {
@@ -408,7 +410,7 @@ const MY_ENVIRONMENTS_BASE_FIELDS = `id
         studioInstanceId
         packages { registry name version }
         services { type prefix enabled }`
-const MY_ENVIRONMENTS_APP_FIELDS = `appId appRole prNumber`
+const MY_ENVIRONMENTS_APP_FIELDS = `appId appRole prNumber ownerOrgId`
 
 /**
  * Whether the backend knows the Vetra App link fields on `myEnvironments`.
@@ -427,20 +429,31 @@ export function isUnknownFieldError(err: unknown): boolean {
 export async function fetchMyEnvironments(
   scope: ListScope = 'MINE',
   token?: string | null,
+  orgId?: string | null,
 ): Promise<EnvironmentSummary[]> {
   const run = async (withAppFields: boolean) => {
     const fields = withAppFields
       ? `${MY_ENVIRONMENTS_BASE_FIELDS}\n        ${MY_ENVIRONMENTS_APP_FIELDS}`
       : MY_ENVIRONMENTS_BASE_FIELDS
-    const data = await gql<{ myEnvironments: EnvironmentSummary[] }>(
-      `query ($scope: ListScope!) {
+    const [query, variables] =
+      scope === 'ORG'
+        ? [
+            `query ($scope: ListScope!, $orgId: String) {
+      myEnvironments(scope: $scope, orgId: $orgId) {
+        ${fields}
+      }
+    }`,
+            { scope, orgId: orgId ?? null },
+          ]
+        : [
+            `query ($scope: ListScope!) {
       myEnvironments(scope: $scope) {
         ${fields}
       }
     }`,
-      { scope },
-      token,
-    )
+            { scope },
+          ]
+    const data = await gql<{ myEnvironments: EnvironmentSummary[] }>(query, variables, token)
     return data.myEnvironments
   }
 
@@ -1076,4 +1089,43 @@ export async function restartEnvironmentService(
     token,
   )
   return data.restartEnvironmentService
+}
+
+// ---------------------------------------------------------------------------
+// Organisation environments (vetra-cloud-observability subgraph)
+// ---------------------------------------------------------------------------
+
+export type EnvironmentOrgAccess = {
+  environmentId: string
+  ownerOrgId: string | null
+  canOperate: boolean
+  canView: boolean
+}
+const ORG_ACCESS_FIELDS = 'environmentId ownerOrgId canOperate canView'
+
+/** Refresh the caller's operator entry / read grant on an org env (C1 Ruling 8). */
+export async function syncEnvironmentOrg(
+  environmentId: string,
+  token: string | null,
+): Promise<EnvironmentOrgAccess> {
+  const data = await gql<{ syncEnvironmentOrg: EnvironmentOrgAccess }>(
+    `mutation ($environmentId: String!) { syncEnvironmentOrg(environmentId: $environmentId) { ${ORG_ACCESS_FIELDS} } }`,
+    { environmentId },
+    token,
+  )
+  return data.syncEnvironmentOrg
+}
+
+/** Hand a personal environment to an organisation (C1 Ruling 7). One-way. */
+export async function setEnvironmentOrg(
+  environmentId: string,
+  orgId: string,
+  token: string | null,
+): Promise<EnvironmentOrgAccess> {
+  const data = await gql<{ setEnvironmentOrg: EnvironmentOrgAccess }>(
+    `mutation ($environmentId: String!, $orgId: String!) { setEnvironmentOrg(environmentId: $environmentId, orgId: $orgId) { ${ORG_ACCESS_FIELDS} } }`,
+    { environmentId, orgId },
+    token,
+  )
+  return data.setEnvironmentOrg
 }
