@@ -96,14 +96,16 @@ function RenownButton() {
     return (
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <button type="button" className={btnSecondary}>
-            <Avatar className="h-5 w-5">
+          <button type="button" className={cn(btnSecondary, 'max-w-full min-w-0')}>
+            <Avatar className="h-5 w-5 shrink-0">
               <AvatarImage src={avatarUrl} alt={auth.displayName ?? 'Account'} />
               <AvatarFallback className="bg-transparent p-0">
                 <User className="h-4 w-4" />
               </AvatarFallback>
             </Avatar>
-            {auth.displayName ?? auth.displayAddress ?? 'Account'}
+            <span className="min-w-0 truncate">
+              {auth.displayName ?? auth.displayAddress ?? 'Account'}
+            </span>
             <ActiveOrgLabel />
           </button>
         </DropdownMenuTrigger>

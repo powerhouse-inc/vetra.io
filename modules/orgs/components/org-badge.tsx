@@ -20,7 +20,7 @@ export function OrgBadge({
     <a
       href={renownOrgPageUrl(org.handle)}
       target="_blank"
-      rel="noreferrer"
+      rel="noopener noreferrer"
       className={`bg-muted text-foreground hover:bg-muted/70 inline-flex max-w-full items-center gap-1.5 rounded-full px-2.5 py-0.5 font-medium ${size === 'md' ? 'text-sm' : 'text-xs'}`}
     >
       {avatar ? (
@@ -32,6 +32,7 @@ export function OrgBadge({
       <span className="min-w-0 truncate">{org.name}</span>
       {verified && (
         <BadgeCheck
+          role="img"
           className="text-primary h-3.5 w-3.5 shrink-0"
           aria-label={`Verified: ${verified}`}
         />

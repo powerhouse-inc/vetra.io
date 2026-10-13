@@ -39,14 +39,14 @@ export function OrgSwitcherMenuSection() {
       </DropdownMenuRadioGroup>
       {org && (
         <DropdownMenuItem asChild className={item}>
-          <a href={renownOrgManageUrl(org.handle)} target="_blank" rel="noreferrer">
+          <a href={renownOrgManageUrl(org.handle)} target="_blank" rel="noopener noreferrer">
             <ExternalLink className="h-4 w-4" />
             <span className="min-w-0 truncate">Manage {org.name}</span>
           </a>
         </DropdownMenuItem>
       )}
       <DropdownMenuItem asChild className={item}>
-        <a href={renownCreateOrgUrl()} target="_blank" rel="noreferrer">
+        <a href={renownCreateOrgUrl()} target="_blank" rel="noopener noreferrer">
           <Plus className="h-4 w-4" />
           Create an organisation
         </a>
@@ -60,5 +60,9 @@ export function OrgSwitcherMenuSection() {
 export function ActiveOrgLabel() {
   const { org } = useActiveOrg()
   if (!org) return null
-  return <span className="text-muted-foreground max-w-[10rem] truncate text-xs">· {org.name}</span>
+  return (
+    <span className="text-muted-foreground hidden max-w-[10rem] min-w-0 truncate text-xs sm:inline">
+      · {org.name}
+    </span>
+  )
 }
