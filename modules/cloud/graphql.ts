@@ -428,7 +428,8 @@ const MY_ENVIRONMENTS_BASE_FIELDS = `id
         studioInstanceId
         packages { registry name version }
         services { type prefix enabled }`
-const MY_ENVIRONMENTS_APP_FIELDS = `appId appRole prNumber ownerOrgId`
+const MY_ENVIRONMENTS_APP_FIELDS = `appId appRole prNumber`
+const MY_ENVIRONMENTS_ORG_FIELDS = `ownerOrgId`
 
 /**
  * Whether the backend knows the Vetra App link fields on `myEnvironments`.
@@ -437,6 +438,8 @@ const MY_ENVIRONMENTS_APP_FIELDS = `appId appRole prNumber ownerOrgId`
  * extra round-trip per page load instead of a broken env list.
  */
 let myEnvironmentsHasAppFields: boolean | null = null
+/** Same probe for `ownerOrgId` (C1), kept apart so a switchboard without it keeps the app fields. */
+let myEnvironmentsHasOrgField: boolean | null = null
 
 /** True when a GraphQL error says a selected field does not exist on the schema. */
 export function isUnknownFieldError(err: unknown): boolean {
@@ -449,10 +452,12 @@ export async function fetchMyEnvironments(
   token?: string | null,
   orgId?: string | null,
 ): Promise<EnvironmentSummary[]> {
-  const run = async (withAppFields: boolean) => {
-    const fields = withAppFields
-      ? `${MY_ENVIRONMENTS_BASE_FIELDS}\n        ${MY_ENVIRONMENTS_APP_FIELDS}`
-      : MY_ENVIRONMENTS_BASE_FIELDS
+  const run = async (withAppFields: boolean, withOrgField: boolean) => {
+    const fields = [
+      MY_ENVIRONMENTS_BASE_FIELDS,
+      ...(withAppFields ? [MY_ENVIRONMENTS_APP_FIELDS] : []),
+      ...(withOrgField ? [MY_ENVIRONMENTS_ORG_FIELDS] : []),
+    ].join('\n        ')
     const [query, variables] =
       scope === 'ORG'
         ? [
@@ -475,15 +480,22 @@ export async function fetchMyEnvironments(
     return data.myEnvironments
   }
 
-  if (myEnvironmentsHasAppFields === false) return run(false)
-  try {
-    const result = await run(true)
-    myEnvironmentsHasAppFields = true
-    return result
-  } catch (err) {
-    if (!isUnknownFieldError(err)) throw err
-    myEnvironmentsHasAppFields = false
-    return run(false)
+  // Each unknown optional group is dropped (and remembered) on its own.
+  for (;;) {
+    const withApp = myEnvironmentsHasAppFields !== false
+    const withOrg = myEnvironmentsHasOrgField !== false
+    try {
+      const result = await run(withApp, withOrg)
+      if (withApp) myEnvironmentsHasAppFields = true
+      if (withOrg) myEnvironmentsHasOrgField = true
+      return result
+    } catch (err) {
+      if (!isUnknownFieldError(err) || (!withApp && !withOrg)) throw err
+      const message = err instanceof Error ? err.message : String(err)
+      if (withOrg && /ownerOrgId/.test(message)) myEnvironmentsHasOrgField = false
+      else if (withApp) myEnvironmentsHasAppFields = false
+      else myEnvironmentsHasOrgField = false
+    }
   }
 }
 
