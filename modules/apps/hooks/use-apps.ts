@@ -35,6 +35,7 @@ import type {
   GithubRepo,
   UpdateAppInput,
 } from '../types'
+import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { waitForToken } from '../lib/token'
 import { appsKeys } from './keys'
 
@@ -67,10 +68,15 @@ function useTokenResolver(): () => Promise<string | null> {
 
 export function useMyApps() {
   const did = useDid()
-  return useAuthedQuery<App[]>(appsKeys.list(did), (token) => fetchMyApps(token), {
-    retry: retryUnlessFinal,
-    refetchInterval: (query) => appsPollInterval(query.state.data),
-  })
+  const { orgId } = useActiveOrg()
+  return useAuthedQuery<App[]>(
+    appsKeys.list(did, orgId),
+    (token) => fetchMyApps(token, undefined, orgId),
+    {
+      retry: retryUnlessFinal,
+      refetchInterval: (query) => appsPollInterval(query.state.data),
+    },
+  )
 }
 
 /**
@@ -148,7 +154,7 @@ function useCacheApp() {
   return useCallback(
     (app: App) => {
       qc.setQueryData(appsKeys.detail(app.id, did), app)
-      qc.setQueryData<App[]>(appsKeys.list(did), (old) =>
+      qc.setQueryData<App[]>(appsKeys.list(did, app.ownerOrgId ?? null), (old) =>
         old ? [app, ...old.filter((a) => a.id !== app.id)] : old,
       )
     },
@@ -208,7 +214,9 @@ export function useDeleteApp() {
     mutationFn: async (vars: { appId: string; deleteEnvironments: boolean }) =>
       deleteApp(vars.appId, vars.deleteEnvironments, await token()),
     onSuccess: (_ok, vars) => {
-      qc.setQueryData<App[]>(appsKeys.list(did), (old) => old?.filter((a) => a.id !== vars.appId))
+      qc.setQueriesData<App[]>({ queryKey: ['apps', 'list'] }, (old) =>
+        old?.filter((a) => a.id !== vars.appId),
+      )
       qc.removeQueries({ queryKey: appsKeys.detail(vars.appId, did) })
       void qc.invalidateQueries({ queryKey: ['environments'] })
     },
@@ -233,7 +241,7 @@ export function useRollbackApp(appId: string) {
         old ? [deployment, ...old.filter((d) => d.id !== deployment.id)] : old,
       )
       void qc.invalidateQueries({ queryKey: appsKeys.detail(appId, did) })
-      void qc.invalidateQueries({ queryKey: appsKeys.list(did) })
+      void qc.invalidateQueries({ queryKey: ['apps', 'list'] })
     },
   })
 }

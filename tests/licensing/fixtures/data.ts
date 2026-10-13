@@ -37,6 +37,9 @@ export type CloudState = {
   refusals: string[]
   /** Environment documents (vetra-cloud) the environment page can open. */
   cloudEnvironments: Array<{ id: string; state: CloudEnvironmentState }>
+  orgApps: Record<string, App[]>
+  orgEnvironments: Array<Record<string, unknown> & { id: string; ownerOrgId: string }>
+  orgCalls: string[]
   calls: Array<{ query: string; variables: Record<string, unknown> }>
   unmatched: string[]
 }
@@ -155,6 +158,9 @@ export function baseState(): CloudState {
         },
       },
     ],
+    orgApps: {},
+    orgEnvironments: [],
+    orgCalls: [],
     calls: [],
     unmatched: [],
   }

@@ -7,10 +7,12 @@ import { toast } from 'sonner'
 
 import { DRIVE_ID } from '@/modules/cloud/client'
 import { loadEnvironmentController } from '@/modules/cloud/controller'
+import { ensureCanOperateEnvironment } from '@/modules/cloud/org-sync'
 import { resolveGenericHost, isTypeAtApex } from '@/modules/cloud/lib/env-host'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { useEnvironments, useViewer, type ViewScope } from '@/modules/cloud/hooks/use-environment'
 import { useOptimisticMutation } from '@/modules/cloud/query/use-optimistic-mutation'
+import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -53,7 +55,12 @@ function StatusDot({ status }: { status: string }) {
 }
 
 export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
-  const { signer, canSign } = useCanSign()
+  const { signer, canSign: signerReady } = useCanSign()
+  // Org envs: a plain MEMBER only views (R6); the delete itself is gated again
+  // by the backend's canOperate answer (ensureCanOperateEnvironment).
+  const { orgId, org } = useActiveOrg()
+  const viewOnly = !!env.ownerOrgId && env.ownerOrgId === orgId && org?.role === 'MEMBER'
+  const canSign = signerReady && !viewOnly
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
   const displayName = env.state.label || env.name || 'Unnamed'
   const packageCount = env.state.packages.length
@@ -83,7 +90,9 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
         documentId: env.id,
         parentIdentifier: DRIVE_ID,
         signer,
+        ownerOrgId: env.ownerOrgId ?? null,
       })
+      await ensureCanOperateEnvironment(env.id, ctrl, signer.user?.address)
       await ctrl.delete()
     },
     affectedKeys: () => [['environments'], ['studio-products']],
@@ -160,7 +169,13 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
               className="text-muted-foreground hover:text-destructive hover:border-destructive shrink-0"
               onClick={() => setShowDeleteDialog(true)}
               disabled={isDeleting || !canSign}
-              title={canSign ? 'Delete environment' : 'Log in with Renown to delete'}
+              title={
+                canSign
+                  ? 'Delete environment'
+                  : viewOnly
+                    ? 'Members of the organisation can view, not delete'
+                    : 'Log in with Renown to delete'
+              }
             >
               <Trash2 className="h-4 w-4" />
             </Button>
@@ -221,17 +236,23 @@ export function CloudEnvironments({
 } = {}) {
   const [scope, setScope] = useState<VisibleScope>('MINE')
   const { viewer } = useViewer()
+  const { orgId, org } = useActiveOrg()
   const { environments: allEnvironments, isPending } = useEnvironments(
     scope,
     viewer?.address ?? null,
+    { orgId },
   )
   const environments = filter ? allEnvironments.filter(filter) : allEnvironments
   const isAdmin = viewer?.isAdmin ?? false
+  const empty = orgId
+    ? `No environments in ${org?.name ?? 'this organisation'} yet.`
+    : (emptyCopy ?? EMPTY_COPY[scope])
 
   return (
     <div className="space-y-4">
-      {/* Scope toggle is admin-only. Non-admins always see their own envs. */}
-      {isAdmin && (
+      {/* Scope toggle is admin-only. Non-admins always see their own envs;
+          in an organisation context the list is that organisation's envs. */}
+      {isAdmin && !orgId && (
         <div className="flex items-center gap-2 text-sm">
           <span className="text-muted-foreground">View:</span>
           <div className="bg-muted inline-flex rounded-md p-0.5">
@@ -261,14 +282,14 @@ export function CloudEnvironments({
       ) : environments.length === 0 && compactEmpty ? (
         <div className="text-muted-foreground flex items-center gap-3 rounded-xl border border-dashed px-5 py-4 text-sm">
           <Server className="h-4 w-4 shrink-0" aria-hidden />
-          {emptyCopy ?? EMPTY_COPY[scope]}
+          {empty}
         </div>
       ) : environments.length === 0 ? (
         <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4 py-12">
           <Server className="text-muted-foreground h-12 w-12" />
           <div className="text-center">
             <h3 className="text-lg font-semibold">No environments yet</h3>
-            <p className="text-muted-foreground text-sm">{emptyCopy ?? EMPTY_COPY[scope]}</p>
+            <p className="text-muted-foreground text-sm">{empty}</p>
           </div>
         </div>
       ) : (

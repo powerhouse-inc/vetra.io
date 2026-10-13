@@ -64,6 +64,22 @@ describe('AppProfileTab', () => {
     expect(saveButton().disabled).toBe(true)
   })
 
+  it('has contact fields that validate on type, and hides them on an old Renown', () => {
+    render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
+    expect(screen.getByLabelText('Support contact')).toBeTruthy()
+    fireEvent.change(screen.getByLabelText('Security contact'), { target: { value: 'http://x' } })
+    expect(screen.getByText('Use an email address or an https:// link.')).toBeTruthy()
+    expect(saveButton().disabled).toBe(true)
+    cleanup()
+    profile = { ...profile, data: { ...STORED, contactsUnavailable: true } }
+    render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
+    expect(screen.queryByLabelText('Support contact')).toBeNull()
+    cleanup()
+    profile = { ...profile, data: { ...STORED, metricsUnavailable: true } }
+    render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)
+    expect(screen.queryByRole('heading', { name: 'Metrics' })).toBeNull()
+  })
+
   it('saves only what changed', async () => {
     mutateAsync.mockResolvedValue(true)
     render(<AppProfileTab appId="app-1" appName="Vault" appDid={DID} />)

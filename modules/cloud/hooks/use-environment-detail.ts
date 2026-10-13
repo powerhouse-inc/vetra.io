@@ -36,6 +36,8 @@ import { useDocumentSubscription } from './use-document-subscription'
 import { useEnvironmentController } from './use-environment-controller'
 import { useCanSign } from './use-can-sign'
 import { useRenown } from '@powerhousedao/reactor-browser'
+import { useQueryClient } from '@tanstack/react-query'
+import { editGateOwnerOrgId, runSignedEnvironmentAction } from '../org-sync'
 
 const NOT_LOGGED_IN_ERROR = 'You must be logged in with Renown to perform this action'
 
@@ -60,7 +62,10 @@ function projectFromController(
     createdAtUtcIso: metadata?.createdAtUtcIso ?? '',
     lastModifiedAtUtcIso: metadata?.lastModifiedAtUtcIso ?? '',
     revision: metadata?.revision ?? 0,
-    state: s,
+    // The controller holds the full document state: a missing ownerOrgId there
+    // means personal (null). The read-only fallback leaves it undefined
+    // ("not known"), which keeps the R6 edit gate closed until the controller loads.
+    state: s ? { ...s, ownerOrgId: s.ownerOrgId ?? null } : s,
   }
 }
 
@@ -70,7 +75,8 @@ export function useEnvironmentDetail(documentId: string) {
   useLayoutEffect(() => {
     renownRef.current = renown
   })
-  const { canSign } = useCanSign()
+  const { canSign, signer } = useCanSign()
+  const queryClient = useQueryClient()
 
   const ctrlResult = useEnvironmentController(canSign ? documentId : null)
   const { controller, state: ctrlState, isLoading: ctrlLoading, error: ctrlError } = ctrlResult
@@ -140,6 +146,12 @@ export function useEnvironmentDetail(documentId: string) {
     return () => clearInterval(interval)
   }, [canSign, refetchFallback])
 
+  // A just-granted org member's first read-only fetch may have been refused
+  // before the controller load synced their grant: fetch the metadata again.
+  useEffect(() => {
+    if (controller && !fallbackRef.current) void refetchFallback()
+  }, [controller, refetchFallback])
+
   // Track controller revision to surface re-renders when state changes
   const [, setRev] = useState(0)
   useEffect(() => {
@@ -170,10 +182,15 @@ export function useEnvironmentDetail(documentId: string) {
       if (!controller) {
         throw new Error(NOT_LOGGED_IN_ERROR)
       }
-      fn(controller)
-      await controller.push()
+      // Organisation envs: sync the caller's operator entry and refuse unless
+      // the backend says they can operate (C1 contract). A refusal re-asks the
+      // viewer's access so the edit controls follow.
+      await runSignedEnvironmentAction(documentId, controller, signer?.user?.address, fn, {
+        onOrgRefusal: () =>
+          void queryClient.invalidateQueries({ queryKey: ['environment-org', documentId] }),
+      })
     },
-    [controller],
+    [controller, documentId, signer, queryClient],
   )
 
   const setLabel = useCallback((label: string) => mutate((c) => c.setLabel({ label })), [mutate])
@@ -408,6 +425,14 @@ export function useEnvironmentDetail(documentId: string) {
 
   return {
     environment,
+    /** The env organisation for the R6 edit gate (see `editGateOwnerOrgId`). */
+    editGateOwnerOrgId: editGateOwnerOrgId({
+      canSign,
+      controllerLoaded: !!ctrlState,
+      ownerOrgId: environment?.state.ownerOrgId,
+    }),
+    /** Re-pull the signed controller (e.g. after a hand-over). */
+    refresh: ctrlResult.refresh,
     isLoading,
     error,
     setLabel,

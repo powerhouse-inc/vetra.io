@@ -1,6 +1,6 @@
 'use client'
 
-import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
+import { useCanEditEnvironment } from '@/modules/cloud/hooks/use-environment-org'
 import {
   ShieldCheck,
   ShieldOff,
@@ -474,9 +474,12 @@ function ServiceRow({
 export function InlineEditableTitle({
   value,
   onSave,
+  readOnly = false,
 }: {
   value: string
   onSave: (name: string) => Promise<void>
+  /** Hide the edit affordance (viewer cannot change this env). */
+  readOnly?: boolean
 }) {
   const { value: displayValue, set: commitValue } = useOptimistic(value, onSave)
   const [isEditing, setIsEditing] = useState(false)
@@ -541,17 +544,19 @@ export function InlineEditableTitle({
   return (
     <div className="flex items-center gap-2">
       <h2 className="text-2xl font-bold">{displayValue}</h2>
-      <Button
-        variant="ghost"
-        size="sm"
-        className="text-muted-foreground hover:text-foreground h-8 w-8 p-0"
-        onClick={() => {
-          setEditValue(displayValue)
-          setIsEditing(true)
-        }}
-      >
-        <Pencil className="h-4 w-4" />
-      </Button>
+      {!readOnly && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:text-foreground h-8 w-8 p-0"
+          onClick={() => {
+            setEditValue(displayValue)
+            setIsEditing(true)
+          }}
+        >
+          <Pencil className="h-4 w-4" />
+        </Button>
+      )}
     </div>
   )
 }
@@ -631,7 +636,8 @@ export function OverviewTab({
   onOpenAgentDetail,
   addons,
 }: OverviewTabProps) {
-  const { canSign } = useCanSign()
+  // Edit controls need the signer and, on an org env, operator access (R6).
+  const canEdit = useCanEditEnvironment(environment.id, environment.state.ownerOrgId)
   const [addAgentOpen, setAddAgentOpen] = useState(false)
   const [fusionConfigOpen, setFusionConfigOpen] = useState(false)
   const { setSecret: setTenantSecret } = useTenantConfig(tenantId)
@@ -784,7 +790,7 @@ export function OverviewTab({
                   environmentStatus={state.status}
                   currentVersion={service?.version ?? null}
                   selectedRessource={service?.selectedRessource ?? null}
-                  canResize={canSign}
+                  canResize={canEdit}
                   onToggle={(enabled) =>
                     enabled
                       ? enableService(type, service?.prefix ?? defaultPrefixes[type])
@@ -844,7 +850,7 @@ export function OverviewTab({
           <AgentsSection
             services={state.services}
             env={environment ?? null}
-            canEdit={canSign}
+            canEdit={canEdit}
             tenantId={tenantId}
             onAddAgent={() => setAddAgentOpen(true)}
             manifests={clintManifestsByName}
@@ -886,7 +892,7 @@ export function OverviewTab({
           }}
         />
       )}
-      {canSign && (
+      {canEdit && (
         <AddAgentModal
           open={addAgentOpen}
           onOpenChange={setAddAgentOpen}

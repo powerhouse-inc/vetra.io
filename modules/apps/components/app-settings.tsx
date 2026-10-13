@@ -15,6 +15,14 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/modules/shared/components/ui/alert-dialog'
+import { OrgBadge } from '@/modules/orgs/components/org-badge'
+import { useMyOrgs, useOrgSummary } from '@/modules/orgs/hooks/use-orgs'
+import {
+  renownMeUrl,
+  renownCreateOrgUrl,
+  renownOrgBringAppUrl,
+  renownOrgManageUrl,
+} from '@/modules/orgs/lib/links'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Checkbox } from '@/modules/shared/components/ui/checkbox'
 import { Input } from '@/modules/shared/components/ui/input'
@@ -405,6 +413,73 @@ function DangerZone({ app }: { app: App }) {
   )
 }
 
+const linkClass = 'text-primary text-sm font-medium hover:underline'
+
+/** Who owns the app on Renown, and where ownership changes (renown.id runs the flow). */
+export function OrganisationCard({ app }: { app: App }) {
+  const { data: mine } = useMyOrgs()
+  const { data: owner } = useOrgSummary(app.ownerOrgId)
+  if (app.ownerOrgId) {
+    return (
+      <SettingsCard
+        title="Organisation"
+        description="This app belongs to an organisation. Its admins manage it on Renown."
+      >
+        <div className="flex flex-wrap items-center gap-3">
+          <OrgBadge orgId={app.ownerOrgId} size="md" />
+          <a
+            className={linkClass}
+            href={owner ? renownOrgManageUrl(owner.handle, 'apps') : renownMeUrl('organisations')}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {owner ? 'Manage on Renown' : 'Your organisations on Renown'}
+          </a>
+        </div>
+      </SettingsCard>
+    )
+  }
+  const admins = (mine ?? []).filter((o) => o.role === 'OWNER' || o.role === 'ADMIN')
+  return (
+    <SettingsCard
+      title="Organisation"
+      description="Move this app to an organisation. You propose the transfer on Renown and an organisation admin accepts it; the app keeps its stats and history."
+    >
+      <div className="flex flex-col items-start gap-2">
+        {admins.length === 0 && (
+          <a
+            className={linkClass}
+            href={renownCreateOrgUrl()}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Create an organisation
+          </a>
+        )}
+        {(app.identityDid ? admins : []).map((o) => (
+          <a
+            key={o.id}
+            className={linkClass}
+            href={renownOrgBringAppUrl(o.handle, app.identityDid)}
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Transfer to {o.name}
+          </a>
+        ))}
+        <a
+          className={linkClass}
+          href={renownMeUrl('app-transfers')}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Transfer to an organisation
+        </a>
+      </div>
+    </SettingsCard>
+  )
+}
+
 /** Settings tab: general + previews form, workflow, identity, danger zone. */
 export function AppSettings({ app, onAuthorize }: { app: App; onAuthorize: () => void }) {
   return (
@@ -417,6 +492,7 @@ export function AppSettings({ app, onAuthorize }: { app: App; onAuthorize: () =>
         <SetupDeploys app={app} disabled={app.status === 'DISCONNECTED'} />
       </SettingsCard>
       <IdentityCard app={app} onAuthorize={onAuthorize} />
+      <OrganisationCard app={app} />
       <DangerZone app={app} />
     </div>
   )

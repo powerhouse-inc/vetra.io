@@ -1,10 +1,17 @@
 import type { QueryClient } from '@tanstack/react-query'
 import { appsKeys } from '@/modules/apps/hooks/keys'
+import { readActiveOrg } from '@/modules/orgs/active-org'
 import { fetchMyApps } from '@/modules/apps/graphql'
 import { myEnvironmentsQuery } from '@/modules/cloud/hooks/use-environment'
 import { studioProductsQuery } from '@/modules/cloud/studio/use-studio-products'
 
 type PrefetchCtx = { queryClient: QueryClient; did: string | undefined; token: string | null }
+
+/** The env list the page will ask for: the active organisation's, or the personal one. */
+function envListQuery(did: string | undefined) {
+  const orgId = readActiveOrg()
+  return myEnvironmentsQuery(did, orgId ? 'ORG' : 'MINE', orgId)
+}
 
 /**
  * Maps a nav href to a data-prefetch action. Only authed client-query routes
@@ -15,12 +22,12 @@ export const ROUTE_PREFETCH: Record<string, (ctx: PrefetchCtx) => Promise<unknow
   '/user': ({ queryClient, did, token }) =>
     Promise.all([
       queryClient.prefetchQuery({
-        queryKey: appsKeys.list(did),
-        queryFn: () => fetchMyApps(token),
+        queryKey: appsKeys.list(did, readActiveOrg()),
+        queryFn: () => fetchMyApps(token, undefined, readActiveOrg()),
       }),
       queryClient.prefetchQuery({
-        queryKey: myEnvironmentsQuery(did).queryKey,
-        queryFn: () => myEnvironmentsQuery(did).fetch(token),
+        queryKey: envListQuery(did).queryKey,
+        queryFn: () => envListQuery(did).fetch(token),
       }),
     ]),
   '/user/studio': ({ queryClient, did, token }) => {
@@ -28,11 +35,11 @@ export const ROUTE_PREFETCH: Record<string, (ctx: PrefetchCtx) => Promise<unknow
     return queryClient.prefetchQuery({ queryKey: q.queryKey, queryFn: () => q.fetch(token) })
   },
   '/user/environments': ({ queryClient, did, token }) => {
-    const q = myEnvironmentsQuery(did)
+    const q = envListQuery(did)
     return queryClient.prefetchQuery({ queryKey: q.queryKey, queryFn: () => q.fetch(token) })
   },
   '/cloud': ({ queryClient, did, token }) => {
-    const q = myEnvironmentsQuery(did)
+    const q = envListQuery(did)
     return queryClient.prefetchQuery({ queryKey: q.queryKey, queryFn: () => q.fetch(token) })
   },
 }

@@ -17,6 +17,8 @@ import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 
 import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environment'
+import { canOfferCreateApp } from '@/modules/orgs/types'
+import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
 import { Label } from '@/modules/shared/components/ui/label'
@@ -140,7 +142,14 @@ function ConfigureStep({
   onCreated: (app: App) => void
 }) {
   const { viewer } = useViewer()
-  const { environments, isPending: envsPending } = useEnvironments('MINE', viewer?.address ?? null)
+  const { orgId, org } = useActiveOrg()
+  const { environments, isPending: envsPending } = useEnvironments(
+    'MINE',
+    viewer?.address ?? null,
+    {
+      orgId,
+    },
+  )
   // Only envs with no app link at all: createApp rejects any env still
   // carrying an appId, including the kept production env of a deleted app.
   const standalone = useMemo(() => attachableEnvironments(environments), [environments])
@@ -152,7 +161,10 @@ function ConfigureStep({
     : 'Pick the branch that deploys production'
   const envError =
     draft.envMode === 'existing' && !draft.existingEnvId ? 'Choose an environment' : null
-  const invalid = !!(nameError || branchError || envError)
+  // An org context whose details have not loaded yet cannot create: the copy and role are unknown.
+  const orgPending = !!orgId && !org
+  const roleBlocked = !!org && !canOfferCreateApp(org.role)
+  const invalid = !!(nameError || branchError || envError || orgPending || roleBlocked)
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -164,13 +176,14 @@ function ConfigureStep({
         repositoryId: draft.repo.id,
         productionBranch: draft.productionBranch.trim(),
         productionEnvironmentId: draft.envMode === 'existing' ? draft.existingEnvId : null,
+        orgId,
       },
       {
         onSuccess: (app) => {
           toast.success(`${app.name} created`)
           onCreated(app)
         },
-        onError: (err) => toast.error(describeCreateAppError(err, draft.repo.fullName)),
+        onError: (err) => toast.error(describeCreateAppError(err, draft.repo.fullName, org?.name)),
       },
     )
   }
@@ -183,6 +196,20 @@ function ConfigureStep({
       <form onSubmit={submit} className="space-y-6" noValidate>
         <RepoChip repo={draft.repo} onChange={onBack} />
 
+        {roleBlocked && org && (
+          <p
+            role="alert"
+            className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm"
+          >
+            Ask an owner or admin of {org.name} to create apps.
+          </p>
+        )}
+        {org && (
+          <p className="text-sm">
+            This app will belong to <strong className="font-medium">{org.name}</strong>.
+          </p>
+        )}
+
         {isAppsError(createApp.error, 'GITHUB_NOT_CONNECTED') && (
           <ReconnectGithub message="Your GitHub authorization expired. Reconnect, then create the app again." />
         )}
@@ -191,7 +218,7 @@ function ConfigureStep({
             role="alert"
             className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm"
           >
-            {describeCreateAppError(createApp.error, draft.repo.fullName)}
+            {describeCreateAppError(createApp.error, draft.repo.fullName, org?.name)}
           </p>
         )}
 

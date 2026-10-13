@@ -19,7 +19,11 @@ import { Input } from '@/modules/shared/components/ui/input'
 import { Textarea } from '@/modules/shared/components/ui/textarea'
 
 import { useAppProfile, useRenownBearer, useUpdateAppProfile } from '../../hooks/use-app-profile'
-import type { RenownAppProfile } from '../../lib/app-profile/api'
+import {
+  renownSupportsContacts,
+  renownSupportsMetrics,
+  type RenownAppProfile,
+} from '../../lib/app-profile/api'
 import {
   CATEGORY_SUGGESTIONS,
   changedFields,
@@ -144,6 +148,9 @@ function ProfileForm({
   const busy = uploading.logo || uploading.cover || update.isPending
   const canSave = hasChanges(changes) && !busy && Object.keys(problems).length === 0
   const documentId = stored?.documentId ?? null
+  // Renown before 1.12 has no contact fields; hide them rather than fail the save.
+  const showMetrics = !stored?.metricsUnavailable && renownSupportsMetrics()
+  const showContacts = !stored?.contactsUnavailable && renownSupportsContacts()
   const saving = useRef(false)
   const previewsRef = useRef<ImagePreviews>(NO_PREVIEWS)
   useEffect(() => {
@@ -340,6 +347,48 @@ function ProfileForm({
           </ProfileField>
         </section>
 
+        {showContacts && (
+          <section className="grid gap-6 sm:grid-cols-2" aria-labelledby="profile-contacts-heading">
+            <h3 id="profile-contacts-heading" className="text-sm font-medium sm:col-span-2">
+              Contacts
+            </h3>
+            <ProfileField
+              id="profile-support"
+              label="Support contact"
+              hint="Email or https:// link"
+              error={errorFor('supportContact')}
+            >
+              <Input
+                id="profile-support"
+                aria-describedby={describedBy('profile-support', errorFor('supportContact'), true)}
+                placeholder="help@example.com"
+                value={form.supportContact}
+                aria-invalid={!!errorFor('supportContact')}
+                onChange={(e) => set('supportContact', e.target.value)}
+              />
+            </ProfileField>
+            <ProfileField
+              id="profile-security"
+              label="Security contact"
+              hint="Where to report vulnerabilities"
+              error={errorFor('securityContact')}
+            >
+              <Input
+                id="profile-security"
+                aria-describedby={describedBy(
+                  'profile-security',
+                  errorFor('securityContact'),
+                  true,
+                )}
+                placeholder="https://example.com/.well-known/security.txt"
+                value={form.securityContact}
+                aria-invalid={!!errorFor('securityContact')}
+                onChange={(e) => set('securityContact', e.target.value)}
+              />
+            </ProfileField>
+          </section>
+        )}
+
         <section className="space-y-3" aria-labelledby="profile-links-heading">
           <div className="flex items-baseline justify-between gap-3">
             <h3 id="profile-links-heading" className="text-sm font-medium">
@@ -356,28 +405,30 @@ function ProfileForm({
           />
         </section>
 
-        <section className="space-y-3" aria-labelledby="profile-metrics-heading">
-          <div className="flex items-baseline justify-between gap-3">
-            <h3 id="profile-metrics-heading" className="text-sm font-medium">
-              Metrics
-            </h3>
-            <span className="text-muted-foreground text-xs tabular-nums">
-              {form.metrics.length}/{METRIC_LIMITS.metrics}
-            </span>
-          </div>
-          <p className="text-muted-foreground text-xs">
-            What your environments report for each user, and how Renown shows it on the app page and
-            on users’ profiles.{' '}
-            <Link href="/docs/app-stats" className="text-primary hover:underline">
-              How to report stats
-            </Link>
-          </p>
-          <MetricsEditor
-            metrics={form.metrics}
-            onChange={(metrics) => set('metrics', metrics)}
-            error={errorFor('metrics')}
-          />
-        </section>
+        {showMetrics && (
+          <section className="space-y-3" aria-labelledby="profile-metrics-heading">
+            <div className="flex items-baseline justify-between gap-3">
+              <h3 id="profile-metrics-heading" className="text-sm font-medium">
+                Metrics
+              </h3>
+              <span className="text-muted-foreground text-xs tabular-nums">
+                {form.metrics.length}/{METRIC_LIMITS.metrics}
+              </span>
+            </div>
+            <p className="text-muted-foreground text-xs">
+              What your environments report for each user, and how Renown shows it on the app page
+              and on users’ profiles.{' '}
+              <Link href="/docs/app-stats" className="text-primary hover:underline">
+                How to report stats
+              </Link>
+            </p>
+            <MetricsEditor
+              metrics={form.metrics}
+              onChange={(metrics) => set('metrics', metrics)}
+              error={errorFor('metrics')}
+            />
+          </section>
+        )}
 
         <div className="border-border flex flex-wrap items-center justify-end gap-3 border-t pt-6">
           {dirty && <span className="text-muted-foreground mr-auto text-sm">Unsaved changes</span>}

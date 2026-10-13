@@ -28,6 +28,7 @@ import { TabSkeleton } from '@/modules/publisher/components/primitives'
 import { describePublisherError, isPublisherError } from '@/modules/publisher/graphql'
 import { useAppPublisher } from '@/modules/publisher/hooks/use-publisher'
 import type { PublisherApp } from '@/modules/publisher/types'
+import { OrgBadge } from '@/modules/orgs/components/org-badge'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/components/ui/tabs'
@@ -217,6 +218,7 @@ function Header({ app }: { app: App }) {
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="truncate text-3xl font-bold tracking-tight">{app.name}</h1>
           <StatusPill meta={appHeadlineStatus(app)} />
+          <OrgBadge orgId={app.ownerOrgId} />
         </div>
         <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
           <a
@@ -276,7 +278,7 @@ export function AppDetail({ appId }: { appId: string }) {
   const githubInfo = useGithubDeployAppInfo()
   const confirm = useConfirmAppIdentity()
   const app = appQuery.data
-  const publisher = useAppPublisher(appId)
+  const publisher = useAppPublisher(appId, app?.ownerOrgId ?? null)
 
   const tabParam = params.get('tab')
   const readOnly = app ? isAppReadOnly(app) : false

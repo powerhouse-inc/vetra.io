@@ -40,6 +40,7 @@ vi.mock('../hooks/use-apps', () => ({
 vi.mock('@/modules/publisher/hooks/use-publisher', () => ({
   useAppPublisher: () => publisher,
 }))
+vi.mock('@/modules/orgs/components/org-badge', () => ({ OrgBadge: () => null }))
 vi.mock('../components/app-overview', () => ({ AppOverview: () => <div>overview-content</div> }))
 vi.mock('../components/app-deployments', () => ({
   AppDeployments: () => <div>deployments-content</div>,

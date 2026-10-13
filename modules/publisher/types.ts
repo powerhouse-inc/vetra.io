@@ -178,6 +178,8 @@ export type UpdateAppProfileInput = {
   website?: string
   description?: string
   category?: string
+  supportContact?: string
+  securityContact?: string
   logoRef?: string
   coverRef?: string
   links?: PublisherAppLinkInput[]

@@ -136,7 +136,6 @@ const SERVICE_FIELDS = `type prefix enabled url status version`
 const PACKAGE_FIELDS = `registry name version`
 const CUSTOM_DOMAIN_FIELDS = `enabled domain dnsRecords { type host value }`
 const STATE_FIELDS = `owner label genericSubdomain genericBaseDomain customDomain { ${CUSTOM_DOMAIN_FIELDS} } defaultPackageRegistry status apexService autoUpdateChannel services { ${SERVICE_FIELDS} } packages { ${PACKAGE_FIELDS} }`
-const DOCUMENT_FIELDS = `id documentType createdAtUtcIso lastModifiedAtUtcIso revisionsList { scope revision } state { global { ${STATE_FIELDS} } }`
 const LIST_ITEM_FIELDS = `id state { global { ${STATE_FIELDS} } }`
 
 // ---------------------------------------------------------------------------
@@ -213,37 +212,56 @@ export async function fetchEnvironments(token?: string | null): Promise<CloudEnv
   return data.VetraCloudEnvironment.findDocuments.items.map(mapListItem)
 }
 
+/**
+ * Whether the environment document schema knows `ownerOrgId` (C1). `null` =
+ * not probed yet; flips to `false` the first time the server rejects it.
+ */
+let environmentHasOwnerOrgId: boolean | null = null
+
 export async function fetchEnvironment(
   id: string,
   token?: string | null,
 ): Promise<CloudEnvironment | null> {
-  const data = await gql<
-    Namespaced<{
-      document: {
-        document: RawDocument
-      } | null
-    }>
-  >(
-    `query ($id: String!) {
+  const run = async (withOrg: boolean) => {
+    const stateFields = withOrg ? `${STATE_FIELDS} ownerOrgId` : STATE_FIELDS
+    const data = await gql<
+      Namespaced<{
+        document: {
+          document: RawDocument
+        } | null
+      }>
+    >(
+      `query ($id: String!) {
       VetraCloudEnvironment {
         document(identifier: $id) {
-          document { ${DOCUMENT_FIELDS} }
+          document { id documentType createdAtUtcIso lastModifiedAtUtcIso revisionsList { scope revision } state { global { ${stateFields} } } }
         }
       }
     }`,
-    { id },
-    token,
-  )
+      { id },
+      token,
+    )
+    const raw = data.VetraCloudEnvironment.document?.document
+    return raw ? mapDocument(raw) : null
+  }
 
-  const raw = data.VetraCloudEnvironment.document?.document
-  return raw ? mapDocument(raw) : null
+  if (environmentHasOwnerOrgId === false) return run(false)
+  try {
+    const env = await run(true)
+    environmentHasOwnerOrgId = true
+    return env
+  } catch (err) {
+    if (!isUnknownFieldError(err)) throw err
+    environmentHasOwnerOrgId = false
+    return run(false)
+  }
 }
 
 // ---------------------------------------------------------------------------
 // Per-user environment listing (vetra-cloud-observability subgraph)
 // ---------------------------------------------------------------------------
 
-export type ListScope = 'MINE' | 'ALL'
+export type ListScope = 'MINE' | 'ALL' | 'ORG'
 
 export type EnvironmentSummary = {
   id: string
@@ -271,6 +289,8 @@ export type EnvironmentSummary = {
   appId?: string | null
   appRole?: 'PRODUCTION' | 'PREVIEW' | null
   prNumber?: number | null
+  /** Renown organisation owning the env; null/absent when personal. */
+  ownerOrgId?: string | null
 }
 
 export type Viewer = {
@@ -409,6 +429,7 @@ const MY_ENVIRONMENTS_BASE_FIELDS = `id
         packages { registry name version }
         services { type prefix enabled }`
 const MY_ENVIRONMENTS_APP_FIELDS = `appId appRole prNumber`
+const MY_ENVIRONMENTS_ORG_FIELDS = `ownerOrgId`
 
 /**
  * Whether the backend knows the Vetra App link fields on `myEnvironments`.
@@ -417,6 +438,8 @@ const MY_ENVIRONMENTS_APP_FIELDS = `appId appRole prNumber`
  * extra round-trip per page load instead of a broken env list.
  */
 let myEnvironmentsHasAppFields: boolean | null = null
+/** Same probe for `ownerOrgId` (C1), kept apart so a switchboard without it keeps the app fields. */
+let myEnvironmentsHasOrgField: boolean | null = null
 
 /** True when a GraphQL error says a selected field does not exist on the schema. */
 export function isUnknownFieldError(err: unknown): boolean {
@@ -427,32 +450,52 @@ export function isUnknownFieldError(err: unknown): boolean {
 export async function fetchMyEnvironments(
   scope: ListScope = 'MINE',
   token?: string | null,
+  orgId?: string | null,
 ): Promise<EnvironmentSummary[]> {
-  const run = async (withAppFields: boolean) => {
-    const fields = withAppFields
-      ? `${MY_ENVIRONMENTS_BASE_FIELDS}\n        ${MY_ENVIRONMENTS_APP_FIELDS}`
-      : MY_ENVIRONMENTS_BASE_FIELDS
-    const data = await gql<{ myEnvironments: EnvironmentSummary[] }>(
-      `query ($scope: ListScope!) {
+  const run = async (withAppFields: boolean, withOrgField: boolean) => {
+    const fields = [
+      MY_ENVIRONMENTS_BASE_FIELDS,
+      ...(withAppFields ? [MY_ENVIRONMENTS_APP_FIELDS] : []),
+      ...(withOrgField ? [MY_ENVIRONMENTS_ORG_FIELDS] : []),
+    ].join('\n        ')
+    const [query, variables] =
+      scope === 'ORG'
+        ? [
+            `query ($scope: ListScope!, $orgId: String) {
+      myEnvironments(scope: $scope, orgId: $orgId) {
+        ${fields}
+      }
+    }`,
+            { scope, orgId: orgId ?? null },
+          ]
+        : [
+            `query ($scope: ListScope!) {
       myEnvironments(scope: $scope) {
         ${fields}
       }
     }`,
-      { scope },
-      token,
-    )
+            { scope },
+          ]
+    const data = await gql<{ myEnvironments: EnvironmentSummary[] }>(query, variables, token)
     return data.myEnvironments
   }
 
-  if (myEnvironmentsHasAppFields === false) return run(false)
-  try {
-    const result = await run(true)
-    myEnvironmentsHasAppFields = true
-    return result
-  } catch (err) {
-    if (!isUnknownFieldError(err)) throw err
-    myEnvironmentsHasAppFields = false
-    return run(false)
+  // Each unknown optional group is dropped (and remembered) on its own.
+  for (;;) {
+    const withApp = myEnvironmentsHasAppFields !== false
+    const withOrg = myEnvironmentsHasOrgField !== false
+    try {
+      const result = await run(withApp, withOrg)
+      if (withApp) myEnvironmentsHasAppFields = true
+      if (withOrg) myEnvironmentsHasOrgField = true
+      return result
+    } catch (err) {
+      if (!isUnknownFieldError(err) || (!withApp && !withOrg)) throw err
+      const message = err instanceof Error ? err.message : String(err)
+      if (withOrg && /ownerOrgId/.test(message)) myEnvironmentsHasOrgField = false
+      else if (withApp) myEnvironmentsHasAppFields = false
+      else myEnvironmentsHasOrgField = false
+    }
   }
 }
 
@@ -1076,4 +1119,43 @@ export async function restartEnvironmentService(
     token,
   )
   return data.restartEnvironmentService
+}
+
+// ---------------------------------------------------------------------------
+// Organisation environments (vetra-cloud-observability subgraph)
+// ---------------------------------------------------------------------------
+
+export type EnvironmentOrgAccess = {
+  environmentId: string
+  ownerOrgId: string | null
+  canOperate: boolean
+  canView: boolean
+}
+const ORG_ACCESS_FIELDS = 'environmentId ownerOrgId canOperate canView'
+
+/** Refresh the caller's operator entry / read grant on an org env (C1 Ruling 8). */
+export async function syncEnvironmentOrg(
+  environmentId: string,
+  token: string | null,
+): Promise<EnvironmentOrgAccess> {
+  const data = await gql<{ syncEnvironmentOrg: EnvironmentOrgAccess }>(
+    `mutation ($environmentId: String!) { syncEnvironmentOrg(environmentId: $environmentId) { ${ORG_ACCESS_FIELDS} } }`,
+    { environmentId },
+    token,
+  )
+  return data.syncEnvironmentOrg
+}
+
+/** Hand a personal environment to an organisation (C1 Ruling 7). One-way. */
+export async function setEnvironmentOrg(
+  environmentId: string,
+  orgId: string,
+  token: string | null,
+): Promise<EnvironmentOrgAccess> {
+  const data = await gql<{ setEnvironmentOrg: EnvironmentOrgAccess }>(
+    `mutation ($environmentId: String!, $orgId: String!) { setEnvironmentOrg(environmentId: $environmentId, orgId: $orgId) { ${ORG_ACCESS_FIELDS} } }`,
+    { environmentId, orgId },
+    token,
+  )
+  return data.setEnvironmentOrg
 }

@@ -90,6 +90,10 @@ export type CloudPackage = {
 export type CloudEnvironmentState = {
   /** Lowercased EthereumAddress of the owner; null until claimed via SET_OWNER. */
   owner: string | null
+  /** Renown organisation owning the env (document state); absent on older documents. */
+  ownerOrgId?: string | null
+  /** Vetra App link (document state); absent on standalone envs and older documents. */
+  app?: { appId?: string | null } | null
   label: string | null
   genericSubdomain: string | null
   genericBaseDomain: string | null
@@ -207,6 +211,8 @@ export type CloudEnvironment = {
   revision: number
   state: CloudEnvironmentState
   app?: CloudEnvironmentAppLink | null
+  /** Renown organisation owning the env; null/absent when personal. */
+  ownerOrgId?: string | null
 }
 
 // Observability types (from vetra-cloud-observability subgraph)

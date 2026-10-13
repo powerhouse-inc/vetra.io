@@ -1,9 +1,10 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { cleanup, render, screen } from '@testing-library/react'
 import React from 'react'
 import type { App } from '@/modules/apps/types'
 
 let apps: Pick<App, 'id' | 'name'>[] = []
+let activeOrg: { id: string; name: string; role: string } | null = null
 let published: { id: string; name: string; status: string }[] = []
 
 vi.mock('@/modules/apps/hooks/use-apps', () => ({
@@ -15,6 +16,15 @@ vi.mock('@/modules/apps/hooks/use-apps', () => ({
     isRefetching: false,
   }),
   useStandaloneEnvFilter: () => ({ isStandalone: () => true }),
+}))
+vi.mock('@/modules/orgs/hooks/use-orgs', () => ({
+  useActiveOrg: () => ({
+    orgId: activeOrg?.id ?? null,
+    org: activeOrg,
+    orgs: [],
+    isLoading: false,
+    setActiveOrg: vi.fn(),
+  }),
 }))
 vi.mock('@/modules/publisher/hooks/use-publisher', () => ({
   usePublisherApps: () => ({ data: published }),
@@ -31,6 +41,9 @@ import { AppsHome } from '../apps-home'
 
 describe('AppsHome', () => {
   beforeEach(() => cleanup())
+  afterEach(() => {
+    activeOrg = null
+  })
 
   it('adds a card for an app published for licensing only', () => {
     apps = [{ id: 'vault', name: 'Knowledge Vault' }]
@@ -53,5 +66,21 @@ describe('AppsHome', () => {
     render(<AppsHome />)
     expect(screen.getByRole('link', { name: 'Vetra Studio' })).toBeTruthy()
     expect(screen.getByText('empty-state')).toBeTruthy()
+  })
+
+  it('names the organisation it is showing', () => {
+    activeOrg = { id: 'o1', name: 'Acme', role: 'ADMIN' }
+    apps = [{ id: 'a1', name: 'Shop' }]
+    render(<AppsHome />)
+    expect(screen.getByText(/Apps of/)).toBeTruthy()
+    expect(screen.getByText(/New app in Acme/)).toBeTruthy()
+  })
+
+  it('offers no create link to a plain member', () => {
+    activeOrg = { id: 'o1', name: 'Acme', role: 'MEMBER' }
+    apps = [{ id: 'a1', name: 'Shop' }]
+    render(<AppsHome />)
+    expect(screen.getByText(/Ask an owner or admin of Acme to create apps/)).toBeTruthy()
+    expect(screen.queryByRole('link', { name: /New app in Acme/ })).toBeNull()
   })
 })

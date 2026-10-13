@@ -101,7 +101,26 @@ export function describeAppsError(err: unknown): string {
 }
 
 /** createApp-specific copy: FORBIDDEN there means the user can't access the repo on GitHub. */
-export function describeCreateAppError(err: unknown, repoFullName: string): string {
+export function describeCreateAppError(
+  err: unknown,
+  repoFullName: string,
+  orgName?: string | null,
+): string {
+  // The server words its refusals; tell the role refusal from GitHub repo access by message.
+  if (
+    err instanceof AppsApiError &&
+    err.code === 'FORBIDDEN' &&
+    /publisher role|all its apps/i.test(err.message)
+  ) {
+    return `You need the publisher role with access to all apps of ${orgName ?? 'this organisation'} to create apps there. Ask an owner or admin.`
+  }
+  if (
+    err instanceof AppsApiError &&
+    err.code === 'BAD_USER_INPUT' &&
+    /Renown identity belongs to another owner/i.test(err.message)
+  ) {
+    return `This repository's Renown identity already belongs to another owner or organisation. Delete the old app, or ask its creator to, then try again.`
+  }
   if (isAppsError(err, 'FORBIDDEN')) {
     return `Your GitHub account doesn't have access to ${repoFullName}. Ask a repository admin for access, or pick another repository.`
   }
@@ -167,7 +186,7 @@ const APP_FIELDS = `id slug name ownerAddress status
   createdAt updatedAt`
 
 /** App fields newer backends add; dropped (once per page load) when the schema rejects them. */
-const OPTIONAL_APP_FIELDS = ['identityExpiresAt'] as const
+const OPTIONAL_APP_FIELDS = ['identityExpiresAt', 'ownerOrgId'] as const
 let optionalAppFieldsSupported: boolean | null = null
 
 /** Test hook: forget what the backend supports. */
@@ -201,9 +220,20 @@ async function withAppFields<T>(run: (fields: string) => Promise<T>): Promise<T>
 // Queries
 // ---------------------------------------------------------------------------
 
-export async function fetchMyApps(token: string | null, fetchImpl?: FetchLike): Promise<App[]> {
+export async function fetchMyApps(
+  token: string | null,
+  fetchImpl?: FetchLike,
+  orgId?: string | null,
+): Promise<App[]> {
   const data = await withAppFields((fields) =>
-    appsGql<{ myApps: App[] }>(`query { myApps { ${fields} } }`, {}, token, fetchImpl),
+    orgId
+      ? appsGql<{ myApps: App[] }>(
+          `query ($orgId: String) { myApps(orgId: $orgId) { ${fields} } }`,
+          { orgId },
+          token,
+          fetchImpl,
+        )
+      : appsGql<{ myApps: App[] }>(`query { myApps { ${fields} } }`, {}, token, fetchImpl),
   )
   return data.myApps
 }
@@ -298,10 +328,12 @@ export async function connectGithubDeploy(
 }
 
 export async function createApp(input: CreateAppInput, token: string | null): Promise<App> {
+  const { orgId, ...rest } = input
+  const sent = orgId ? { ...rest, orgId } : rest
   const data = await withAppFields((fields) =>
     appsGql<{ createApp: App }>(
       `mutation ($input: CreateAppInput!) { createApp(input: $input) { ${fields} } }`,
-      { input },
+      { input: sent },
       token,
     ),
   )

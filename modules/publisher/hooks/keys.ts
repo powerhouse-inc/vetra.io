@@ -8,7 +8,7 @@ export type PublisherResource =
 
 export const publisherKeys = {
   all: ['publisher'] as const,
-  apps: (did: string) => ['publisher', 'apps', did] as const,
+  apps: (did: string, orgId: string | null = null) => ['publisher', 'apps', did, orgId] as const,
   resource: (r: PublisherResource, appId: string, did: string) =>
     ['publisher', r, appId, did] as const,
   of: (r: PublisherResource, appId: string) => ['publisher', r, appId] as const,

@@ -10,6 +10,8 @@ import { licensingOnlyApps } from '@/modules/apps/lib/licensing-only'
 import { usePublisherApps } from '@/modules/publisher/hooks/use-publisher'
 import { describeAppsError, isAppsError } from '@/modules/apps/graphql'
 import { useMyApps, useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
+import { canOfferCreateApp, type MyOrg } from '@/modules/orgs/types'
+import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { Alert, AlertDescription, AlertTitle } from '@/modules/shared/components/ui/alert'
 import { Button } from '@/modules/shared/components/ui/button'
 
@@ -33,7 +35,19 @@ function AppCardSkeleton() {
   )
 }
 
-function NewAppTile() {
+function NewAppTile({ org }: { org?: MyOrg | null }) {
+  if (org && !canOfferCreateApp(org.role)) {
+    return (
+      <div
+        aria-disabled="true"
+        className="text-muted-foreground border-border flex min-h-[176px] flex-col items-center justify-center gap-2 rounded-xl border border-dashed p-5 text-center text-sm"
+      >
+        <span className="max-w-full truncate font-medium">New app in {org.name}</span>
+        <span className="max-w-full">Ask an owner or admin of {org.name} to create apps</span>
+      </div>
+    )
+  }
+  const orgName = org?.name
   return (
     <Link
       href="/user/apps/new"
@@ -42,7 +56,7 @@ function NewAppTile() {
       <span className="bg-muted flex h-10 w-10 items-center justify-center rounded-xl">
         <Plus className="h-5 w-5" aria-hidden />
       </span>
-      New app
+      <span className="max-w-full truncate">{orgName ? `New app in ${orgName}` : 'New app'}</span>
     </Link>
   )
 }
@@ -50,7 +64,8 @@ function NewAppTile() {
 function AppsSection() {
   const { data: apps, isPending, error, refetch, isRefetching } = useMyApps()
   // Apps published for licensing only (no repository) appear next to the git-connected ones.
-  const published = usePublisherApps()
+  const { orgId, org } = useActiveOrg()
+  const published = usePublisherApps(orgId)
   const licensingOnly = apps ? licensingOnlyApps(published.data, apps) : []
 
   if (isAppsError(error, 'APPS_UNAVAILABLE')) {
@@ -114,12 +129,19 @@ function AppsSection() {
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {apps.map((app) => (
-        <AppCard key={app.id} app={app} />
-      ))}
-      {licensingOnlyCards}
-      <NewAppTile />
+    <div className="space-y-3">
+      {org && (
+        <p className="text-muted-foreground text-sm">
+          Apps of <span className="text-foreground font-medium">{org.name}</span>
+        </p>
+      )}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {apps.map((app) => (
+          <AppCard key={app.id} app={app} />
+        ))}
+        {licensingOnlyCards}
+        <NewAppTile org={org} />
+      </div>
     </div>
   )
 }
