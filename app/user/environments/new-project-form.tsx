@@ -86,7 +86,12 @@ function NewEnvironmentFormInner({
       ? `Members of ${org.name} cannot create environments. Ask an organisation admin for publisher access, or switch to your personal account.`
       : null
 
+  // An org context whose membership has not loaded yet cannot create: the
+  // owner copy and the role are unknown.
+  const orgPending = !isRenameMode && !!orgId && !org
+
   const handleSubmit = async (values: EnvironmentFormValues) => {
+    if (orgPending || orgRefusal) return
     try {
       setIsSubmitting(true)
       setError(null)
@@ -173,9 +178,12 @@ function NewEnvironmentFormInner({
         {!isRenameMode && org && !orgRefusal && (
           <p className="text-muted-foreground mt-2 text-sm">It will belong to {org.name}.</p>
         )}
+        {orgPending && (
+          <p className="text-muted-foreground mt-2 text-sm">Loading your organisation…</p>
+        )}
         {orgRefusal && <p className="text-muted-foreground mt-2 text-sm">{orgRefusal}</p>}
         <div className="mt-4">
-          <Button type="submit" disabled={isSubmitting || !!orgRefusal} size="sm">
+          <Button type="submit" disabled={isSubmitting || orgPending || !!orgRefusal} size="sm">
             {isSubmitting ? 'Saving...' : isRenameMode ? 'Update Name' : 'Create Environment'}
           </Button>
         </div>

@@ -7,6 +7,7 @@ const push = vi.fn()
 const createEnv = vi.fn<(input: { orgId?: string | null }) => Promise<{ documentId: string }>>()
 const toastError = vi.fn<(...a: unknown[]) => void>()
 let role = 'PUBLISHER'
+let orgLoaded = true
 
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 vi.mock('sonner', () => ({ toast: { error: (...a: unknown[]) => toastError(...a) } }))
@@ -22,7 +23,7 @@ vi.mock('@/modules/cloud/hooks/use-create-environment', () => ({
 vi.mock('@/modules/orgs/hooks/use-orgs', () => ({
   useActiveOrg: () => ({
     orgId: 'o1',
-    org: { id: 'o1', name: 'Acme', role },
+    org: orgLoaded ? { id: 'o1', name: 'Acme', role } : null,
     orgs: [],
     isLoading: false,
     setActiveOrg: vi.fn(),
@@ -35,6 +36,7 @@ afterEach(() => {
   cleanup()
   vi.clearAllMocks()
   role = 'PUBLISHER'
+  orgLoaded = true
 })
 
 function submit(name = 'Shop') {
@@ -62,6 +64,16 @@ describe('NewEnvironmentForm in an organisation', () => {
     expect(
       screen.getByRole<HTMLButtonElement>('button', { name: 'Create Environment' }).disabled,
     ).toBe(true)
+  })
+
+  it('blocks creating while the active organisation has not loaded', () => {
+    orgLoaded = false
+    render(<NewEnvironmentForm />)
+    expect(
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Create Environment' }).disabled,
+    ).toBe(true)
+    submit()
+    expect(createEnv).not.toHaveBeenCalled()
   })
 
   it('keeps a failed hand-over visible after navigation, with a way to retry', async () => {
