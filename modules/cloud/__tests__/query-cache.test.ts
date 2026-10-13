@@ -14,6 +14,11 @@ describe('shouldPersistQuery', () => {
     expect(shouldPersistQuery(queryKeys.tenantEnvVars('env-1'))).toBe(false)
   })
 
+  it('never persists organisation memberships or env access answers', () => {
+    expect(shouldPersistQuery(['orgs', 'mine', 'did:x'])).toBe(false)
+    expect(shouldPersistQuery(queryKeys.environmentOrg('env-1', 'did:x'))).toBe(false)
+  })
+
   it('persists keys with a non-string head (cannot match a sensitive prefix)', () => {
     expect(shouldPersistQuery([42, 'x'])).toBe(true)
   })

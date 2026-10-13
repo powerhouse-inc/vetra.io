@@ -19,10 +19,12 @@ export const CACHE_MAX_AGE = 24 * 60 * 60 * 1000 // 24h
 
 /**
  * Query-key prefixes whose payloads must never be written to localStorage.
- * Tenant secrets/env vars can carry sensitive values; everything else is
+ * Tenant secrets/env vars can carry sensitive values. Organisation memberships
+ * (hidden ones included) and env access answers (`canOperate`) stay in memory
+ * only: they must not outlive logout or be restored stale. Everything else is
  * per-user data already namespaced by DID in its key.
  */
-const SENSITIVE_KEY_PREFIXES = ['tenant-secrets', 'tenant-env-vars']
+const SENSITIVE_KEY_PREFIXES = ['tenant-secrets', 'tenant-env-vars', 'orgs', 'environment-org']
 
 /** True when a query is safe to persist (not sensitive, and succeeded). */
 export function shouldPersistQuery(queryKey: readonly unknown[]): boolean {
