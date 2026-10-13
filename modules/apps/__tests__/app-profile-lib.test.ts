@@ -1,11 +1,13 @@
 import { describe, expect, it, vi } from 'vitest'
-import { fetchAppProfile } from '../lib/app-profile/api'
+import { fetchAppProfile, renownSupportsContacts } from '../lib/app-profile/api'
 import {
   changedFields,
   fieldForServer,
   formFromProfile,
   formProblems,
   hasChanges,
+  isContact,
+  normalizeContact,
   type AppProfileForm,
 } from '../lib/app-profile/form'
 import {
@@ -234,6 +236,8 @@ describe('profile form', () => {
       website: '',
       description: '',
       category: '',
+      supportContact: '',
+      securityContact: '',
       logoRef: null,
       coverRef: null,
       links: [],
@@ -344,5 +348,55 @@ describe('renderImage encoder fallback', () => {
     expect(blob.type).toBe('image/jpeg')
     expect(asked[0]).toBe('image/webp')
     expect(asked).toContain('image/jpeg')
+  })
+})
+
+describe('contacts', () => {
+  it('accepts emails and https URLs, strips mailto: and spaces, refuses the rest', () => {
+    expect(normalizeContact('  mailto:help@acme.example ')).toBe('help@acme.example')
+    expect(isContact('help@acme.example')).toBe(true)
+    expect(isContact('https://acme.example/security')).toBe(true)
+    expect(isContact('http://acme.example')).toBe(false)
+    expect(isContact('not a contact')).toBe(false)
+    expect(isContact('a<b>@acme.example')).toBe(false)
+    expect(isContact(`${'x'.repeat(190)}@acme.example`)).toBe(false)
+  })
+
+  it('reports problems per field and sends only changed, normalised values ("" clears)', () => {
+    const initial = formFromProfile({
+      ...PROFILE,
+      supportContact: 'help@acme.example',
+      securityContact: null,
+    })
+    expect(initial.supportContact).toBe('help@acme.example')
+    expect(formProblems({ ...initial, securityContact: 'http://x' })).toMatchObject({
+      securityContact: 'Use an email address or an https:// link.',
+    })
+    expect(
+      changedFields(initial, {
+        ...initial,
+        supportContact: '',
+        securityContact: ' mailto:sec@acme.example',
+      }),
+    ).toStrictEqual({ supportContact: '', securityContact: 'sec@acme.example' })
+    expect(fieldForServer('supportContact')).toBe('supportContact')
+  })
+
+  it('falls back to the query without contacts when Renown lacks them', async () => {
+    const bodies = [
+      { errors: [{ message: 'Cannot query field "supportContact" on type "AppProfile".' }] },
+      { data: { appProfile: PROFILE } },
+    ]
+    const sentBodies: string[] = []
+    const f = vi.fn((_u: string, init: RequestInit) => {
+      sentBodies.push(init.body as string)
+      return Promise.resolve(new Response(JSON.stringify(bodies.shift()), { status: 200 }))
+    })
+    const got = await fetchAppProfile(DID, f as unknown as typeof fetch)
+    expect(got).toEqual({ ...PROFILE, contactsUnavailable: true })
+    expect(renownSupportsContacts()).toBe(false)
+    expect(f).toHaveBeenCalledTimes(2)
+    expect(sentBodies[0]).toContain('supportContact')
+    expect(sentBodies[1]).not.toContain('supportContact')
   })
 })

@@ -19,6 +19,7 @@ export const PROFILE_LIMITS = {
   links: 8,
   linkLabel: 40,
   linkUrl: 2048,
+  contact: 200,
 } as const
 
 export const CATEGORY_SUGGESTIONS = [
@@ -40,6 +41,8 @@ export type AppProfileForm = {
   website: string
   description: string
   category: string
+  supportContact: string
+  securityContact: string
   logoRef: string | null
   coverRef: string | null
   links: AppProfileLinkDraft[]
@@ -52,6 +55,8 @@ export type AppProfileField =
   | 'website'
   | 'description'
   | 'category'
+  | 'supportContact'
+  | 'securityContact'
   | 'logo'
   | 'cover'
   | 'links'
@@ -64,10 +69,35 @@ export type AppProfileChanges = {
   website?: string
   description?: string
   category?: string
+  supportContact?: string
+  securityContact?: string
   logoRef?: string
   coverRef?: string
   links?: AppProfileLinkDraft[]
   metrics?: AppMetricChange[]
+}
+
+const CONTACT_FIELDS = ['supportContact', 'securityContact'] as const
+
+// Renown's EMAIL_RE (renown-app-profile utils.ts), verbatim.
+const EMAIL_RE =
+  /^[^\s@<>()"',;:]+@[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?(?:\.[A-Za-z0-9](?:[A-Za-z0-9-]*[A-Za-z0-9])?)+$/
+
+/** As Renown stores it: trimmed, without a mailto: prefix. */
+export function normalizeContact(value: string): string {
+  return value.trim().replace(/^mailto:/i, '')
+}
+
+/** An email address or an https:// URL of at most 200 characters (Renown's rule). */
+export function isContact(value: string): boolean {
+  const v = normalizeContact(value)
+  if (!v || v.length > PROFILE_LIMITS.contact) return false
+  if (EMAIL_RE.test(v)) return true
+  try {
+    return new URL(v).protocol === 'https:'
+  } catch {
+    return false
+  }
 }
 
 const TEXT_FIELDS = ['name', 'tagline', 'website', 'description', 'category'] as const
@@ -79,6 +109,8 @@ export function formFromProfile(profile: RenownAppProfile | null): AppProfileFor
     website: profile?.website ?? '',
     description: profile?.description ?? '',
     category: profile?.category ?? '',
+    supportContact: profile?.supportContact ?? '',
+    securityContact: profile?.securityContact ?? '',
     logoRef: profile?.logoRef ?? null,
     coverRef: profile?.coverRef ?? null,
     links: (profile?.links ?? []).map(({ id, label, url }) => ({ id, label, url })),
@@ -120,6 +152,10 @@ export function formProblems(form: AppProfileForm): Partial<Record<AppProfileFie
     out.description = `At most ${max.description} characters.`
   if (form.category.trim().length > max.category)
     out.category = `At most ${max.category} characters.`
+  for (const key of CONTACT_FIELDS) {
+    const v = form[key].trim()
+    if (v && !isContact(v)) out[key] = 'Use an email address or an https:// link.'
+  }
   if (form.links.length > max.links) {
     out.links = `At most ${max.links} links.`
   } else if (form.links.some((l) => !l.label.trim() || l.label.trim().length > max.linkLabel)) {
@@ -144,6 +180,10 @@ export function changedFields(initial: AppProfileForm, current: AppProfileForm):
   for (const key of TEXT_FIELDS) {
     const next = current[key].trim()
     if (next !== initial[key].trim()) out[key] = next
+  }
+  for (const key of CONTACT_FIELDS) {
+    const next = normalizeContact(current[key])
+    if (next !== normalizeContact(initial[key])) out[key] = next
   }
   if (current.logoRef !== initial.logoRef) out.logoRef = current.logoRef ?? ''
   if (current.coverRef !== initial.coverRef) out.coverRef = current.coverRef ?? ''
@@ -170,6 +210,8 @@ export function fieldForServer(field: string | null | undefined): AppProfileFiel
     case 'website':
     case 'description':
     case 'category':
+    case 'supportContact':
+    case 'securityContact':
     case 'links':
     case 'metrics':
       return field
