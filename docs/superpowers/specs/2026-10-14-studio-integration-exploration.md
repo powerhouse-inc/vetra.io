@@ -113,62 +113,96 @@ What is missing:
 
 These collapse into one approach, described below.
 
-## What we want: a solution is a document
+## What we want: a solution is an App and its environments
 
-**In one sentence:** describe each Vetra solution as a single typed Powerhouse
-document (a manifest), and let Studio, vetra.io and Cloud all be clients of it.
-Studio writes it, vetra.io edits and prices it, and Cloud reconciles to it. The runtime
-underneath is the Powerhouse monorepo's own: host files, workflows and the
-multi-reactor router (see "Builds on the Powerhouse monorepo").
+**In one sentence:** a solution is an App plus the environments it runs in. The App is
+the definition: versioned, owned, licensable, and able to compose other Apps with
+workflows and a shell. The environment is the instance: installed Apps, data, size
+and price. Studio builds Apps, vetra.io installs and prices them, and Cloud runs
+them. No new document type is needed: we evolve `vetra-app` and
+`vetra-cloud-environment`, on top of the Powerhouse monorepo's host files, workflows
+and multi-reactor router (see "Builds on the Powerhouse monorepo").
+
+The split already exists: `vetra-app` holds only definition-level things (identity,
+owner, repo, artifacts, templates, plans), and the environment links back with
+`app { appId, role: PRODUCTION | PREVIEW }`, so one App running in several stages is
+already modelled.
 
 ### Model
 
 ```
-Package   = code: document models, editors, drive apps, subgraphs, processors, pieces, aiTools
-App       = identity + licence + packages + optional Fusion image
-            provides: the package manifest (exists today)
-            requires: { platform range, documentTypes, capabilities }   (new)
-Solution  = { apps: [App@version], drives, glue: [workflows], shell?: FusionImage, size }
-            runtime part = a host-core host file; one reactor by default
-Blueprint = a published Solution manifest (fork = copy the document)
+Package     = code: document models, editors, drive apps, subgraphs, processors, pieces, aiTools
+App         = definition: identity, owner, versions (artifacts), plans (terms), templates
+              provides: the package manifest (exists today)
+              requires: { apps@range, capabilities, platform range }   (new)
+              workflows, shell, visibility: private | listed            (new)
+              runtime projection = a host-core host file
+Environment = instance: installed [{ app, version, licence }], drives, data, size, price
+              packages and services derived from the installed Apps' templates
+Solution    = a word for the UX: a composite App plus its environments
 ```
+
+### What changes in the two documents
+
+| Document                  | Role                                     | Gains                                                                                                                                                       |
+| ------------------------- | ---------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `vetra-app`               | Definition: versioned, owned, licensable | `requires` (other Apps with a version range, capabilities, platform range), `workflows`, `shell`, `visibility` (private or listed); host `profile.appId` is this App |
+| `vetra-cloud-environment` | Instance: data, size, price              | The single `app` link becomes `installed: [{appId, version, licenceId}]`; `packages` and `services` are derived from the installed Apps' templates, with manual edits for power users |
+
+Why not fold the App into a solution: one App (say Knowledge Vault) is installed into
+many customers' solutions and one solution contains many Apps, so the relation is
+many-to-many. Plans, licences, Renown identity and versions all hang on the App.
 
 ### Operations (examples)
 
-- `INSTALL_APP(knowledge-vault@1.4)`, `UNINSTALL_APP`, `UPGRADE_APP`
-- `ADD_CAPABILITY(docling)`
-- `ADD_WORKFLOW(task-to-note)`, `SET_SHELL(image)`
-- `SET_SIZE`, or a size derived from the manifest
+- On the App: `ADD_REQUIREMENT(knowledge-vault@^1.4)`, `ADD_WORKFLOW(task-to-note)`,
+  `SET_SHELL(image)`, `PUBLISH` (private to listed)
+- On the environment: `INSTALL_APP(app@version, licence)`, `UNINSTALL_APP`,
+  `UPGRADE_APP`, `SET_SIZE`
+
+### What it buys and what it costs
+
+- **Buys:** Studio always produces an App (private by default), closing the gap where
+  Studio skips the App layer. Publishing is flipping a private composite App to
+  listed and adding plans, so blueprints stop being a separate concept. Plans and
+  templates keep working as today.
+- **Costs:** every customised solution gets a private App, so creating one must be
+  lightweight (no repo, probably no Renown identity until listed or shared with an
+  org). Environments migrate from `app` to `installed[]`, keeping `role` for a
+  publisher's own prod and preview environments. The UX hides definition versus
+  instance: "edit solution" edits the private App, while data and size live on the
+  environment.
 
 ### Why it holds up
 
-1. **The platform uses its own primitive.** The manifest is a Powerhouse document, so
-   it gets an operation log, history, diff, undo and signatures for free. There is no
-   second config system.
+1. **The platform uses its own primitive.** Apps and environments are Powerhouse
+   documents, so they get an operation log, history, diff, undo and signatures for
+   free. There is no second config system.
 2. **Composition is type-checked before anything runs.** Apps declare `provides` and
    `requires`, and a resolver checks them like a package manager. A missing capability
    or a conflicting shell is an error at edit time, not a broken deployment.
 3. **Integration comes from the architecture.** All apps share one event-sourced
    reactor. Glue is a workflow over typed document events, with durable runs,
    retries and park-on-failure. No adapters or sync jobs between silos.
-4. **It is declarative and reproducible.** The same manifest yields the same
+4. **It is declarative and reproducible.** The same App version yields the same
    runtime, in the cloud or locally. Documents are state with their own lifecycle
-   (see "Risks and gaps"). Blueprints, forks and preview branches fall out of that.
-5. **Agent output can be checked.** Studio emits operations on a typed document, so
+   (see "Risks and gaps"). Publishing, forks and preview environments fall out of
+   that.
+5. **Agent output can be checked.** Studio emits operations on typed documents, so
    every change it makes can be reviewed, validated and reverted.
-6. **Baseline price follows from the manifest.**
-   `price = units(size(manifest)) × €40/month`, where one unit is 2 vCPU, 4 GB RAM
-   and 80 GB NVMe, priced linearly. Real size also depends on data and load.
+6. **Baseline price follows from the installed Apps.**
+   `price = units(size(installed Apps)) × €40/month`, where one unit is 2 vCPU, 4 GB
+   RAM and 80 GB NVMe, priced linearly. Real size also depends on data and load.
 
 ### Roles
 
-| Piece                            | Role                                                                     |
-| -------------------------------- | ------------------------------------------------------------------------ |
-| Studio                           | Turns intent into manifest operations and workflows; builds Apps         |
-| vetra.io                         | Editor and price view for the manifest: install apps, see the size       |
-| Cloud                            | Reconciles the environment to the manifest and runs its host file        |
-| Renown                           | Identity: an org owns the solution, `appScope` gives per-app access, risky changes use 2-owner proposals |
-| Knowledge Vault, Speckle, Docling | Ordinary catalog entries (Apps and capabilities), nothing special-cased  |
+| Piece                             | Role                                                                                                 |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------- |
+| Studio                            | Turns intent into Apps: packages, workflows, shells                                                  |
+| vetra.io                          | Installs Apps into environments, edits private Apps, shows the live price                           |
+| Cloud                             | Reconciles environments to their installed Apps and runs the host file                              |
+| Renown                            | Identity: an org owns the App, `appScope` gives per-app access, risky changes use 2-owner proposals |
+| Knowledge Vault, Speckle, Docling | Ordinary catalog entries (Apps and capabilities), nothing special-cased                              |
 
 ### Builds on the Powerhouse monorepo
 
@@ -179,7 +213,7 @@ default.
 
 | Our concept                  | Monorepo piece                                                                                                                                              | State (2026-10-14)                                                                                                     |
 | ---------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| Runtime part of the manifest | Host files (`host-core`, uniform runners): reactor backends, storage, packages, workflows, auth flags; compound hosts; `profile` as an app-store listing | On main behind `FEATURE_UNIFORM_RUNNERS_ENABLED`; run by `ph run`, desktop and clint runners; not read by Cloud yet |
+| Runtime part of an App       | Host files (`host-core`, uniform runners): reactor backends, storage, packages, workflows, auth flags; compound hosts; `profile` as an app-store listing | On main behind `FEATURE_UNIFORM_RUNNERS_ENABLED`; run by `ph run`, desktop and clint runners; not read by Cloud yet |
 | App `provides`               | Package manifest: document models, editors, drive apps, subgraphs, processors, pieces, `aiTools`                                                           | Exists                                                                                                                 |
 | App `requires`               | Registry `/packages/by-document-type`; document-model upgrade manifests                                                                                    | No platform-compat metadata on packages yet                                                                            |
 | Glue                         | Workflows (`reactor-workflow`): durable runs on document events, schedules and webhooks; retries, timeouts, park-on-failure; pieces with scoped reactor access | On main, Switchboard only, behind a flag                                                                               |
@@ -211,14 +245,15 @@ Two design rules follow:
 
 **To build:**
 
-- the Solution manifest document model
+- App composition: `requires`, `workflows`, `shell`, `visibility`
+- `installed[]` on environments, with derived packages and services
 - `requires` metadata on packages (platform range, document types)
 - the resolver
 - a Cloud runner that executes host files
 - a Renown org → `reactor-group` bridge
 - app and agent principals
 - the vetra.io solution editor and live price view
-- Studio support for emitting manifest operations and workflows
+- Studio always producing an App (private by default)
 - a shell that combines several apps
 
 ### First demo slice
@@ -237,7 +272,7 @@ Reading the monorepo removed one risk and shrank three; six remain open.
   - Composition guarantees: workflows already give durable, retried, journaled runs.
     Idempotency keys and cycle detection (task → note → task) are still missing.
   - Local-first and exit: the same host file runs on Vetra Cloud or locally with
-    `ph run` and the desktop runner, so customers can take the manifest and their
+    `ph run` and the desktop runner, so customers can take the App definition and their
     documents elsewhere. Vetra Cloud's ops layer stays closed.
   - UI composition: drive apps and editors are Connect's extension points; a shell
     that combines several apps does not exist yet.
@@ -263,7 +298,7 @@ Reading the monorepo removed one risk and shrank three; six remain open.
 - **Org ownership:** an org can own a solution while the studio stays personal (Ruling
   5). Is that the intended split?
 - **Scope of this round:** does it include merging vetra-cli `fusion-studio`, or is it
-  vetra.io plus the manifest only?
+  vetra.io plus App composition only?
 - **Licence delivery:** the licensing keeper must be secured before blueprints or
   licensed apps can deliver environments automatically.
 
