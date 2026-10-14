@@ -57,7 +57,7 @@ describe('useCreateStudioEnvironment', () => {
     await expect(result.current({ anthropicApiKey: 'sk' })).rejects.toThrow(/logged in/i)
   })
 
-  it('creates env, writes 3 secrets, approves, returns ids', async () => {
+  it('creates env, writes 4 secrets, approves, returns ids', async () => {
     const setOwner = vi.fn(),
       setLabel = vi.fn(),
       initialize = vi.fn(),
@@ -93,9 +93,18 @@ describe('useCreateStudioEnvironment', () => {
     const [tenantId, secretChanges] = vi.mocked(applyConfigChanges).mock.calls[0]
     expect(tenantId).toBe('warm-newt-75-aa726a95')
     expect(secretChanges.map((c) => c.name).sort()).toEqual(
-      ['ANTHROPIC_API_KEY', 'VETRA_ANTHROPIC_API_KEY', 'VETRA_CLI_ANTHROPIC_API_KEY'].sort(),
+      [
+        'ANTHROPIC_API_KEY',
+        'VETRA_ANTHROPIC_API_KEY',
+        'VETRA_CLI_ANTHROPIC_API_KEY',
+        'VETRA_SESSION_EXPORT_SECRET',
+      ].sort(),
     )
-    expect(secretChanges.every((c) => c.kind === 'setSecret' && c.value === 'sk-test')).toBe(true)
+    const anthropic = secretChanges.filter((c) => c.name !== 'VETRA_SESSION_EXPORT_SECRET')
+    expect(anthropic.every((c) => c.kind === 'setSecret' && c.value === 'sk-test')).toBe(true)
+    const exportSecret = secretChanges.find((c) => c.name === 'VETRA_SESSION_EXPORT_SECRET')
+    expect(exportSecret?.kind).toBe('setSecret')
+    expect(exportSecret?.kind === 'setSecret' && exportSecret.value).toMatch(/^[0-9a-f-]{72}$/)
     const githubChanges = vi.mocked(applyConfigChanges).mock.calls[1][1]
     expect(githubChanges.map((c) => c.name).sort()).toEqual(
       ['VETRA_CLOUD_SWITCHBOARD_URL', 'VETRA_ENVIRONMENT_ID'].sort(),

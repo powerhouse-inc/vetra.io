@@ -58,9 +58,10 @@ describe('AgentCard collapsed', () => {
     expect(screen.queryByRole('button', { name: /configure/i })).not.toBeNull()
   })
 
-  it('renders unconfigured label when config is missing', () => {
+  it('falls back to the service prefix as label when config is missing', () => {
     const noConfig: CloudEnvironmentService = { ...service, config: null }
     render(<AgentCard service={noConfig} env={null} canEdit={false} tenantId={null} />)
-    expect(screen.queryByText(/unconfigured/i)).not.toBeNull()
+    expect(screen.getAllByText('rupert').length).toBeGreaterThan(0)
+    expect(screen.queryByText(/ph-rupert@/)).toBeNull()
   })
 })

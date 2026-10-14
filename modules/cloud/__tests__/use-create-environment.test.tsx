@@ -26,13 +26,27 @@ describe('useCreateEnvironment', () => {
     ).rejects.toThrow(/logged in/i)
   })
 
+  it('throws when signer has no user address', async () => {
+    vi.mocked(useCanSign).mockReturnValue({
+      canSign: true,
+      signer: { sign: vi.fn() } as never,
+      loading: false,
+    })
+    const { result } = renderHook(() => useCreateEnvironment())
+    await expect(
+      result.current({ label: 'e', subdomain: 'foo', baseDomain: 'vetra.io', enabledServices: [] }),
+    ).rejects.toThrow(/no user address/i)
+    expect(createNewEnvironmentController).not.toHaveBeenCalled()
+  })
+
   it('dispatches actions then pushes; returns documentId', async () => {
-    const fakeSigner = { sign: vi.fn() }
+    const fakeSigner = { sign: vi.fn(), user: { address: '0xMe' } }
+    const setOwner = vi.fn()
     const setLabel = vi.fn()
     const initialize = vi.fn()
     const enableService = vi.fn()
     const push = vi.fn().mockResolvedValue({ remoteDocument: { id: 'new-doc-id' } })
-    const ctrl = { setLabel, initialize, enableService, push }
+    const ctrl = { setOwner, setLabel, initialize, enableService, push }
 
     vi.mocked(useCanSign).mockReturnValue({
       canSign: true,
@@ -57,6 +71,7 @@ describe('useCreateEnvironment', () => {
       })
     })
 
+    expect(setOwner).toHaveBeenCalledWith({ address: '0xMe' })
     expect(setLabel).toHaveBeenCalledWith({ label: 'env-1' })
     expect(initialize).toHaveBeenCalledWith({
       genericSubdomain: 'foo',
