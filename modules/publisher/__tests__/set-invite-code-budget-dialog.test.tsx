@@ -63,4 +63,29 @@ describe('SetInviteCodeBudgetDialog', () => {
     }
     expect(setBudget).not.toHaveBeenCalled()
   })
+
+  it('explains an invalid amount, with a hint for a comma', () => {
+    setup()
+    fireEvent.change(screen.getByLabelText(/monthly llm budget/i), { target: { value: '20,5' } })
+    expect(screen.getByRole('alert').textContent).toMatch(/dot, not a comma/i)
+    expect(
+      (screen.getByRole('button', { name: /save budget/i }) as HTMLButtonElement).disabled,
+    ).toBe(true)
+  })
+
+  it('keeps typed text when the current budget refetches while open', () => {
+    const ui = (current: number | null) => (
+      <SetInviteCodeBudgetDialog
+        appId="app-1"
+        code="VIP-2026"
+        current={current}
+        open
+        onOpenChange={vi.fn()}
+      />
+    )
+    const { rerender } = render(ui(20))
+    fireEvent.change(screen.getByLabelText(/monthly llm budget/i), { target: { value: '35' } })
+    rerender(ui(25))
+    expect((screen.getByLabelText(/monthly llm budget/i) as HTMLInputElement).value).toBe('35')
+  })
 })

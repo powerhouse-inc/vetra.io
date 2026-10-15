@@ -1,7 +1,7 @@
 'use client'
 
 import { Loader2 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useState } from 'react'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   Dialog,
@@ -34,10 +34,12 @@ export function SetInviteCodeBudgetDialog({
   const setBudget = useSetInviteCodeLlmBudget(appId)
   const [value, setValue] = useState(current == null ? '' : String(current))
 
-  // Each opening starts from the code's current budget.
-  useEffect(() => {
+  // Each opening (not each refetch of `current`) starts from the code's current budget.
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
     if (open) setValue(current == null ? '' : String(current))
-  }, [open, current])
+  }
 
   const text = value.trim()
   const valid = text !== '' && isBudgetText(text)
@@ -73,6 +75,12 @@ export function SetInviteCodeBudgetDialog({
               value={value}
               onChange={(e) => setValue(e.target.value)}
             />
+            {text !== '' && !valid && (
+              <p role="alert" className="text-destructive text-sm">
+                A dollar amount from 0 to 10,000 (cents at most).
+                {text.includes(',') && ' Use a dot, not a comma.'}
+              </p>
+            )}
           </div>
           <DialogFooter className="gap-2 sm:justify-between">
             <Button
