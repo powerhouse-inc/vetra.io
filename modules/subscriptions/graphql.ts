@@ -77,19 +77,3 @@ export async function cancelSubscription(
   )
   return data.vetraSubscriptions.cancelSubscription
 }
-
-/** Writes the caller's studio-licence Claude key into a tenant's secrets, server-side. */
-export async function applyStudioKey(
-  tenantId: string,
-  secretNames: string[],
-  token: string | null,
-  fetchImpl?: FetchLike,
-): Promise<boolean> {
-  const data = await publisherGql<Ns<{ applyStudioKey: boolean }>>(
-    `mutation ($tenantId: String!, $secretNames: [String!]!) { vetraSubscriptions { applyStudioKey(tenantId: $tenantId, secretNames: $secretNames) } }`,
-    { tenantId, secretNames },
-    token,
-    fetchImpl,
-  )
-  return data.vetraSubscriptions.applyStudioKey
-}

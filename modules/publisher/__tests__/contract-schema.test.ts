@@ -155,7 +155,6 @@ const CALLS: Record<string, (f: publisher.FetchLike) => Promise<unknown>> = {
   redeemUpgrade: (f) =>
     subscriptions.redeemInviteCode({ code: 'VIP-2026', upgrades: 'l1' }, 't', f),
   cancelSubscription: (f) => subscriptions.cancelSubscription('l1', 't', f),
-  applyStudioKey: (f) => subscriptions.applyStudioKey('tenant', ['ANTHROPIC_API_KEY'], 't', f),
 }
 
 describe('client operations against the licensing contract', () => {

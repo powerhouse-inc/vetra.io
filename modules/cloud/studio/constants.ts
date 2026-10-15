@@ -28,13 +28,3 @@ export const STUDIO_ENV_LABEL = 'Vetra Studio'
 export const STUDIO_DEFAULT_ENV_VARS = [
   { name: 'VETRA_OBSERVABILITY_CONSENT', value: 'granted', isSecret: false },
 ] as const
-/**
- * The vetra-cli manifest declares three required Anthropic secrets. We collect
- * one key and write it to all three names so the agent boots regardless of
- * which it reads.
- */
-export const STUDIO_ANTHROPIC_SECRET_NAMES = [
-  'ANTHROPIC_API_KEY',
-  'VETRA_ANTHROPIC_API_KEY',
-  'VETRA_CLI_ANTHROPIC_API_KEY',
-] as const

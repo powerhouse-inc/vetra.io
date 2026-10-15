@@ -9,43 +9,26 @@ describe('NewProductCard', () => {
   it('renders a disabled limit-reached notice when atLimit', () => {
     const onCreate = vi.fn(noop)
     const { getByText, container } = render(
-      <NewProductCard
-        onCreate={onCreate}
-        createError={null}
-        hasAttachedKey={false}
-        atLimit
-        limit={3}
-      />,
+      <NewProductCard onCreate={onCreate} createError={null} atLimit limit={3} />,
     )
     getByText('Limit reached — 3 of 3 products')
-    // No interactive create control while at the limit.
     expect(container.querySelector('button')).toBeNull()
-  })
-
-  it('does not create or open a dialog when clicked at the limit', () => {
-    const onCreate = vi.fn(noop)
-    const { getByText } = render(
-      <NewProductCard onCreate={onCreate} createError={null} hasAttachedKey atLimit limit={3} />,
-    )
     fireEvent.click(getByText('Limit reached — 3 of 3 products'))
     expect(onCreate).not.toHaveBeenCalled()
   })
 
-  it('renders the normal create CTA below the limit', () => {
+  it('creates on click, with no key form', () => {
     const onCreate = vi.fn(noop)
-    const { getByText, container } = render(
-      <NewProductCard onCreate={onCreate} createError={null} hasAttachedKey={false} />,
-    )
-    getByText(/create new product/i)
-    expect(container.querySelector('button')).not.toBeNull()
-  })
-
-  it('provisions immediately when the invite code carries a key', () => {
-    const onCreate = vi.fn(noop)
-    const { getByText } = render(
-      <NewProductCard onCreate={onCreate} createError={null} hasAttachedKey />,
+    const { getByText, queryByLabelText } = render(
+      <NewProductCard onCreate={onCreate} createError={null} />,
     )
     fireEvent.click(getByText(/create new product/i))
-    expect(onCreate).toHaveBeenCalled()
+    expect(onCreate).toHaveBeenCalledOnce()
+    expect(queryByLabelText(/api key/i)).toBeNull()
+  })
+
+  it('shows a create error under the card', () => {
+    const { getByText } = render(<NewProductCard onCreate={vi.fn(noop)} createError="boom" />)
+    getByText('boom')
   })
 })

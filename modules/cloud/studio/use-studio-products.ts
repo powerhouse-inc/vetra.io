@@ -7,10 +7,8 @@ import { fetchMyStudioProducts, type StudioProductSummary } from '@/modules/clou
 import { maxStudiosPerUser } from '@/modules/cloud/switchboard-url'
 import { queryKeys } from '@/modules/cloud/query/keys'
 import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
-import { useStudioAccess } from '@/modules/subscriptions/hooks/use-subscriptions'
 import { STUDIO_AGENT_PREFIX, STUDIO_ENV_LABEL } from './constants'
 import { type ProductStatus, studioPollIntervalMs } from './studio-readiness'
-import { showMissingKeyNotice } from './missing-key-notice'
 import { useCreateStudioEnvironment } from './use-create-studio-environment'
 
 export type StudioGate = 'loading' | 'unauthenticated' | 'ready'
@@ -47,14 +45,8 @@ export type StudioProductsState = {
   atLimit: boolean
   creating: boolean
   createError: string | null
-  /**
-   * Provision a new product env; resolves to the new env id for navigation.
-   * Omit the key when the caller's studio licence carries one (`hasAttachedKey`) —
-   * the subgraph then injects it server-side.
-   */
-  createProduct: (anthropicApiKey?: string) => Promise<string>
-  /** True when the caller's studio licence has a Claude key, so no manual entry is needed. */
-  hasAttachedKey: boolean
+  /** Provision a new product env; resolves to the new env id for navigation. */
+  createProduct: () => Promise<string>
   did: string | undefined
 }
 
@@ -128,50 +120,40 @@ export function useStudioProducts(): StudioProductsState {
   const limit = maxStudiosPerUser()
   const atLimit = limit > 0 && products.length >= limit
 
-  // Whether the caller's studio licence carries a Claude key, so creating a studio
-  // can skip the manual key prompt. useStudioAccess polls while the answer is
-  // still unknown (null), so a fresh login never wrongly prompts for a key.
-  const { data: access } = useStudioAccess()
-  const hasAttachedKey = access?.hasAttachedKey ?? false
-
-  const createProduct = useCallback(
-    async (anthropicApiKey?: string): Promise<string> => {
-      // Enforce the cap even for programmatic in-app callers, not just the
-      // disabled button. (Client-side only — see the max-products spec.)
-      if (atLimit) throw new Error(`You've reached the maximum of ${limit} products`)
-      setCreateError(null)
-      setCreating(true)
-      try {
-        const res = await create(anthropicApiKey ? { anthropicApiKey } : {})
-        // Optimistically insert a booting placeholder so the new product shows
-        // up immediately, then let the 30s poll (and the invalidate below)
-        // reconcile it against the server-resolved list. Guard against a double
-        // insert if the env already appears (e.g. a fast refetch raced us).
-        const placeholder: StudioProduct = {
-          envId: res.documentId,
-          subdomain: res.subdomain ?? '',
-          prefix: STUDIO_AGENT_PREFIX,
-          label: STUDIO_ENV_LABEL,
-          brand: null,
-          status: 'booting',
-        }
-        queryClient.setQueryData<StudioProduct[]>(productsKey, (prev) => {
-          const list = prev ?? []
-          if (list.some((p) => p.envId === placeholder.envId)) return list
-          return [...list, placeholder]
-        })
-        void queryClient.invalidateQueries({ queryKey: productsKey })
-        if (res.missingKey) showMissingKeyNotice(res.documentId)
-        return res.documentId
-      } catch (err) {
-        setCreateError(err instanceof Error ? err.message : 'Failed to create product')
-        throw err
-      } finally {
-        setCreating(false)
+  const createProduct = useCallback(async (): Promise<string> => {
+    // Enforce the cap even for programmatic in-app callers, not just the
+    // disabled button. (Client-side only — see the max-products spec.)
+    if (atLimit) throw new Error(`You've reached the maximum of ${limit} products`)
+    setCreateError(null)
+    setCreating(true)
+    try {
+      const res = await create()
+      // Optimistically insert a booting placeholder so the new product shows
+      // up immediately, then let the 30s poll (and the invalidate below)
+      // reconcile it against the server-resolved list. Guard against a double
+      // insert if the env already appears (e.g. a fast refetch raced us).
+      const placeholder: StudioProduct = {
+        envId: res.documentId,
+        subdomain: res.subdomain ?? '',
+        prefix: STUDIO_AGENT_PREFIX,
+        label: STUDIO_ENV_LABEL,
+        brand: null,
+        status: 'booting',
       }
-    },
-    [atLimit, limit, create, queryClient, productsKey],
-  )
+      queryClient.setQueryData<StudioProduct[]>(productsKey, (prev) => {
+        const list = prev ?? []
+        if (list.some((p) => p.envId === placeholder.envId)) return list
+        return [...list, placeholder]
+      })
+      void queryClient.invalidateQueries({ queryKey: productsKey })
+      return res.documentId
+    } catch (err) {
+      setCreateError(err instanceof Error ? err.message : 'Failed to create product')
+      throw err
+    } finally {
+      setCreating(false)
+    }
+  }, [atLimit, limit, create, queryClient, productsKey])
 
   let gate: StudioGate
   if (!user) gate = 'unauthenticated'
@@ -186,7 +168,6 @@ export function useStudioProducts(): StudioProductsState {
     creating,
     createError,
     createProduct,
-    hasAttachedKey,
     did,
   }
 }

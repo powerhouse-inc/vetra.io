@@ -15,22 +15,23 @@ vi.mock('@/modules/cloud/studio/pool-client', () => ({
   claimStudioEnvironment: vi.fn(),
   fetchStudioPoolVersion: vi.fn().mockResolvedValue(null),
 }))
-vi.mock('@/modules/subscriptions/graphql', () => ({ applyStudioKey: vi.fn() }))
+vi.mock('@/modules/cloud/studio/llm-client', () => ({ provisionStudioLlm: vi.fn() }))
 
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { createNewEnvironmentController } from '@/modules/cloud/controller'
 import { applyConfigChanges } from '@/modules/cloud/config/apply'
 import { getAuthToken } from '@/modules/cloud/graphql'
 import { claimStudioEnvironment } from '@/modules/cloud/studio/pool-client'
-import { applyStudioKey } from '@/modules/subscriptions/graphql'
+import { provisionStudioLlm } from '@/modules/cloud/studio/llm-client'
 import { STUDIO_AGENT_PACKAGE, STUDIO_AGENT_VERSION } from '@/modules/cloud/studio/constants'
 import { useCreateStudioEnvironment } from '@/modules/cloud/studio/use-create-studio-environment'
 
+const DOC = 'aa726a95-1111-2222-3333-444455556666'
+const TENANT = 'warm-newt-75-aa726a95'
+
 /** Minimal controller whose push() resolves to a fixed remote document id. */
 function mockController() {
-  const push = vi
-    .fn()
-    .mockResolvedValue({ remoteDocument: { id: 'aa726a95-1111-2222-3333-444455556666' } })
+  const push = vi.fn().mockResolvedValue({ remoteDocument: { id: DOC } })
   const ctrl = {
     setOwner: vi.fn(),
     setLabel: vi.fn(),
@@ -50,198 +51,95 @@ function mockController() {
 }
 
 describe('useCreateStudioEnvironment', () => {
-  beforeEach(() => vi.clearAllMocks())
+  beforeEach(() => {
+    vi.clearAllMocks()
+    vi.mocked(getAuthToken).mockResolvedValue('tok')
+  })
 
   it('throws without a signer', async () => {
     vi.mocked(useCanSign).mockReturnValue({ canSign: false, signer: null, loading: false })
     const { result } = renderHook(() => useCreateStudioEnvironment())
-    await expect(result.current({ anthropicApiKey: 'sk' })).rejects.toThrow(/logged in/i)
+    await expect(result.current()).rejects.toThrow(/logged in/i)
   })
 
-  it('creates env, writes 4 secrets, approves, returns ids', async () => {
-    const setOwner = vi.fn(),
-      setLabel = vi.fn(),
-      initialize = vi.fn(),
-      addPackage = vi.fn(),
-      enableService = vi.fn(),
-      approveChanges = vi.fn()
-    const push = vi
-      .fn()
-      .mockResolvedValue({ remoteDocument: { id: 'aa726a95-1111-2222-3333-444455556666' } })
-    const ctrl = { setOwner, setLabel, initialize, addPackage, enableService, approveChanges, push }
-    vi.mocked(createNewEnvironmentController).mockReturnValue(ctrl as never)
-    vi.mocked(useCanSign).mockReturnValue({
-      canSign: true,
-      loading: false,
-      signer: { user: { address: '0xMe' } } as never,
+  it('returns a claimed warm Studio without cold provisioning', async () => {
+    const ctrl = mockController()
+    vi.mocked(claimStudioEnvironment).mockResolvedValue({
+      documentId: 'd',
+      subdomain: 's',
+      tenantId: 't',
     })
-
     const { result } = renderHook(() => useCreateStudioEnvironment())
-    let res: { documentId: string; subdomain: string; tenantId: string } | undefined
-    await act(async () => {
-      res = await result.current({ anthropicApiKey: 'sk-test' })
+    await expect(result.current()).resolves.toEqual({
+      documentId: 'd',
+      subdomain: 's',
+      tenantId: 't',
     })
+    expect(ctrl.push).not.toHaveBeenCalled()
+    expect(provisionStudioLlm).not.toHaveBeenCalled()
+  })
 
-    expect(setOwner).toHaveBeenCalledWith({ address: '0xMe' })
-    expect(addPackage).toHaveBeenCalledWith({
+  it('cold path: creates the env, provisions its model server-side, writes the vars, approves', async () => {
+    const ctrl = mockController()
+    vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
+    vi.mocked(provisionStudioLlm).mockResolvedValue({
+      environmentId: DOC,
+      connected: true,
+      llmBudgetUsd: 20,
+    })
+    const { result } = renderHook(() => useCreateStudioEnvironment())
+    let res: unknown
+    await act(async () => {
+      res = await result.current()
+    })
+    expect(ctrl.addPackage).toHaveBeenCalledWith({
       packageName: STUDIO_AGENT_PACKAGE,
       version: STUDIO_AGENT_VERSION,
     })
-    expect(enableService).toHaveBeenCalledOnce()
-    expect(enableService.mock.calls[0][0]).toMatchObject({ type: 'CLINT', prefix: 'vetra-agent' })
-
-    expect(applyConfigChanges).toHaveBeenCalledTimes(2)
-    const [tenantId, secretChanges] = vi.mocked(applyConfigChanges).mock.calls[0]
-    expect(tenantId).toBe('warm-newt-75-aa726a95')
-    expect(secretChanges.map((c) => c.name).sort()).toEqual(
-      [
-        'ANTHROPIC_API_KEY',
-        'VETRA_ANTHROPIC_API_KEY',
-        'VETRA_CLI_ANTHROPIC_API_KEY',
-        'VETRA_SESSION_EXPORT_SECRET',
-      ].sort(),
-    )
-    const anthropic = secretChanges.filter((c) => c.name !== 'VETRA_SESSION_EXPORT_SECRET')
-    expect(anthropic.every((c) => c.kind === 'setSecret' && c.value === 'sk-test')).toBe(true)
-    const exportSecret = secretChanges.find((c) => c.name === 'VETRA_SESSION_EXPORT_SECRET')
-    expect(exportSecret?.kind).toBe('setSecret')
-    expect(exportSecret?.kind === 'setSecret' && exportSecret.value).toMatch(/^[0-9a-f-]{72}$/)
-    const githubChanges = vi.mocked(applyConfigChanges).mock.calls[1][1]
-    expect(githubChanges.map((c) => c.name).sort()).toEqual(
-      ['VETRA_CLOUD_SWITCHBOARD_URL', 'VETRA_ENVIRONMENT_ID'].sort(),
-    )
-    expect(githubChanges.every((c) => c.kind === 'setVar')).toBe(true)
-
-    expect(approveChanges).toHaveBeenCalledOnce()
-    expect(push).toHaveBeenCalledTimes(2)
-    expect(applyStudioKey).not.toHaveBeenCalled()
-    expect(res).toEqual({
-      documentId: 'aa726a95-1111-2222-3333-444455556666',
-      subdomain: 'warm-newt-75',
-      tenantId: 'warm-newt-75-aa726a95',
-    })
-  })
-
-  it('injects the invite-code key server-side when no key is passed', async () => {
-    const ctrl = mockController()
-    vi.mocked(claimStudioEnvironment).mockResolvedValue(null) // pool empty → cold path
-    vi.mocked(applyStudioKey).mockResolvedValue(true)
-
-    const { result } = renderHook(() => useCreateStudioEnvironment())
-    let res: { tenantId: string } | undefined
-    await act(async () => {
-      res = await result.current()
-    })
-
+    expect(provisionStudioLlm).toHaveBeenCalledWith(TENANT, 'tok')
     expect(applyConfigChanges).toHaveBeenCalledOnce()
-    const githubChanges = vi.mocked(applyConfigChanges).mock.calls[0][1]
-    expect(githubChanges.map((c) => c.name).sort()).toEqual(
-      ['VETRA_CLOUD_SWITCHBOARD_URL', 'VETRA_ENVIRONMENT_ID'].sort(),
-    )
-    expect(githubChanges.every((c) => c.kind === 'setVar')).toBe(true)
-    expect(applyStudioKey).toHaveBeenCalledOnce()
-    const [tenantId, secretNames] = vi.mocked(applyStudioKey).mock.calls[0]
-    expect(tenantId).toBe('warm-newt-75-aa726a95')
-    expect([...secretNames].sort()).toEqual(
-      ['ANTHROPIC_API_KEY', 'VETRA_ANTHROPIC_API_KEY', 'VETRA_CLI_ANTHROPIC_API_KEY'].sort(),
-    )
+    const changes = vi.mocked(applyConfigChanges).mock.calls[0][1]
+    expect(changes.map((c) => c.name).sort()).toEqual([
+      'VETRA_CLOUD_SWITCHBOARD_URL',
+      'VETRA_ENVIRONMENT_ID',
+    ])
+    // No key is ever written client-side.
+    expect(changes.some((c) => /ANTHROPIC|OPENROUTER/.test(c.name))).toBe(false)
     expect(ctrl.approveChanges).toHaveBeenCalledOnce()
-    expect(ctrl.push).toHaveBeenCalledTimes(2)
-    expect(res?.tenantId).toBe('warm-newt-75-aa726a95')
+    expect(res).toEqual({ documentId: DOC, subdomain: 'warm-newt-75', tenantId: TENANT })
   })
 
-  it('finishes creation and flags missingKey when the code carries no key', async () => {
-    const ctrl = mockController()
-    vi.mocked(claimStudioEnvironment).mockResolvedValue(null) // pool empty → cold path
-    vi.mocked(applyStudioKey).mockResolvedValue(false)
+  it.each([
+    ['no budget', { environmentId: DOC, connected: false, llmBudgetUsd: 0 }],
+    ['broker not configured', null],
+  ])(
+    'still finishes creation with %s (the Studio serves in connect-a-model mode)',
+    async (_label, provision) => {
+      const ctrl = mockController()
+      vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
+      vi.mocked(provisionStudioLlm).mockResolvedValue(provision)
+      const { result } = renderHook(() => useCreateStudioEnvironment())
+      await act(async () => {
+        await result.current()
+      })
+      expect(ctrl.approveChanges).toHaveBeenCalledOnce()
+    },
+  )
 
-    const { result } = renderHook(() => useCreateStudioEnvironment())
-    let res: { documentId: string; missingKey?: boolean } | undefined
-    await act(async () => {
-      res = await result.current()
-    })
-
-    expect(applyConfigChanges).toHaveBeenCalledOnce() // github vars still set
-    expect(ctrl.approveChanges).toHaveBeenCalledOnce()
-    expect(ctrl.push).toHaveBeenCalledTimes(2)
-    expect(res).toEqual({
-      documentId: 'aa726a95-1111-2222-3333-444455556666',
-      subdomain: 'warm-newt-75',
-      tenantId: 'warm-newt-75-aa726a95',
-      missingKey: true,
-    })
-  })
-
-  it('still throws and does not approve when authentication yields no token', async () => {
+  it('throws and does not approve when provisioning fails for real', async () => {
     const ctrl = mockController()
     vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
-    vi.mocked(getAuthToken).mockResolvedValue(null)
-
-    const { result } = renderHook(() => useCreateStudioEnvironment())
-    await expect(result.current()).rejects.toThrow(/authenticate/i)
-    expect(ctrl.approveChanges).not.toHaveBeenCalled()
-    vi.mocked(getAuthToken).mockResolvedValue('tok')
-  })
-
-  it('still throws and does not approve when applyStudioKey rejects', async () => {
-    const ctrl = mockController()
-    vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
-    vi.mocked(applyStudioKey).mockRejectedValue(new Error('network down'))
-
+    vi.mocked(provisionStudioLlm).mockRejectedValue(new Error('network down'))
     const { result } = renderHook(() => useCreateStudioEnvironment())
     await expect(result.current()).rejects.toThrow('network down')
     expect(ctrl.approveChanges).not.toHaveBeenCalled()
   })
 
-  it('does not flag missingKey when the key was injected', async () => {
-    mockController()
-    vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
-    vi.mocked(applyStudioKey).mockResolvedValue(true)
-
-    const { result } = renderHook(() => useCreateStudioEnvironment())
-    let res: { missingKey?: boolean } | undefined
-    await act(async () => {
-      res = await result.current()
-    })
-    expect(res?.missingKey).toBeFalsy()
-  })
-
-  it('claims a warm env on the invite-code path without running the controller', async () => {
+  it('refuses the cold path without a token', async () => {
     const ctrl = mockController()
-    vi.mocked(claimStudioEnvironment).mockResolvedValue({
-      documentId: 'warm-doc',
-      subdomain: 'warm-newt-99',
-      tenantId: 'warm-newt-99-warmdoc0',
-    })
-
+    vi.mocked(getAuthToken).mockResolvedValue(null as never)
     const { result } = renderHook(() => useCreateStudioEnvironment())
-    let res: { documentId: string; subdomain: string; tenantId: string } | undefined
-    await act(async () => {
-      res = await result.current()
-    })
-
-    expect(claimStudioEnvironment).toHaveBeenCalledOnce()
-    expect(ctrl.push).not.toHaveBeenCalled()
-    expect(applyStudioKey).not.toHaveBeenCalled()
-    expect(res).toEqual({
-      documentId: 'warm-doc',
-      subdomain: 'warm-newt-99',
-      tenantId: 'warm-newt-99-warmdoc0',
-    })
-  })
-
-  it('falls back to cold provisioning when the pool is empty (claim returns null)', async () => {
-    const ctrl = mockController()
-    vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
-    vi.mocked(applyStudioKey).mockResolvedValue(true)
-
-    const { result } = renderHook(() => useCreateStudioEnvironment())
-    await act(async () => {
-      await result.current()
-    })
-
-    expect(claimStudioEnvironment).toHaveBeenCalledOnce()
-    expect(ctrl.push).toHaveBeenCalledTimes(2) // cold path ran
-    expect(applyStudioKey).toHaveBeenCalledOnce()
+    await expect(result.current()).rejects.toThrow(/authenticate/i)
+    expect(ctrl.approveChanges).not.toHaveBeenCalled()
   })
 })

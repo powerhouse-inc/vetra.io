@@ -66,28 +66,17 @@ function LapsedBanner() {
  * the "redeem a code" panel.
  */
 export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
-  const {
-    gate,
-    products,
-    isScanning,
-    limit,
-    atLimit,
-    creating,
-    createError,
-    createProduct,
-    hasAttachedKey,
-    did,
-  } = useStudioProducts()
+  const { gate, products, isScanning, limit, atLimit, creating, createError, createProduct, did } =
+    useStudioProducts()
 
   if (gate === 'unauthenticated') return <StudioLanding />
   if (gate === 'loading') return <StudioBootScreen title="Loading…" />
 
   // Provision a new product; it surfaces in the list optimistically (as
   // "Provisioning…") immediately, and the 30s poll reconciles it against the
-  // server-resolved list. The key is omitted when the studio licence carries one
-  // (server-side injection).
-  const handleCreate = async (apiKey?: string) => {
-    await createProduct(apiKey)
+  // server-resolved list. Its model key is provisioned server-side.
+  const handleCreate = async () => {
+    await createProduct()
   }
 
   // First load with nothing cached: show skeleton cards so the layout settles
@@ -109,12 +98,7 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
           <p className="text-muted-foreground max-w-sm text-sm">
             Create your first product to spin up a dedicated Vetra Studio.
           </p>
-          <NewProductCard
-            onCreate={handleCreate}
-            createError={createError}
-            hasAttachedKey={hasAttachedKey}
-            variant="button"
-          />
+          <NewProductCard onCreate={handleCreate} createError={createError} variant="button" />
         </div>
       ) : (
         <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -151,7 +135,6 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
                 <NewProductCard
                   onCreate={handleCreate}
                   createError={createError}
-                  hasAttachedKey={hasAttachedKey}
                   atLimit={atLimit}
                   limit={limit}
                 />

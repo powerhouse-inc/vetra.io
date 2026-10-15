@@ -1,28 +1,17 @@
 'use client'
 
-import { useState } from 'react'
 import { Plus } from 'lucide-react'
 import { Button } from '@/modules/shared/components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from '@/modules/shared/components/ui/dialog'
-import { StudioCreateForm } from './studio-create-form'
 
 export function NewProductCard({
   onCreate,
   createError,
-  hasAttachedKey,
   variant = 'card',
   atLimit = false,
   limit = 0,
 }: {
-  onCreate: (apiKey?: string) => Promise<void>
+  onCreate: () => Promise<void>
   createError: string | null
-  /** When true, the studio licence supplies the key — provision directly, no form. */
-  hasAttachedKey: boolean
   /**
    * `card` — dashed tile sized to sit in the products grid.
    * `button` — solid green CTA for the empty state (no products yet).
@@ -35,12 +24,12 @@ export function NewProductCard({
   /** The configured cap, shown in the limit-reached copy. */
   limit?: number
 }) {
-  const [open, setOpen] = useState(false)
+  // Creating provisions immediately: the model key comes from the licence's
+  // LLM budget server-side, so there is nothing to ask for.
+  const handleClick = () => void onCreate()
 
-  const handleClick = () => (hasAttachedKey ? void onCreate() : setOpen(true))
-
-  // At the cap: a disabled, non-interactive tile explaining why (no dialog, no
-  // create). Sized per variant so it drops into the same slot as the CTA.
+  // At the cap: a disabled, non-interactive tile explaining why (no create).
+  // Sized per variant so it drops into the same slot as the CTA.
   if (atLimit) {
     const message = `Limit reached — ${limit} of ${limit} products`
     const shape =
@@ -80,29 +69,11 @@ export function NewProductCard({
       </button>
     )
 
-  // The studio licence carries the key: clicking provisions immediately (the grid swaps
-  // to its "Creating…" state via `creating`). Surface any error beneath the card.
-  if (hasAttachedKey) {
-    return (
-      <div className="flex flex-col gap-2">
-        {card}
-        {createError && <p className="text-destructive text-sm">{createError}</p>}
-      </div>
-    )
-  }
-
-  // No attached key: collect one manually.
+  // The grid swaps to its "Creating…" state via `creating`; surface any error beneath the card.
   return (
-    <>
+    <div className="flex flex-col gap-2">
       {card}
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle>New product</DialogTitle>
-          </DialogHeader>
-          <StudioCreateForm onCreate={onCreate} error={createError} />
-        </DialogContent>
-      </Dialog>
-    </>
+      {createError && <p className="text-destructive text-sm">{createError}</p>}
+    </div>
   )
 }

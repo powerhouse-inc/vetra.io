@@ -1,7 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import type { FetchLike } from '@/modules/publisher/graphql'
 import {
-  applyStudioKey,
   cancelSubscription,
   fetchInviteCodeCheck,
   fetchMySubscriptions,
@@ -67,18 +66,9 @@ describe('vetraSubscriptions client', () => {
     expect(calls[0].variables).toEqual({ input: { code: 'C', upgrades: 'old' } })
   })
 
-  it('cancels and applies the studio key with bare arguments', async () => {
+  it('cancels with bare arguments', async () => {
     const a = capture({ vetraSubscriptions: { cancelSubscription: true } })
     await expect(cancelSubscription('l1', 'tok', a.fetchImpl)).resolves.toBe(true)
     expect(a.calls[0].query).toContain('cancelSubscription(licenseId: $licenseId)')
-    const b = capture({ vetraSubscriptions: { applyStudioKey: true } })
-    await expect(applyStudioKey('t-1', ['ANTHROPIC_API_KEY'], 'tok', b.fetchImpl)).resolves.toBe(
-      true,
-    )
-    expect(b.calls[0].query).toContain('mutation ($tenantId: String!, $secretNames: [String!]!)')
-    expect(b.calls[0].query).toContain(
-      'applyStudioKey(tenantId: $tenantId, secretNames: $secretNames)',
-    )
-    expect(b.calls[0].variables).toEqual({ tenantId: 't-1', secretNames: ['ANTHROPIC_API_KEY'] })
   })
 })

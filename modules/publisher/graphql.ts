@@ -39,11 +39,15 @@ export type PublisherErrorCode =
   | 'RATE_LIMITED'
   | 'PROFILE_UNAVAILABLE'
   | 'NO_IDENTITY'
+  | 'SERVICE_NOT_CONFIGURED'
+  | 'UPSTREAM_ERROR'
+  | 'BAD_USER_INPUT'
+  | 'INTERNAL'
   | 'PUBLISHER_UNAVAILABLE'
   | 'NETWORK'
   | 'UNKNOWN'
 
-// Codes the vetra-licensing subgraph (vetraPublisher + vetraSubscriptions) sends in
+// Codes the vetra-licensing (vetraPublisher + vetraSubscriptions) and vetra-llm (vetraLlm) subgraphs send in
 // extensions.code. PUBLISHER_UNAVAILABLE, NETWORK and UNKNOWN are produced locally.
 const KNOWN_CODES = new Set<string>([
   'UNAUTHENTICATED',
@@ -60,6 +64,10 @@ const KNOWN_CODES = new Set<string>([
   'RATE_LIMITED',
   'PROFILE_UNAVAILABLE',
   'NO_IDENTITY',
+  'SERVICE_NOT_CONFIGURED',
+  'UPSTREAM_ERROR',
+  'BAD_USER_INPUT',
+  'INTERNAL',
 ])
 
 type GqlError = { message?: string; extensions?: { code?: unknown; field?: unknown } }

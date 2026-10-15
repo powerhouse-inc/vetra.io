@@ -1,9 +1,10 @@
 'use client'
 
-import { Boxes, Loader2, Moon } from 'lucide-react'
+import { Boxes, Loader2, Moon, PlugZap } from 'lucide-react'
 import { studioAppsEnabled } from '@/modules/cloud/switchboard-url'
 import type { StudioProduct } from '../use-studio-products'
 import { MakeAppDialog } from './make-app-dialog'
+import { useStudioLlmStatus } from '../use-studio-llm-status'
 
 /**
  * A product in the grid.
@@ -32,6 +33,11 @@ export function StudioProductCard({
   // Both ready and sleeping open the host; sleeping flows through the activator
   // → /studio/waking spinner, ready lands directly in the studio.
   const canOpen = isReady || isSleeping
+
+  // A Studio that is up but has no model key answers "No model is connected…":
+  // say so on the card. Not asked while booting, or for a locked (lapsed) card.
+  const llm = useStudioLlmStatus(product.envId, canOpen && !locked)
+  const needsModel = llm.data?.connected === false
 
   // Cached brand from the switchboard; falls back to the env label when absent.
   const brand = product.brand
@@ -92,7 +98,18 @@ export function StudioProductCard({
         </p>
       )}
       <div className="mt-4 flex items-center justify-between border-t pt-3">
-        {statusBadge}
+        <div className="flex items-center gap-2">
+          {statusBadge}
+          {needsModel && (
+            <span
+              title="No model connected yet"
+              className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600"
+            >
+              <PlugZap className="h-3 w-3" aria-hidden />
+              Connect a model
+            </span>
+          )}
+        </div>
         {isReady && <span className="text-muted-foreground text-xs">Open →</span>}
         {isSleeping && <span className="text-muted-foreground text-xs">Wake →</span>}
       </div>

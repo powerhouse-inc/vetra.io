@@ -10,6 +10,12 @@ vi.mock('@/modules/apps/hooks/use-apps', () => ({
 }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 
+let llmStatus: { data?: { environmentId: string; connected: boolean } } = {}
+const useStudioLlmStatus = vi.fn((_envId: string, _enabled: boolean) => llmStatus)
+vi.mock('@/modules/cloud/studio/use-studio-llm-status', () => ({
+  useStudioLlmStatus: (envId: string, enabled: boolean) => useStudioLlmStatus(envId, enabled),
+}))
+
 const AGENT_URL = 'https://warm-newt-75.vetra.io/?user=did%3Aethr%3A0xabc'
 
 // Brand is cached server-side and carried on the product, so the card renders
@@ -61,5 +67,26 @@ describe('StudioProductCard', () => {
     )
     getByText('Untitled')
     getByText('sub')
+  })
+
+  it('says "Connect a model" on a ready Studio without a model key', () => {
+    llmStatus = { data: { environmentId: 'env1', connected: false } }
+    const { getByText } = render(<StudioProductCard product={base} href={AGENT_URL} />)
+    getByText('Connect a model')
+    llmStatus = {}
+  })
+
+  it('says nothing extra once the Studio has a model, or while unknown', () => {
+    llmStatus = { data: { environmentId: 'env1', connected: true } }
+    const { queryByText, rerender } = render(<StudioProductCard product={base} href={AGENT_URL} />)
+    expect(queryByText('Connect a model')).toBeNull()
+    llmStatus = {}
+    rerender(<StudioProductCard product={base} href={AGENT_URL} />)
+    expect(queryByText('Connect a model')).toBeNull()
+  })
+
+  it('does not ask for the status of a booting Studio', () => {
+    render(<StudioProductCard product={{ ...base, status: 'booting' }} href={AGENT_URL} />)
+    expect(useStudioLlmStatus).toHaveBeenLastCalledWith('env1', false)
   })
 })
