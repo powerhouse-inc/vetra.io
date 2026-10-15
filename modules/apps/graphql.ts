@@ -5,6 +5,7 @@ import type {
   AppsErrorCode,
   AppRegistryCredentials,
   CreateAppInput,
+  CreateStudioAppInput,
   DeployAppInput,
   GithubDeployAppInfo,
   GithubDeployInstallation,
@@ -186,7 +187,7 @@ const APP_FIELDS = `id slug name ownerAddress status
   createdAt updatedAt`
 
 /** App fields newer backends add; dropped (once per page load) when the schema rejects them. */
-const OPTIONAL_APP_FIELDS = ['identityExpiresAt', 'ownerOrgId'] as const
+const OPTIONAL_APP_FIELDS = ['identityExpiresAt', 'ownerOrgId', 'studioEnvironmentId'] as const
 let optionalAppFieldsSupported: boolean | null = null
 
 /** Test hook: forget what the backend supports. */
@@ -435,4 +436,21 @@ export async function fetchAppRegistryCredentials(
     token,
   )
   return data.appRegistryCredentials
+}
+
+/** Turn a Studio into an App: the backend creates the managed repo and wires deploys. */
+export async function createStudioApp(
+  input: CreateStudioAppInput,
+  token: string | null,
+): Promise<App> {
+  const { orgId, ...rest } = input
+  const sent = orgId ? { ...rest, orgId } : rest
+  const data = await withAppFields((fields) =>
+    appsGql<{ createStudioApp: App }>(
+      `mutation ($input: CreateStudioAppInput!) { createStudioApp(input: $input) { ${fields} } }`,
+      { input: sent },
+      token,
+    ),
+  )
+  return data.createStudioApp
 }

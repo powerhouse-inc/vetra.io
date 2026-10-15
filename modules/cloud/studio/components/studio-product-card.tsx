@@ -2,6 +2,7 @@
 
 import { Boxes, Loader2, Moon } from 'lucide-react'
 import type { StudioProduct } from '../use-studio-products'
+import { MakeAppDialog } from './make-app-dialog'
 
 /**
  * A product in the grid.
@@ -15,7 +16,16 @@ import type { StudioProduct } from '../use-studio-products'
  * Brand metadata is cached server-side (myStudioProducts → obsDB) so the card
  * shows the real product name even while hibernated, with no per-card host fetch.
  */
-export function StudioProductCard({ product, href }: { product: StudioProduct; href: string }) {
+export function StudioProductCard({
+  product,
+  href,
+  locked = false,
+}: {
+  product: StudioProduct
+  href: string
+  /** No live Studio licence: the card stays listed but offers no actions. */
+  locked?: boolean
+}) {
   const isReady = product.status === 'ready'
   const isSleeping = product.status === 'sleeping'
   // Both ready and sleeping open the host; sleeping flows through the activator
@@ -88,11 +98,20 @@ export function StudioProductCard({ product, href }: { product: StudioProduct; h
     </>
   )
 
-  return canOpen ? (
+  const card = canOpen ? (
     <a href={href} target="_blank" rel="noopener noreferrer" className={cardClass}>
       {body}
     </a>
   ) : (
     <div className={cardClass}>{body}</div>
+  )
+
+  // The action sits beside the card link, not inside it: a button nested in an anchor is invalid.
+  if (locked || !canOpen) return card
+  return (
+    <div className="flex flex-col gap-2">
+      {card}
+      <MakeAppDialog studioEnvironmentId={product.envId} label={title} />
+    </div>
   )
 }

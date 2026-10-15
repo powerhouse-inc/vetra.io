@@ -130,6 +130,7 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
                 <StudioProductCard
                   key={p.envId}
                   product={p}
+                  locked={locked}
                   href={buildStudioEmbedUrl({
                     prefix: p.prefix,
                     genericSubdomain: p.subdomain,

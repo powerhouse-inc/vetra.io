@@ -59,6 +59,8 @@ export type App = {
   id: string
   /** Renown organisation owning the app; absent on older backends, null when personal. */
   ownerOrgId?: string | null
+  /** Studio this app was made from; absent on older backends. */
+  studioEnvironmentId?: string | null
   slug: string
   name: string
   ownerAddress: string
@@ -156,4 +158,11 @@ export type AppRegistryCredentials = {
   project: string
   username: string
   password: string
+}
+
+export type CreateStudioAppInput = {
+  name: string
+  studioEnvironmentId: string
+  /** Create the app for this organisation. */
+  orgId?: string | null
 }

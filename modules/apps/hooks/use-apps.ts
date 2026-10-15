@@ -10,6 +10,7 @@ import {
   confirmAppIdentity,
   connectGithubDeploy,
   createApp,
+  createStudioApp,
   deleteApp,
   fetchApp,
   fetchAppDeployments,
@@ -30,6 +31,7 @@ import type {
   App,
   AppDeployment,
   CreateAppInput,
+  CreateStudioAppInput,
   GithubDeployAppInfo,
   GithubDeployInstallation,
   GithubRepo,
@@ -183,6 +185,19 @@ export function useCreateApp() {
     onSuccess: (app) => {
       cacheApp(app)
       // The new production env shows up on the env lists via its own query.
+      void qc.invalidateQueries({ queryKey: ['environments'] })
+    },
+  })
+}
+
+export function useCreateStudioApp() {
+  const qc = useQueryClient()
+  const token = useTokenResolver()
+  const cacheApp = useCacheApp()
+  return useMutation({
+    mutationFn: async (input: CreateStudioAppInput) => createStudioApp(input, await token()),
+    onSuccess: (app) => {
+      cacheApp(app)
       void qc.invalidateQueries({ queryKey: ['environments'] })
     },
   })
