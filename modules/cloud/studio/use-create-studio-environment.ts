@@ -27,6 +27,8 @@ export type CreateStudioResult = {
   documentId: string
   subdomain: string
   tenantId: string
+  /** Set when the model could not be provisioned; creation still finished. */
+  provisionWarning?: string
 }
 
 /**
@@ -48,10 +50,10 @@ export function useCreateStudioEnvironment() {
     // Try to claim a pre-provisioned ("warm") env first. On null (pool empty,
     // no studio licence) fall through to cold provisioning.
     const token = await getAuthToken(renown)
-    if (token) {
-      const claimed = await claimStudioEnvironment(token)
-      if (claimed) return claimed
-    }
+    // Checked before anything is created: throwing later would orphan an env.
+    if (!token) throw new Error('Could not authenticate to provision the studio')
+    const claimed = await claimStudioEnvironment(token)
+    if (claimed) return claimed
 
     // Source the version live from the backend so a stale (cached) bundle
     // still cold-provisions the current CLI. Falls back to the bundled
@@ -92,8 +94,15 @@ export function useCreateStudioEnvironment() {
     // The Studio's model key (and session-export secret), server-side. A
     // licence without a budget or a deployment without a broker still finishes;
     // a real failure throws before approving, so nothing half-configured rolls.
-    if (!token) throw new Error('Could not authenticate to provision the studio')
-    await provisionStudioLlm(tenantId, token)
+    // Any failure here is non-fatal: the env already exists, so throwing would
+    // leave it stuck in CHANGES_PENDING and a retry would create a second one.
+    // Finish creation and surface a warning; the card says "Connect a model".
+    let provisionWarning: string | undefined
+    try {
+      await provisionStudioLlm(tenantId, token)
+    } catch {
+      provisionWarning = "Your Studio is up, but its model couldn't be connected yet."
+    }
 
     const githubChanges: ConfigChange[] = [
       { kind: 'setVar', name: 'VETRA_ENVIRONMENT_ID', value: documentId },
@@ -112,6 +121,6 @@ export function useCreateStudioEnvironment() {
     controller.approveChanges({})
     await controller.push()
 
-    return { documentId, subdomain, tenantId }
+    return { documentId, subdomain, tenantId, ...(provisionWarning ? { provisionWarning } : {}) }
   }, [signer, renown])
 }

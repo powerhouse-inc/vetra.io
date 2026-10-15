@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
+import { toast } from 'sonner'
 import { useDid, useUser } from '@powerhousedao/reactor-browser'
 import { fetchMyStudioProducts, type StudioProductSummary } from '@/modules/cloud/graphql'
 import { maxStudiosPerUser } from '@/modules/cloud/switchboard-url'
@@ -146,6 +147,7 @@ export function useStudioProducts(): StudioProductsState {
         return [...list, placeholder]
       })
       void queryClient.invalidateQueries({ queryKey: productsKey })
+      if (res.provisionWarning) toast.warning(res.provisionWarning)
       return res.documentId
     } catch (err) {
       setCreateError(err instanceof Error ? err.message : 'Failed to create product')

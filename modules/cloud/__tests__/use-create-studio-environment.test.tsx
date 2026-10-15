@@ -126,13 +126,19 @@ describe('useCreateStudioEnvironment', () => {
     },
   )
 
-  it('throws and does not approve when provisioning fails for real', async () => {
+  it('finishes creation with a warning when provisioning fails after the first push', async () => {
     const ctrl = mockController()
     vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
     vi.mocked(provisionStudioLlm).mockRejectedValue(new Error('network down'))
     const { result } = renderHook(() => useCreateStudioEnvironment())
-    await expect(result.current()).rejects.toThrow('network down')
-    expect(ctrl.approveChanges).not.toHaveBeenCalled()
+    let res: { documentId: string; provisionWarning?: string } | undefined
+    await act(async () => {
+      res = await result.current()
+    })
+    expect(ctrl.approveChanges).toHaveBeenCalledOnce()
+    expect(applyConfigChanges).toHaveBeenCalledOnce()
+    expect(res?.documentId).toBe(DOC)
+    expect(res?.provisionWarning).toMatch(/model/i)
   })
 
   it('refuses the cold path without a token', async () => {
@@ -140,6 +146,8 @@ describe('useCreateStudioEnvironment', () => {
     vi.mocked(getAuthToken).mockResolvedValue(null as never)
     const { result } = renderHook(() => useCreateStudioEnvironment())
     await expect(result.current()).rejects.toThrow(/authenticate/i)
+    expect(ctrl.push).not.toHaveBeenCalled()
+    expect(createNewEnvironmentController).not.toHaveBeenCalled()
     expect(ctrl.approveChanges).not.toHaveBeenCalled()
   })
 })
