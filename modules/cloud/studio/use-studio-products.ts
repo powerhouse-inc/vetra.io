@@ -10,6 +10,7 @@ import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
 import { useStudioAccess } from '@/modules/subscriptions/hooks/use-subscriptions'
 import { STUDIO_AGENT_PREFIX, STUDIO_ENV_LABEL } from './constants'
 import { type ProductStatus, studioPollIntervalMs } from './studio-readiness'
+import { showMissingKeyNotice } from './missing-key-notice'
 import { useCreateStudioEnvironment } from './use-create-studio-environment'
 
 export type StudioGate = 'loading' | 'unauthenticated' | 'ready'
@@ -160,6 +161,7 @@ export function useStudioProducts(): StudioProductsState {
           return [...list, placeholder]
         })
         void queryClient.invalidateQueries({ queryKey: productsKey })
+        if (res.missingKey) showMissingKeyNotice(res.documentId)
         return res.documentId
       } catch (err) {
         setCreateError(err instanceof Error ? err.message : 'Failed to create product')

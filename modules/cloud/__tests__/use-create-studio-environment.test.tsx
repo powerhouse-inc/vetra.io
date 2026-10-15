@@ -149,14 +149,39 @@ describe('useCreateStudioEnvironment', () => {
     expect(res?.tenantId).toBe('warm-newt-75-aa726a95')
   })
 
-  it('throws when no key is passed and the code carries none', async () => {
-    mockController()
+  it('finishes creation and flags missingKey when the code carries no key', async () => {
+    const ctrl = mockController()
     vi.mocked(claimStudioEnvironment).mockResolvedValue(null) // pool empty → cold path
     vi.mocked(applyStudioKey).mockResolvedValue(false)
 
     const { result } = renderHook(() => useCreateStudioEnvironment())
-    await expect(result.current()).rejects.toThrow(/no anthropic api key/i)
-    expect(applyConfigChanges).not.toHaveBeenCalled()
+    let res: { documentId: string; missingKey?: boolean } | undefined
+    await act(async () => {
+      res = await result.current()
+    })
+
+    expect(applyConfigChanges).toHaveBeenCalledOnce() // github vars still set
+    expect(ctrl.approveChanges).toHaveBeenCalledOnce()
+    expect(ctrl.push).toHaveBeenCalledTimes(2)
+    expect(res).toEqual({
+      documentId: 'aa726a95-1111-2222-3333-444455556666',
+      subdomain: 'warm-newt-75',
+      tenantId: 'warm-newt-75-aa726a95',
+      missingKey: true,
+    })
+  })
+
+  it('does not flag missingKey when the key was injected', async () => {
+    mockController()
+    vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
+    vi.mocked(applyStudioKey).mockResolvedValue(true)
+
+    const { result } = renderHook(() => useCreateStudioEnvironment())
+    let res: { missingKey?: boolean } | undefined
+    await act(async () => {
+      res = await result.current()
+    })
+    expect(res?.missingKey).toBeFalsy()
   })
 
   it('claims a warm env on the invite-code path without running the controller', async () => {

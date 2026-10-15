@@ -24,7 +24,13 @@ import {
   STUDIO_SERVICE_COMMAND,
 } from './constants'
 
-export type CreateStudioResult = { documentId: string; subdomain: string; tenantId: string }
+export type CreateStudioResult = {
+  documentId: string
+  subdomain: string
+  tenantId: string
+  /** True when no Claude key could be supplied; the studio still boots, but the agent can't answer. */
+  missingKey?: boolean
+}
 
 /**
  * Provisions a dedicated Vetra Studio environment: a single vetra-cli CLINT
@@ -93,6 +99,7 @@ export function useCreateStudioEnvironment() {
       const documentId = result.remoteDocument.id
       const tenantId = deriveTenantId(subdomain, documentId)
 
+      let missingKey = false
       if (input.anthropicApiKey) {
         // Manual entry / fallback: write the provided key client-side.
         const changes: ConfigChange[] = STUDIO_ANTHROPIC_SECRET_NAMES.map((name) => ({
@@ -113,9 +120,9 @@ export function useCreateStudioEnvironment() {
         const token = await getAuthToken(renown)
         if (!token) throw new Error('Could not authenticate to provision the studio key')
         const injected = await applyStudioKey(tenantId, [...STUDIO_ANTHROPIC_SECRET_NAMES], token)
-        if (!injected) {
-          throw new Error('No Anthropic API key is available for your studio licence')
-        }
+        // No key on the licence: carry on so the env isn't left CHANGES_PENDING;
+        // the caller tells the user to add ANTHROPIC_API_KEY under Secrets.
+        if (!injected) missingKey = true
       }
 
       const githubChanges: ConfigChange[] = [
@@ -135,7 +142,7 @@ export function useCreateStudioEnvironment() {
       controller.approveChanges({})
       await controller.push()
 
-      return { documentId, subdomain, tenantId }
+      return { documentId, subdomain, tenantId, ...(missingKey ? { missingKey: true } : {}) }
     },
     [signer, renown],
   )
