@@ -101,6 +101,8 @@ export function describeAppsError(err: unknown): string {
   }
 }
 
+const ROLE_REFUSAL = /publisher role|all its apps/i
+
 /** createApp-specific copy: FORBIDDEN there means the user can't access the repo on GitHub. */
 export function describeCreateAppError(
   err: unknown,
@@ -108,11 +110,7 @@ export function describeCreateAppError(
   orgName?: string | null,
 ): string {
   // The server words its refusals; tell the role refusal from GitHub repo access by message.
-  if (
-    err instanceof AppsApiError &&
-    err.code === 'FORBIDDEN' &&
-    /publisher role|all its apps/i.test(err.message)
-  ) {
+  if (err instanceof AppsApiError && err.code === 'FORBIDDEN' && ROLE_REFUSAL.test(err.message)) {
     return `You need the publisher role with access to all apps of ${orgName ?? 'this organisation'} to create apps there. Ask an owner or admin.`
   }
   if (
@@ -127,6 +125,15 @@ export function describeCreateAppError(
   }
   if (isAppsError(err, 'GITHUB_NOT_CONNECTED')) {
     return 'Your GitHub authorization expired. Reconnect GitHub, then create the app again.'
+  }
+  return describeAppsError(err)
+}
+
+/** createStudioApp copy: keep the server's own FORBIDDEN wording ("You do not own this Studio"). */
+export function describeCreateStudioAppError(err: unknown, orgName?: string | null): string {
+  if (isAppsError(err, 'FORBIDDEN') && err instanceof Error) {
+    if (ROLE_REFUSAL.test(err.message)) return describeCreateAppError(err, '', orgName)
+    if (err.message.trim()) return err.message
   }
   return describeAppsError(err)
 }

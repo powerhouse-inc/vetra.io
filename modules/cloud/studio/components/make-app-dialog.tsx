@@ -3,8 +3,9 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 
-import { describeAppsError } from '@/modules/apps/graphql'
+import { describeCreateStudioAppError } from '@/modules/apps/graphql'
 import { useCreateStudioApp } from '@/modules/apps/hooks/use-apps'
+import { canOfferCreateApp } from '@/modules/orgs/types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
@@ -54,24 +55,28 @@ function MakeAppForm({
   label: string
 }) {
   const router = useRouter()
-  const { orgId } = useActiveOrg()
+  const { orgId, org } = useActiveOrg()
   const createApp = useCreateStudioApp()
   const [name, setName] = useState(label)
   const [error, setError] = useState<string | null>(null)
   const [done, setDone] = useState(false)
   const busy = createApp.isPending || done
   const trimmed = name.trim()
+  // An org context still loading cannot create: its role is unknown.
+  const orgPending = !!orgId && !org
+  const roleBlocked = !!org && !canOfferCreateApp(org.role)
+  const blocked = orgPending || roleBlocked
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!trimmed || busy) return
+    if (!trimmed || busy || blocked) return
     setError(null)
     try {
       const app = await createApp.mutateAsync({ name: trimmed, studioEnvironmentId, orgId })
       setDone(true)
       router.push(`/user/apps/${app.id}`)
     } catch (err) {
-      setError(describeAppsError(err))
+      setError(describeCreateStudioAppError(err, org?.name))
     }
   }
 
@@ -93,13 +98,18 @@ function MakeAppForm({
           onChange={(e) => setName(e.target.value)}
         />
       </div>
+      {roleBlocked && org && (
+        <p role="alert" className="bg-destructive/10 text-destructive rounded-lg px-4 py-3 text-sm">
+          Ask an owner or admin of {org.name} to create apps.
+        </p>
+      )}
       {error && (
         <p role="alert" className="text-destructive text-sm">
           {error}
         </p>
       )}
       <DialogFooter>
-        <Button type="submit" disabled={!trimmed || busy}>
+        <Button type="submit" disabled={!trimmed || busy || blocked}>
           {busy ? 'Creating…' : 'Create App'}
         </Button>
       </DialogFooter>
