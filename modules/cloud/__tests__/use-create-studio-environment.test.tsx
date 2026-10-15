@@ -20,6 +20,7 @@ vi.mock('@/modules/subscriptions/graphql', () => ({ applyStudioKey: vi.fn() }))
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { createNewEnvironmentController } from '@/modules/cloud/controller'
 import { applyConfigChanges } from '@/modules/cloud/config/apply'
+import { getAuthToken } from '@/modules/cloud/graphql'
 import { claimStudioEnvironment } from '@/modules/cloud/studio/pool-client'
 import { applyStudioKey } from '@/modules/subscriptions/graphql'
 import { STUDIO_AGENT_PACKAGE, STUDIO_AGENT_VERSION } from '@/modules/cloud/studio/constants'
@@ -169,6 +170,27 @@ describe('useCreateStudioEnvironment', () => {
       tenantId: 'warm-newt-75-aa726a95',
       missingKey: true,
     })
+  })
+
+  it('still throws and does not approve when authentication yields no token', async () => {
+    const ctrl = mockController()
+    vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
+    vi.mocked(getAuthToken).mockResolvedValue(null)
+
+    const { result } = renderHook(() => useCreateStudioEnvironment())
+    await expect(result.current()).rejects.toThrow(/authenticate/i)
+    expect(ctrl.approveChanges).not.toHaveBeenCalled()
+    vi.mocked(getAuthToken).mockResolvedValue('tok')
+  })
+
+  it('still throws and does not approve when applyStudioKey rejects', async () => {
+    const ctrl = mockController()
+    vi.mocked(claimStudioEnvironment).mockResolvedValue(null)
+    vi.mocked(applyStudioKey).mockRejectedValue(new Error('network down'))
+
+    const { result } = renderHook(() => useCreateStudioEnvironment())
+    await expect(result.current()).rejects.toThrow('network down')
+    expect(ctrl.approveChanges).not.toHaveBeenCalled()
   })
 
   it('does not flag missingKey when the key was injected', async () => {
