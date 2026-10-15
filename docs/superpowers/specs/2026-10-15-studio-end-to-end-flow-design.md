@@ -60,7 +60,7 @@ Speed stays where it matters (the inner loop needs no CI). Every environment out
    - create the Harbor project `app-<slug>` and its robot;
    - set the repo variable `VETRA_APP_ID`, so the workflow template stays generic (it matches `vars.VETRA_APP_ID` in the unmerged codegen branch);
    - link the environments:
-     - the claimed Studio environment, with a new role `STUDIO`;
+     - the claimed Studio environment, recorded as `apps.studio_environment_id`. The Studio is not app-linked, so CI can never deploy into it;
      - the production environment, created lazily on the first merge rather than up front, so nobody pays for an empty prod;
    - the App is `private` by default (as in the exploration spec).
 
@@ -86,7 +86,7 @@ Speed stays where it matters (the inner loop needs no CI). Every environment out
 | Area                                             | Change                                                                                                                                                                                                                              |
 | ------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | GitHub Apps                                      | **Merge into one App.** `vetra-deploy` gains repo creation (Administration: write, Variables: write, Contents: write). `vetra-studio` and `vetra-github-auth`'s device flow are retired. One install, one webhook, one setup URL; fix the staging setup URL that points at prod. |
-| `vetra-cloud-package` / `vetra-apps`             | `createStudioApp`. Env link role `STUDIO`. Lazy production environment on the first PRODUCTION deploy. Store the GitHub installation on the App row (it already lives in relational tables).                                        |
+| `vetra-cloud-package` / `vetra-apps`             | `createStudioApp`. Record the Studio as `apps.studio_environment_id`; it is not app-linked, so CI can never deploy into it. Lazy production environment on the first PRODUCTION deploy. Store the GitHub installation on the App row (it already lives in relational tables).                                        |
 | `vetra-cli` (agent)                              | Work-branch checkpointing, `github-clone` on boot, "preview" opens a PR, "ship" merges. **Remove** `deploy-create` / `deploy-update` / `deployProject` from the agent's toolset (or gate them to non-App sandboxes).               |
 | `powerhouse` codegen                             | Land `vetra.yml` in `ph init` (branch `feat/codegen-vetra-workflow`).                                                                                                                                                              |
 | vetra.io                                         | Studio start screen creates an App. The Studio Deploy tab shows PR, preview and production status from the App. `/user/apps/new` becomes "Import a repo". Delete the dead `NEXT_PUBLIC_GITHUB_APP_SLUG`.                         |
@@ -110,7 +110,7 @@ Costs: private-repo Actions minutes in the managed org are billed to Vetra. Miti
 
 ## Migration
 
-- **Existing Studio environments with a `vetra-studio` repo:** offer "Turn into App". It reuses the repo, opens the setup PR (the existing path) and switches the environment link to `STUDIO`.
+- **Existing Studio environments with a `vetra-studio` repo:** offer "Turn into App". It reuses the repo, opens the setup PR (the existing path) and records the Studio as `apps.studio_environment_id`. The Studio is not app-linked, so CI can never deploy into it.
 - **Studio environments without a repo:** "Turn into App" creates one and pushes the current workdir as the first commit.
 - **Retire `vetra-studio`** once there are no active device-flow bindings.
 
@@ -120,7 +120,7 @@ Each step is independently shippable.
 
 1. **One GitHub App.** Add the permissions to `vetra-deploy` and move repo creation into `vetra-apps`. Fix the staging setup URL.
 2. **`vetra.yml` in `ph init`.** Land the codegen branch.
-3. **`createStudioApp` and the `STUDIO` role, plus the vetra.io start screen.** This is the minimum viable end-to-end flow: a new Studio project becomes an App with a repo and a working workflow.
+3. **`createStudioApp` and the Studio link, plus the vetra.io start screen.** The App records the Studio as `apps.studio_environment_id`; the Studio is not app-linked, so CI can never deploy into it. This is the minimum viable end-to-end flow: a new Studio project becomes an App with a repo and a working workflow.
 4. **Agent git loop.** Checkpoints, clone on boot, Preview opens a PR, Ship merges.
 5. **Retire direct deploy from the agent.** Lazy production environment.
 6. **Managed org and "Take ownership".**
