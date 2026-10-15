@@ -140,7 +140,7 @@ const READS: Read[] = [
       'expiresAt',
       'maxUses',
       'redemptions',
-      'hasAnthropicKey',
+      'llmBudgetUsd',
       'createdAt',
     ],
   },

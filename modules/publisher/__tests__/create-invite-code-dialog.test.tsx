@@ -37,7 +37,7 @@ const made: PublisherInviteCode = {
   expiresAt: null,
   maxUses: null,
   redemptions: 0,
-  hasAnthropicKey: false,
+  llmBudgetUsd: null,
   createdAt: '2026-10-08T00:00:00Z',
 }
 
@@ -56,7 +56,7 @@ describe('CreateInviteCodeDialog', () => {
       expiresAt: null,
       maxUses: null,
       redemptions: 0,
-      hasAnthropicKey: false,
+      llmBudgetUsd: null,
       createdAt: '2026-10-08T00:00:00Z',
     })
     render(<CreateInviteCodeDialog appId="app-1" plans={plans} open onOpenChange={vi.fn()} />)
@@ -68,7 +68,7 @@ describe('CreateInviteCodeDialog', () => {
     expect(screen.getByText(`${window.location.origin}/redeem/LFC_2026-vip`)).toBeTruthy()
   })
 
-  it('sends the Claude key once and never shows it again', async () => {
+  it('sends the monthly LLM budget and shows it on the ready view', async () => {
     create.mockResolvedValue({
       code: 'K-1234',
       kind: 'conf',
@@ -77,17 +77,16 @@ describe('CreateInviteCodeDialog', () => {
       expiresAt: null,
       maxUses: null,
       redemptions: 0,
-      hasAnthropicKey: true,
+      llmBudgetUsd: 20,
       createdAt: '2026-10-08T00:00:00Z',
     })
     render(<CreateInviteCodeDialog appId="app-1" plans={plans} open onOpenChange={vi.fn()} />)
-    fireEvent.change(screen.getByLabelText('Claude API key (optional)'), {
-      target: { value: 'sk-ant-secret' },
+    fireEvent.change(screen.getByLabelText('Monthly LLM budget (USD, optional)'), {
+      target: { value: '20' },
     })
     await act(async () => fireEvent.click(screen.getByRole('button', { name: 'Create code' })))
-    expect(create).toHaveBeenCalledWith(expect.objectContaining({ anthropicKey: 'sk-ant-secret' }))
-    expect(document.body.innerHTML).not.toContain('sk-ant-secret')
-    expect(screen.getByText(/includes a claude key/i)).toBeTruthy()
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ llmBudgetUsd: 20 }))
+    expect(screen.getByText(/\$20\.00 \/ month of LLM usage/i)).toBeTruthy()
   })
 
   it('keeps the form and explains when the create fails', async () => {
@@ -157,7 +156,7 @@ describe('CreateInviteCodeDialog', () => {
       expiresAt: null,
       maxUses: 10,
       redemptions: 0,
-      hasAnthropicKey: false,
+      llmBudgetUsd: null,
       createdAt: '2026-10-08T00:00:00Z',
     })
     render(<CreateInviteCodeDialog appId="app-1" plans={plans} open onOpenChange={vi.fn()} />)
@@ -178,10 +177,8 @@ describe('CreateInviteCodeDialog', () => {
     expect(screen.getByText(/\/redeem\/VIP-2026$/)).toBeTruthy()
   })
 
-  it('never shows the Claude key back after typing it', () => {
+  it('has no Claude key field any more', () => {
     render(<CreateInviteCodeDialog appId="app-1" plans={plans} open onOpenChange={vi.fn()} />)
-    expect((screen.getByLabelText('Claude API key (optional)') as HTMLInputElement).type).toBe(
-      'password',
-    )
+    expect(screen.queryByLabelText(/claude api key/i)).toBeNull()
   })
 })

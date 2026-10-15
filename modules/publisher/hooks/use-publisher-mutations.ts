@@ -147,10 +147,10 @@ export const useSetInviteCodeActive = (appId: string) =>
     ['inviteCodes'],
   )
 
-export const useSetInviteCodeAnthropicKey = (appId: string) =>
-  usePublisherMutation<{ code: string; anthropicKey: string | null }, boolean>(
+export const useSetInviteCodeLlmBudget = (appId: string) =>
+  usePublisherMutation<{ code: string; llmBudgetUsd: number | null }, boolean>(
     appId,
-    (v, t) => api.setInviteCodeAnthropicKey({ appId, ...v }, t),
+    (v, t) => api.setInviteCodeLlmBudget({ appId, ...v }, t),
     ['inviteCodes'],
   )
 

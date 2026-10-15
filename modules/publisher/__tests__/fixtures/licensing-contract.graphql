@@ -121,6 +121,7 @@ type PublisherInviteCode {
   maxUses: Int
   redemptions: Int!
   hasAnthropicKey: Boolean!
+  llmBudgetUsd: Float
   createdAt: String!
 }
 
@@ -209,6 +210,7 @@ input CreateInviteCodeInput {
   maxUses: Int
   "Write-only; stored encrypted, never returned."
   anthropicKey: String
+  llmBudgetUsd: Float
 }
 
 type VetraPublisherQueries {
@@ -240,6 +242,7 @@ type VetraPublisherMutations {
   createInviteCode(input: CreateInviteCodeInput!): PublisherInviteCode!
   setInviteCodeActive(appId: String!, code: String!, active: Boolean!): Boolean!
   setInviteCodeAnthropicKey(appId: String!, code: String!, anthropicKey: String): Boolean!
+  setInviteCodeLlmBudget(appId: String!, code: String!, llmBudgetUsd: Float): Boolean!
   addToAllowList(appId: String!, user: String!): Boolean!
   removeFromAllowList(appId: String!, user: String!): Boolean!
   updateAppProfile(input: UpdateAppProfileInput!): Boolean!
@@ -306,6 +309,7 @@ type StudioAccess {
   licenseId: String
   expires: String
   hasAttachedKey: Boolean!
+  llmBudgetUsd: Float!
 }
 
 input RedeemInviteCodeInput {

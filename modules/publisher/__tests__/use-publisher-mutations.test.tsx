@@ -7,7 +7,7 @@ const addTemplate = vi.fn()
 const issueGrant = vi.fn()
 const publishTerm = vi.fn()
 const setInviteCodeActive = vi.fn()
-const setInviteCodeAnthropicKey = vi.fn()
+const setInviteCodeLlmBudget = vi.fn()
 
 vi.mock('../graphql', async (orig) => ({
   ...(await orig<typeof import('../graphql')>()),
@@ -15,7 +15,7 @@ vi.mock('../graphql', async (orig) => ({
   issueGrant: (...a: unknown[]) => issueGrant(...a),
   publishTerm: (...a: unknown[]) => publishTerm(...a),
   setInviteCodeActive: (...a: unknown[]) => setInviteCodeActive(...a),
-  setInviteCodeAnthropicKey: (...a: unknown[]) => setInviteCodeAnthropicKey(...a),
+  setInviteCodeLlmBudget: (...a: unknown[]) => setInviteCodeLlmBudget(...a),
 }))
 vi.mock('../hooks/use-publisher', () => ({ usePublisherToken: () => async () => 'tok' }))
 
@@ -24,7 +24,7 @@ import {
   useIssueGrant,
   usePublishTerm,
   useSetInviteCodeActive,
-  useSetInviteCodeAnthropicKey,
+  useSetInviteCodeLlmBudget,
 } from '../hooks/use-publisher-mutations'
 
 function setup() {
@@ -93,15 +93,15 @@ describe('publisher mutation hooks', () => {
     )
   })
 
-  it('setting a code key binds the appId and refreshes invite codes', async () => {
-    setInviteCodeAnthropicKey.mockResolvedValue(true)
+  it('setting a code budget binds the appId and refreshes invite codes', async () => {
+    setInviteCodeLlmBudget.mockResolvedValue(true)
     const { Wrapper, invalidated } = setup()
-    const { result } = renderHook(() => useSetInviteCodeAnthropicKey('app-1'), { wrapper: Wrapper })
+    const { result } = renderHook(() => useSetInviteCodeLlmBudget('app-1'), { wrapper: Wrapper })
     await act(async () => {
-      await result.current.mutateAsync({ code: 'C', anthropicKey: null })
+      await result.current.mutateAsync({ code: 'C', llmBudgetUsd: null })
     })
-    expect(setInviteCodeAnthropicKey).toHaveBeenCalledWith(
-      { appId: 'app-1', code: 'C', anthropicKey: null },
+    expect(setInviteCodeLlmBudget).toHaveBeenCalledWith(
+      { appId: 'app-1', code: 'C', llmBudgetUsd: null },
       'tok',
     )
     expect(invalidated()).toEqual([['publisher', 'inviteCodes', 'app-1']])

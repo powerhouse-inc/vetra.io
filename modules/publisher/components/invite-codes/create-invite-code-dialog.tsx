@@ -34,6 +34,7 @@ import {
 import { useCreateInviteCode } from '../../hooks/use-publisher-mutations'
 import { termName } from '../../lib/format'
 import {
+  budgetText,
   inviteCodeInput,
   inviteCodeSchema,
   redeemUrl,
@@ -48,7 +49,7 @@ const EMPTY: InviteCodeForm = {
   code: '',
   maxUses: '',
   expiresOn: '',
-  anthropicKey: '',
+  llmBudgetUsd: '',
 }
 
 export function CreateInviteCodeDialog({
@@ -103,7 +104,6 @@ export function CreateInviteCodeDialog({
       const code = await create.mutateAsync(inviteCodeInput(v))
       if (session.current !== mine || !openRef.current) return
       setCreated(code)
-      // The Claude key is write-only: drop it from the form as soon as it is sent.
       form.reset({ ...EMPTY, kind: only })
     }, 'Invite code created')
   }
@@ -130,9 +130,9 @@ export function CreateInviteCodeDialog({
               <p className="bg-muted rounded-lg px-3 py-4 text-center font-mono text-2xl font-semibold tracking-wide break-all">
                 {created.code}
               </p>
-              {created.hasAnthropicKey && (
+              {created.llmBudgetUsd != null && created.llmBudgetUsd > 0 && (
                 <p className="text-muted-foreground text-center text-sm">
-                  Includes a Claude key for Vetra Studio plans.
+                  Includes {budgetText(created)} of LLM usage for Vetra Studio plans.
                 </p>
               )}
               <div className="border-border flex items-center gap-2 rounded-lg border px-3 py-2">
@@ -256,21 +256,16 @@ export function CreateInviteCodeDialog({
                 </div>
                 <FormField
                   control={form.control}
-                  name="anthropicKey"
+                  name="llmBudgetUsd"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Claude API key (optional)</FormLabel>
+                      <FormLabel>Monthly LLM budget (USD, optional)</FormLabel>
                       <FormControl>
-                        <Input
-                          type="password"
-                          autoComplete="off"
-                          placeholder="sk-ant-…"
-                          {...field}
-                        />
+                        <Input inputMode="decimal" placeholder="Plan default" {...field} />
                       </FormControl>
                       <FormDescription>
-                        For Vetra Studio plans: people who redeem get this key in their studio.
-                        Stored encrypted and never shown again.
+                        For Vetra Studio plans: each Studio redeemed from this code gets a model key
+                        capped at this amount per month. 0 means no Vetra key.
                       </FormDescription>
                       <FormMessage />
                     </FormItem>

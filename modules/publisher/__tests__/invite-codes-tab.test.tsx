@@ -30,7 +30,7 @@ vi.mock('../hooks/use-publisher', () => ({
 vi.mock('../hooks/use-publisher-mutations', () => ({
   useCreateInviteCode: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSetInviteCodeActive: () => ({ mutateAsync: setActive, isPending: false }),
-  useSetInviteCodeAnthropicKey: () => ({ mutateAsync: vi.fn(), isPending: false }),
+  useSetInviteCodeLlmBudget: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
 
 import { InviteCodesTab } from '../components/invite-codes/invite-codes-tab'
@@ -43,7 +43,7 @@ const code = (over: Partial<PublisherInviteCode> = {}): PublisherInviteCode => (
   expiresAt: null,
   maxUses: 50,
   redemptions: 12,
-  hasAnthropicKey: true,
+  llmBudgetUsd: 20,
   createdAt: '2026-10-01T00:00:00Z',
   ...over,
 })
@@ -85,7 +85,7 @@ describe('InviteCodesTab', () => {
     expect(within(row).getByText('12 of 50')).toBeTruthy()
     expect(within(row).getByText('Conference')).toBeTruthy()
     expect(within(row).getByText('Active')).toBeTruthy()
-    expect(within(row).getByLabelText('Includes a Claude key')).toBeTruthy()
+    expect(within(row).getByText('$20.00 / month')).toBeTruthy()
     expect(within(row).getByRole('button', { name: /copy redeem link/i })).toBeTruthy()
   })
 
@@ -124,5 +124,13 @@ describe('InviteCodesTab', () => {
     codes = [code({ code: 'Team_A-1' })]
     render(<InviteCodesTab appId="app-1" />)
     expect(screen.getByRole('button', { name: 'Copy redeem link for Team_A-1' })).toBeTruthy()
+  })
+
+  it('offers Set budget instead of Set Claude key', () => {
+    codes = [code()]
+    render(<InviteCodesTab appId="app-1" />)
+    const row = screen.getByTestId('code-LFC_2026-vip')
+    expect(within(row).getByRole('button', { name: 'Set budget for LFC_2026-vip' })).toBeTruthy()
+    expect(within(row).queryByRole('button', { name: /claude key/i })).toBeNull()
   })
 })

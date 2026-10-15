@@ -124,15 +124,15 @@ const CALLS: Record<string, (f: publisher.FetchLike) => Promise<unknown>> = {
         maxUses: 5,
         expiresAt: null,
         code: 'VIP-2026',
-        anthropicKey: 'k',
+        llmBudgetUsd: 20,
       },
       't',
       f,
     ),
   setInviteCodeActive: (f) =>
     publisher.setInviteCodeActive({ appId: A, code: 'VIP-2026', active: false }, 't', f),
-  setInviteCodeAnthropicKey: (f) =>
-    publisher.setInviteCodeAnthropicKey({ appId: A, code: 'VIP-2026', anthropicKey: null }, 't', f),
+  setInviteCodeLlmBudget: (f) =>
+    publisher.setInviteCodeLlmBudget({ appId: A, code: 'VIP-2026', llmBudgetUsd: null }, 't', f),
   addToAllowList: (f) =>
     publisher.addToAllowList({ appId: A, user: '0x' + 'a'.repeat(40) }, 't', f),
   removeFromAllowList: (f) =>

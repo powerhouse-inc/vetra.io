@@ -1,6 +1,6 @@
 'use client'
 
-import { KeyRound, Plus, RefreshCw, Ticket } from 'lucide-react'
+import { Coins, Plus, RefreshCw, Ticket } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { CopyButton } from '@/modules/apps/components/copy-button'
@@ -20,19 +20,19 @@ import {
 import { usePublisherInviteCodes, usePublisherTerms } from '../../hooks/use-publisher'
 import { useSetInviteCodeActive } from '../../hooks/use-publisher-mutations'
 import { termName } from '../../lib/format'
-import { codePlans, redeemUrl, usesText } from '../../lib/invite-codes'
+import { budgetText, codePlans, redeemUrl, usesText } from '../../lib/invite-codes'
 import { runWithToast } from '../../lib/run'
 import { inviteCodeState, inviteCodeStatusMeta } from '../../lib/status'
 import { EmptyState, TabError, TabHeader, TabSkeleton } from '../primitives'
 import { CreateInviteCodeDialog } from './create-invite-code-dialog'
-import { SetInviteCodeKeyDialog } from './set-invite-code-key-dialog'
+import { SetInviteCodeBudgetDialog } from './set-invite-code-budget-dialog'
 
 export function InviteCodesTab({ appId }: { appId: string }) {
   const codes = usePublisherInviteCodes(appId)
   const terms = usePublisherTerms(appId)
   const setActive = useSetInviteCodeActive(appId)
   const [creating, setCreating] = useState(false)
-  const [keyCode, setKeyCode] = useState<string | null>(null)
+  const [budgetCode, setBudgetCode] = useState<string | null>(null)
   const list = codes.data ?? []
   const termList = terms.data ?? []
   const plans = codePlans(termList)
@@ -108,15 +108,7 @@ export function InviteCodesTab({ appId }: { appId: string }) {
                     <TableCell className="pl-4">
                       <div className="flex items-center gap-2">
                         <span className="font-mono text-sm font-semibold">{c.code}</span>
-                        {c.hasAnthropicKey && (
-                          <span
-                            role="img"
-                            aria-label="Includes a Claude key"
-                            title="Includes a Claude key"
-                          >
-                            <KeyRound className="text-muted-foreground h-3.5 w-3.5" aria-hidden />
-                          </span>
-                        )}
+                        <span className="text-muted-foreground text-xs">{budgetText(c)}</span>
                       </div>
                       {c.label && <p className="text-muted-foreground text-xs">{c.label}</p>}
                     </TableCell>
@@ -140,11 +132,11 @@ export function InviteCodesTab({ appId }: { appId: string }) {
                         <Button
                           variant="ghost"
                           size="sm"
-                          aria-label={`Set Claude key for ${c.code}`}
-                          onClick={() => setKeyCode(c.code)}
+                          aria-label={`Set budget for ${c.code}`}
+                          onClick={() => setBudgetCode(c.code)}
                         >
-                          <KeyRound className="h-4 w-4" aria-hidden />
-                          Set Claude key
+                          <Coins className="h-4 w-4" aria-hidden />
+                          Set budget
                         </Button>
                         <Switch
                           checked={c.active}
@@ -172,12 +164,13 @@ export function InviteCodesTab({ appId }: { appId: string }) {
         open={creating}
         onOpenChange={setCreating}
       />
-      <SetInviteCodeKeyDialog
+      <SetInviteCodeBudgetDialog
         appId={appId}
-        code={keyCode ?? ''}
-        open={keyCode !== null}
+        code={budgetCode ?? ''}
+        current={list.find((c) => c.code === budgetCode)?.llmBudgetUsd ?? null}
+        open={budgetCode !== null}
         onOpenChange={(o) => {
-          if (!o) setKeyCode(null)
+          if (!o) setBudgetCode(null)
         }}
       />
     </div>

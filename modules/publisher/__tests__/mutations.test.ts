@@ -92,15 +92,15 @@ describe('createInviteCode', () => {
       expiresAt: null,
       maxUses: 50,
       redemptions: 0,
-      hasAnthropicKey: true,
+      llmBudgetUsd: 20,
       createdAt: '2026-10-08T00:00:00Z',
     }
     const { calls, fetchImpl } = capture({ vetraPublisher: { createInviteCode: code } })
-    const input = { appId: 'a', kind: 'conf', anthropicKey: 'sk-secret', maxUses: 50 }
+    const input = { appId: 'a', kind: 'conf', llmBudgetUsd: 20, maxUses: 50 }
     await expect(api.createInviteCode(input, 't', fetchImpl)).resolves.toEqual(code)
     expect(calls[0].query).toContain('($input: CreateInviteCodeInput!)')
     expect(calls[0].query).toContain('createInviteCode(input: $input) {')
-    expect(calls[0].query).not.toContain('anthropicKey')
+    expect(calls[0].query).toContain('llmBudgetUsd')
     expect(calls[0].variables).toEqual({ input })
   })
 })
@@ -131,16 +131,16 @@ const ARG_WRITES: Array<[keyof typeof api, Record<string, unknown>, string, stri
     'setInviteCodeActive(appId: $appId, code: $code, active: $active)',
   ],
   [
-    'setInviteCodeAnthropicKey',
-    { appId: 'a', code: 'C', anthropicKey: 'sk-ant-x' },
-    '($appId: String!, $code: String!, $anthropicKey: String)',
-    'setInviteCodeAnthropicKey(appId: $appId, code: $code, anthropicKey: $anthropicKey)',
+    'setInviteCodeLlmBudget',
+    { appId: 'a', code: 'C', llmBudgetUsd: 20 },
+    '($appId: String!, $code: String!, $llmBudgetUsd: Float)',
+    'setInviteCodeLlmBudget(appId: $appId, code: $code, llmBudgetUsd: $llmBudgetUsd)',
   ],
   [
-    'setInviteCodeAnthropicKey',
-    { appId: 'a', code: 'C', anthropicKey: null },
-    '($appId: String!, $code: String!, $anthropicKey: String)',
-    'setInviteCodeAnthropicKey(appId: $appId, code: $code, anthropicKey: $anthropicKey)',
+    'setInviteCodeLlmBudget',
+    { appId: 'a', code: 'C', llmBudgetUsd: null },
+    '($appId: String!, $code: String!, $llmBudgetUsd: Float)',
+    'setInviteCodeLlmBudget(appId: $appId, code: $code, llmBudgetUsd: $llmBudgetUsd)',
   ],
   [
     'addToAllowList',

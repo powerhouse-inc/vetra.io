@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import {
   CODE_PATTERN,
+  budgetText,
   codePlans,
   endOfDayIso,
   inviteCodeInput,
@@ -76,8 +77,8 @@ describe('invite codes', () => {
     ).toEqual(['a'])
   })
 
-  it('omits the code and key when left empty, so the server generates the code', () => {
-    const form = { kind: 'conf', label: '', code: '', maxUses: '', expiresOn: '', anthropicKey: '' }
+  it('omits the code and the budget when left empty, so the server generates the code and the plan default applies', () => {
+    const form = { kind: 'conf', label: '', code: '', maxUses: '', expiresOn: '', llmBudgetUsd: '' }
     expect(inviteCodeSchema.safeParse(form).success).toBe(true)
     expect(inviteCodeInput(form)).toEqual({
       kind: 'conf',
@@ -86,11 +87,11 @@ describe('invite codes', () => {
       expiresAt: null,
     })
     expect(
-      inviteCodeInput({ ...form, code: ' VIP-2026 ', maxUses: '50', anthropicKey: ' sk-ant ' }),
+      inviteCodeInput({ ...form, code: ' VIP-2026 ', maxUses: '50', llmBudgetUsd: ' 20.5 ' }),
     ).toMatchObject({
       code: 'VIP-2026',
       maxUses: 50,
-      anthropicKey: 'sk-ant',
+      llmBudgetUsd: 20.5,
     })
   })
 
@@ -101,7 +102,7 @@ describe('invite codes', () => {
       code: '',
       maxUses: '0',
       expiresOn: '2000-01-01',
-      anthropicKey: '',
+      llmBudgetUsd: '',
     }
     const result = inviteCodeSchema.safeParse(form)
     expect(result.success).toBe(false)
@@ -110,12 +111,25 @@ describe('invite codes', () => {
   })
 
   it('caps the number of uses and explains the code length', () => {
-    const form = { kind: 'conf', label: '', code: '', maxUses: '', expiresOn: '', anthropicKey: '' }
+    const form = { kind: 'conf', label: '', code: '', maxUses: '', expiresOn: '', llmBudgetUsd: '' }
     expect(inviteCodeSchema.safeParse({ ...form, maxUses: '1000000' }).success).toBe(true)
     expect(inviteCodeSchema.safeParse({ ...form, maxUses: '1000001' }).success).toBe(false)
     const short = inviteCodeSchema.safeParse({ ...form, code: 'VIP-1' })
     expect(short.success ? '' : short.error.issues[0].message).toBe(
       '8–64 letters, numbers, dashes or underscores',
     )
+  })
+
+  it('accepts a dollar budget from 0 to 10,000 with at most cents', () => {
+    const form = { kind: 'conf', label: '', code: '', maxUses: '', expiresOn: '', llmBudgetUsd: '' }
+    for (const ok of ['0', '20', '20.5', '20.55', '10000']) {
+      expect(inviteCodeSchema.safeParse({ ...form, llmBudgetUsd: ok }).success).toBe(true)
+    }
+    for (const bad of ['-1', 'abc', '1.234', '10000.01']) {
+      expect(inviteCodeSchema.safeParse({ ...form, llmBudgetUsd: bad }).success).toBe(false)
+    }
+    expect(budgetText({ llmBudgetUsd: null })).toBe('Plan default')
+    expect(budgetText({ llmBudgetUsd: 20 })).toBe('$20.00 / month')
+    expect(budgetText({ llmBudgetUsd: 0 })).toBe('No LLM budget')
   })
 })

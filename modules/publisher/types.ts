@@ -93,7 +93,8 @@ export type PublisherInviteCode = {
   expiresAt: string | null
   maxUses: number | null
   redemptions: number
-  hasAnthropicKey: boolean
+  /** Monthly LLM budget (USD) for Studios redeemed from this code; null = the plan default. */
+  llmBudgetUsd: number | null
   createdAt: string
 }
 
@@ -164,8 +165,8 @@ export type CreateInviteCodeInput = {
   code?: string | null
   expiresAt?: string | null
   maxUses?: number | null
-  /** Write-only; stored encrypted, never returned. */
-  anthropicKey?: string | null
+  /** Monthly LLM budget (USD); omit for the plan default. */
+  llmBudgetUsd?: number | null
 }
 
 export type PublisherAppLinkInput = { id: string; label: string; url: string }
