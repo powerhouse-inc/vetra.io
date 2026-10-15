@@ -1,8 +1,14 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { render } from '@testing-library/react'
 
 import { StudioProductCard } from '@/modules/cloud/studio/components/studio-product-card'
 import type { StudioBrand, StudioProduct } from '@/modules/cloud/studio/use-studio-products'
+
+vi.mock('@/modules/apps/hooks/use-apps', () => ({
+  useCreateStudioApp: () => ({}),
+  useMyApps: () => ({ data: [] }),
+}))
+vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 
 const AGENT_URL = 'https://warm-newt-75.vetra.io/?user=did%3Aethr%3A0xabc'
 

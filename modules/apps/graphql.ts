@@ -193,34 +193,33 @@ const APP_FIELDS = `id slug name ownerAddress status
   latestDeployment { ${DEPLOYMENT_FIELDS} }
   createdAt updatedAt`
 
-/** App fields newer backends add; dropped (once per page load) when the schema rejects them. */
+/** App fields newer backends add; each is dropped (once per page load) when the schema rejects it by name. */
 const OPTIONAL_APP_FIELDS = ['identityExpiresAt', 'ownerOrgId', 'studioEnvironmentId'] as const
-let optionalAppFieldsSupported: boolean | null = null
+const unsupportedAppFields = new Set<string>()
 
 /** Test hook: forget what the backend supports. */
 export function resetOptionalAppFields(): void {
-  optionalAppFieldsSupported = null
+  unsupportedAppFields.clear()
 }
 
 /**
- * Run an App-returning operation with the optional fields selected, falling
- * back to the base selection when the schema rejects exactly those fields.
+ * Run an App-returning operation with the optional fields selected, dropping
+ * only the optional field(s) the schema rejects by name and keeping the rest.
  * Validation fails before execution, so retrying a mutation is safe.
  */
 async function withAppFields<T>(run: (fields: string) => Promise<T>): Promise<T> {
-  if (optionalAppFieldsSupported === false) return run(APP_FIELDS)
-  try {
-    const result = await run(`${APP_FIELDS} ${OPTIONAL_APP_FIELDS.join(' ')}`)
-    optionalAppFieldsSupported = true
-    return result
-  } catch (err) {
-    const rejectsOptional =
-      err instanceof AppsApiError &&
-      err.code === 'APPS_UNAVAILABLE' &&
-      OPTIONAL_APP_FIELDS.some((f) => err.message.includes(`"${f}"`))
-    if (!rejectsOptional) throw err
-    optionalAppFieldsSupported = false
-    return run(APP_FIELDS)
+  for (;;) {
+    const selected = OPTIONAL_APP_FIELDS.filter((f) => !unsupportedAppFields.has(f))
+    try {
+      return await run(`${APP_FIELDS} ${selected.join(' ')}`.trimEnd())
+    } catch (err) {
+      const rejected =
+        err instanceof AppsApiError && err.code === 'APPS_UNAVAILABLE'
+          ? selected.filter((f) => err.message.includes(`"${f}"`))
+          : []
+      if (rejected.length === 0) throw err
+      for (const f of rejected) unsupportedAppFields.add(f)
+    }
   }
 }
 

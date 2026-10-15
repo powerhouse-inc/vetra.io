@@ -1,10 +1,11 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { describeCreateStudioAppError } from '@/modules/apps/graphql'
-import { useCreateStudioApp } from '@/modules/apps/hooks/use-apps'
+import { useCreateStudioApp, useMyApps } from '@/modules/apps/hooks/use-apps'
 import { canOfferCreateApp } from '@/modules/orgs/types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { Button } from '@/modules/shared/components/ui/button'
@@ -33,6 +34,19 @@ export function MakeAppDialog({
   label: string
 }) {
   const [open, setOpen] = useState(false)
+  const { data: apps } = useMyApps()
+  // A Studio that is already an App links to it instead of offering a second one.
+  const existing = apps?.find((a) => a.studioEnvironmentId === studioEnvironmentId)
+  if (existing) {
+    return (
+      <Link
+        href={`/user/apps/${existing.id}`}
+        className="text-muted-foreground text-sm hover:underline"
+      >
+        Open App
+      </Link>
+    )
+  }
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
@@ -86,7 +100,8 @@ function MakeAppForm({
         <DialogTitle>Make it an App</DialogTitle>
         <DialogDescription>
           Creates a private GitHub repository for this Studio, with Vetra deploys set up: every pull
-          request gets a preview, and merging to main ships to production.
+          request gets a preview, and merging to main ships to production. It also creates the
+          App&apos;s production environment.
         </DialogDescription>
       </DialogHeader>
       <div className="space-y-2">

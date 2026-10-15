@@ -5,10 +5,14 @@ import { AppsApiError } from '@/modules/apps/graphql'
 
 const push = vi.hoisted(() => vi.fn())
 const mutateAsync = vi.hoisted(() => vi.fn())
+const apps = vi.hoisted(() => ({
+  data: [] as { id: string; studioEnvironmentId?: string | null }[],
+}))
 const org = vi.hoisted(() => ({ orgId: null as string | null, org: null as unknown }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 vi.mock('@/modules/apps/hooks/use-apps', () => ({
   useCreateStudioApp: () => ({ mutateAsync, isPending: false }),
+  useMyApps: () => ({ data: apps.data }),
 }))
 vi.mock('@/modules/orgs/hooks/use-orgs', () => ({
   useActiveOrg: () => ({ orgId: org.orgId, org: org.org }),
@@ -21,6 +25,7 @@ afterEach(() => {
   vi.clearAllMocks()
   org.orgId = null
   org.org = null
+  apps.data = []
 })
 
 function open() {
@@ -33,6 +38,7 @@ describe('MakeAppDialog', () => {
     mutateAsync.mockResolvedValue({ id: 'a1' })
     open()
     expect(screen.getByText(/Creates a private GitHub repository for this Studio/)).toBeTruthy()
+    expect(screen.getByText(/It also creates the App's production environment\./)).toBeTruthy()
     expect((screen.getByLabelText('App name') as HTMLInputElement).value).toBe('My Shop')
     fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
     await waitFor(() =>
@@ -43,6 +49,21 @@ describe('MakeAppDialog', () => {
       }),
     )
     await waitFor(() => expect(push).toHaveBeenCalledWith('/user/apps/a1'))
+  })
+
+  it('offers an Open App link instead of the trigger when the Studio is already an App', () => {
+    apps.data = [{ id: 'a9', studioEnvironmentId: 'env-1' }]
+    render(<MakeAppDialog studioEnvironmentId="env-1" label="My Shop" />)
+    expect(screen.queryByRole('button', { name: 'Make it an App' })).toBeNull()
+    expect(screen.getByRole('link', { name: 'Open App' }).getAttribute('href')).toBe(
+      '/user/apps/a9',
+    )
+  })
+
+  it('still offers the trigger when another Studio is the App', () => {
+    apps.data = [{ id: 'a9', studioEnvironmentId: 'env-2' }]
+    render(<MakeAppDialog studioEnvironmentId="env-1" label="My Shop" />)
+    expect(screen.getByRole('button', { name: 'Make it an App' })).toBeTruthy()
   })
 
   it('creates in the active organisation', async () => {

@@ -8,6 +8,10 @@ vi.mock('next/link', () => ({
     <a href={href}>{children}</a>
   ),
 }))
+vi.mock('@/modules/apps/hooks/use-apps', () => ({
+  useCreateStudioApp: () => ({}),
+  useMyApps: () => ({ data: [] }),
+}))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 
 // Brand is cached server-side and carried on each product, so cards render

@@ -180,6 +180,34 @@ describe('optional App fields', () => {
     expect(bodies[2]).not.toContain('identityExpiresAt')
   })
 
+  it('drops only the rejected field and keeps ownerOrgId', async () => {
+    resetOptionalAppFields()
+    const bodies: string[] = []
+    const fetchImpl = vi.fn<FetchLike>((_url, init) => {
+      const body = init.body as string
+      bodies.push(body)
+      if (body.includes('studioEnvironmentId')) {
+        return Promise.resolve(
+          jsonResponse(
+            { errors: [{ message: 'Cannot query field "studioEnvironmentId" on type "App".' }] },
+            400,
+          ),
+        )
+      }
+      return Promise.resolve(
+        jsonResponse({ data: { myApps: [{ id: 'a1', ownerOrgId: 'org-1' }] } }),
+      )
+    })
+    const apps = await fetchMyApps(null, fetchImpl)
+    expect(apps[0].ownerOrgId).toBe('org-1')
+    expect(bodies[1]).toContain('ownerOrgId')
+    expect(bodies[1]).toContain('identityExpiresAt')
+    expect(bodies[1]).not.toContain('studioEnvironmentId')
+    await fetchMyApps(null, fetchImpl)
+    expect(bodies).toHaveLength(3)
+    expect(bodies[2]).toContain('ownerOrgId')
+  })
+
   it('keeps a real APPS_UNAVAILABLE error when the retry also fails', async () => {
     resetOptionalAppFields()
     const fetchImpl: FetchLike = () =>
