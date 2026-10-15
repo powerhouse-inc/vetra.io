@@ -177,4 +177,21 @@ describe('MakeAppDialog', () => {
     expect(screen.getByText(/GitHub app missing/)).toBeTruthy()
     expect(screen.queryByText('Install Vetra Deploy')).toBeNull()
   })
+
+  it('keeps the owner select and shows the error when a refetch fails', async () => {
+    installs.data = [
+      { installationId: '11', accountLogin: 'alice', accountType: 'User' },
+      { installationId: '22', accountLogin: 'acme-inc', accountType: 'Organization' },
+    ]
+    installs.error = new AppsApiError('NETWORK', 'boom')
+    mutateAsync.mockResolvedValue({ id: 'a1' })
+    open()
+    expect(screen.getByText(/Could not reach Vetra/)).toBeTruthy()
+    fireEvent.click(screen.getByRole('combobox', { name: 'Repository owner' }))
+    fireEvent.click(await screen.findByRole('option', { name: /acme-inc/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ installationId: '22' })),
+    )
+  })
 })

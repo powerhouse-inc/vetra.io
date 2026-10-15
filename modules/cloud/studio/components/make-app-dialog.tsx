@@ -151,7 +151,7 @@ function MakeAppForm({
         <p className="text-muted-foreground text-sm">Checking your GitHub connection…</p>
       ) : notConnected ? (
         <ReconnectGithub message="Your GitHub authorization expired. Reconnect, then create the app again." />
-      ) : installations.error ? (
+      ) : installations.error && list.length === 0 ? (
         <p role="alert" className="text-destructive text-sm">
           {describeAppsError(installations.error)}
         </p>
@@ -179,6 +179,11 @@ function MakeAppForm({
               ))}
             </SelectContent>
           </Select>
+          {installations.error && (
+            <p role="alert" className="text-destructive text-sm">
+              {describeAppsError(installations.error)}
+            </p>
+          )}
         </div>
       )}
       {roleBlocked && org && (
