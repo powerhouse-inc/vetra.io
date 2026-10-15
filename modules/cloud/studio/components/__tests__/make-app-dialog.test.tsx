@@ -8,6 +8,7 @@ const mutateAsync = vi.hoisted(() => vi.fn())
 const apps = vi.hoisted(() => ({
   data: [] as { id: string; studioEnvironmentId?: string | null }[],
 }))
+const appInfo = vi.hoisted(() => ({ error: null as unknown }))
 const installs = vi.hoisted(() => ({
   data: [{ installationId: '11', accountLogin: 'alice', accountType: 'User' }] as {
     installationId: string
@@ -25,7 +26,7 @@ vi.mock('@/modules/apps/hooks/use-apps', () => ({
   useMyGithubDeployInstallations: () => installs,
   useGithubDeployAppInfo: () => ({
     data: { installUrl: 'https://gh/install', authorizeUrl: 'https://gh/auth' },
-    error: null,
+    error: appInfo.error,
   }),
 }))
 vi.mock('@/modules/orgs/hooks/use-orgs', () => ({
@@ -43,6 +44,7 @@ afterEach(() => {
   installs.data = [{ installationId: '11', accountLogin: 'alice', accountType: 'User' }]
   installs.isPending = false
   installs.error = null
+  appInfo.error = null
 })
 
 function open() {
@@ -155,5 +157,24 @@ describe('MakeAppDialog', () => {
     open()
     fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
     expect(await screen.findByText('Reconnect GitHub')).toBeTruthy()
+  })
+
+  it('shows an installations load error instead of the connect flow', () => {
+    installs.data = []
+    installs.error = new AppsApiError('NETWORK', 'boom')
+    open()
+    expect(screen.getByText(/Could not reach Vetra/)).toBeTruthy()
+    expect(screen.queryByText('Install Vetra Deploy')).toBeNull()
+    expect((screen.getByRole('button', { name: 'Create App' }) as HTMLButtonElement).disabled).toBe(
+      true,
+    )
+  })
+
+  it('shows the app info error when there are no installations', () => {
+    installs.data = []
+    appInfo.error = new AppsApiError('BAD_USER_INPUT', 'GitHub app missing')
+    open()
+    expect(screen.getByText(/GitHub app missing/)).toBeTruthy()
+    expect(screen.queryByText('Install Vetra Deploy')).toBeNull()
   })
 })

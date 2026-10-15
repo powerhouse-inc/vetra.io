@@ -4,7 +4,11 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
-import { describeCreateStudioAppError, isAppsError } from '@/modules/apps/graphql'
+import {
+  describeAppsError,
+  describeCreateStudioAppError,
+  isAppsError,
+} from '@/modules/apps/graphql'
 import {
   useCreateStudioApp,
   useGithubDeployAppInfo,
@@ -147,6 +151,14 @@ function MakeAppForm({
         <p className="text-muted-foreground text-sm">Checking your GitHub connection…</p>
       ) : notConnected ? (
         <ReconnectGithub message="Your GitHub authorization expired. Reconnect, then create the app again." />
+      ) : installations.error ? (
+        <p role="alert" className="text-destructive text-sm">
+          {describeAppsError(installations.error)}
+        </p>
+      ) : list.length === 0 && info.error ? (
+        <p role="alert" className="text-destructive text-sm">
+          {describeAppsError(info.error)}
+        </p>
       ) : list.length === 0 ? (
         <ConnectGithub installUrl={info.data?.installUrl} authorizeUrl={info.data?.authorizeUrl} />
       ) : (
