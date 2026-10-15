@@ -1,6 +1,6 @@
 # Vetra Studio, end to end: from first prompt to production
 
-Status: draft for review, 2026-10-15
+Status: approved, 2026-10-15
 Builds on: `2026-10-14-studio-integration-exploration.md` (a solution is an App plus its environments)
 
 ## The problem in one paragraph
@@ -126,9 +126,9 @@ Each step is independently shippable.
 6. **Managed org and "Take ownership".**
 7. **Migration of existing Studio environments.**
 
-## Open questions
+## Decisions (2026-10-15)
 
-1. Managed org name and Actions billing: GitHub org plan vs self-hosted runners?
-2. Should "Ship" require a passing preview, or only a green CI?
-3. Does the agent get to merge, or only the human pressing Ship? Recommendation: human only. The agent has no App principal yet (an open gap from the exploration).
-4. The relationship of host files to the repo: should the repo carry the host file (the App's runtime projection) that CI records? Align with Wouter first.
+1. **Managed org.** Users without GitHub get repos in a Vetra-managed org, with "Take ownership" later. Runner choice (GitHub org plan vs self-hosted ARC) is an ops detail; start on GitHub-hosted.
+2. **Ship requires green CI** on the PR, not a visited preview.
+3. **Only the human merges.** The agent can open and update PRs, never merge.
+4. **The host file lives in the repo.** CI records it on the App as its runtime projection. Exact shape and runner consumption are still to align with Wouter.
