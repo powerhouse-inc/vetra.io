@@ -399,7 +399,7 @@ function inputWrite<I extends object, R>(field: string, inputType: string, selec
 }
 
 /** A mutation that takes bare scalar arguments and returns Boolean!. */
-function argsWrite<A extends Record<string, string | boolean>>(
+function argsWrite<A extends Record<string, string | boolean | null>>(
   field: string,
   types: { [K in keyof A & string]: string },
 ) {
@@ -473,6 +473,12 @@ export const setInviteCodeActive = argsWrite<{ appId: string; code: string; acti
   'setInviteCodeActive',
   { appId: 'String!', code: 'String!', active: 'Boolean!' },
 )
+/** A null or empty `anthropicKey` clears the key on the code. */
+export const setInviteCodeAnthropicKey = argsWrite<{
+  appId: string
+  code: string
+  anthropicKey: string | null
+}>('setInviteCodeAnthropicKey', { appId: 'String!', code: 'String!', anthropicKey: 'String' })
 export const addToAllowList = argsWrite<{ appId: string; user: string }>('addToAllowList', {
   appId: 'String!',
   user: 'String!',

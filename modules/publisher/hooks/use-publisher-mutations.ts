@@ -147,6 +147,13 @@ export const useSetInviteCodeActive = (appId: string) =>
     ['inviteCodes'],
   )
 
+export const useSetInviteCodeAnthropicKey = (appId: string) =>
+  usePublisherMutation<{ code: string; anthropicKey: string | null }, boolean>(
+    appId,
+    (v, t) => api.setInviteCodeAnthropicKey({ appId, ...v }, t),
+    ['inviteCodes'],
+  )
+
 export const useAddToAllowList = (appId: string) =>
   usePublisherMutation<{ user: string }, boolean>(
     appId,

@@ -30,6 +30,7 @@ vi.mock('../hooks/use-publisher', () => ({
 vi.mock('../hooks/use-publisher-mutations', () => ({
   useCreateInviteCode: () => ({ mutateAsync: vi.fn(), isPending: false }),
   useSetInviteCodeActive: () => ({ mutateAsync: setActive, isPending: false }),
+  useSetInviteCodeAnthropicKey: () => ({ mutateAsync: vi.fn(), isPending: false }),
 }))
 
 import { InviteCodesTab } from '../components/invite-codes/invite-codes-tab'

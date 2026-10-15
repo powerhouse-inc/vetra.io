@@ -131,6 +131,18 @@ const ARG_WRITES: Array<[keyof typeof api, Record<string, unknown>, string, stri
     'setInviteCodeActive(appId: $appId, code: $code, active: $active)',
   ],
   [
+    'setInviteCodeAnthropicKey',
+    { appId: 'a', code: 'C', anthropicKey: 'sk-ant-x' },
+    '($appId: String!, $code: String!, $anthropicKey: String)',
+    'setInviteCodeAnthropicKey(appId: $appId, code: $code, anthropicKey: $anthropicKey)',
+  ],
+  [
+    'setInviteCodeAnthropicKey',
+    { appId: 'a', code: 'C', anthropicKey: null },
+    '($appId: String!, $code: String!, $anthropicKey: String)',
+    'setInviteCodeAnthropicKey(appId: $appId, code: $code, anthropicKey: $anthropicKey)',
+  ],
+  [
     'addToAllowList',
     { appId: 'a', user: '0xabc' },
     '($appId: String!, $user: String!)',

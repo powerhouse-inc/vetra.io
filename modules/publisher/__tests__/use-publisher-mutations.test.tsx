@@ -7,6 +7,7 @@ const addTemplate = vi.fn()
 const issueGrant = vi.fn()
 const publishTerm = vi.fn()
 const setInviteCodeActive = vi.fn()
+const setInviteCodeAnthropicKey = vi.fn()
 
 vi.mock('../graphql', async (orig) => ({
   ...(await orig<typeof import('../graphql')>()),
@@ -14,6 +15,7 @@ vi.mock('../graphql', async (orig) => ({
   issueGrant: (...a: unknown[]) => issueGrant(...a),
   publishTerm: (...a: unknown[]) => publishTerm(...a),
   setInviteCodeActive: (...a: unknown[]) => setInviteCodeActive(...a),
+  setInviteCodeAnthropicKey: (...a: unknown[]) => setInviteCodeAnthropicKey(...a),
 }))
 vi.mock('../hooks/use-publisher', () => ({ usePublisherToken: () => async () => 'tok' }))
 
@@ -22,6 +24,7 @@ import {
   useIssueGrant,
   usePublishTerm,
   useSetInviteCodeActive,
+  useSetInviteCodeAnthropicKey,
 } from '../hooks/use-publisher-mutations'
 
 function setup() {
@@ -88,6 +91,20 @@ describe('publisher mutation hooks', () => {
       { appId: 'app-1', code: 'C', active: false },
       'tok',
     )
+  })
+
+  it('setting a code key binds the appId and refreshes invite codes', async () => {
+    setInviteCodeAnthropicKey.mockResolvedValue(true)
+    const { Wrapper, invalidated } = setup()
+    const { result } = renderHook(() => useSetInviteCodeAnthropicKey('app-1'), { wrapper: Wrapper })
+    await act(async () => {
+      await result.current.mutateAsync({ code: 'C', anthropicKey: null })
+    })
+    expect(setInviteCodeAnthropicKey).toHaveBeenCalledWith(
+      { appId: 'app-1', code: 'C', anthropicKey: null },
+      'tok',
+    )
+    expect(invalidated()).toEqual([['publisher', 'inviteCodes', 'app-1']])
   })
 
   it('never retries a failed write', async () => {

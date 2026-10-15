@@ -25,12 +25,14 @@ import { runWithToast } from '../../lib/run'
 import { inviteCodeState, inviteCodeStatusMeta } from '../../lib/status'
 import { EmptyState, TabError, TabHeader, TabSkeleton } from '../primitives'
 import { CreateInviteCodeDialog } from './create-invite-code-dialog'
+import { SetInviteCodeKeyDialog } from './set-invite-code-key-dialog'
 
 export function InviteCodesTab({ appId }: { appId: string }) {
   const codes = usePublisherInviteCodes(appId)
   const terms = usePublisherTerms(appId)
   const setActive = useSetInviteCodeActive(appId)
   const [creating, setCreating] = useState(false)
+  const [keyCode, setKeyCode] = useState<string | null>(null)
   const list = codes.data ?? []
   const termList = terms.data ?? []
   const plans = codePlans(termList)
@@ -135,6 +137,15 @@ export function InviteCodesTab({ appId }: { appId: string }) {
                           value={redeemUrl(origin, c.code)}
                           label={`Copy redeem link for ${c.code}`}
                         />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          aria-label={`Set Claude key for ${c.code}`}
+                          onClick={() => setKeyCode(c.code)}
+                        >
+                          <KeyRound className="h-4 w-4" aria-hidden />
+                          Set Claude key
+                        </Button>
                         <Switch
                           checked={c.active}
                           disabled={setActive.isPending}
@@ -160,6 +171,14 @@ export function InviteCodesTab({ appId }: { appId: string }) {
         plans={plans}
         open={creating}
         onOpenChange={setCreating}
+      />
+      <SetInviteCodeKeyDialog
+        appId={appId}
+        code={keyCode ?? ''}
+        open={keyCode !== null}
+        onOpenChange={(o) => {
+          if (!o) setKeyCode(null)
+        }}
       />
     </div>
   )
