@@ -163,6 +163,8 @@ export type AppRegistryCredentials = {
 export type CreateStudioAppInput = {
   name: string
   studioEnvironmentId: string
+  /** The connected GitHub account or org installation that will own the new repo. */
+  installationId: string
   /** Create the app for this organisation. */
   orgId?: string | null
 }

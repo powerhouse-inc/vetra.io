@@ -31,7 +31,7 @@ export function filterRepos(repos: readonly GithubRepo[], query: string): Github
   return repos.filter((r) => r.fullName.toLowerCase().includes(q))
 }
 
-function ConnectGithub({
+export function ConnectGithub({
   installUrl,
   authorizeUrl,
 }: {

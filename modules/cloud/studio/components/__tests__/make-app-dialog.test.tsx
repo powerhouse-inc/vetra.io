@@ -8,11 +8,25 @@ const mutateAsync = vi.hoisted(() => vi.fn())
 const apps = vi.hoisted(() => ({
   data: [] as { id: string; studioEnvironmentId?: string | null }[],
 }))
+const installs = vi.hoisted(() => ({
+  data: [{ installationId: '11', accountLogin: 'alice', accountType: 'User' }] as {
+    installationId: string
+    accountLogin: string
+    accountType: string
+  }[],
+  isPending: false,
+  error: null as unknown,
+}))
 const org = vi.hoisted(() => ({ orgId: null as string | null, org: null as unknown }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push }) }))
 vi.mock('@/modules/apps/hooks/use-apps', () => ({
   useCreateStudioApp: () => ({ mutateAsync, isPending: false }),
   useMyApps: () => ({ data: apps.data }),
+  useMyGithubDeployInstallations: () => installs,
+  useGithubDeployAppInfo: () => ({
+    data: { installUrl: 'https://gh/install', authorizeUrl: 'https://gh/auth' },
+    error: null,
+  }),
 }))
 vi.mock('@/modules/orgs/hooks/use-orgs', () => ({
   useActiveOrg: () => ({ orgId: org.orgId, org: org.org }),
@@ -26,6 +40,9 @@ afterEach(() => {
   org.orgId = null
   org.org = null
   apps.data = []
+  installs.data = [{ installationId: '11', accountLogin: 'alice', accountType: 'User' }]
+  installs.isPending = false
+  installs.error = null
 })
 
 function open() {
@@ -37,7 +54,9 @@ describe('MakeAppDialog', () => {
   it('creates the App from the Studio and opens its page', async () => {
     mutateAsync.mockResolvedValue({ id: 'a1' })
     open()
-    expect(screen.getByText(/Creates a private GitHub repository for this Studio/)).toBeTruthy()
+    expect(
+      screen.getByText(/Creates a private GitHub repository in alice for this Studio/),
+    ).toBeTruthy()
     expect(screen.getByText(/It also creates the App's production environment\./)).toBeTruthy()
     expect((screen.getByLabelText('App name') as HTMLInputElement).value).toBe('My Shop')
     fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
@@ -45,6 +64,7 @@ describe('MakeAppDialog', () => {
       expect(mutateAsync).toHaveBeenCalledWith({
         name: 'My Shop',
         studioEnvironmentId: 'env-1',
+        installationId: '11',
         orgId: null,
       }),
     )
@@ -103,5 +123,37 @@ describe('MakeAppDialog', () => {
     expect(submit.disabled).toBe(true)
     fireEvent.click(submit)
     expect(mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('shows the connect flow and disables submit with no GitHub installation', () => {
+    installs.data = []
+    open()
+    expect(screen.getByText('Install Vetra Deploy')).toBeTruthy()
+    const submit = screen.getByRole('button', { name: 'Create App' }) as HTMLButtonElement
+    expect(submit.disabled).toBe(true)
+    fireEvent.click(submit)
+    expect(mutateAsync).not.toHaveBeenCalled()
+  })
+
+  it('sends the installation picked as repository owner', async () => {
+    installs.data = [
+      { installationId: '11', accountLogin: 'alice', accountType: 'User' },
+      { installationId: '22', accountLogin: 'acme-inc', accountType: 'Organization' },
+    ]
+    mutateAsync.mockResolvedValue({ id: 'a1' })
+    open()
+    fireEvent.click(screen.getByRole('combobox', { name: 'Repository owner' }))
+    fireEvent.click(await screen.findByRole('option', { name: /acme-inc/ }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
+    await waitFor(() =>
+      expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ installationId: '22' })),
+    )
+  })
+
+  it('offers reconnect when GitHub is not connected', async () => {
+    mutateAsync.mockRejectedValue(new AppsApiError('GITHUB_NOT_CONNECTED', 'x'))
+    open()
+    fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
+    expect(await screen.findByText('Reconnect GitHub')).toBeTruthy()
   })
 })

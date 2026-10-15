@@ -271,11 +271,21 @@ describe('organisation apps', () => {
   it('creates a Studio App with the studio environment id', async () => {
     resetOptionalAppFields()
     const bodies = captureBodies({ createStudioApp: { id: 'a1' } })
-    await createStudioApp({ name: 'Shop', studioEnvironmentId: 'env-1' }, 'tok')
-    await createStudioApp({ name: 'Shop', studioEnvironmentId: 'env-1', orgId: 'o1' }, 'tok')
+    await createStudioApp(
+      { name: 'Shop', studioEnvironmentId: 'env-1', installationId: '11' },
+      'tok',
+    )
+    await createStudioApp(
+      { name: 'Shop', studioEnvironmentId: 'env-1', installationId: '11', orgId: 'o1' },
+      'tok',
+    )
     expect(bodies[0].query).toContain('createStudioApp(input: $input)')
     expect(bodies[0].query).toContain('studioEnvironmentId')
-    expect(bodies[0].variables.input).toStrictEqual({ name: 'Shop', studioEnvironmentId: 'env-1' })
+    expect(bodies[0].variables.input).toStrictEqual({
+      name: 'Shop',
+      studioEnvironmentId: 'env-1',
+      installationId: '11',
+    })
     expect(bodies[1].variables.input).toMatchObject({ orgId: 'o1' })
   })
 
