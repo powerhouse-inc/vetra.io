@@ -1,6 +1,7 @@
 'use client'
 
 import { Boxes, Loader2, Moon } from 'lucide-react'
+import { studioAppsEnabled } from '@/modules/cloud/switchboard-url'
 import type { StudioProduct } from '../use-studio-products'
 import { MakeAppDialog } from './make-app-dialog'
 
@@ -107,7 +108,7 @@ export function StudioProductCard({
   )
 
   // The action sits beside the card link, not inside it: a button nested in an anchor is invalid.
-  if (locked || !canOpen) return card
+  if (locked || !canOpen || !studioAppsEnabled()) return card
   return (
     <div className="flex flex-col gap-2">
       {card}

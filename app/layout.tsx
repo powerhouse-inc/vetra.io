@@ -94,6 +94,10 @@ export default async function RootLayout({
                 process.env.MAX_STUDIOS_PER_USER ||
                 process.env.NEXT_PUBLIC_MAX_STUDIOS_PER_USER ||
                 '',
+              NEXT_PUBLIC_STUDIO_APPS_ENABLED:
+                process.env.STUDIO_APPS_ENABLED ||
+                process.env.NEXT_PUBLIC_STUDIO_APPS_ENABLED ||
+                '',
             })}`,
           }}
         />

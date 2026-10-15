@@ -42,3 +42,12 @@ export function maxStudiosPerUser(): number {
   const n = Number.parseInt(readEnv('NEXT_PUBLIC_MAX_STUDIOS_PER_USER'), 10)
   return Number.isFinite(n) && n > 0 ? n : 0
 }
+
+/**
+ * Whether Studios may be turned into Apps ("Make it an App"). Off unless the
+ * deployment sets NEXT_PUBLIC_STUDIO_APPS_ENABLED=true, which it does once the
+ * backend's Vetra-managed GitHub org is configured. Read at call time.
+ */
+export function studioAppsEnabled(): boolean {
+  return readEnv('NEXT_PUBLIC_STUDIO_APPS_ENABLED') === 'true'
+}
