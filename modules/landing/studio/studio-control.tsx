@@ -8,8 +8,8 @@ const POINTS = [
     body: 'Sign in with Renown. Every change carries your signature.',
   },
   {
-    title: 'Your model key, your call',
-    body: 'Runs on Anthropic Claude. Use the key in your licence or bring your own.',
+    title: 'Models included',
+    body: 'Runs on Claude through OpenRouter. Your licence includes a monthly model budget.',
   },
 ]
 
