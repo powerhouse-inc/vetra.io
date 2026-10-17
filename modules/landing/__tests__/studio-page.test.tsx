@@ -14,7 +14,7 @@ describe('StudioPage', () => {
       }),
     ).toBeTruthy()
     expect(container.textContent).toContain('pre-alpha')
-    expect(container.textContent).toContain('Anthropic Claude')
+    expect(container.textContent).toContain('monthly model budget')
   })
 
   it('has an #access section with the waitlist form and redeem link', () => {

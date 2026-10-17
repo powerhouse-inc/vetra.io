@@ -1,5 +1,5 @@
 import type { CloudEnvironment, CloudEnvironmentService } from '@/modules/cloud/types'
-import { STUDIO_AGENT_PACKAGE } from './constants'
+import { isStudioAgentPackage } from './constants'
 
 export type StudioAgentMatch = {
   env: CloudEnvironment
@@ -17,11 +17,11 @@ export type StudioAgentMatch = {
  * package installed alongside its enabled CLINT agent.
  */
 function matchStudioService(env: CloudEnvironment): CloudEnvironmentService | undefined {
-  const hasStudioPackage = env.state.packages.some((p) => p.name === STUDIO_AGENT_PACKAGE)
+  const hasStudioPackage = env.state.packages.some((p) => isStudioAgentPackage(p.name))
   return env.state.services.find((s) => {
     if (s.type !== 'CLINT' || !s.enabled) return false
     const pkgName = s.config?.package?.name
-    return pkgName ? pkgName === STUDIO_AGENT_PACKAGE : hasStudioPackage
+    return pkgName ? isStudioAgentPackage(pkgName) : hasStudioPackage
   })
 }
 

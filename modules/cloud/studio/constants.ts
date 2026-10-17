@@ -1,7 +1,12 @@
 import type { CloudResourceSize } from '@/modules/cloud/types'
 
 /** The package whose presence (as a CLINT agent) marks a Vetra Studio. */
-export const STUDIO_AGENT_PACKAGE = 'vetra-cli'
+export const STUDIO_AGENT_PACKAGE = 'vetra'
+/** Every name the studio agent has shipped under (renamed vetra-cli -> vetra in vetra-cli #66). */
+export const STUDIO_AGENT_PACKAGE_NAMES: readonly string[] = ['vetra', 'vetra-cli']
+export function isStudioAgentPackage(name: string | null | undefined): boolean {
+  return !!name && STUDIO_AGENT_PACKAGE_NAMES.includes(name)
+}
 /**
  * Pinned, known-good vetra-cli version. We pin explicitly because the `latest`
  * dist-tag has pointed at builds that crash on boot (e.g. dev.8:
@@ -12,7 +17,7 @@ export const STUDIO_AGENT_PACKAGE = 'vetra-cli'
  * verified, or switch back to undefined (= latest) once `latest` tracks a
  * working build.
  */
-export const STUDIO_AGENT_VERSION = '0.0.1-dev.27'
+export const STUDIO_AGENT_VERSION = '0.0.8-dev.0'
 /** Default agent prefix for a freshly-provisioned studio (manifest agent.id). */
 export const STUDIO_AGENT_PREFIX = 'vetra-agent'
 /** Studio agents only support XL/XXL; v1 provisions XXL. */
