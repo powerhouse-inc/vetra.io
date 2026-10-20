@@ -7,9 +7,9 @@ const STEPS = [
   },
   {
     name: 'plan',
-    body: 'Studio proposes models and operations. Nothing is written until you approve.',
+    body: 'Studio proposes models and operations. You can stop or redirect it at any point.',
   },
-  { name: 'build', body: 'Models, reducers, editors and tests, committed step by step.' },
+  { name: 'build', body: 'Models, reducers, editors and tests, saved as it goes.' },
   { name: 'preview', body: 'Use the app live inside your studio while it is being built.' },
   { name: 'publish', body: 'Version it to the registry and roll it out to a Cloud environment.' },
 ]

@@ -32,4 +32,30 @@ describe('StudioPage', () => {
     expectNoPlaceholders(container.textContent ?? '')
     expectNoOpenCloudClaim(container.textContent ?? '')
   })
+
+  it('makes only promises the product keeps', () => {
+    const { container } = render(<StudioPage />)
+    const text = container.textContent ?? ''
+    for (const gone of [
+      'Nothing is written until you approve',
+      'Every step is a commit',
+      'Data may be lost between versions',
+      'You approve every plan',
+      'committed step by step',
+      'approved by you',
+    ]) {
+      expect(text).not.toContain(gone)
+    }
+    for (const here of [
+      'Studio explains what it will build before it builds it.',
+      'Your work is saved',
+      'Download your workspace any time; GitHub sync arrives with publishing.',
+      'You can stop or redirect it at any point.',
+      'saved as it goes',
+      'Major version upgrades may need a re-run; keep an export of important work',
+      'You steer every step',
+    ]) {
+      expect(text).toContain(here)
+    }
+  })
 })

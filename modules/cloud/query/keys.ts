@@ -21,6 +21,8 @@ export const queryKeys = {
   studioProducts: (did: string | undefined) => ['studio-products', did ?? null] as const,
   studioLlmStatus: (envId: string, did: string | undefined) =>
     ['studio-llm-status', envId, did ?? null] as const,
+  studioLlmUsage: (envId: string, did: string | undefined) =>
+    ['studio-llm-usage', envId, did ?? null] as const,
   runtimeEndpoints: (subdomain: string, envId: string) =>
     ['runtime-endpoints', subdomain, envId] as const,
   tenantSecrets: (envId: string) => ['tenant-secrets', envId] as const,

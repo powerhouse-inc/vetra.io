@@ -1,8 +1,8 @@
 import { Container, SectionHeading } from '../components/section-heading'
 
 const POINTS = [
-  { title: 'Plans before code', body: 'Studio asks before it changes your models.' },
-  { title: 'Every step is a commit', body: 'Review, revert or continue by hand in your IDE.' },
+  { title: 'Plans before code', body: 'Studio explains what it will build before it builds it.' },
+  { title: 'Your work is saved', body: 'Download your workspace any time; GitHub sync arrives with publishing.' },
   {
     title: 'Signed with your identity',
     body: 'Sign in with Renown. Every change carries your signature.',
@@ -26,7 +26,7 @@ const STATUS = [
   {
     title: '// still rough',
     tone: 'text-console-warn',
-    items: ['Large refactors', 'Data may be lost between versions, so keep exports'],
+    items: ['Large refactors', 'Major version upgrades may need a re-run; keep an export of important work'],
   },
 ]
 

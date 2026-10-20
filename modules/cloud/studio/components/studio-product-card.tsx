@@ -5,6 +5,9 @@ import { studioAppsEnabled } from '@/modules/cloud/switchboard-url'
 import type { StudioProduct } from '../use-studio-products'
 import { MakeAppDialog } from './make-app-dialog'
 import { useStudioLlmStatus } from '../use-studio-llm-status'
+import { useStudioLlmUsage } from '../use-studio-llm-usage'
+
+const usd = (n: number) => `$${n.toFixed(2)}`
 
 /**
  * A product in the grid.
@@ -38,6 +41,16 @@ export function StudioProductCard({
   // say so on the card. Not asked while booting, or for a locked (lapsed) card.
   const llm = useStudioLlmStatus(product.envId, canOpen && !locked)
   const needsModel = llm.data?.connected === false
+
+  // The monthly budget, quiet when unknown: no usage or a failed fetch shows nothing.
+  const usage = useStudioLlmUsage(product.envId, canOpen && !locked && !needsModel).data
+  const budget = !usage
+    ? null
+    : usage.limitUsd != null && usage.usageUsd >= usage.limitUsd
+      ? 'Budget used up'
+      : usage.limitUsd != null
+        ? `${usd(usage.usageUsd)} of ${usd(usage.limitUsd)}`
+        : `${usd(usage.usageUsd)} used`
 
   // Cached brand from the switchboard; falls back to the env label when absent.
   const brand = product.brand
@@ -110,6 +123,7 @@ export function StudioProductCard({
             </span>
           )}
         </div>
+        {budget && <span className="text-muted-foreground text-xs">{budget}</span>}
         {isReady && <span className="text-muted-foreground text-xs">Open →</span>}
         {isSleeping && <span className="text-muted-foreground text-xs">Wake →</span>}
       </div>

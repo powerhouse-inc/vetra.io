@@ -11,6 +11,7 @@ vi.mock('@/modules/apps/hooks/use-apps', () => ({
 }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/modules/cloud/studio/use-studio-llm-status', () => ({ useStudioLlmStatus: () => ({}) }))
+vi.mock('@/modules/cloud/studio/use-studio-llm-usage', () => ({ useStudioLlmUsage: () => ({}) }))
 
 type WindowWithEnv = { __ENV?: Record<string, string> }
 

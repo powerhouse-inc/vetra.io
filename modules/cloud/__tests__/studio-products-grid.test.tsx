@@ -14,6 +14,7 @@ vi.mock('@/modules/apps/hooks/use-apps', () => ({
 }))
 vi.mock('next/navigation', () => ({ useRouter: () => ({ push: vi.fn() }) }))
 vi.mock('@/modules/cloud/studio/use-studio-llm-status', () => ({ useStudioLlmStatus: () => ({}) }))
+vi.mock('@/modules/cloud/studio/use-studio-llm-usage', () => ({ useStudioLlmUsage: () => ({}) }))
 
 // Brand is cached server-side and carried on each product, so cards render
 // synchronously from `product.brand` — no hook to stub.

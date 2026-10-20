@@ -7,6 +7,13 @@ type Ns<T> = { vetraLlm: T }
 
 export type StudioLlmProvision = { environmentId: string; connected: boolean; llmBudgetUsd: number }
 export type StudioLlmStatus = { environmentId: string; connected: boolean }
+export type StudioLlmUsage = {
+  source: string
+  model: string
+  usageUsd: number
+  limitUsd: number | null
+  resetsAt: string | null
+}
 
 /**
  * Provision the new Studio's model key from the caller's licence budget,
@@ -47,4 +54,19 @@ export async function fetchStudioLlmStatus(
     fetchImpl,
   )
   return data.vetraLlm.studioLlmStatus
+}
+
+/** This month's spend against the Studio's budget; null without a key (operators only, cached 60 s). */
+export async function fetchStudioLlmUsage(
+  environmentId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<StudioLlmUsage | null> {
+  const data = await publisherGql<Ns<{ studioLlmUsage: StudioLlmUsage | null }>>(
+    `query ($environmentId: String!) { vetraLlm { studioLlmUsage(environmentId: $environmentId) { source model usageUsd limitUsd resetsAt } } }`,
+    { environmentId },
+    token,
+    fetchImpl,
+  )
+  return data.vetraLlm.studioLlmUsage
 }

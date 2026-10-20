@@ -19,7 +19,7 @@ export function StudioSessionWindow() {
       <Container className="pb-24">
         <WindowFrame
           title="studio · @acme/loans · branch studio/overdue"
-          label="A Studio session: the chat, the plan you approved with the code it wrote, and a live preview of the generated loan editor"
+          label="A Studio session: the chat, the plan with the code it wrote, and a live preview of the generated loan editor"
         >
           <div className="flex flex-wrap">
             <div className="border-console-line flex min-w-0 flex-[1_1_300px] flex-col gap-3 border-b p-5 text-sm md:border-r md:border-b-0">
@@ -34,7 +34,7 @@ export function StudioSessionWindow() {
               </p>
             </div>
             <div className="border-console-line flex min-w-0 flex-[1_1_300px] flex-col gap-2.5 border-b p-5 text-sm md:border-r md:border-b-0">
-              <p className="font-console-mono text-console-faint text-xs">PLAN · approved by you</p>
+              <p className="font-console-mono text-console-faint text-xs">PLAN</p>
               <ul className="flex flex-col gap-2">
                 {PLAN.map((p) => (
                   <li key={p.text} className="flex gap-2.5">

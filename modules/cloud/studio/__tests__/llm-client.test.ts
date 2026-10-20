@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest'
 import { buildSchema, parse, validate } from 'graphql'
 import type { FetchLike } from '@/modules/publisher/graphql'
-import { fetchStudioLlmStatus, provisionStudioLlm } from '../llm-client'
+import { fetchStudioLlmStatus, fetchStudioLlmUsage, provisionStudioLlm } from '../llm-client'
 
 // The vetraLlm SDL as served by vetra-cloud-package subgraphs/vetra-llm/schema.ts.
 const schema = buildSchema(`
   type StudioLlmStatus { environmentId: String! connected: Boolean! }
   type StudioLlmProvision { environmentId: String! connected: Boolean! llmBudgetUsd: Float! }
-  type VetraLlmQueries { studioLlmStatus(environmentId: String!): StudioLlmStatus! }
+  type StudioLlmUsage { source: String! model: String! usageUsd: Float! limitUsd: Float resetsAt: String }
+  type VetraLlmQueries { studioLlmStatus(environmentId: String!): StudioLlmStatus! studioLlmUsage(environmentId: String!): StudioLlmUsage }
   type VetraLlmMutations { provisionStudioLlm(tenantId: String!): StudioLlmProvision! }
   type Query { vetraLlm: VetraLlmQueries! }
   type Mutation { vetraLlm: VetraLlmMutations! }
@@ -76,5 +77,16 @@ describe('llm-client', () => {
       connected: false,
     })
     expect(validate(schema, parse(r.calls[0].query))).toEqual([])
+  })
+
+  it('fetches usage against the schema, and passes null through', async () => {
+    const usage = { source: 'VETRA', model: 'm', usageUsd: 0.31, limitUsd: 10, resetsAt: null }
+    const r = respond({ data: { vetraLlm: { studioLlmUsage: usage } } })
+    await expect(fetchStudioLlmUsage('e1', 'tok', r.fetchImpl)).resolves.toEqual(usage)
+    expect(validate(schema, parse(r.calls[0].query))).toEqual([])
+    expect(r.calls[0].variables).toEqual({ environmentId: 'e1' })
+    expect(r.calls[0].auth).toBe('Bearer tok')
+    const n = respond({ data: { vetraLlm: { studioLlmUsage: null } } })
+    await expect(fetchStudioLlmUsage('e1', 'tok', n.fetchImpl)).resolves.toBeNull()
   })
 })

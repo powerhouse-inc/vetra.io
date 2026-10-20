@@ -16,6 +16,12 @@ vi.mock('@/modules/cloud/studio/use-studio-llm-status', () => ({
   useStudioLlmStatus: (envId: string, enabled: boolean) => useStudioLlmStatus(envId, enabled),
 }))
 
+type Usage = { source: string; model: string; usageUsd: number; limitUsd: number | null } | null
+let llmUsage: { data?: Usage | null } = {}
+vi.mock('@/modules/cloud/studio/use-studio-llm-usage', () => ({
+  useStudioLlmUsage: () => llmUsage,
+}))
+
 const AGENT_URL = 'https://warm-newt-75.vetra.io/?user=did%3Aethr%3A0xabc'
 
 // Brand is cached server-side and carried on the product, so the card renders
@@ -88,5 +94,34 @@ describe('StudioProductCard', () => {
   it('does not ask for the status of a booting Studio', () => {
     render(<StudioProductCard product={{ ...base, status: 'booting' }} href={AGENT_URL} />)
     expect(useStudioLlmStatus).toHaveBeenLastCalledWith('env1', false)
+  })
+
+  describe('budget', () => {
+    const usage = (usageUsd: number, limitUsd: number | null): Usage => ({
+      source: 'VETRA',
+      model: 'm',
+      usageUsd,
+      limitUsd,
+    })
+    const renderCard = () => render(<StudioProductCard product={base} href={AGENT_URL} />)
+
+    it('card shows used of limit', () => {
+      llmUsage = { data: usage(0.31, 10) }
+      renderCard().getByText('$0.31 of $10.00')
+    })
+    it('shows only the spend when there is no limit', () => {
+      llmUsage = { data: usage(2, null) }
+      renderCard().getByText('$2.00 used')
+    })
+    it('says the budget is used up at 100%', () => {
+      llmUsage = { data: usage(10, 10) }
+      renderCard().getByText('Budget used up')
+    })
+    it('shows nothing about budget without usage', () => {
+      for (const u of [{}, { data: null }]) {
+        llmUsage = u
+        expect(renderCard().container.textContent).not.toMatch(/\$|budget/i)
+      }
+    })
   })
 })

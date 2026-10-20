@@ -17,7 +17,7 @@ export function StudioHero() {
         <div className="flex flex-wrap items-center gap-x-8 gap-y-5">
           <p className="text-console-muted max-w-[660px] text-lg leading-relaxed sm:text-xl">
             Vetra Studio turns a conversation into a working Powerhouse package: document models,
-            editors, APIs and tests. You approve every plan and keep every line.
+            editors, APIs and tests. You steer every step and keep every line.
           </p>
           <div className="flex flex-wrap gap-3">
             <CtaLink href={EARLY_ACCESS_HREF} variant="primary">
