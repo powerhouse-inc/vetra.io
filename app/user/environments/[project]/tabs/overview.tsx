@@ -32,6 +32,7 @@ import { partitionPackagesByManifestType } from '@/modules/cloud/lib/module-pack
 import { toServiceImageTag } from '@/modules/cloud/registry/channels'
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
 import {
+  customDomainHosts,
   customDomainServiceHost,
   isPinnedToCustomApex,
   isTypeAtApex,
@@ -676,9 +677,7 @@ export function OverviewTab({
   const hasCustomDomain = state.customDomain?.enabled ?? false
   const activeCustomDomain = hasCustomDomain ? (state.customDomain?.domain ?? null) : null
   // The hosts the backend actually renders under the custom domain (and checks).
-  const customDomainHosts = (['CONNECT', 'SWITCHBOARD'] as const)
-    .map((t) => customDomainServiceHost(state.services, state.apexService, activeCustomDomain, t))
-    .filter((h): h is string => !!h)
+  const servedCustomHosts = customDomainHosts(state.services, state.apexService, activeCustomDomain)
 
   return (
     <div className="space-y-6">
@@ -726,10 +725,10 @@ export function OverviewTab({
                   Expires: {new Date(status.tlsCertExpiresAt).toLocaleDateString()}
                 </p>
               )}
-              {customDomainHosts.length > 0 && (
+              {servedCustomHosts.length > 0 && (
                 <p className="text-muted-foreground text-xs">
                   Hosts:{' '}
-                  <span className="text-foreground font-mono">{customDomainHosts.join(', ')}</span>
+                  <span className="text-foreground font-mono">{servedCustomHosts.join(', ')}</span>
                 </p>
               )}
               {status?.updatedAt && (

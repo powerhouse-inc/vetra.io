@@ -65,13 +65,17 @@ export function isTypeAtApex(
 // Unlike the generic apex there is NO lone-service auto-claim: the bare custom
 // domain belongs to a service only when `apexService` pins it; otherwise the
 // chart renders `connect.<domain>` / `switchboard.<domain>` (fixed prefixes, not
-// the service's own prefix). No other type gets a custom-domain ingress.
+// the service's own prefix). FUSION has no prefixed host: pinned, its single
+// ingress moves to the bare domain (generateFusionBlock), else it gets none.
 // ---------------------------------------------------------------------------
 
 const CUSTOM_DOMAIN_PREFIX: Record<string, string> = {
   CONNECT: 'connect',
   SWITCHBOARD: 'switchboard',
 }
+
+/** Types that answer under a custom domain: prefixed, or at its apex when pinned. */
+const CUSTOM_DOMAIN_HOST_TYPES = ['CONNECT', 'SWITCHBOARD', 'FUSION'] as const
 
 function isEnabled(services: ServiceLike[], type: string): boolean {
   return services.some((s) => s.enabled && s.type === type)
@@ -87,7 +91,7 @@ export function isPinnedToCustomApex(
   return (
     !!customDomain &&
     apexService === type &&
-    type in CUSTOM_DOMAIN_PREFIX &&
+    (CUSTOM_DOMAIN_HOST_TYPES as readonly string[]).includes(type) &&
     isEnabled(services, type)
   )
 }
@@ -99,9 +103,21 @@ export function customDomainServiceHost(
   customDomain: string | null | undefined,
   type: string,
 ): string | null {
-  if (!customDomain || !(type in CUSTOM_DOMAIN_PREFIX) || !isEnabled(services, type)) return null
+  if (!customDomain || !isEnabled(services, type)) return null
   if (isPinnedToCustomApex(services, apexService, customDomain, type)) return customDomain
+  if (!(type in CUSTOM_DOMAIN_PREFIX)) return null
   return `${CUSTOM_DOMAIN_PREFIX[type]}.${customDomain}`
+}
+
+/** Every host the backend serves (and checks) under the custom domain. */
+export function customDomainHosts(
+  services: ServiceLike[],
+  apexService: string | null | undefined,
+  customDomain: string | null | undefined,
+): string[] {
+  return CUSTOM_DOMAIN_HOST_TYPES.map((type) =>
+    customDomainServiceHost(services, apexService, customDomain, type),
+  ).filter((host): host is string => !!host)
 }
 
 /**
@@ -149,10 +165,11 @@ export function customDomainDnsRecords(
   apexService: string | null | undefined,
   customDomain: string | null | undefined,
 ): Array<{ type: 'A'; host: string; value: string }> {
-  return ['CONNECT', 'SWITCHBOARD']
-    .map((type) => customDomainServiceHost(services, apexService, customDomain, type))
-    .filter((host): host is string => !!host)
-    .map((host) => ({ type: 'A' as const, host, value: INGRESS_IP }))
+  return customDomainHosts(services, apexService, customDomain).map((host) => ({
+    type: 'A' as const,
+    host,
+    value: INGRESS_IP,
+  }))
 }
 
 /** Service types that can serve the custom-domain apex (an ingress the chart renders for them). */
