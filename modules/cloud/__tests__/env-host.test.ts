@@ -7,6 +7,7 @@ import {
   isPinnedToCustomApex,
   envHeaderHost,
   customDomainDnsRecords,
+  customDomainHosts,
   INGRESS_IP,
   type ServiceLike,
 } from '@/modules/cloud/lib/env-host'
@@ -209,5 +210,38 @@ describe('customDomainDnsRecords', () => {
   it('nothing without a domain or without routable services', () => {
     expect(customDomainDnsRecords([svc('CONNECT')], null, null)).toEqual([])
     expect(customDomainDnsRecords([svc('DOCLING')], null, 'kv.example')).toEqual([])
+  })
+})
+
+// athlink.vetra.io: CONNECT + SWITCHBOARD + FUSION, FUSION pinned to the bare
+// custom domain. gitops renders FUSION's only ingress at the domain itself.
+describe('FUSION pinned to the custom-domain apex', () => {
+  const s = [svc('CONNECT'), svc('SWITCHBOARD'), svc('FUSION')]
+  it('FUSION answers on the bare custom domain', () => {
+    expect(isPinnedToCustomApex(s, 'FUSION', 'athlink.vetra.io', 'FUSION')).toBe(true)
+    expect(customDomainServiceHost(s, 'FUSION', 'athlink.vetra.io', 'FUSION')).toBe(
+      'athlink.vetra.io',
+    )
+  })
+  it('connect/switchboard keep their prefixed hosts', () => {
+    expect(customDomainServiceHost(s, 'FUSION', 'athlink.vetra.io', 'CONNECT')).toBe(
+      'connect.athlink.vetra.io',
+    )
+  })
+  it('the served hosts and DNS records include the bare domain', () => {
+    expect(customDomainHosts(s, 'FUSION', 'athlink.vetra.io')).toEqual([
+      'connect.athlink.vetra.io',
+      'switchboard.athlink.vetra.io',
+      'athlink.vetra.io',
+    ])
+    expect(customDomainDnsRecords(s, 'FUSION', 'athlink.vetra.io').map((r) => r.host)).toContain(
+      'athlink.vetra.io',
+    )
+  })
+  it('an unpinned FUSION still gets no custom host', () => {
+    expect(customDomainHosts(s, null, 'athlink.vetra.io')).toEqual([
+      'connect.athlink.vetra.io',
+      'switchboard.athlink.vetra.io',
+    ])
   })
 })
