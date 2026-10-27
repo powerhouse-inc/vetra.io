@@ -914,9 +914,12 @@ export async function fetchClintRuntimeEndpointsByEnv(
 // On-demand database dumps (vetra-cloud-observability subgraph)
 // ---------------------------------------------------------------------------
 
+// `source` is omitted: the deployed DatabaseDump type doesn't have it yet
+// (scheduled backups are unmerged in vetra-cloud-package), and querying an
+// unknown field fails the whole request with a 400.
 const DUMP_FIELDS = `
   id status requestedAt startedAt completedAt expiresAt
-  sizeBytes errorMessage downloadUrl source
+  sizeBytes errorMessage downloadUrl
 `
 
 export async function fetchEnvironmentDumps(

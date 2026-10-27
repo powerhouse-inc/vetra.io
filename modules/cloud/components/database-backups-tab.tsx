@@ -10,6 +10,10 @@ import { useEnvironmentDumps } from '@/modules/cloud/hooks/use-environment-dumps
 import type { BackupCadence, BackupSchedule } from '@/modules/cloud/types'
 import { Button } from '@/modules/shared/components/ui/button'
 
+// The `restoreEnvironmentDump` mutation isn't deployed yet (unmerged in
+// vetra-cloud-package), so the Restore action stays hidden until it ships.
+const RESTORE_SUPPORTED = false
+
 type Props = {
   tenantId: string | null
   canEdit: boolean
@@ -221,7 +225,7 @@ export function DatabaseBackupsTab({
               }
               isCancelling={cancellingId === d.id}
               onRestore={
-                d.status === 'READY' && canEdit && !isRestoring
+                RESTORE_SUPPORTED && d.status === 'READY' && canEdit && !isRestoring
                   ? () => handleRestore(d.id)
                   : undefined
               }
