@@ -478,7 +478,7 @@ export function ServiceDetailDrawer({
               {showDatabaseTab && (
                 <TabsContent value="database" className="mt-0">
                   <div className="text-muted-foreground mb-4 text-xs">
-                    <span className="font-mono">{clusterName}</span> · postgres 16
+                    <span className="font-mono">{clusterName}</span> · PostgreSQL
                   </div>
                   <DatabaseTabBody
                     tenantId={tenantId}
