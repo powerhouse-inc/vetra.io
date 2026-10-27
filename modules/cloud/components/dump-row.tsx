@@ -71,6 +71,11 @@ export function DumpRow({ dump, onRetry, onCancel, isCancelling, onRestore, sour
               auto
             </Badge>
           )}
+          {effectiveSource === 'PRE_RESTORE' && (
+            <Badge size="xs" variant="secondary">
+              before restore
+            </Badge>
+          )}
           <span
             className={cn(
               'inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium tracking-wide',
@@ -127,9 +132,25 @@ export function DumpRow({ dump, onRetry, onCancel, isCancelling, onRestore, sour
             <AlertDialogContent>
               <AlertDialogHeader>
                 <AlertDialogTitle>Restore this dump?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will overwrite the current database with the contents of{' '}
-                  <span className="font-mono">{filename}</span>. This action cannot be undone.
+                <AlertDialogDescription asChild>
+                  <div className="space-y-2">
+                    <p>
+                      The whole database is replaced with the contents of{' '}
+                      <span className="font-mono">{filename}</span>. Everything written after this
+                      dump is removed.
+                    </p>
+                    <ul className="list-disc space-y-1 pl-4">
+                      <li>
+                        A safety backup of the current data is taken first, so you can undo this by
+                        restoring it.
+                      </li>
+                      <li>The Switchboard is offline for the duration of the restore.</li>
+                      <li>
+                        Packages and configuration are not rolled back. If a package update caused
+                        the problem, roll the package back first.
+                      </li>
+                    </ul>
+                  </div>
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>

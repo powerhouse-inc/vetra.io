@@ -148,13 +148,11 @@ export type AutoUpdateChannel = 'DEV' | 'STAGING' | 'LATEST'
 export type BackupCadence = 'HOURLY' | 'DAILY' | 'WEEKLY'
 
 /**
- * Discriminator for how a dump was triggered. Manual dumps come from a user
- * clicking "Create dump"; scheduled dumps come from the backend job runner
- * acting on the env's `backupSchedule`. Optional on the type for tolerance
- * with backends that haven't rolled out the column yet — `undefined`/`null`
- * is treated as MANUAL by the UI.
+ * Why a dump exists: an owner clicked "Create dump" (MANUAL), the backup
+ * scheduler fired it (SCHEDULED), or a restore saved the data it was about
+ * to replace (PRE_RESTORE).
  */
-export type DumpSource = 'MANUAL' | 'SCHEDULED'
+export type DumpSource = 'MANUAL' | 'SCHEDULED' | 'PRE_RESTORE'
 
 /**
  * Frontend representation of the recurring-backup intent stored on
@@ -165,6 +163,13 @@ export type BackupSchedule = {
   cadence: BackupCadence
   /** Number of completed scheduled dumps to retain. Default 7; 1–30. */
   retention: number
+}
+
+/** What the backend applies when an environment has no schedule set. */
+export const DEFAULT_BACKUP_SCHEDULE: BackupSchedule = {
+  enabled: true,
+  cadence: 'DAILY',
+  retention: 7,
 }
 export type ReleaseTrigger = 'AUTO' | 'MANUAL' | 'ROLLBACK'
 
@@ -353,8 +358,8 @@ export type DatabaseSchema = {
 export type DatabaseDumpStatus = 'PENDING' | 'RUNNING' | 'READY' | 'FAILED'
 
 /**
- * On-demand pg_dump export of the env's Postgres. File has a 24h TTL on
- * S3; rows are pruned after 7d. `downloadUrl` is a 15-min presigned URL
+ * pg_dump export of the env's Postgres. Kept per source by count
+ * (manual 5, scheduled per schedule, safety 3), at most 30 days. `downloadUrl` is a 15-min presigned URL
  * minted on every read, only present when status=READY and the file
  * hasn't expired.
  */
@@ -368,10 +373,20 @@ export type DatabaseDump = {
   sizeBytes: number | null
   errorMessage: string | null
   downloadUrl: string | null
-  /**
-   * Whether the dump was manually requested or fired by the scheduled-backup
-   * runner. Optional for tolerance with backends that haven't rolled out the
-   * column yet — `undefined`/`null` is treated as MANUAL by the UI.
-   */
-  source?: DumpSource | null
+  source: DumpSource
+}
+
+export type DatabaseRestoreStatus =
+  'SAFETY_DUMP' | 'STOPPING' | 'RESTORING' | 'STARTING' | 'SUCCEEDED' | 'FAILED'
+
+/** A restore of a dump into its environment, advanced server-side step by step. */
+export type DatabaseRestore = {
+  id: string
+  dumpId: string
+  /** PRE_RESTORE dump of the data that was replaced. */
+  safetyDumpId: string
+  status: DatabaseRestoreStatus
+  errorMessage: string | null
+  requestedAt: string
+  completedAt: string | null
 }

@@ -51,7 +51,8 @@ export function BackupSchedulePanel({
   nextRunAt,
   controllerSupported = true,
 }: Props) {
-  const enabled = schedule?.enabled ?? false
+  // No schedule set = the backend default: enabled, daily, keep 7.
+  const enabled = schedule?.enabled ?? true
   const initialCadence = schedule?.cadence ?? DEFAULT_CADENCE
   const initialRetention = schedule?.retention ?? DEFAULT_RETENTION
 

@@ -5,24 +5,32 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   cancelEnvironmentDump,
   fetchEnvironmentDumps,
+  fetchEnvironmentRestores,
   getAuthToken,
   requestEnvironmentDump,
   restoreEnvironmentDump,
 } from '../graphql'
-import type { DatabaseDump, DatabaseDumpStatus } from '../types'
+import type {
+  DatabaseDump,
+  DatabaseDumpStatus,
+  DatabaseRestore,
+  DatabaseRestoreStatus,
+} from '../types'
 
 const POLL_INTERVAL_MS = 5000
 const IN_FLIGHT: ReadonlySet<DatabaseDumpStatus> = new Set(['PENDING', 'RUNNING'])
+const RESTORE_DONE: ReadonlySet<DatabaseRestoreStatus> = new Set(['SUCCEEDED', 'FAILED'])
 
 type State = {
   dumps: DatabaseDump[]
+  restores: DatabaseRestore[]
   isLoading: boolean
   error: string | null
 }
 
 /**
- * Owner-gated query for the env's dump history. Polls every 5s while
- * any dump is PENDING/RUNNING; otherwise idle. The presigned URL on
+ * Owner-gated query for the env's dump and restore history. Polls every 5s
+ * while any dump is PENDING/RUNNING or a restore is active; otherwise idle. The presigned URL on
  * each ready dump is minted server-side at query time, so re-fetching
  * always returns a fresh URL with 15-min validity.
  */
@@ -33,20 +41,24 @@ export function useEnvironmentDumps(tenantId: string | null) {
 
   const [state, setState] = useState<State>({
     dumps: [],
+    restores: [],
     isLoading: true,
     error: null,
   })
   const [isRequesting, setIsRequesting] = useState(false)
   const [cancellingId, setCancellingId] = useState<string | null>(null)
-  const [restoringId, setRestoringId] = useState<string | null>(null)
+  const [isStartingRestore, setIsStartingRestore] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   const refetch = useCallback(async () => {
     if (!tenantId) return
     try {
       const token = await getAuthToken(renownRef.current)
-      const dumps = await fetchEnvironmentDumps(tenantId, token)
-      setState({ dumps, isLoading: false, error: null })
+      const [dumps, restores] = await Promise.all([
+        fetchEnvironmentDumps(tenantId, token),
+        fetchEnvironmentRestores(tenantId, token),
+      ])
+      setState({ dumps, restores, isLoading: false, error: null })
     } catch (err) {
       setState((s) => ({
         ...s,
@@ -62,7 +74,9 @@ export function useEnvironmentDumps(tenantId: string | null) {
   }, [tenantId, refetch])
 
   useEffect(() => {
-    const hasInFlight = state.dumps.some((d) => IN_FLIGHT.has(d.status))
+    const hasInFlight =
+      state.dumps.some((d) => IN_FLIGHT.has(d.status)) ||
+      state.restores.some((r) => !RESTORE_DONE.has(r.status))
     if (hasInFlight && !pollRef.current) {
       pollRef.current = setInterval(() => void refetch(), POLL_INTERVAL_MS)
     } else if (!hasInFlight && pollRef.current) {
@@ -75,7 +89,7 @@ export function useEnvironmentDumps(tenantId: string | null) {
         pollRef.current = null
       }
     }
-  }, [state.dumps, refetch])
+  }, [state.dumps, state.restores, refetch])
 
   const request = useCallback(async () => {
     if (!tenantId) return
@@ -103,16 +117,21 @@ export function useEnvironmentDumps(tenantId: string | null) {
     [refetch],
   )
 
-  const restore = useCallback(async (dumpId: string) => {
-    setRestoringId(dumpId)
-    try {
-      const token = await getAuthToken(renownRef.current)
-      await restoreEnvironmentDump(dumpId, token)
-      // No refetch — server runs restore async; dump list is unchanged.
-    } finally {
-      setRestoringId(null)
-    }
-  }, [])
+  const restore = useCallback(
+    async (dumpId: string) => {
+      setIsStartingRestore(true)
+      try {
+        const token = await getAuthToken(renownRef.current)
+        await restoreEnvironmentDump(dumpId, token)
+        await refetch()
+      } finally {
+        setIsStartingRestore(false)
+      }
+    },
+    [refetch],
+  )
+
+  const activeRestore = state.restores.find((r) => !RESTORE_DONE.has(r.status)) ?? null
 
   return {
     dumps: state.dumps,
@@ -120,7 +139,9 @@ export function useEnvironmentDumps(tenantId: string | null) {
     error: state.error,
     isRequesting,
     cancellingId,
-    restoringId,
+    restores: state.restores,
+    activeRestore,
+    isStartingRestore,
     request,
     cancel,
     restore,

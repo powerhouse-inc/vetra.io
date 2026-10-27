@@ -885,6 +885,7 @@ export async function fetchLogs(
 import type {
   ClintRuntimeEndpointsForPrefix,
   DatabaseDump,
+  DatabaseRestore,
   DatabaseQueryResult,
   DatabaseSchema,
 } from './types'
@@ -914,13 +915,29 @@ export async function fetchClintRuntimeEndpointsByEnv(
 // On-demand database dumps (vetra-cloud-observability subgraph)
 // ---------------------------------------------------------------------------
 
-// `source` is omitted: the deployed DatabaseDump type doesn't have it yet
-// (scheduled backups are unmerged in vetra-cloud-package), and querying an
-// unknown field fails the whole request with a 400.
 const DUMP_FIELDS = `
   id status requestedAt startedAt completedAt expiresAt
-  sizeBytes errorMessage downloadUrl
+  sizeBytes errorMessage downloadUrl source
 `
+
+const RESTORE_FIELDS = `
+  id dumpId safetyDumpId status errorMessage requestedAt completedAt
+`
+
+export async function fetchEnvironmentRestores(
+  tenantId: string,
+  token?: string | null,
+): Promise<DatabaseRestore[]> {
+  const data = await gqlObservability<{ environmentRestores: DatabaseRestore[] }>(
+    '',
+    `query ($tenantId: String!) {
+      environmentRestores(tenantId: $tenantId) { ${RESTORE_FIELDS} }
+    }`,
+    { tenantId },
+    token,
+  )
+  return data.environmentRestores
+}
 
 export async function fetchEnvironmentDumps(
   tenantId: string,
@@ -1033,13 +1050,11 @@ export async function executeReadOnlyQuery(
 export async function restoreEnvironmentDump(
   dumpId: string,
   token?: string | null,
-): Promise<{ ok: boolean; message: string | null }> {
-  const data = await gqlObservability<{
-    restoreEnvironmentDump: { ok: boolean; message: string | null }
-  }>(
+): Promise<DatabaseRestore> {
+  const data = await gqlObservability<{ restoreEnvironmentDump: DatabaseRestore }>(
     '',
     `mutation ($dumpId: ID!) {
-      restoreEnvironmentDump(dumpId: $dumpId) { ok message }
+      restoreEnvironmentDump(dumpId: $dumpId) { ${RESTORE_FIELDS} }
     }`,
     { dumpId },
     token,

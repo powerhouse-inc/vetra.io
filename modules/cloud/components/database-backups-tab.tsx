@@ -1,18 +1,19 @@
 'use client'
 
 import { Database, Loader2, Plus } from 'lucide-react'
-import { useMemo } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { toast } from 'sonner'
 
 import { BackupSchedulePanel } from '@/modules/cloud/components/backup-schedule-panel'
 import { DumpRow } from '@/modules/cloud/components/dump-row'
 import { useEnvironmentDumps } from '@/modules/cloud/hooks/use-environment-dumps'
-import type { BackupCadence, BackupSchedule } from '@/modules/cloud/types'
+import {
+  DEFAULT_BACKUP_SCHEDULE,
+  type BackupCadence,
+  type BackupSchedule,
+  type DatabaseRestoreStatus,
+} from '@/modules/cloud/types'
 import { Button } from '@/modules/shared/components/ui/button'
-
-// The `restoreEnvironmentDump` mutation isn't deployed yet (unmerged in
-// vetra-cloud-package), so the Restore action stays hidden until it ships.
-const RESTORE_SUPPORTED = false
 
 type Props = {
   tenantId: string | null
@@ -31,6 +32,19 @@ type Props = {
   }) => Promise<void>
   /** Whether the controller exposes `setBackupSchedule` at runtime. */
   scheduleSupported?: boolean
+}
+
+const RESTORE_STEP_LABEL: Partial<Record<DatabaseRestoreStatus, string>> = {
+  SAFETY_DUMP: 'Saving a safety backup of the current data…',
+  STOPPING: 'Stopping Switchboard…',
+  RESTORING: 'Restoring the database…',
+  STARTING: 'Starting Switchboard…',
+}
+
+const CADENCE_LABEL: Record<BackupCadence, string> = {
+  HOURLY: 'hourly',
+  DAILY: 'daily',
+  WEEKLY: 'weekly',
 }
 
 const CADENCE_MS: Record<BackupCadence, number> = {
@@ -52,15 +66,38 @@ export function DatabaseBackupsTab({
     error,
     isRequesting,
     cancellingId,
-    restoringId,
+    restores,
+    activeRestore,
+    isStartingRestore,
     request,
     cancel,
     restore,
   } = useEnvironmentDumps(tenantId)
 
-  const isRestoring = restoringId !== null
+  // A null schedule means the backend's default applies (daily, keep 7).
+  const effectiveSchedule = schedule ?? DEFAULT_BACKUP_SCHEDULE
+  const isRestoring = activeRestore !== null || isStartingRestore
   const inFlight =
     dumps.some((d) => d.status === 'PENDING' || d.status === 'RUNNING') || isRestoring
+
+  // Toast once when the restore this tab watched reaches a final state.
+  const watchedRestoreId = useRef<string | null>(null)
+  useEffect(() => {
+    if (activeRestore) {
+      watchedRestoreId.current = activeRestore.id
+      return
+    }
+    const watched = restores.find((r) => r.id === watchedRestoreId.current)
+    if (!watched) return
+    watchedRestoreId.current = null
+    if (watched.status === 'SUCCEEDED') {
+      toast.success(
+        'Database restored. Reload any open Connect tabs so they pick up the restored data.',
+      )
+    } else if (watched.status === 'FAILED') {
+      toast.error(`Restore failed: ${watched.errorMessage ?? 'unknown error'}`)
+    }
+  }, [activeRestore, restores])
 
   const handleCreate = async () => {
     try {
@@ -71,6 +108,8 @@ export function DatabaseBackupsTab({
       // Surface the underlying contract errors with friendlier copy.
       if (msg.includes('DUMP_IN_PROGRESS')) {
         toast.error('A dump is already in progress for this environment.')
+      } else if (msg.includes('RESTORE_IN_PROGRESS')) {
+        toast.error('A restore is running. Try again once it has finished.')
       } else if (msg.includes('FORBIDDEN')) {
         toast.error('Only the environment owner can request a dump.')
       } else {
@@ -92,21 +131,14 @@ export function DatabaseBackupsTab({
   // Compute next-run timestamp client-side from the most recent SCHEDULED
   // dump + the active cadence. There's no `nextRunAt` field on the doc model
   // yet — this is the spec's documented degraded fallback.
-  //
-  // Deliberately narrow deps to the fields the body actually reads. Retention
-  // changes don't shift the next-run timestamp; using whole `schedule` would
-  // recompute on every retention edit. React Compiler prefers matching its
-  // inferred deps, so it bails out of optimizing this memo — manual
-  // memoization stays in effect with the narrower contract.
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
   const nextRunAt = useMemo(() => {
-    if (!schedule?.enabled) return null
+    if (!effectiveSchedule.enabled) return null
     const scheduled = dumps.filter((d) => d.source === 'SCHEDULED')
     if (scheduled.length === 0) return null
     const latest = scheduled.slice().sort((a, b) => b.requestedAt.localeCompare(a.requestedAt))[0]
-    const cadenceMs = CADENCE_MS[schedule.cadence]
+    const cadenceMs = CADENCE_MS[effectiveSchedule.cadence]
     return new Date(new Date(latest.requestedAt).getTime() + cadenceMs).toISOString()
-  }, [dumps, schedule?.enabled, schedule?.cadence])
+  }, [dumps, effectiveSchedule.enabled, effectiveSchedule.cadence])
 
   const handleSaveSchedule = async (opts: {
     enabled: boolean
@@ -134,11 +166,15 @@ export function DatabaseBackupsTab({
   const handleRestore = async (dumpId: string) => {
     try {
       await restore(dumpId)
-      toast.success('Restore started — the database will be replaced shortly.')
+      toast.success('Restore started. A safety backup of the current data is taken first.')
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Failed to start restore'
       if (msg.includes('RESTORE_IN_PROGRESS')) {
         toast.error('A restore is already in progress for this environment.')
+      } else if (msg.includes('DUMP_IN_PROGRESS')) {
+        toast.error('A dump is running for this environment. Try again once it has finished.')
+      } else if (msg.includes('ENV_NOT_READY')) {
+        toast.error('The environment must be running to restore a dump.')
       } else if (msg.includes('DUMP_NOT_READY') || msg.includes('DUMP_EXPIRED')) {
         toast.error('This dump is no longer available for restore.')
       } else if (msg.includes('FORBIDDEN')) {
@@ -162,7 +198,9 @@ export function DatabaseBackupsTab({
         <div className="text-muted-foreground text-xs">
           <span className="text-foreground font-medium">{dumps.length}</span> dump
           {dumps.length === 1 ? '' : 's'} ·{' '}
-          {schedule?.enabled ? `Sched. · ${schedule.retention} kept` : '24h retention'}
+          {effectiveSchedule.enabled
+            ? `${CADENCE_LABEL[effectiveSchedule.cadence]} backups · ${effectiveSchedule.retention} kept`
+            : 'scheduled backups off'}
         </div>
         {canEdit && (
           <Button size="sm" onClick={() => void handleCreate()} disabled={inFlight || isRequesting}>
@@ -172,11 +210,18 @@ export function DatabaseBackupsTab({
         )}
       </div>
 
-      {isRestoring && restoringId && (
+      {isRestoring && (
         <div className="bg-warning/10 text-warning flex items-center gap-2 rounded-md px-3 py-2 text-sm">
           <Loader2 className="h-3.5 w-3.5 shrink-0 animate-spin" />
           <span>
-            Restoring from <span className="font-mono">dump-{restoringId}.dump</span>&hellip;
+            {activeRestore ? (
+              <>
+                {RESTORE_STEP_LABEL[activeRestore.status]} Restoring{' '}
+                <span className="font-mono">dump-{activeRestore.dumpId}.dump</span>
+              </>
+            ) : (
+              'Starting restore…'
+            )}
           </span>
         </div>
       )}
@@ -225,9 +270,7 @@ export function DatabaseBackupsTab({
               }
               isCancelling={cancellingId === d.id}
               onRestore={
-                RESTORE_SUPPORTED && d.status === 'READY' && canEdit && !isRestoring
-                  ? () => handleRestore(d.id)
-                  : undefined
+                d.status === 'READY' && canEdit && !inFlight ? () => handleRestore(d.id) : undefined
               }
             />
           ))}
