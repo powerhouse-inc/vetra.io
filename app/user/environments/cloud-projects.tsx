@@ -92,7 +92,13 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
         </div>
         {/* Same mapping as the detail page. The list query has no live ArgoCD
             health, so a READY env reads "Ready" here until it is opened. */}
-        <StatusPill meta={environmentStatusMeta({ status: env.state.status })} />
+        <StatusPill
+          meta={environmentStatusMeta({
+            status: env.state.status,
+            argoHealthStatus: env.health?.argoHealthStatus,
+            argoSyncStatus: env.health?.argoSyncStatus,
+          })}
+        />
       </CardHeader>
       <CardContent className="space-y-4 pt-0">
         <EnvironmentLicenceBadge environmentId={env.id} />

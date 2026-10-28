@@ -60,6 +60,7 @@ import { AppProfileTab } from './profile/profile-tab'
 import { GithubFlowLink } from './github-flow-link'
 import { Banner } from './banner'
 import { StatusPill } from '@/modules/shared/components/status'
+import { useDocumentTitle } from '@/modules/shared/hooks/use-document-title'
 
 /** Owner-only tabs, in display order. Tasks append to this as each tab lands. */
 export const LICENSING_TABS = [
@@ -280,6 +281,7 @@ export function AppDetail({ appId }: { appId: string }) {
   const confirm = useConfirmAppIdentity()
   const app = appQuery.data
   const publisher = useAppPublisher(appId, app?.ownerOrgId ?? null)
+  useDocumentTitle(app?.name ?? publisher.app?.name ?? null)
 
   const tabParam = params.get('tab')
   const readOnly = app ? isAppReadOnly(app) : false

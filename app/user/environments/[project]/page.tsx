@@ -61,6 +61,7 @@ import { HeroCard } from '@/modules/shared/components/ui/card'
 
 import { InlineEditableTitle, OverviewTab } from './tabs/overview'
 import { defaultPackageRegistry } from '@/modules/cloud/switchboard-url'
+import { useDocumentTitle } from '@/modules/shared/hooks/use-document-title'
 
 // ---------------------------------------------------------------------------
 // EnvironmentDetail — single-column env page; no env-level tabs. Per-service
@@ -151,6 +152,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   const ownerOrgId = environment?.state.ownerOrgId ?? null
 
   const state = environment?.state
+  useDocumentTitle(state?.label || environment?.name || null)
   const subdomain = state?.genericSubdomain ?? null
   // App environments are hidden from the Cloud list, so "back" leads to the app.
   const appId = environment?.app?.appId ?? state?.app?.appId ?? null

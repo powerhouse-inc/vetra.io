@@ -264,7 +264,9 @@ export function ServiceDetailDrawer({
                   {service?.version ? (
                     <span className="font-mono">{service.version}</span>
                   ) : (
-                    <span className="italic">version not set</span>
+                    <span title="No version pinned: this service runs the platform default image, which Vetra keeps up to date.">
+                      Platform default version
+                    </span>
                   )}
                 </SheetDescription>
               </div>

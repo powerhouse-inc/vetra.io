@@ -7,8 +7,10 @@ import { useRouter } from 'next/navigation'
 import { NewEnvironmentForm } from '@/app/user/environments/new-project-form'
 import { PageHeader } from '@/modules/shared/components/page-header'
 import { StudioLicenseGate } from '@/modules/studio-license/components/studio-license-gate'
+import { useDocumentTitle } from '@/modules/shared/hooks/use-document-title'
 
 export default function CreateEnvironmentPage() {
+  useDocumentTitle('Create an environment')
   const router = useRouter()
 
   // Creating an environment by hand is a builder action, gated on the Vetra Studio licence (decision D2).

@@ -1,5 +1,8 @@
+import type { Metadata } from 'next'
 import { StudioProductsGrid } from '@/modules/cloud/studio/components/studio-products-grid'
 import { StudioLicenseGate } from '@/modules/studio-license/components/studio-license-gate'
+
+export const metadata: Metadata = { title: 'Studio' }
 
 export default function UserStudioPage() {
   return (

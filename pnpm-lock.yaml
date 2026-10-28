@@ -145,9 +145,6 @@ importers:
       '@tanstack/react-query-persist-client':
         specifier: ^5.101.0
         version: 5.101.4(@tanstack/react-query@5.101.4(react@19.2.6))(react@19.2.6)
-      '@types/three':
-        specifier: ^0.183.1
-        version: 0.183.1
       '@uiw/react-codemirror':
         specifier: ^4.25.9
         version: 4.25.11(@babel/runtime@8.0.0)(@codemirror/autocomplete@6.20.3)(@codemirror/language@6.12.4)(@codemirror/lint@6.8.5)(@codemirror/search@6.5.10)(@codemirror/state@6.5.2)(@codemirror/theme-one-dark@6.1.3)(@codemirror/view@6.36.7)(codemirror@6.0.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
@@ -253,9 +250,6 @@ importers:
       tailwind-merge:
         specifier: ^3.3.1
         version: 3.6.0
-      three:
-        specifier: ^0.183.2
-        version: 0.183.2
       uint8arrays:
         specifier: ^5.1.0
         version: 5.1.1
@@ -1499,9 +1493,6 @@ packages:
   '@didtools/key-webcrypto@0.2.0':
     resolution: {integrity: sha512-5WK2Np0Tb6ApDoK71vYmEGiIdwLKzaEjr5KTK6RXFdl5xJnOYOHGkn4Ohco9D0UsoUGyDZE/ztlXmPQIbzHXQA==}
     engines: {node: '>=14.14'}
-
-  '@dimforge/rapier3d-compat@0.12.0':
-    resolution: {integrity: sha512-uekIGetywIgopfD97oDL5PfeezkFpNhwlzlaEYNOA0N6ghdsOvh/HYjSMek5Q2O1PYvRSDFcqFVJl4r4ZBwOow==}
 
   '@ecies/ciphers@0.2.6':
     resolution: {integrity: sha512-patgsRPKGkhhoBjETV4XxD0En4ui5fbX0hzayqI3M8tvNMGUoUvmyYAIWwlxBc1KX5cturfqByYdj5bYGRpN9g==}
@@ -4172,12 +4163,15 @@ packages:
       rolldown:
         optional: true
 
-  '@powerhousedao/shared@6.2.3-dev.78':
-    resolution: {integrity: sha512-3WFBODzv1r9jNBrLE/FWCbQr0MeFH6SYWwrD6pjg972EsHOT+buqcGYje7gSWNXgVcyTJaWjIM6W5vvYigRO+w==}
+  '@powerhousedao/shared@6.2.3-dev.79':
+    resolution: {integrity: sha512-FMXfwwk53IwVopMTrVSlnrEeJxNyFoamjaEHw4uUMwwjNFww5SoyPL/SLLggyv8ZA9KYuCAEXGsHrN0LUG2ulQ==}
     peerDependencies:
+      '@electric-sql/pglite': ^0.3.15
       '@sentry/node-core': ^10.52.0
       rolldown: 1.2.9
     peerDependenciesMeta:
+      '@electric-sql/pglite':
+        optional: true
       '@sentry/node-core':
         optional: true
       rolldown:
@@ -5059,8 +5053,8 @@ packages:
       wagmi:
         optional: true
 
-  '@renown/sdk@6.2.3-dev.78':
-    resolution: {integrity: sha512-aZNgv7JVwl9JXAxSje6Tt6SRuYf9lOktdsw0WOogtf215lKq1N+sN3RyaFUrUmPJOm5/KMzliPr3EOMggt1g3g==}
+  '@renown/sdk@6.2.3-dev.79':
+    resolution: {integrity: sha512-Nb3H8n3Z/lJ/+UOJA889ITDPDtwG1GQDrM6KR1Z6M8NEsKMbocuTMC7Fdy9ok5CWsaVc2q0nwH4ib6HOllgCjg==}
     peerDependencies:
       '@privy-io/react-auth': ^3.25.0
       '@rainbow-me/rainbowkit': ^2.2.11
@@ -6971,9 +6965,6 @@ packages:
       sass-embedded:
         optional: true
 
-  '@tweenjs/tween.js@23.1.3':
-    resolution: {integrity: sha512-vJmvvwFxYuGnF2axRtPYocag6Clbb5YS7kLL+SO/TeVFzHqDIWrNKYtcsPMibjDx9O+bu+psAy9NKfWklassUA==}
-
   '@tybys/wasm-util@0.10.3':
     resolution: {integrity: sha512-F3fo1MYrRJYL3zER0OUOmkutjr1Vp23m7OsSgp7nq4SP6OqX6C/56XFIPAl5bt3zaBRjmW7SGz3u/6LwFpYcOg==}
 
@@ -7165,17 +7156,11 @@ packages:
   '@types/shimmer@1.2.0':
     resolution: {integrity: sha512-UE7oxhQLLd9gub6JKIAhDq06T0F6FnztwMNRvYgjeQSBeMc1ZG/tA47EwfduvkuQS8apbkM/lpLpWsaCeYsXVg==}
 
-  '@types/stats.js@0.17.4':
-    resolution: {integrity: sha512-jIBvWWShCvlBqBNIZt0KAshWpvSjhkwkEu4ZUcASoAvhmrgAUI2t1dXrjSL4xXVLB4FznPrIsX3nKXFl/Dt4vA==}
-
   '@types/stream-buffers@3.0.8':
     resolution: {integrity: sha512-J+7VaHKNvlNPJPEJXX/fKa9DZtR/xPMwuIbe+yNOwp1YB+ApUOBv2aUpEoBJEi8nJgbgs1x8e73ttg0r1rSUdw==}
 
   '@types/tedious@4.0.14':
     resolution: {integrity: sha512-KHPsfX/FoVbUGbyYvk1q9MMQHLPeRZhRJZdO45Q4YjvFkv4hMNghCWTvy7rdKessBsmtz4euWCWAB6/tVpI1Iw==}
-
-  '@types/three@0.183.1':
-    resolution: {integrity: sha512-f2Pu5Hrepfgavttdye3PsH5RWyY/AvdZQwIVhrc4uNtvF7nOWJacQKcoVJn0S4f0yYbmAE6AR+ve7xDcuYtMGw==}
 
   '@types/tmp@0.0.33':
     resolution: {integrity: sha512-gVC1InwyVrO326wbBZw+AO3u2vRXz/iRWq9jYhpG4W8LXyIgDv3ZmcLQ5Q4Gs+gFMyqx+viFoFT+l3p61QFCmQ==}
@@ -7191,9 +7176,6 @@ packages:
 
   '@types/uuid@9.0.8':
     resolution: {integrity: sha512-jg+97EGIcY9AGHJJRaaPVgetKDsrTgbRjQ5Msgjh/DQKEFl0DtyRr/VCOyD1T2R1MNeWPK/u7JoGhlDZnKBAfA==}
-
-  '@types/webxr@0.5.24':
-    resolution: {integrity: sha512-h8fgEd/DpoS9CBrjEQXR+dIDraopAEfu4wYVNY2tEPwk60stPWhvZMf4Foo5FakuQ7HFZoa8WceaWFervK2Ovg==}
 
   '@types/whatwg-mimetype@3.0.2':
     resolution: {integrity: sha512-c2AKvDT8ToxLIOUlN51gTiHXflsfIFisS4pO7pDPoKouJCESkhZnEy623gwP9laCy5lnLDAw1vAzu2vM2YLOrA==}
@@ -7769,9 +7751,6 @@ packages:
 
   '@webassemblyjs/wast-printer@1.14.1':
     resolution: {integrity: sha512-kPSSXE6De1XOR820C90RIo2ogvZG+c3KiHzqUoO/F34Y2shGzesfqv7o57xrxovZJH/MetF5UjroJ/R/3isoiw==}
-
-  '@webgpu/types@0.1.71':
-    resolution: {integrity: sha512-mMy8/ODcKhab808co15eW+yN+HgXoQxRQHTiBV9Mrvl1r0ufnid7YOcI+gi4eUWSWl9ezD6TW2KXccrL8HCh2A==}
 
   '@whatwg-node/disposablestack@0.0.6':
     resolution: {integrity: sha512-LOtTn+JgJvX8WfBVJtF08TGrdjuFzGJc4mkP8EdDI8ADbvO7kiexYep1o8dwnt0okb0jYclCDXF13xU7Ge4zSw==}
@@ -11908,9 +11887,6 @@ packages:
       '@types/node':
         optional: true
 
-  meshoptimizer@1.0.1:
-    resolution: {integrity: sha512-Vix+QlA1YYT3FwmBBZ+49cE5y/b+pRrcXKqGpS5ouh33d3lSp2PoTpCw19E0cKDFWalembrHnIaZetf27a+W2g==}
-
   methods@1.1.2:
     resolution: {integrity: sha512-iclAHeNqNm68zFtnZ0e+1L2yUIdvzNoauKU4WBA3VvH/vPFieF7qfRlwUZU+DA9P9bPXIS90ulxoUoCH23sV2w==}
     engines: {node: '>= 0.6'}
@@ -14764,9 +14740,6 @@ packages:
   thread-stream@4.2.0:
     resolution: {integrity: sha512-e2zZ96wSChazBsbENf/Pcm/4swHt2cEKQ92rhUjkL9GCKiTDJIaTBenjE/m9DXi0QBmTMDkFDdOomUy20A1tDQ==}
     engines: {node: '>=20'}
-
-  three@0.183.2:
-    resolution: {integrity: sha512-di3BsL2FEQ1PA7Hcvn4fyJOlxRRgFYBpMTcyOgkwJIaDOdJMebEFPA+t98EvjuljDx4hNulAGwF6KIjtwI5jgQ==}
 
   through2@2.0.5:
     resolution: {integrity: sha512-/mrRod8xqpA+IHSLyGCQ2s8SPHiCDEeQJSep1jqLYeEUClOFG2Qsh+4FU6G9VeqpZnGW/Su8LQGc4YKni5rYSQ==}
@@ -17668,8 +17641,6 @@ snapshots:
       rpc-utils: 0.6.2
       uint8arrays: 5.1.1
       varint: 6.0.0
-
-  '@dimforge/rapier3d-compat@0.12.0': {}
 
   '@ecies/ciphers@0.2.6(@noble/ciphers@1.3.0)':
     dependencies:
@@ -22759,7 +22730,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@powerhousedao/shared@6.2.3-dev.78(@sentry/node-core@10.68.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1)))(rolldown@1.0.0-rc.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2))':
+  '@powerhousedao/shared@6.2.3-dev.79(@electric-sql/pglite@0.3.15)(@sentry/node-core@10.68.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1)))(rolldown@1.0.0-rc.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2))':
     dependencies:
       '@noble/hashes': 1.8.0
       '@sindresorhus/fnv1a': 3.1.0
@@ -22771,6 +22742,7 @@ snapshots:
       enquirer: 2.4.1
       fflate: 0.8.3
       kysely: 0.28.16
+      kysely-pglite-dialect: 1.2.0(@electric-sql/pglite@0.3.15)(kysely@0.28.16)
       luxon: 3.7.2
       mutative: 1.3.0
       npm-package-arg: 13.0.2
@@ -22784,6 +22756,7 @@ snapshots:
       zocker: 3.0.0(zod@4.4.3)
       zod: 4.4.3
     optionalDependencies:
+      '@electric-sql/pglite': 0.3.15
       '@sentry/node-core': 10.68.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))
       rolldown: 1.0.0-rc.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2)
     transitivePeerDependencies:
@@ -22884,7 +22857,7 @@ snapshots:
       '@powerhousedao/design-system': 6.0.0-dev.244(@babel/runtime@8.0.0)(@electric-sql/pglite@0.3.15)(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2)(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)
       '@powerhousedao/document-engineering': 1.40.5(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(graphql@16.14.2)(react-dom@19.2.6(react@19.2.6))(react@19.2.6)(zod@4.4.3)
       '@powerhousedao/shared': 6.0.0-dev.244(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2)(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))
-      '@renown/sdk': 6.2.3-dev.78(dd69e6a90fb155108c85dd15f45149da)
+      '@renown/sdk': 6.2.3-dev.79(d78768409d375a02fe3e2f70040306b9)
       cmd-ts: 0.15.0
       document-model: 6.0.0-dev.244(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2)(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1))
       graphql: 16.14.2
@@ -24317,10 +24290,10 @@ snapshots:
       - utf-8-validate
       - zod
 
-  '@renown/sdk@6.2.3-dev.78(dd69e6a90fb155108c85dd15f45149da)':
+  '@renown/sdk@6.2.3-dev.79(d78768409d375a02fe3e2f70040306b9)':
     dependencies:
       '@didtools/key-webcrypto': 0.2.0
-      '@powerhousedao/shared': 6.2.3-dev.78(@sentry/node-core@10.68.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1)))(rolldown@1.0.0-rc.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2))
+      '@powerhousedao/shared': 6.2.3-dev.79(@electric-sql/pglite@0.3.15)(@sentry/node-core@10.68.0(@opentelemetry/api@1.9.1)(@opentelemetry/core@2.10.0(@opentelemetry/api@1.9.1))(@opentelemetry/exporter-trace-otlp-http@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/instrumentation@0.57.2(@opentelemetry/api@1.9.1))(@opentelemetry/sdk-trace-base@1.30.1(@opentelemetry/api@1.9.1)))(rolldown@1.0.0-rc.8(@emnapi/core@1.10.0)(@emnapi/runtime@1.11.2))
       did-jwt-vc: 4.0.16
       did-resolver: 4.1.0
       key-did-resolver: 4.0.0
@@ -24333,6 +24306,7 @@ snapshots:
       react: 19.2.6
       wagmi: 2.19.5(@tanstack/query-core@5.101.4)(@tanstack/react-query@5.101.4(react@19.2.6))(@types/react@19.2.17)(bufferutil@4.1.0)(react@19.2.6)(typescript@6.0.2)(utf-8-validate@5.0.10)(viem@2.52.2(bufferutil@4.1.0)(typescript@6.0.2)(utf-8-validate@5.0.10)(zod@4.4.3))(zod@4.4.3)
     transitivePeerDependencies:
+      - '@electric-sql/pglite'
       - '@sentry/node-core'
       - bufferutil
       - rolldown
@@ -26980,8 +26954,6 @@ snapshots:
       - yaml
     optional: true
 
-  '@tweenjs/tween.js@23.1.3': {}
-
   '@tybys/wasm-util@0.10.3':
     dependencies:
       tslib: 2.8.1
@@ -27195,8 +27167,6 @@ snapshots:
   '@types/shimmer@1.2.0':
     optional: true
 
-  '@types/stats.js@0.17.4': {}
-
   '@types/stream-buffers@3.0.8':
     dependencies:
       '@types/node': 24.13.3
@@ -27205,16 +27175,6 @@ snapshots:
     dependencies:
       '@types/node': 24.13.3
     optional: true
-
-  '@types/three@0.183.1':
-    dependencies:
-      '@dimforge/rapier3d-compat': 0.12.0
-      '@tweenjs/tween.js': 23.1.3
-      '@types/stats.js': 0.17.4
-      '@types/webxr': 0.5.24
-      '@webgpu/types': 0.1.71
-      fflate: 0.8.3
-      meshoptimizer: 1.0.1
 
   '@types/tmp@0.0.33':
     optional: true
@@ -27227,8 +27187,6 @@ snapshots:
 
   '@types/uuid@9.0.8':
     optional: true
-
-  '@types/webxr@0.5.24': {}
 
   '@types/whatwg-mimetype@3.0.2': {}
 
@@ -29203,8 +29161,6 @@ snapshots:
     dependencies:
       '@webassemblyjs/ast': 1.14.1
       '@xtuc/long': 4.2.2
-
-  '@webgpu/types@0.1.71': {}
 
   '@whatwg-node/disposablestack@0.0.6':
     dependencies:
@@ -34084,8 +34040,6 @@ snapshots:
     optionalDependencies:
       '@types/node': 25.2.3
 
-  meshoptimizer@1.0.1: {}
-
   methods@1.1.2:
     optional: true
 
@@ -37316,8 +37270,6 @@ snapshots:
     dependencies:
       real-require: 1.0.0
     optional: true
-
-  three@0.183.2: {}
 
   through2@2.0.5:
     dependencies:

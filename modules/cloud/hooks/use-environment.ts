@@ -117,6 +117,13 @@ function summaryToCloudEnvironment(summary: EnvironmentSummary): CloudEnvironmen
       studioInstanceId: summary.studioInstanceId ?? null,
     },
     ownerOrgId: summary.ownerOrgId ?? null,
+    health:
+      summary.argoHealthStatus || summary.argoSyncStatus
+        ? {
+            argoSyncStatus: summary.argoSyncStatus ?? null,
+            argoHealthStatus: summary.argoHealthStatus ?? null,
+          }
+        : null,
     app: summary.appId
       ? { appId: summary.appId, role: summary.appRole ?? null, prNumber: summary.prNumber ?? null }
       : null,

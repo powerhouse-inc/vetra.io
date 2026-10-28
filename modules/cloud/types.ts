@@ -218,6 +218,11 @@ export type CloudEnvironment = {
   app?: CloudEnvironmentAppLink | null
   /** Renown organisation owning the env; null/absent when personal. */
   ownerOrgId?: string | null
+  /** Live ArgoCD status from the list query, so a list card can say Degraded / Down like the detail page. */
+  health?: {
+    argoSyncStatus: ArgoSyncStatus | null
+    argoHealthStatus: ArgoHealthStatus | null
+  } | null
 }
 
 // Observability types (from vetra-cloud-observability subgraph)

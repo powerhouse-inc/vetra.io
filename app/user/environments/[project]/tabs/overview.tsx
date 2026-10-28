@@ -394,7 +394,13 @@ function ServiceRow({
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
             <span className="text-muted-foreground">
               <span className="font-medium">Version:</span>{' '}
-              <span className="font-mono">{displayedVersion ?? 'not set'}</span>
+              {displayedVersion ? (
+                <span className="font-mono">{displayedVersion}</span>
+              ) : (
+                <span title="No version pinned: this service runs the platform default image, which Vetra keeps up to date.">
+                  platform default
+                </span>
+              )}
             </span>
           </div>
           {onSetVersion && (
