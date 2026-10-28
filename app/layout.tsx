@@ -19,6 +19,7 @@ import { FooterScope } from '@/shared/components/footer/footer-scope'
 import Navbar from '@/shared/components/navbar/navbar'
 import { QueryClientProvider } from '@/shared/providers/query-client'
 import { verifySession } from '@/modules/shared/lib/renown-session'
+import { SITE_URL } from '@/modules/landing/lib/links'
 import { UMAMI_BEFORE_SEND, UMAMI_BEFORE_SEND_JS } from '@/modules/shared/lib/analytics-privacy'
 import type { Metadata } from 'next'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
@@ -32,8 +33,10 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Vetra',
-  description: 'Vetra',
+  metadataBase: new URL(SITE_URL),
+  title: { default: 'Vetra', template: '%s · Vetra' },
+  description:
+    'Vetra Studio builds open-source Powerhouse apps with you; Vetra Cloud hosts them, or you self-host on the open Powerhouse platform.',
 }
 
 export default async function RootLayout({

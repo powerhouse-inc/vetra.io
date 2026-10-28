@@ -1,4 +1,6 @@
 /** Outbound targets shared by the console landing pages. */
+/** Canonical public origin, used for metadata, robots.txt and the sitemap. */
+export const SITE_URL = 'https://vetra.io'
 export const EARLY_ACCESS_HREF = '/studio#access'
 export const REDEEM_HREF = '/redeem'
 export const CONSOLE_HREF = '/user'

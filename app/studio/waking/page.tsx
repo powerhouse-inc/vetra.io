@@ -5,7 +5,7 @@ import { WakingScreen } from '@/modules/cloud/studio/components/waking-screen'
 export const dynamic = 'force-dynamic'
 
 export const metadata = {
-  title: 'Waking your studio… · Vetra',
+  title: 'Waking your studio…',
 }
 
 export default function StudioWakingPage() {

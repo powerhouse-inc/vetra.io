@@ -4,7 +4,7 @@ import { verifySession } from '@/modules/shared/lib/renown-session'
 import { redirect } from 'next/navigation'
 
 export const metadata = {
-  title: 'Vetra | An agent that builds Powerhouse apps, a cloud that hosts them',
+  title: { absolute: 'Vetra · An agent that builds Powerhouse apps, a cloud that hosts them' },
   description:
     'Vetra Studio turns a conversation into an open-source Powerhouse package. Vetra Cloud hosts it, or you self-host it on the open Powerhouse platform.',
 }

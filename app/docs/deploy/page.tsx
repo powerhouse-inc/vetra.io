@@ -8,7 +8,7 @@ import { buildWorkflowYaml, WORKFLOW_PATH } from '@/modules/apps/lib/workflow'
 import { Button } from '@/modules/shared/components/ui/button'
 
 export const metadata: Metadata = {
-  title: 'Deploy guide',
+  title: 'Deploy with Vetra Apps',
   description:
     'Connect a GitHub repository to Vetra: push to deploy production, get a preview environment for every pull request.',
 }
