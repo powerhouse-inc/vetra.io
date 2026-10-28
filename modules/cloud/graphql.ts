@@ -1,4 +1,6 @@
 import type {
+  ArgoHealthStatus,
+  ArgoSyncStatus,
   AutoUpdateChannel,
   CloudEnvironment,
   EnvironmentStatus,
@@ -291,6 +293,9 @@ export type EnvironmentSummary = {
   prNumber?: number | null
   /** Renown organisation owning the env; null/absent when personal. */
   ownerOrgId?: string | null
+  /** Live ArgoCD status (as on the detail page); null/absent until known or on older backends. */
+  argoSyncStatus?: ArgoSyncStatus | null
+  argoHealthStatus?: ArgoHealthStatus | null
 }
 
 export type Viewer = {
@@ -430,6 +435,7 @@ const MY_ENVIRONMENTS_BASE_FIELDS = `id
         services { type prefix enabled }`
 const MY_ENVIRONMENTS_APP_FIELDS = `appId appRole prNumber`
 const MY_ENVIRONMENTS_ORG_FIELDS = `ownerOrgId`
+const MY_ENVIRONMENTS_HEALTH_FIELDS = `argoSyncStatus argoHealthStatus`
 
 /**
  * Whether the backend knows the Vetra App link fields on `myEnvironments`.
@@ -440,6 +446,8 @@ const MY_ENVIRONMENTS_ORG_FIELDS = `ownerOrgId`
 let myEnvironmentsHasAppFields: boolean | null = null
 /** Same probe for `ownerOrgId` (C1), kept apart so a switchboard without it keeps the app fields. */
 let myEnvironmentsHasOrgField: boolean | null = null
+/** Same probe for the live Argo health fields, so the env list matches the detail page. */
+let myEnvironmentsHasHealthFields: boolean | null = null
 
 /** True when a GraphQL error says a selected field does not exist on the schema. */
 export function isUnknownFieldError(err: unknown): boolean {
@@ -452,11 +460,12 @@ export async function fetchMyEnvironments(
   token?: string | null,
   orgId?: string | null,
 ): Promise<EnvironmentSummary[]> {
-  const run = async (withAppFields: boolean, withOrgField: boolean) => {
+  const run = async (withAppFields: boolean, withOrgField: boolean, withHealthFields: boolean) => {
     const fields = [
       MY_ENVIRONMENTS_BASE_FIELDS,
       ...(withAppFields ? [MY_ENVIRONMENTS_APP_FIELDS] : []),
       ...(withOrgField ? [MY_ENVIRONMENTS_ORG_FIELDS] : []),
+      ...(withHealthFields ? [MY_ENVIRONMENTS_HEALTH_FIELDS] : []),
     ].join('\n        ')
     const [query, variables] =
       scope === 'ORG'
@@ -484,17 +493,22 @@ export async function fetchMyEnvironments(
   for (;;) {
     const withApp = myEnvironmentsHasAppFields !== false
     const withOrg = myEnvironmentsHasOrgField !== false
+    const withHealth = myEnvironmentsHasHealthFields !== false
     try {
-      const result = await run(withApp, withOrg)
+      const result = await run(withApp, withOrg, withHealth)
       if (withApp) myEnvironmentsHasAppFields = true
       if (withOrg) myEnvironmentsHasOrgField = true
+      if (withHealth) myEnvironmentsHasHealthFields = true
       return result
     } catch (err) {
-      if (!isUnknownFieldError(err) || (!withApp && !withOrg)) throw err
+      if (!isUnknownFieldError(err) || (!withApp && !withOrg && !withHealth)) throw err
       const message = err instanceof Error ? err.message : String(err)
-      if (withOrg && /ownerOrgId/.test(message)) myEnvironmentsHasOrgField = false
+      if (withHealth && /argo(Sync|Health)Status/.test(message))
+        myEnvironmentsHasHealthFields = false
+      else if (withOrg && /ownerOrgId/.test(message)) myEnvironmentsHasOrgField = false
       else if (withApp) myEnvironmentsHasAppFields = false
-      else myEnvironmentsHasOrgField = false
+      else if (withOrg) myEnvironmentsHasOrgField = false
+      else myEnvironmentsHasHealthFields = false
     }
   }
 }
