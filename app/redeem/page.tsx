@@ -1,7 +1,10 @@
 import { Ticket } from 'lucide-react'
 import { RedeemCodeForm } from '@/modules/subscriptions/components/redeem/redeem-code-form'
 
-export const metadata = { title: 'Redeem a code · Vetra' }
+export const metadata = {
+  title: 'Redeem a code',
+  description: 'Redeem an invite code for Vetra Studio or Vetra Cloud and see what it gives you.',
+}
 
 export default function RedeemPage() {
   return (

@@ -2,7 +2,7 @@ import { WAITLIST_ACTION } from '@/modules/studio-license/lib/waitlist'
 import { CtaLink } from '../components/cta-link'
 import { InstallChip } from '../components/install-chip'
 import { Container } from '../components/section-heading'
-import { REDEEM_HREF, SELF_HOST_URL } from '../lib/links'
+import { REDEEM_HREF, RUN_LOCALLY_URL } from '../lib/links'
 
 export function StudioAccess() {
   return (
@@ -15,7 +15,7 @@ export function StudioAccess() {
         </h2>
         <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
           <div className="border-console-line-strong bg-console-surface flex flex-col gap-4 rounded-2xl border p-6">
-            <h3 className="text-lg font-semibold">Join the waitlist</h3>
+            <h3 className="text-lg font-semibold">Request access</h3>
             <p className="text-console-muted text-sm leading-relaxed">
               We open access in small groups and send a code when a spot frees up.
             </p>
@@ -29,7 +29,7 @@ export function StudioAccess() {
                 type="email"
                 name="EMAIL"
                 required
-                aria-label="Email for the waitlist"
+                aria-label="Email to request access"
                 placeholder="you@example.com"
                 className="border-console-line-strong bg-console-bg text-console-ink placeholder:text-console-faint focus:ring-console-signal/40 min-h-12 min-w-0 flex-1 rounded-lg border px-3 text-[15px] focus:ring-2 focus:outline-none"
               />
@@ -37,7 +37,7 @@ export function StudioAccess() {
                 type="submit"
                 className="bg-console-signal text-console-bg min-h-12 rounded-lg px-5 text-[15px] font-semibold"
               >
-                Join
+                Request access
               </button>
             </form>
           </div>
@@ -55,7 +55,7 @@ export function StudioAccess() {
             <p className="text-console-muted text-sm leading-relaxed">
               No waiting: install Vetra and run Studio on your own machine.{' '}
               <a
-                href={SELF_HOST_URL}
+                href={RUN_LOCALLY_URL}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="text-console-signal underline-offset-4 hover:underline"

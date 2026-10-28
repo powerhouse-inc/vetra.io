@@ -25,7 +25,7 @@ export function CloudExit() {
             rel="noopener noreferrer"
             className="border-console-line-strong hover:bg-console-raised text-console-ink flex min-h-12 items-center justify-between rounded-lg border px-4 text-[15px]"
           >
-            Read the self-hosting guide <span aria-hidden>↗</span>
+            Read the Docker deployment guide <span aria-hidden>↗</span>
           </a>
         </div>
       </Container>

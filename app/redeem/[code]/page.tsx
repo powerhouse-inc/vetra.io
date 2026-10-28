@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import { RedeemCodePage } from '@/modules/subscriptions/components/redeem/redeem-code-page'
 
 export const metadata: Metadata = {
-  title: 'Redeem a code · Vetra',
+  title: 'Redeem a code',
   robots: { index: false, follow: false },
 }
 

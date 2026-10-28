@@ -12,7 +12,7 @@ export function StudioHero() {
           early access · pre-alpha
         </p>
         <h1 className="max-w-[1100px] text-[clamp(40px,6.5vw,84px)] leading-none font-bold tracking-[-0.045em]">
-          A studio of your own, with an agent that builds alongside you
+          A studio of your own, with an agent that builds alongside you.
         </h1>
         <div className="flex flex-wrap items-center gap-x-8 gap-y-5">
           <p className="text-console-muted max-w-[660px] text-lg leading-relaxed sm:text-xl">
@@ -23,7 +23,7 @@ export function StudioHero() {
             <CtaLink href={EARLY_ACCESS_HREF} variant="primary">
               Request access
             </CtaLink>
-            <CtaLink href={REDEEM_HREF}>I have an access code</CtaLink>
+            <CtaLink href={REDEEM_HREF}>Redeem a code</CtaLink>
           </div>
         </div>
       </Container>

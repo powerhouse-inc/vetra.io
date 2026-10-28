@@ -13,7 +13,7 @@ export function CloudFinalCta() {
         </h2>
         <div className="flex flex-wrap gap-3">
           <CtaLink href={REDEEM_HREF} variant="primary">
-            Redeem access code
+            Redeem a code
           </CtaLink>
           <CtaLink href={EARLY_ACCESS_HREF}>Request access</CtaLink>
           <CtaLink href={WALKTHROUGH_URL}>Book a walkthrough</CtaLink>

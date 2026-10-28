@@ -4,7 +4,7 @@ const CAPABILITIES = [
   {
     tag: 'studio',
     title: 'A private studio in seconds',
-    body: 'Your own studio, ready from a warm pool. It hibernates when idle and wakes when you return.',
+    body: 'Your own studio, ready in seconds. It hibernates when idle and wakes when you return.',
   },
   {
     tag: 'environments',
@@ -22,9 +22,9 @@ const CAPABILITIES = [
     body: 'A GitHub Action builds and rolls out on every merge.',
   },
   {
-    tag: 'database',
-    title: 'See your data',
-    body: 'Browse the database, logs and metrics without leaving the console.',
+    tag: 'logs · metrics',
+    title: 'See what is happening',
+    body: 'Per-service logs and resource graphs without leaving the console.',
   },
   {
     tag: 'backups',

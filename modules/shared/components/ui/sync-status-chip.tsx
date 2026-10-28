@@ -1,5 +1,7 @@
 'use client'
 
+import { usePathname } from 'next/navigation'
+import { isAppRoute } from '@/modules/landing/lib/routes'
 import { useAppState, type SyncStatus } from '@/shared/state'
 
 const LABELS: Record<SyncStatus, string> = {
@@ -27,11 +29,13 @@ function syncedAgo(lastSyncedAt: number | null): string {
 /**
  * Small fixed-position chip showing whether app data is fresh. Unobtrusive:
  * pinned bottom-right, summarizes the coordinated sync state. Renders nothing
- * until the coordinator context is available.
+ * until the coordinator context is available, and only on the signed-in app
+ * routes: public pages have no app data to sync and the chip would cover content.
  */
 export function SyncStatusChip() {
   const state = useAppState()
-  if (!state) return null
+  const pathname = usePathname()
+  if (!state || !isAppRoute(pathname)) return null
 
   return (
     <div

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  isAppRoute,
   isConsoleRoute,
   isGatedPath,
   loggedOutDestination,
@@ -117,5 +118,27 @@ describe('loginRedirectPath', () => {
 
   it('drops an unsafe path instead of forwarding it', () => {
     expect(loginRedirectPath('//evil.com')).toBe('/?login=1')
+  })
+})
+
+describe('isAppRoute', () => {
+  it('matches the console and profile routes', () => {
+    for (const p of ['/user', '/user/environments', '/profile', '/profile/create-team']) {
+      expect(isAppRoute(p)).toBe(true)
+    }
+  })
+
+  it('leaves the public pages alone', () => {
+    for (const p of [
+      '/',
+      '/cloud',
+      '/studio',
+      '/docs/deploy',
+      '/redeem',
+      '/privacy-policy',
+      '/users',
+    ]) {
+      expect(isAppRoute(p)).toBe(false)
+    }
   })
 })
