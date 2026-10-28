@@ -17,19 +17,19 @@ export function CodeBlock({
   return (
     <div
       className={cn(
-        'overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950 text-zinc-100 shadow-sm',
+        'border-console-line-strong bg-console-bg text-console-ink overflow-hidden rounded-xl border shadow-sm',
         className,
       )}
     >
-      <div className="flex items-center justify-between border-b border-zinc-800 py-1 pr-1 pl-4">
-        <span className="flex min-w-0 items-center gap-2 font-mono text-xs text-zinc-400">
+      <div className="border-console-line-strong flex items-center justify-between border-b py-1 pr-1 pl-4">
+        <span className="text-console-muted flex min-w-0 items-center gap-2 font-mono text-xs">
           <FileCode2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
           <span className="truncate">{filename ?? 'snippet'}</span>
         </span>
         <CopyButton
           value={code}
           label={filename ? `Copy ${filename}` : 'Copy code'}
-          className="text-zinc-400 hover:bg-zinc-800 hover:text-zinc-100"
+          className="text-console-muted hover:bg-console-raised hover:text-console-ink"
         />
       </div>
       <pre className="overflow-x-auto p-4 font-mono text-[13px] leading-relaxed">

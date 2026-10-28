@@ -21,9 +21,9 @@ const LEVEL_STYLES: Record<string, { badge: string; text: string }> = {
   error: { badge: 'bg-destructive/20 text-destructive', text: 'text-red-300' },
   warn: { badge: 'bg-warning/20 text-warning', text: 'text-amber-200' },
   warning: { badge: 'bg-warning/20 text-warning', text: 'text-amber-200' },
-  info: { badge: 'bg-info/15 text-info', text: 'text-gray-200' },
-  debug: { badge: 'bg-gray-500/20 text-gray-500', text: 'text-gray-400' },
-  log: { badge: 'bg-gray-500/15 text-gray-400', text: 'text-gray-300' },
+  info: { badge: 'bg-info/15 text-info', text: 'text-console-ink' },
+  debug: { badge: 'bg-console-raised text-console-muted', text: 'text-console-muted' },
+  log: { badge: 'bg-console-raised text-console-muted', text: 'text-console-ink/90' },
 }
 
 function parseLogLine(line: string): ParsedLog {
@@ -78,10 +78,10 @@ function LogLine({ entry, showRaw }: { entry: LogEntry; showRaw: boolean }) {
   if (showRaw) {
     return (
       <div className="flex gap-2 leading-5 hover:bg-white/[0.03]">
-        <span className="shrink-0 text-gray-500 select-none">
+        <span className="text-console-muted shrink-0 select-none">
           {formatLogTimestamp(entry.timestamp)}
         </span>
-        <span className="break-all whitespace-pre-wrap text-gray-300">{entry.line}</span>
+        <span className="text-console-ink/90 break-all whitespace-pre-wrap">{entry.line}</span>
       </div>
     )
   }
@@ -91,7 +91,7 @@ function LogLine({ entry, showRaw }: { entry: LogEntry; showRaw: boolean }) {
       className="group -mx-1 flex cursor-pointer gap-2 rounded px-1 leading-5 hover:bg-white/[0.03]"
       onClick={() => parsed.extra && setExpanded(!expanded)}
     >
-      <span className="shrink-0 text-gray-600 tabular-nums select-none">
+      <span className="text-console-faint shrink-0 tabular-nums select-none">
         {formatLogTimestamp(entry.timestamp)}
       </span>
       {parsed.level && (
@@ -102,7 +102,7 @@ function LogLine({ entry, showRaw }: { entry: LogEntry; showRaw: boolean }) {
         </span>
       )}
       {parsed.pod && (
-        <span className="max-w-[140px] shrink-0 truncate text-gray-600" title={parsed.pod}>
+        <span className="text-console-faint max-w-[140px] shrink-0 truncate" title={parsed.pod}>
           {parsed.pod.replace(/^.*-(?=(connect|switchboard|pg|pooler))/, '')}
         </span>
       )}
@@ -110,13 +110,13 @@ function LogLine({ entry, showRaw }: { entry: LogEntry; showRaw: boolean }) {
       <span className={`break-all ${levelStyle.text}`}>
         {parsed.message}
         {parsed.extra && !expanded && (
-          <span className="ml-1 text-gray-600 opacity-0 transition-opacity group-hover:opacity-100">
+          <span className="text-console-faint ml-1 opacity-0 transition-opacity group-hover:opacity-100">
             +{Object.keys(parsed.extra).length} fields
           </span>
         )}
       </span>
       {expanded && parsed.extra && (
-        <div className="mt-1 ml-6 text-[11px] whitespace-pre-wrap text-gray-500">
+        <div className="text-console-muted mt-1 ml-6 text-[11px] whitespace-pre-wrap">
           {JSON.stringify(parsed.extra, null, 2)}
         </div>
       )}
@@ -166,14 +166,14 @@ export function LogViewer({ logs, isLoading, levelFilter }: LogViewerProps) {
     : logs
 
   return (
-    <div className="rounded-lg bg-gray-950 font-mono text-xs text-gray-100">
-      <div className="flex items-center justify-between border-b border-gray-800 px-4 py-2">
-        <span className="text-[11px] text-gray-500">
+    <div className="bg-console-bg text-console-ink rounded-lg font-mono text-xs">
+      <div className="border-console-line-strong flex items-center justify-between border-b px-4 py-2">
+        <span className="text-console-muted text-[11px]">
           {filteredLogs.length} entries{levelFilter ? ` (${levelFilter})` : ''}
         </span>
         <button
           onClick={() => setShowRaw(!showRaw)}
-          className="text-[11px] text-gray-500 transition-colors hover:text-gray-300"
+          className="text-console-muted hover:text-console-ink text-[11px] transition-colors"
         >
           {showRaw ? 'Formatted' : 'Raw'}
         </button>
@@ -183,16 +183,16 @@ export function LogViewer({ logs, isLoading, levelFilter }: LogViewerProps) {
           <div className="animate-pulse space-y-2">
             {Array.from({ length: 5 }).map((_, i) => (
               <div key={i} className="flex gap-3">
-                <div className="h-3 w-20 rounded bg-gray-800" />
+                <div className="bg-console-raised h-3 w-20 rounded" />
                 <div
-                  className="h-3 rounded bg-gray-800"
+                  className="bg-console-raised h-3 rounded"
                   style={{ width: `${40 + ((i * 17) % 40)}%` }}
                 />
               </div>
             ))}
           </div>
         ) : filteredLogs.length === 0 ? (
-          <p className="py-8 text-center text-gray-500">No logs in this time range</p>
+          <p className="text-console-muted py-8 text-center">No logs in this time range</p>
         ) : (
           <div className="space-y-0.5">
             {filteredLogs.map((entry, i) => (

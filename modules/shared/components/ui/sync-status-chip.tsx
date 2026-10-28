@@ -12,7 +12,7 @@ const LABELS: Record<SyncStatus, string> = {
 }
 
 const DOT: Record<SyncStatus, string> = {
-  'up-to-date': 'bg-emerald-500',
+  'up-to-date': 'bg-success',
   refreshing: 'bg-primary animate-pulse',
   offline: 'bg-muted-foreground',
   error: 'bg-destructive',

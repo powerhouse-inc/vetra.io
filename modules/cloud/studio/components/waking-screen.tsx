@@ -24,7 +24,7 @@ const READINESS_MAX_WAIT_MS = 90_000
  * hit. We kick the open wakeStudio mutation, poll until the studio reports
  * AWAKE (agent webserver up), then poll a same-origin readiness probe until the
  * app actually serves `/` before redirecting — so the user never lands on a
- * transient "not found". Reuses the app's real theme (green #04c161, Inter).
+ * transient "not found". Reuses the app's console theme.
  */
 export function WakingScreen() {
   const params = useSearchParams()

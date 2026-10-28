@@ -13,9 +13,10 @@ import {
 } from 'recharts'
 
 import type { DatabaseQueryResult } from '@/modules/cloud/types'
+import { CHART_SERIES_COLORS } from '@/modules/cloud/lib/chart-colors'
 
 /** Mirror of the sparkline COLORS palette to keep result charts on-brand. */
-const COLORS = ['#04c161', '#329dff', '#ffa132', '#ea4335', '#9333ea', '#06b6d4']
+const COLORS = CHART_SERIES_COLORS
 
 type Props = {
   result: DatabaseQueryResult

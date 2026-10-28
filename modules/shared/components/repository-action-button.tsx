@@ -85,7 +85,7 @@ export function RepositoryActionButton({
                     onClick={() => void copyToClipboard(phCheckoutCommand)}
                   >
                     {copiedCommand === phCheckoutCommand ? (
-                      <Check className="h-4 w-4 text-green-500" />
+                      <Check className="text-success h-4 w-4" />
                     ) : (
                       <Copy className="h-4 w-4" />
                     )}
@@ -106,7 +106,7 @@ export function RepositoryActionButton({
                   onClick={() => void copyToClipboard(phInitCommand)}
                 >
                   {copiedCommand === phInitCommand ? (
-                    <Check className="h-4 w-4 text-green-500" />
+                    <Check className="text-success h-4 w-4" />
                   ) : (
                     <Copy className="h-4 w-4" />
                   )}

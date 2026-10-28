@@ -31,7 +31,7 @@ export default function NotFound() {
       <div className="mb-14 flex gap-3 max-sm:w-full max-sm:max-w-[300px] max-sm:flex-col">
         <Link
           href="/"
-          className="bg-primary inline-flex items-center justify-center rounded-lg px-8 py-3.5 text-base font-semibold text-white transition-all hover:-translate-y-px hover:opacity-90"
+          className="bg-primary text-primary-foreground inline-flex items-center justify-center rounded-lg px-8 py-3.5 text-base font-semibold transition-all hover:-translate-y-px hover:opacity-90"
         >
           Go Home
         </Link>

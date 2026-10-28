@@ -4,16 +4,21 @@ import { formatBytes, formatCpu } from '@/modules/cloud/lib/format-resources'
 
 import { LimitedAreaChart, type LimitedSeries } from './limited-area-chart'
 import { Sparkline } from './sparkline'
+import {
+  CHART_ERROR_COLOR,
+  CHART_SERIES_COLORS,
+  CHART_WARN_COLOR,
+} from '@/modules/cloud/lib/chart-colors'
 
-const SERIES_COLORS = ['#04c161', '#329dff', '#ffa132', '#ea4335', '#9333ea', '#06b6d4']
+const SERIES_COLORS = CHART_SERIES_COLORS
 
 const PRIMARY_COLOR: Record<'cpu' | 'memory', string> = {
-  cpu: '#04c161',
-  memory: '#329dff',
+  cpu: CHART_SERIES_COLORS[0],
+  memory: CHART_SERIES_COLORS[1],
 }
 
-const WARN_COLOR = '#ffa132'
-const ERROR_COLOR = '#ea4335'
+const WARN_COLOR = CHART_WARN_COLOR
+const ERROR_COLOR = CHART_ERROR_COLOR
 
 const WARN_THRESHOLD = 0.75
 const ERROR_THRESHOLD = 0.9
