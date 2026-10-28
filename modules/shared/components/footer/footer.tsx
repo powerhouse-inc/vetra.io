@@ -10,6 +10,8 @@ const REPO_URL = 'https://github.com/powerhouse-inc/vetra.to'
 const BUILD_ID = process.env.NEXT_PUBLIC_BUILD_ID ?? 'dev'
 
 function BuildTag() {
+  // Production visitors don't need the build; it stays on staging/local and in /health.
+  if (BUILD_ID.startsWith('main-')) return <span aria-hidden />
   const sha = BUILD_ID.match(/-([0-9a-f]{7,40})$/)?.[1]
   const base = 'text-muted-foreground/60 font-mono text-xs'
   if (!sha) return <span className={base}>{BUILD_ID}</span>
