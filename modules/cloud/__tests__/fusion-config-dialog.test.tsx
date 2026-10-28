@@ -20,7 +20,7 @@ describe('FusionConfigDialog', () => {
     expect((screen.getByLabelText(/^image$/i) as HTMLInputElement).value).toBe(
       'cr.vetra.io/achra/frontend',
     )
-    expect((screen.getByTestId('env-name-0') as HTMLInputElement).value).toBe(
+    expect(screen.getByTestId<HTMLInputElement>('env-name-0').value).toBe(
       'NEXT_PUBLIC_SHOW_WHITELIST_OVERLAY',
     )
     expect(screen.getByRole('switch', { name: /auto-deploy/i }).getAttribute('aria-checked')).toBe(

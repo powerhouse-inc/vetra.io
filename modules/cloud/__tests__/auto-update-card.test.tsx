@@ -22,6 +22,13 @@ vi.mock('@/modules/cloud/graphql', () => ({
 import { AutoUpdateCard } from '@/modules/cloud/components/auto-update-card'
 import type { CloudEnvironment } from '@/modules/cloud/types'
 
+/** Click, then let the async handler it starts settle. */
+const click = (el: HTMLElement) =>
+  act(async () => {
+    fireEvent.click(el)
+    await Promise.resolve()
+  })
+
 const environment = {
   id: 'env-1',
   state: {
@@ -36,6 +43,7 @@ describe('AutoUpdateCard rollback', () => {
   it('asks for confirmation before rolling back', async () => {
     const onRollback = vi.fn().mockResolvedValue(['CONNECT'])
     await act(async () => {
+      await Promise.resolve()
       render(
         <AutoUpdateCard
           environment={environment}
@@ -45,7 +53,7 @@ describe('AutoUpdateCard rollback', () => {
         />,
       )
     })
-    await act(async () => fireEvent.click(await screen.findByRole('button', { name: 'Roll back' })))
+    await click(await screen.findByRole('button', { name: 'Roll back' }))
     expect(onRollback).not.toHaveBeenCalled()
     expect(screen.getByText('Roll back to the previous version?')).toBeTruthy()
     expect(screen.getByText('Connect: v1.1.0 → v1.0.0')).toBeTruthy()
@@ -53,7 +61,7 @@ describe('AutoUpdateCard rollback', () => {
     const confirm = screen
       .getAllByRole('button', { name: 'Roll back' })
       .find((b) => b.closest('[role="alertdialog"]'))!
-    await act(async () => fireEvent.click(confirm))
+    await click(confirm)
     expect(onRollback).toHaveBeenCalledOnce()
   })
 })
