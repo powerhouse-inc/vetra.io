@@ -1,9 +1,9 @@
 'use client'
 import { useRenownAuthAsync, usePHToast } from '@powerhousedao/reactor-browser'
-import { Loader2 } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useMemo, useState } from 'react'
-import { LoginPrompt } from '../components/login-prompt'
 import { Stepper, STEPS, type StepKey } from './components/stepper'
 import { StepIdentity } from './components/step-identity'
 import { StepBrand } from './components/step-brand'
@@ -13,6 +13,8 @@ import { SubmitBar } from './components/submit-bar'
 import { isValidEthAddress, isValidSlug, isValidUrl } from '@/modules/profile/lib/validations'
 import { useCreateTeam, type CreateTeamForm } from '@/modules/profile/lib/use-create-team'
 import { useSlugAvailability } from '@/modules/profile/lib/use-slug-availability'
+import { PageShell, PageSpinner } from '@/modules/shared/components/page-shell'
+import { RequireLogin } from '@/modules/shared/components/renown/require-login'
 
 const emptyForm: CreateTeamForm = {
   name: '',
@@ -79,20 +81,8 @@ function CreateTeamInner() {
     }
   }, [activeStep, form, slugStatus, allMembersValid])
 
-  if (auth.state === 'resolving') {
-    return (
-      <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-8">
-        <Loader2 className="text-muted-foreground size-6 animate-spin" />
-      </div>
-    )
-  }
-  if (auth.state !== 'authenticated' || !auth.address) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <LoginPrompt />
-      </div>
-    )
-  }
+  // RequireLogin gates the page; the address can trail the auth state by a render.
+  if (!auth.address) return <PageSpinner />
 
   const onNext = async () => {
     if (stepIdx < STEPS.length - 1) {
@@ -116,8 +106,15 @@ function CreateTeamInner() {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl px-4 py-8">
+    <PageShell className="max-w-2xl">
       <div className="mb-8">
+        <Link
+          href="/user/settings?tab=teams"
+          className="text-muted-foreground hover:text-foreground mb-1 inline-flex items-center gap-1 text-xs"
+        >
+          <ArrowLeft className="size-3" />
+          Back to settings
+        </Link>
         <h1 className="text-2xl font-bold tracking-tight">Create new team</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Set up your team&apos;s profile and invite your first members.
@@ -168,20 +165,16 @@ function CreateTeamInner() {
         onBack={() => goToStep(stepIdx - 1)}
         onNext={() => void onNext()}
       />
-    </div>
+    </PageShell>
   )
 }
 
 export default function CreateTeamPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-8">
-          <Loader2 className="text-muted-foreground size-6 animate-spin" />
-        </div>
-      }
-    >
-      <CreateTeamInner />
-    </Suspense>
+    <RequireLogin title="Log in to create a team">
+      <Suspense fallback={<PageSpinner />}>
+        <CreateTeamInner />
+      </Suspense>
+    </RequireLogin>
   )
 }

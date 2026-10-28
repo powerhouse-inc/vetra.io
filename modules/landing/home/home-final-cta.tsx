@@ -13,7 +13,7 @@ export function HomeFinalCta() {
         </h2>
         <div className="flex flex-wrap gap-3">
           <CtaLink href={EARLY_ACCESS_HREF} variant="primary">
-            Get early access
+            Request access
           </CtaLink>
           <CtaLink href={REDEEM_HREF}>Redeem a code</CtaLink>
           <CtaLink href={DISCORD_URL}>Join Discord</CtaLink>

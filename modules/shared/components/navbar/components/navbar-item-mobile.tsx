@@ -41,7 +41,10 @@ function MobileNavLink({ item, pathname }: { item: NavItem; pathname: string }) 
 function NavbarItemMobile({ navItems, pathname }: NavbarItemMobileProps) {
   const triggerLabel = useMemo(() => {
     const item = navItems.find((item) => !item.isExternal && item?.isActive?.(pathname))
-    return item ? item.label : 'Home'
+    if (item) return item.label
+    if (pathname === '/') return 'Home'
+    if (pathname === '/docs' || pathname.startsWith('/docs/')) return 'Docs'
+    return 'Menu'
   }, [navItems, pathname])
 
   return (

@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import { DISCORD_URL } from '@/modules/shared/config/constants'
 import VetraLogotype from '@/modules/shared/components/svgs/Vetra-logo-with-text-black.svg'
 import { PowerhouseLogoIsotype } from '../svgs'
 
@@ -36,11 +37,11 @@ const footerLinks = {
       label: 'Vetra Studio',
       href: 'https://academy.vetra.io/academy/MasteryTrack/BuilderEnvironment/VetraStudio',
     },
-    { label: 'LLM Docs', href: 'https://academy.vetra.io/academy/LLMDocs' },
+    { label: 'LLM Docs', href: 'https://academy.vetra.io/academy/Lookup/LLMDocs' },
   ],
   socials: [
     { label: 'Powerhouse on X', href: 'https://x.com/PowerhouseDAO' },
-    { label: 'Discord', href: 'https://discord.gg/pwQJwgaQKd' },
+    { label: 'Discord', href: DISCORD_URL },
   ],
 }
 

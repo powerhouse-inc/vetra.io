@@ -14,10 +14,10 @@ import {
 } from '@/modules/shared/components/ui/dialog'
 import { setPendingLoginMethod } from '@/modules/shared/lib/wallet-switch'
 
-// Open state lives in LoginModalProvider (React, not the URL). `from` carries the
-// page a proxy redirect came from, used for the post-login navigation.
+// Open state lives in LoginModalProvider (React, not the URL). `message` is set when
+// a proxy redirect opened it for a gated page (AuthRedirect returns there after login).
 export function RenownLoginModal() {
-  const { open, closeLogin } = useLoginModal()
+  const { open, message, closeLogin } = useLoginModal()
   const { login, pending, status, error } = useRenownAuth()
   const methods = useRenownLoginMethods()
 
@@ -56,8 +56,12 @@ export function RenownLoginModal() {
         }}
       >
         <DialogHeader>
-          <DialogTitle>Sign in to Vetra</DialogTitle>
-          <DialogDescription>Authenticate with Renown to continue.</DialogDescription>
+          <DialogTitle>{message ?? 'Sign in to Vetra'}</DialogTitle>
+          <DialogDescription>
+            {message
+              ? 'That page needs a Renown login. You will land there right after.'
+              : 'Authenticate with Renown to continue.'}
+          </DialogDescription>
         </DialogHeader>
         <div className="flex flex-col gap-3 pt-2">
           {methods.length === 0 ? (

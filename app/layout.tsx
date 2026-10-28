@@ -19,6 +19,7 @@ import { FooterScope } from '@/shared/components/footer/footer-scope'
 import Navbar from '@/shared/components/navbar/navbar'
 import { QueryClientProvider } from '@/shared/providers/query-client'
 import { verifySession } from '@/modules/shared/lib/renown-session'
+import { SITE_URL } from '@/modules/landing/lib/links'
 import { UMAMI_BEFORE_SEND, UMAMI_BEFORE_SEND_JS } from '@/modules/shared/lib/analytics-privacy'
 import type { Metadata } from 'next'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
@@ -32,8 +33,10 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: 'Vetra',
-  description: 'Vetra',
+  metadataBase: new URL(SITE_URL),
+  title: { default: 'Vetra', template: '%s · Vetra' },
+  description:
+    'Vetra Studio builds open-source Powerhouse apps with you; Vetra Cloud hosts them, or you self-host on the open Powerhouse platform.',
 }
 
 export default async function RootLayout({
@@ -131,8 +134,11 @@ export default async function RootLayout({
           strategy="afterInteractive"
         />
         <AmbientBackground />
+        {/* The NEXT_PUBLIC_ id is the vetra.io project. OPENPANEL_CLIENT_ID is injected
+            by the hosting chart for tenant Connects ("Vetra Environments", CORS
+            *.vetra.io only), so preferring it got every vetra.io event rejected. */}
         <OpenPanelProvider
-          clientId={process.env.OPENPANEL_CLIENT_ID || process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
+          clientId={process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || process.env.OPENPANEL_CLIENT_ID}
           apiUrl={process.env.OPENPANEL_API_URL || process.env.NEXT_PUBLIC_OPENPANEL_API_URL}
           environment={process.env.OPENPANEL_ENV || process.env.NEXT_PUBLIC_OPENPANEL_ENV}
         />

@@ -17,7 +17,7 @@ describe('/docs/app-stats', () => {
     for (const id of ['how-it-works', 'declare', 'environment', 'report', 'semantics', 'helper', 'troubleshooting']) {
       expect(document.getElementById(id)).not.toBeNull()
     }
-    expect(screen.getByRole('link', { name: /Open your apps/ }).getAttribute('href')).toBe('/user/apps')
+    expect(screen.getByRole('link', { name: /Open your apps/ }).getAttribute('href')).toBe('/user')
   })
 
   it('ships the tested helper verbatim', () => {

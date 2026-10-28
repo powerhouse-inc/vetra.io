@@ -1,13 +1,18 @@
-'use client'
-
+import type { Metadata } from 'next'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { GoBackButton } from './_components/go-back-button'
+
+export const metadata: Metadata = {
+  title: 'Page not found',
+  description: 'The page you were looking for does not exist or has moved.',
+}
+
+import { DISCORD_URL } from '@/modules/shared/config/constants'
 
 export default function NotFound() {
-  const router = useRouter()
-
   return (
-    <div className="flex flex-1 flex-col items-center justify-center px-6 py-12 text-center">
+    // pt clears the fixed 64px header so the large 404 is never tucked under it.
+    <div className="flex flex-1 flex-col items-center justify-center px-6 pt-28 pb-12 text-center">
       {/* Large 404 */}
       <div className="text-primary mb-[-16px] text-[160px] leading-none font-extrabold tracking-[-8px] opacity-20 select-none max-sm:text-[100px] max-sm:tracking-[-4px]">
         404
@@ -18,8 +23,8 @@ export default function NotFound() {
         Page not found
       </h1>
       <p className="text-muted-foreground mx-auto mb-8 max-w-[420px] text-base leading-relaxed">
-        The page you&apos;re looking for doesn&apos;t exist or has been moved. Try searching or head
-        back to familiar ground.
+        The page you&apos;re looking for doesn&apos;t exist or has been moved. Head back to familiar
+        ground.
       </p>
 
       {/* Buttons */}
@@ -30,12 +35,7 @@ export default function NotFound() {
         >
           Go Home
         </Link>
-        <button
-          onClick={() => router.back()}
-          className="bg-accent text-foreground hover:bg-muted inline-flex items-center justify-center rounded-lg px-8 py-3.5 text-base font-semibold transition-all"
-        >
-          Go Back
-        </button>
+        <GoBackButton className="bg-accent text-foreground hover:bg-muted inline-flex items-center justify-center rounded-lg px-8 py-3.5 text-base font-semibold transition-all" />
       </div>
 
       {/* Quick Links */}
@@ -107,7 +107,7 @@ export default function NotFound() {
           <span className="text-foreground text-[13px] font-semibold">Cloud</span>
         </Link>
         <Link
-          href="https://discord.gg/pwQJwgaQKd"
+          href={DISCORD_URL}
           className="bg-card border-border hover:border-primary-30 flex flex-col items-center gap-2.5 rounded-xl border p-6 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
           <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-[10px]">

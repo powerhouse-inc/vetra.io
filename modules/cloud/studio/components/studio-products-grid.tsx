@@ -3,7 +3,6 @@
 import { Loader2, Ticket } from 'lucide-react'
 import Link from 'next/link'
 import { Banner } from '@/modules/apps/components/banner'
-import { StudioLanding } from '@/modules/landing/studio/studio-landing'
 import { Button } from '@/modules/shared/components/ui/button'
 import { NoLicencePanel } from '@/modules/studio-license/components/no-licence-panel'
 import {
@@ -69,8 +68,9 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
   const { gate, products, isScanning, limit, atLimit, creating, createError, createProduct, did } =
     useStudioProducts()
 
-  if (gate === 'unauthenticated') return <StudioLanding />
-  if (gate === 'loading') return <StudioBootScreen title="Loading…" />
+  // The page is gated by RequireLogin (via StudioLicenseGate); no Renown user here only
+  // means the user object hasn't caught up yet, so wait rather than show the marketing page.
+  if (gate !== 'ready') return <StudioBootScreen title="Loading…" />
 
   // Provision a new product; it surfaces in the list optimistically (as
   // "Provisioning…") immediately, and the 30s poll reconciles it against the

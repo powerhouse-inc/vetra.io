@@ -20,7 +20,7 @@ export function CloudHero() {
           </p>
           <div className="flex flex-wrap gap-3">
             <CtaLink href={REDEEM_HREF} variant="primary">
-              Redeem access code
+              Redeem a code
             </CtaLink>
             <CtaLink href={WALKTHROUGH_URL}>Book a walkthrough</CtaLink>
           </div>

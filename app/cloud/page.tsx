@@ -1,7 +1,7 @@
 import { CloudLanding } from '@/modules/landing/cloud/cloud-landing'
 
 export const metadata = {
-  title: 'Vetra Cloud | Managed hosting for Powerhouse apps',
+  title: { absolute: 'Vetra Cloud · Managed hosting for Powerhouse apps' },
   description:
     'Environments with a team workspace, APIs and agents, your own domain and nightly backups. Priced by capacity from €40 per month, with self-hosting always an option.',
 }

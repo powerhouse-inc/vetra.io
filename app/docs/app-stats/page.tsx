@@ -6,6 +6,8 @@ import { CodeBlock } from '@/modules/apps/components/code-block'
 import { CURL_SNIPPET, REPORT_USER_STAT_SNIPPET, USAGE_SNIPPET } from '@/modules/docs/report-user-stat-snippet'
 import { Button } from '@/modules/shared/components/ui/button'
 
+import { DataTable } from '../_components/data-table'
+
 export const metadata: Metadata = {
   title: 'Report app stats',
   description:
@@ -56,35 +58,6 @@ function C({ children }: { children: React.ReactNode }) {
   return <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-[0.85em]">{children}</code>
 }
 
-function DataTable({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
-  return (
-    <div className="border-border overflow-x-auto rounded-xl border">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-muted/50">
-          <tr>
-            {head.map((h) => (
-              <th key={h} scope="col" className="px-4 py-2.5 font-medium whitespace-nowrap">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-border divide-y">
-          {rows.map((row, i) => (
-            <tr key={i}>
-              {row.map((cell, j) => (
-                <td key={j} className="text-foreground/80 px-4 py-2.5 align-top">
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
-}
-
 function Problem({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="bg-card border-border rounded-xl border p-5">
@@ -124,7 +97,7 @@ export default function AppStatsDocsPage() {
               shows them on your app’s public page and on every user’s profile.
             </p>
             <Button asChild size="lg">
-              <Link href="/user/apps">
+              <Link href="/user">
                 Open your apps
                 <ArrowRight className="h-4 w-4" />
               </Link>

@@ -19,8 +19,11 @@ import {
   User,
 } from 'lucide-react'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import { useTheme } from 'next-themes'
 import { useSyncExternalStore, useState } from 'react'
+import { CONSOLE_HREF, EARLY_ACCESS_HREF } from '@/modules/landing/lib/links'
+import { isAppRoute } from '@/modules/landing/lib/routes'
 import { ActiveOrgLabel, OrgSwitcherMenuSection } from '@/modules/orgs/components/org-switcher'
 import { useOpenLogin } from '@/modules/shared/components/renown/login-modal-context'
 import { useRenownAvatarUrl } from '@/modules/shared/hooks/use-renown-avatar'
@@ -71,6 +74,8 @@ function CopyAddressButton({ address }: { address: string }) {
 
 function RenownButton() {
   const consoleMenu = useConsoleMenuClass()
+  // Public pages render in a fixed look, so the theme switch only appears in the app.
+  const showThemeToggle = isAppRoute(usePathname())
   const auth = useRenownAuthAsync()
   const avatarUrl = useRenownAvatarUrl()
   const openLogin = useOpenLogin()
@@ -183,14 +188,18 @@ function RenownButton() {
               Packages
             </Link>
           </DropdownMenuItem>
-          <DropdownMenuSeparator className="bg-border/50" />
-          <DropdownMenuItem
-            onClick={toggleTheme}
-            className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
-          >
-            {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-            {isDark ? 'Light mode' : 'Dark mode'}
-          </DropdownMenuItem>
+          {showThemeToggle && (
+            <>
+              <DropdownMenuSeparator className="bg-border/50" />
+              <DropdownMenuItem
+                onClick={toggleTheme}
+                className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
+              >
+                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+                {isDark ? 'Light mode' : 'Dark mode'}
+              </DropdownMenuItem>
+            </>
+          )}
           <DropdownMenuSeparator className="bg-border/50" />
           <DropdownMenuItem
             asChild
@@ -221,9 +230,24 @@ function RenownButton() {
   )
 }
 
+/**
+ * The primary header action: signed-in visitors open the console, everyone else
+ * is sent to the access request on the Studio page (the console would bounce them).
+ */
+function useHeaderCta(): { href: string; label: string } | null {
+  const auth = useRenownAuthAsync()
+  const pathname = usePathname()
+  if (auth.state !== 'authenticated') return { href: EARLY_ACCESS_HREF, label: 'Request access' }
+  // Already inside the console: the button would point at the current area.
+  if (isAppRoute(pathname)) return null
+  return { href: CONSOLE_HREF, label: 'Open console' }
+}
+
 function NavbarRightSide() {
   const consoleMenu = useConsoleMenuClass()
   const { resolvedTheme, setTheme } = useTheme()
+  const cta = useHeaderCta()
+  const showThemeToggle = isAppRoute(usePathname())
 
   const handleThemeToggle = () => {
     setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
@@ -233,12 +257,14 @@ function NavbarRightSide() {
     <>
       <div className="hidden items-center gap-3 md:flex">
         <RenownButton />
-        <Link
-          href="/user"
-          className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all hover:-translate-y-px"
-        >
-          Vetra Studio
-        </Link>
+        {cta && (
+          <Link
+            href={cta.href}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 rounded-lg px-5 py-2.5 text-sm font-semibold transition-all hover:-translate-y-px"
+          >
+            {cta.label}
+          </Link>
+        )}
       </div>
 
       <div className="flex items-center md:hidden">
@@ -256,10 +282,24 @@ function NavbarRightSide() {
             <DropdownMenuItem className="p-0">
               <RenownButton />
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
-              <ThemeIconLabel theme={resolvedTheme} />
-            </DropdownMenuItem>
+            {cta && (
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <Link
+                  href={cta.href}
+                  className="bg-primary text-primary-foreground focus:bg-primary/90 focus:text-primary-foreground mt-1 justify-center font-semibold"
+                >
+                  {cta.label}
+                </Link>
+              </DropdownMenuItem>
+            )}
+            {showThemeToggle && (
+              <>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
+                  <ThemeIconLabel theme={resolvedTheme} />
+                </DropdownMenuItem>
+              </>
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
       </div>

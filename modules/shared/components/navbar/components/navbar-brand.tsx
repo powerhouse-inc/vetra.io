@@ -23,7 +23,7 @@ export function NavbarBrand({
   return (
     <div className="flex items-center gap-4 p-4 md:gap-6">
       {showIsotype && logoHref && (
-        <Link href={logoHref} className="cursor-pointer hover:opacity-80">
+        <Link href={logoHref} aria-label="Vetra home" className="cursor-pointer hover:opacity-80">
           <div className="flex items-center">
             {/* Show icon only on mobile */}
             {typeof IsotypeLogo === 'function' && <IsotypeLogo className="h-8 w-8 md:hidden" />}

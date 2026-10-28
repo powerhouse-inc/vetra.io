@@ -1,12 +1,13 @@
 'use client'
 import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
-import { Loader2, Plus } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense } from 'react'
 import { useEnsureUserDrive } from '@/modules/profile/lib/use-ensure-user-drive'
+import { PageShell, PageSpinner } from '@/modules/shared/components/page-shell'
+import { RequireLogin } from '@/modules/shared/components/renown/require-login'
 import { Button } from '@/modules/shared/components/ui/button'
-import { LoginPrompt } from './components/login-prompt'
 import { ProfileTabs } from './components/profile-tabs'
 
 function ProfilePageInner() {
@@ -19,24 +20,11 @@ function ProfilePageInner() {
   // renders immediately.
   useEnsureUserDrive()
 
-  if (auth.state === 'resolving') {
-    return (
-      <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-8">
-        <Loader2 className="text-muted-foreground size-6 animate-spin" />
-      </div>
-    )
-  }
-
-  if (auth.state !== 'authenticated' || !auth.address) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <LoginPrompt />
-      </div>
-    )
-  }
+  // RequireLogin gates the page; the address can trail the auth state by a render.
+  if (!auth.address) return <PageSpinner />
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 py-8">
+    <PageShell className="max-w-5xl">
       <div className="mb-8 flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold tracking-tight">My profile</h1>
@@ -54,21 +42,17 @@ function ProfilePageInner() {
         )}
       </div>
       <ProfileTabs address={auth.address} />
-    </div>
+    </PageShell>
   )
 }
 
 export default function ProfilePage() {
   // Suspense boundary for useSearchParams (Next.js 15+ requirement).
   return (
-    <Suspense
-      fallback={
-        <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-8">
-          <Loader2 className="text-muted-foreground size-6 animate-spin" />
-        </div>
-      }
-    >
-      <ProfilePageInner />
-    </Suspense>
+    <RequireLogin title="Log in to see your profile">
+      <Suspense fallback={<PageSpinner />}>
+        <ProfilePageInner />
+      </Suspense>
+    </RequireLogin>
   )
 }

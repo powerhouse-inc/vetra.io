@@ -4,9 +4,9 @@ import { WindowFrame } from '../components/window-frame'
 const ENVIRONMENTS = [
   { name: 'acme-ops', active: true, state: '●' },
   { name: 'acme-staging', active: false, state: '●' },
-  { name: 'frank-studio', active: false, state: '◐' },
+  { name: 'acme-studio', active: false, state: '◐' },
 ]
-const TABS = ['overview', 'packages', 'domains', 'secrets', 'backups', 'logs', 'database']
+const TABS = ['overview', 'packages', 'domains', 'secrets', 'backups', 'logs', 'metrics']
 const SERVICES = ['Connect', 'Switchboard', 'Fusion', 'Agent']
 const CPU_BARS = [30, 42, 38, 55, 70, 62, 48, 35, 44, 58, 66, 52]
 const EVENTS = [
