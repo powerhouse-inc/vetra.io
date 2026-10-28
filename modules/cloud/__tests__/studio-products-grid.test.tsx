@@ -57,15 +57,12 @@ const baseState: StudioProductsState = {
 }
 
 describe('StudioProductsGrid', () => {
-  it('shows the Studio landing to logged-out visitors', () => {
+  it('waits (never the marketing page) until the Renown user is known', () => {
+    // RequireLogin gates the page; a missing user is only a lagging user object.
     state = { ...baseState, gate: 'unauthenticated' }
-    const { getByRole } = render(<StudioProductsGrid />)
-    expect(
-      getByRole('heading', {
-        level: 1,
-        name: 'A studio of your own, with an agent that builds alongside you',
-      }),
-    ).toBeTruthy()
+    const { getByText, queryByRole } = render(<StudioProductsGrid />)
+    expect(getByText('Loading…')).toBeTruthy()
+    expect(queryByRole('heading', { level: 1 })).toBeNull()
   })
 
   it('renders a card per product plus the new-product card', () => {

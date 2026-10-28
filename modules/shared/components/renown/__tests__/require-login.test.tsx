@@ -16,7 +16,7 @@ describe('RequireLogin', () => {
     cleanup()
   })
 
-  it('shows a skeleton while Renown resolves', () => {
+  it('shows a spinner (never a blank page) while Renown resolves', () => {
     state = 'resolving'
     render(<RequireLogin>secret</RequireLogin>)
     expect(screen.getByRole('status', { name: /checking your login/i })).toBeTruthy()

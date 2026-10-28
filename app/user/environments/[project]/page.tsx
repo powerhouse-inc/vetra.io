@@ -41,6 +41,7 @@ import {
 } from '@/modules/cloud/lib/addons'
 import { useServiceAddon } from '@/modules/cloud/hooks/use-service-addon'
 import { useWorkflowsAddon } from '@/modules/cloud/hooks/use-workflows-addon'
+import { RequireLogin } from '@/modules/shared/components/renown/require-login'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   DropdownMenu,
@@ -573,10 +574,12 @@ type PageProps = {
 export default function EnvironmentDetailPage({ params }: PageProps) {
   const { project } = use(params)
   return (
-    <main className="mx-auto mt-20 max-w-screen-xl space-y-8 px-6 py-8">
-      <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
-        <EnvironmentDetail documentId={project} />
-      </Suspense>
-    </main>
+    <RequireLogin title="Log in to see this environment">
+      <main className="mx-auto mt-20 max-w-screen-xl space-y-8 px-6 py-8">
+        <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
+          <EnvironmentDetail documentId={project} />
+        </Suspense>
+      </main>
+    </RequireLogin>
   )
 }

@@ -1,30 +1,12 @@
 'use client'
-import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
-import { Loader2 } from 'lucide-react'
 import { Suspense } from 'react'
 import { useEnsureUserDrive } from '@/modules/profile/lib/use-ensure-user-drive'
-import { LoginPrompt } from '@/app/profile/components/login-prompt'
 import { PackagesTab } from '@/app/profile/components/packages-tab'
+import { PageSpinner } from '@/modules/shared/components/page-shell'
+import { RequireLogin } from '@/modules/shared/components/renown/require-login'
 
 function UserPackagesPageInner() {
-  const auth = useRenownAuthAsync()
   useEnsureUserDrive()
-
-  if (auth.state === 'resolving') {
-    return (
-      <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-8">
-        <Loader2 className="text-muted-foreground size-6 animate-spin" />
-      </div>
-    )
-  }
-
-  if (auth.state !== 'authenticated' || !auth.address) {
-    return (
-      <div className="container mx-auto px-4 py-8">
-        <LoginPrompt />
-      </div>
-    )
-  }
 
   return (
     <div className="container mx-auto max-w-5xl px-4 pt-20 pb-8">
@@ -39,14 +21,10 @@ function UserPackagesPageInner() {
 
 export default function UserPackagesPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="container mx-auto flex min-h-[60vh] items-center justify-center px-4 py-8">
-          <Loader2 className="text-muted-foreground size-6 animate-spin" />
-        </div>
-      }
-    >
-      <UserPackagesPageInner />
-    </Suspense>
+    <RequireLogin title="Log in to see your packages">
+      <Suspense fallback={<PageSpinner />}>
+        <UserPackagesPageInner />
+      </Suspense>
+    </RequireLogin>
   )
 }

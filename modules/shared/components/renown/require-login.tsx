@@ -3,11 +3,14 @@
 import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
 import { LogIn } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { PageSpinner } from '@/modules/shared/components/page-shell'
 import { useOpenLogin } from '@/modules/shared/components/renown/login-modal-context'
 import { Button } from '@/modules/shared/components/ui/button'
-import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 
-/** Renown login only — no licence needed. Used by owner pages and the app page. */
+/**
+ * Renown login only — no licence needed. The single gate for every /user and /profile
+ * page: wrap the whole page (outermost), since its own states clear the fixed navbar.
+ */
 export function RequireLogin({
   children,
   title = 'Log in to continue',
@@ -21,17 +24,9 @@ export function RequireLogin({
   const openLogin = useOpenLogin()
 
   if (state === 'authenticated') return <>{children}</>
-  if (state === 'resolving') {
-    return (
-      <div role="status" aria-label="Checking your login" className="space-y-4 py-4">
-        <Skeleton className="h-8 w-1/3" />
-        <Skeleton className="h-4 w-1/2" />
-        <Skeleton className="h-40 w-full rounded-xl" />
-      </div>
-    )
-  }
+  if (state === 'resolving') return <PageSpinner label="Checking your login" />
   return (
-    <div className="mx-auto flex max-w-md flex-col items-center gap-4 py-16 text-center">
+    <div className="mx-auto flex max-w-md flex-col items-center gap-4 px-6 pt-32 pb-16 text-center">
       <span className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-2xl">
         <LogIn className="h-5 w-5" aria-hidden />
       </span>
