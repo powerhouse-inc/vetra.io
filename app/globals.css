@@ -52,8 +52,8 @@
     'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-mono:
-    var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
-    'Liberation Mono', 'Courier New', monospace;
+    var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono',
+    'Courier New', monospace;
   --radius: 0.75rem;
   --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
   --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
