@@ -11,17 +11,14 @@ import {
   LogIn,
   LogOut,
   Loader2,
-  Moon,
   MoreVertical,
   Package,
   Settings,
-  Sun,
   User,
 } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useTheme } from 'next-themes'
-import { useSyncExternalStore, useState } from 'react'
+import { useState } from 'react'
 import { CONSOLE_HREF, EARLY_ACCESS_HREF } from '@/modules/landing/lib/links'
 import { isAppRoute } from '@/modules/landing/lib/routes'
 import { ActiveOrgLabel, OrgSwitcherMenuSection } from '@/modules/orgs/components/org-switcher'
@@ -37,8 +34,6 @@ import {
 } from '../../ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar'
 import { cn } from '@/modules/shared/lib/utils'
-import { useConsoleMenuClass } from '../use-console-menu-class'
-import ThemeIconLabel from './toogle-theme-label'
 
 const btnSecondary =
   'bg-accent text-foreground hover:bg-muted inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all cursor-pointer'
@@ -73,22 +68,9 @@ function CopyAddressButton({ address }: { address: string }) {
 }
 
 function RenownButton() {
-  const consoleMenu = useConsoleMenuClass()
-  // Public pages render in a fixed look, so the theme switch only appears in the app.
-  const showThemeToggle = isAppRoute(usePathname())
   const auth = useRenownAuthAsync()
   const avatarUrl = useRenownAvatarUrl()
   const openLogin = useOpenLogin()
-  const { resolvedTheme, setTheme } = useTheme()
-  const mounted = useSyncExternalStore(
-    () => () => {},
-    () => true,
-    () => false,
-  )
-
-  const toggleTheme = () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
-  const isDark = mounted && resolvedTheme === 'dark'
-
   if (auth.state === 'resolving') {
     return (
       <span className={btnSecondary}>
@@ -116,7 +98,7 @@ function RenownButton() {
         </DropdownMenuTrigger>
         <DropdownMenuContent
           align="end"
-          className={cn('bg-accent border-border/50 z-170 w-56 rounded-lg p-1.5', consoleMenu)}
+          className="bg-popover border-border z-170 w-56 rounded-lg p-1.5"
         >
           <DropdownMenuLabel className="px-3 py-2">
             <div className="flex items-center gap-2.5">
@@ -188,18 +170,6 @@ function RenownButton() {
               Packages
             </Link>
           </DropdownMenuItem>
-          {showThemeToggle && (
-            <>
-              <DropdownMenuSeparator className="bg-border/50" />
-              <DropdownMenuItem
-                onClick={toggleTheme}
-                className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
-              >
-                {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                {isDark ? 'Light mode' : 'Dark mode'}
-              </DropdownMenuItem>
-            </>
-          )}
           <DropdownMenuSeparator className="bg-border/50" />
           <DropdownMenuItem
             asChild
@@ -244,14 +214,7 @@ function useHeaderCta(): { href: string; label: string } | null {
 }
 
 function NavbarRightSide() {
-  const consoleMenu = useConsoleMenuClass()
-  const { resolvedTheme, setTheme } = useTheme()
   const cta = useHeaderCta()
-  const showThemeToggle = isAppRoute(usePathname())
-
-  const handleThemeToggle = () => {
-    setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
-  }
 
   return (
     <>
@@ -278,7 +241,7 @@ function NavbarRightSide() {
               <span className="sr-only">Open menu</span>
             </button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent className={cn('z-160 w-56', consoleMenu)} align="end">
+          <DropdownMenuContent className="z-160 w-56" align="end">
             <DropdownMenuItem className="p-0">
               <RenownButton />
             </DropdownMenuItem>
@@ -291,14 +254,6 @@ function NavbarRightSide() {
                   {cta.label}
                 </Link>
               </DropdownMenuItem>
-            )}
-            {showThemeToggle && (
-              <>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={handleThemeToggle} className="cursor-pointer">
-                  <ThemeIconLabel theme={resolvedTheme} />
-                </DropdownMenuItem>
-              </>
             )}
           </DropdownMenuContent>
         </DropdownMenu>

@@ -160,6 +160,6 @@ function PackageIconHidden() {
 function StatusChip({ saving, saved }: { saving: boolean; saved: boolean }) {
   if (saving) return <Loader2 className="text-muted-foreground size-4 animate-spin" />
   if (saved)
-    return <span className="text-xs font-medium text-green-600 dark:text-green-500">Saved</span>
+    return <span className="text-xs font-medium text-success dark:text-success">Saved</span>
   return <span className="size-4" />
 }

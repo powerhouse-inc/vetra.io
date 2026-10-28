@@ -171,7 +171,7 @@ function NewEnvironmentFormInner({
         </div>
         {error && <div className="text-destructive mt-2 text-sm">{error}</div>}
         {success && (
-          <div className="mt-2 text-sm text-green-600">
+          <div className="text-success mt-2 text-sm">
             Environment {isRenameMode ? 'updated' : 'created'} successfully!
           </div>
         )}

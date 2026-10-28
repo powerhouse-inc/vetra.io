@@ -3,122 +3,68 @@
 
 @custom-variant dark (&:where(.dark, .dark *));
 
-:root {
-  --background: #fcfcfc;
-  --foreground: #343839;
-  --card: #fcfcfc;
-  --card-foreground: #343839;
-  --popover: #ffffff;
-  --popover-foreground: #343839;
-  --primary: #04c161;
-  --primary-foreground: #ffffff;
-  --secondary: #f4f4f4;
-  --secondary-foreground: #343839;
-  --muted: #efefef;
-  --muted-foreground: #9ea0a1;
-  --accent: #f3f5f7;
-  --accent-foreground: #343839;
-  --destructive: #ea4335;
-  --destructive-foreground: #fcfcfc;
-  --border: #d7d8d9;
-  --input: #ffffff;
-  --ring: #04c161;
-  --sidebar: #ffffff;
-  --sidebar-foreground: #343839;
-  --sidebar-primary: #04c161;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #f3f5f7;
-  --sidebar-accent-foreground: #343839;
-  --sidebar-border: #d7d8d9;
-  --sidebar-ring: #04c161;
-  --success: #4fc86f;
-  --success-30: rgba(79, 200, 111, 0.3);
-  --info: #329dff;
-  --info-30: rgba(50, 157, 255, 0.3);
-  --warning: #ffa132;
-  --warning-30: rgba(255, 161, 50, 0.3);
-  --purple: #8e55ea;
-  --purple-30: rgba(142, 85, 234, 0.3);
-  --primary-30: rgba(4, 193, 97, 0.3);
-  --foreground-70: rgba(52, 56, 57, 0.7);
-  --destructive-30: rgba(234, 67, 53, 0.3);
+:root,
+.dark {
+  /* One theme, dark-only: the console look of the landing pages (see the
+     --console-* palette below) mapped onto the shared component tokens. */
+  color-scheme: dark;
+  --background: #08090a;
+  --foreground: #e4e8e6;
+  --card: #0e1113;
+  --card-foreground: #e4e8e6;
+  --popover: #0e1113;
+  --popover-foreground: #e4e8e6;
+  --primary: #3be38a;
+  --primary-foreground: #08090a;
+  --secondary: #161b1e;
+  --secondary-foreground: #e4e8e6;
+  --muted: #161b1e;
+  --muted-foreground: #9aa5a1;
+  --accent: #161b1e;
+  --accent-foreground: #e4e8e6;
+  --destructive: #f05a4f;
+  --destructive-foreground: #08090a;
+  --border: #23292e;
+  --input: #23292e;
+  --ring: #3be38a;
+  --sidebar: #0e1113;
+  --sidebar-foreground: #e4e8e6;
+  --sidebar-primary: #3be38a;
+  --sidebar-primary-foreground: #08090a;
+  --sidebar-accent: #161b1e;
+  --sidebar-accent-foreground: #e4e8e6;
+  --sidebar-border: #23292e;
+  --sidebar-ring: #3be38a;
+  --success: #3be38a;
+  --success-30: rgba(59, 227, 138, 0.3);
+  --info: #5aa9ff;
+  --info-30: rgba(90, 169, 255, 0.3);
+  --warning: #f2c14e;
+  --warning-30: rgba(242, 193, 78, 0.3);
+  --purple: #a27cf0;
+  --purple-30: rgba(162, 124, 240, 0.3);
+  --primary-30: rgba(59, 227, 138, 0.3);
+  --foreground-70: rgba(228, 232, 230, 0.7);
+  --destructive-30: rgba(240, 90, 79, 0.3);
   --font-sans:
-    var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+    var(--font-geist), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
     'Segoe UI Symbol', 'Noto Color Emoji';
   --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
   --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
+    var(--font-jetbrains), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas,
+    'Liberation Mono', 'Courier New', monospace;
   --radius: 0.75rem;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
-  --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
-  --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.25);
+  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
+  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.3);
+  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
+  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.4), 0 1px 2px -1px hsl(0 0% 0% / 0.4);
+  --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.4), 0 2px 4px -2px hsl(0 0% 0% / 0.4);
+  --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.45), 0 4px 6px -4px hsl(0 0% 0% / 0.45);
+  --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.5), 0 8px 10px -6px hsl(0 0% 0% / 0.5);
+  --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.6);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
-}
-
-.dark {
-  --background: #1b1e24;
-  --foreground: #fcfcfc;
-  --card: #252a34;
-  --card-foreground: #f3f5f7;
-  --popover: #1e222b;
-  --popover-foreground: #fcfcfc;
-  --primary: #04c161;
-  --primary-foreground: #ffffff;
-  --secondary: #4f596f;
-  --secondary-foreground: #a6b1c7;
-  --muted: #343839;
-  --muted-foreground: #6c7275;
-  --accent: #373e4d;
-  --accent-foreground: #f3f5f7;
-  --destructive: #ea4335;
-  --destructive-foreground: #fcfcfc;
-  --border: #485265;
-  --input: #1b1e24;
-  --ring: #f3f5f7;
-  --sidebar: #1b1e24;
-  --sidebar-foreground: #fcfcfc;
-  --sidebar-primary: #04c161;
-  --sidebar-primary-foreground: #ffffff;
-  --sidebar-accent: #373e4d;
-  --sidebar-accent-foreground: #fcfcfc;
-  --sidebar-border: #485265;
-  --sidebar-ring: #04c161;
-  --success: #4fc86f;
-  --success-30: rgba(79, 200, 111, 0.3);
-  --info: #329dff;
-  --info-30: rgba(50, 157, 255, 0.3);
-  --warning: #ffa132;
-  --warning-30: rgba(255, 161, 50, 0.3);
-  --purple: #8e55ea;
-  --purple-30: rgba(142, 85, 234, 0.3);
-  --primary-30: rgba(4, 193, 97, 0.3);
-  --foreground-70: rgba(252, 252, 252, 0.7);
-  --destructive-30: rgba(234, 67, 53, 0.3);
-  --font-sans:
-    var(--font-inter), ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
-    Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
-    'Segoe UI Symbol', 'Noto Color Emoji';
-  --font-serif: ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
-  --font-mono:
-    ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New',
-    monospace;
-  --radius: 0.75rem;
-  --shadow-2xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-xs: 0 1px 3px 0px hsl(0 0% 0% / 0.05);
-  --shadow-sm: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow: 0 1px 3px 0px hsl(0 0% 0% / 0.1), 0 1px 2px -1px hsl(0 0% 0% / 0.1);
-  --shadow-md: 0 4px 6px -1px hsl(0 0% 0% / 0.1), 0 2px 4px -2px hsl(0 0% 0% / 0.1);
-  --shadow-lg: 0 10px 15px -3px hsl(0 0% 0% / 0.1), 0 4px 6px -4px hsl(0 0% 0% / 0.1);
-  --shadow-xl: 0 20px 25px -5px hsl(0 0% 0% / 0.1), 0 8px 10px -6px hsl(0 0% 0% / 0.1);
-  --shadow-2xl: 0 25px 50px -12px hsl(0 0% 0% / 0.25);
 }
 
 @theme inline {
@@ -214,7 +160,7 @@
   }
 }
 
-/* Console look for the public landing pages (/, /cloud, /studio). Dark-only by design. */
+/* Console palette (the whole app is dark-only and uses it; shared tokens above map onto it). */
 :root {
   --console-bg: #08090a;
   --console-surface: #0e1113;

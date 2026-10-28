@@ -178,6 +178,7 @@ export function AppsHome() {
     <main className="mx-auto mt-20 max-w-screen-xl space-y-12 px-6 py-8">
       <section className="space-y-6">
         <PageHeader
+          eyebrow="~/apps"
           title="Your apps"
           description="Push to GitHub, Vetra deploys. Production follows your main branch and every pull request gets its own preview."
           actions={

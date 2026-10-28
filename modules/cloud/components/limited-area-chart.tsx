@@ -1,6 +1,7 @@
 'use client'
 
 import type { MetricSeries } from '@/modules/cloud/types'
+import { CHART_ERROR_COLOR } from '@/modules/cloud/lib/chart-colors'
 
 export type LimitedSeries = {
   series: MetricSeries
@@ -115,11 +116,11 @@ export function LimitedAreaChart({
 
         <div
           className="pointer-events-none absolute inset-x-0 h-px"
-          style={{ top: `${quotaTopPct}%`, background: '#ea4335' }}
+          style={{ top: `${quotaTopPct}%`, background: CHART_ERROR_COLOR }}
         >
           <span
             className="absolute -top-[14px] right-1 px-1 text-[9px] font-semibold tracking-wide"
-            style={{ color: '#ea4335', background: cardBg }}
+            style={{ color: CHART_ERROR_COLOR, background: cardBg }}
           >
             QUOTA · {quotaLabel}
           </span>

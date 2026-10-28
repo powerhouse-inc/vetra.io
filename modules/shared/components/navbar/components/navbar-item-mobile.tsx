@@ -10,7 +10,6 @@ import {
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu'
 import type { NavItem } from '../types'
-import { consoleMenuClass } from '../use-console-menu-class'
 
 interface NavbarItemMobileProps {
   navItems: NavItem[]
@@ -61,7 +60,7 @@ function NavbarItemMobile({ navItems, pathname }: NavbarItemMobileProps) {
           <ChevronDown className="relative top-0.25 ml-1 h-3 w-3 transition duration-200 group-data-[state=open]:rotate-180" />
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent className={cn('z-170 w-50 p-2', consoleMenuClass(pathname))}>
+        <DropdownMenuContent className={'z-170 w-50 p-2'}>
           <ul className="flex flex-col">
             <li>
               {navItems.map((item) => (

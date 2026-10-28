@@ -249,7 +249,7 @@ function SlugStatus({
     available: {
       icon: <Check className="size-3" />,
       label: 'Available',
-      cls: 'text-green-600 dark:text-green-500',
+      cls: 'text-success dark:text-success',
     },
     taken: { icon: null, label: 'Taken', cls: 'text-destructive' },
     error: { icon: null, label: "Couldn't check", cls: 'text-muted-foreground' },

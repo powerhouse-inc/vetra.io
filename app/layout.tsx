@@ -1,4 +1,3 @@
-import { Inter } from 'next/font/google'
 import { headers } from 'next/headers'
 import Script from 'next/script'
 import { CloudAuthBridge } from '@/modules/cloud/components/cloud-auth-bridge'
@@ -8,7 +7,6 @@ import { LoginModalProvider } from '@/modules/shared/components/renown/login-mod
 import { RenownLoginModal } from '@/modules/shared/components/renown/renown-login-modal'
 import { RenownProviders } from '@/modules/shared/components/renown/renown-providers'
 import { WalletSwitchGuard } from '@/modules/shared/components/renown/wallet-switch-guard'
-import { AmbientBackground } from '@/modules/shared/components/ui/ambient-background'
 import { GlobalRefreshIndicator } from '@/modules/shared/components/ui/global-refresh-indicator'
 import { SyncStatusChip } from '@/modules/shared/components/ui/sync-status-chip'
 import { AppStateCoordinator } from '@/modules/shared/state'
@@ -20,17 +18,12 @@ import Navbar from '@/shared/components/navbar/navbar'
 import { QueryClientProvider } from '@/shared/providers/query-client'
 import { verifySession } from '@/modules/shared/lib/renown-session'
 import { SITE_URL } from '@/modules/landing/lib/links'
+import { consoleFontVars } from '@/modules/landing/fonts'
 import { UMAMI_BEFORE_SEND, UMAMI_BEFORE_SEND_JS } from '@/modules/shared/lib/analytics-privacy'
 import type { Metadata } from 'next'
 import { NuqsAdapter } from 'nuqs/adapters/next/app'
 
 import './globals.css'
-
-const inter = Inter({
-  variable: '--font-inter',
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700', '800'],
-})
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
@@ -53,7 +46,9 @@ export default async function RootLayout({
   const session = await verifySession()
 
   return (
-    <html lang="en" suppressHydrationWarning>
+    // Dark-only console look everywhere. The font variables sit on <html> because
+    // --font-sans/--font-mono are defined on :root and must resolve there.
+    <html lang="en" className={`dark ${consoleFontVars}`} suppressHydrationWarning>
       <head>
         {/* Before any analytics script loads: hides invite codes in /redeem/<code> URLs. */}
         <script dangerouslySetInnerHTML={{ __html: UMAMI_BEFORE_SEND_JS }} />
@@ -105,7 +100,7 @@ export default async function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.variable} bg-background antialiased`}>
+      <body className="console-grid bg-background text-foreground font-sans antialiased">
         {/* Umami analytics. data-domains limits counting to production hosts, so
             staging, previews and local dev don't pollute the stats. Two
             instances while we move off Umami Cloud: each script tracks page
@@ -133,7 +128,6 @@ export default async function RootLayout({
           data-before-send={UMAMI_BEFORE_SEND}
           strategy="afterInteractive"
         />
-        <AmbientBackground />
         {/* The NEXT_PUBLIC_ id is the vetra.io project. OPENPANEL_CLIENT_ID is injected
             by the hosting chart for tenant Connects ("Vetra Environments", CORS
             *.vetra.io only), so preferring it got every vetra.io event rejected. */}
@@ -145,8 +139,9 @@ export default async function RootLayout({
         <NuqsAdapter>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="dark"
+            forcedTheme="dark"
+            enableSystem={false}
             disableTransitionOnChange
           >
             <QueryClientProvider>

@@ -41,6 +41,7 @@ function UserSettingsPageInner() {
   return (
     <div className="container mx-auto max-w-5xl px-4 pt-20 pb-8">
       <PageHeader
+        eyebrow="~/settings"
         className="mb-8"
         title="Profile settings"
         description="Your Renown identity, account details, and teams."

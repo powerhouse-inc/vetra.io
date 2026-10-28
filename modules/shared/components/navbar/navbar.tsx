@@ -7,7 +7,6 @@ import { NavbarBrand } from './components/navbar-brand'
 import NavbarItemMobile from './components/navbar-item-mobile'
 import NavbarItemsDesk from './components/navbar-items-desk'
 import NavbarRightSide from './components/navbar-right-side'
-import { isConsoleRoute } from '@/modules/landing/lib/routes'
 import { cn } from '@/shared/lib/utils'
 import { getNavbarConfig, PRIVATE_NAV_ITEMS, PUBLIC_NAV_ITEMS } from './navbar-config'
 
@@ -36,9 +35,7 @@ function Navbar() {
   return (
     <div
       className={cn(
-        'border-border bg-background/80 fixed top-0 right-0 left-0 z-160 border-b backdrop-blur-xl',
-        // The public landing pages are dark-only; keep the chrome on the same ground.
-        isConsoleRoute(pathname) && 'dark border-console-line bg-console-bg/85 text-foreground',
+        'border-console-line bg-console-bg/85 text-foreground fixed top-0 right-0 left-0 z-160 border-b backdrop-blur-xl',
       )}
     >
       <div className="mx-auto flex h-16 max-w-screen-xl items-center px-6">

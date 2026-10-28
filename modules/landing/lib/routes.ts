@@ -1,10 +1,3 @@
-/** Public pages that render in the dark console look (navbar and footer follow). */
-const CONSOLE_ROUTES = new Set(['/', '/cloud', '/studio'])
-
-export function isConsoleRoute(pathname: string): boolean {
-  return CONSOLE_ROUTES.has(pathname)
-}
-
 /** Query param that asks the landing page to open the login dialog. */
 export const LOGIN_PARAM = 'login'
 /** Query param carrying where to go once the login succeeds. */
