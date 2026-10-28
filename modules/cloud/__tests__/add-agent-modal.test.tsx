@@ -263,8 +263,8 @@ describe('AddAgentModal', () => {
       />,
     )
     fireEvent.click(screen.getByRole('button', { name: /add env var/i }))
-    fireEvent.change(screen.getByLabelText('env-name-0'), { target: { value: 'SERVICE_PREFIX' } })
-    fireEvent.change(screen.getByLabelText('env-value-0'), { target: { value: 'oops' } })
+    fireEvent.change(screen.getByTestId('env-name-0'), { target: { value: 'SERVICE_PREFIX' } })
+    fireEvent.change(screen.getByTestId('env-value-0'), { target: { value: 'oops' } })
     fireEvent.click(screen.getByRole('button', { name: /install agent/i }))
     expect(screen.queryByText(/reserved/i)).not.toBeNull()
     expect(onSubmit).not.toHaveBeenCalled()

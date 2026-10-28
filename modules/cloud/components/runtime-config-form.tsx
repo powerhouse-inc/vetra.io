@@ -285,17 +285,20 @@ function DrivesSection({ form, overrides }: SectionProps) {
               <div key={f.id} className="bg-muted/30 flex items-start gap-2 rounded-md border p-2">
                 <div className="flex-1 space-y-1">
                   <Input
+                    aria-label={`Drive ${i + 1} URL`}
                     placeholder="https://drive-url"
                     className="bg-background font-mono text-xs"
                     {...form.register(`drives.defaultDrives.${i}.url` as const)}
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <Input
+                      aria-label={`Drive ${i + 1} name`}
                       placeholder="Name (optional)"
                       className="bg-background text-xs"
                       {...form.register(`drives.defaultDrives.${i}.name` as const)}
                     />
                     <Input
+                      aria-label={`Drive ${i + 1} icon URL`}
                       placeholder="Icon URL (optional)"
                       className="bg-background font-mono text-xs"
                       {...form.register(`drives.defaultDrives.${i}.icon` as const)}
