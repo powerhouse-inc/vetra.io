@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { describeRestartError } from '@/modules/cloud/lib/cloud-error'
 import { useRenown, useRenownAuth } from '@powerhousedao/reactor-browser'
 
 import { AsyncButton } from '@/modules/cloud/components/async-button'
@@ -140,22 +141,6 @@ type Props = {
   runtimeConfig?: { connect?: Record<string, unknown>; packageRegistryUrl?: string } | null
   onSaveRuntimeConfig?: (config: Record<string, unknown> | null) => Promise<void>
   runtimeConfigSupported?: boolean
-}
-
-function mapRestartError(message: string): string {
-  if (message.includes('DEPLOYMENT_NOT_FOUND')) {
-    return 'Service not deployed.'
-  }
-  if (message.includes('AMBIGUOUS_SERVICE')) {
-    return 'Could not identify the service.'
-  }
-  if (message.includes('RESTART_NOT_CONFIGURED')) {
-    return "Restart isn't available for this environment."
-  }
-  if (message.includes('FORBIDDEN')) {
-    return 'Only the environment owner can restart.'
-  }
-  return message
 }
 
 export function ServiceDetailDrawer({
@@ -343,8 +328,7 @@ export function ServiceDetailDrawer({
                               toast.success(`${friendly} restarting…`)
                               setRestartOpen(false)
                             } catch (err) {
-                              const raw = err instanceof Error ? err.message : String(err)
-                              toast.error(mapRestartError(raw))
+                              toast.error(describeRestartError(err, 'service'))
                             }
                           }}
                         >

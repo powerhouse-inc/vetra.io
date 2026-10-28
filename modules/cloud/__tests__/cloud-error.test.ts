@@ -22,6 +22,7 @@ describe('describeCloudError', () => {
     ['AMBIGUOUS_SERVICE', /which service/i],
     ['DUMPS_NOT_CONFIGURED', /backups aren't available/i],
     ['INVALID_RETENTION', /between 1 and 30/i],
+    ['DOMAIN_TAKEN', /already uses this domain/i],
   ])('maps %s to a friendly sentence', (raw, expected) => {
     const out = describeCloudError(new Error(raw), FALLBACK)
     expect(out).toMatch(expected)

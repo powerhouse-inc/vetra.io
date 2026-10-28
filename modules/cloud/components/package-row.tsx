@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import { useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
 
 import { applyConfigChanges, type ConfigChange } from '@/modules/cloud/config/apply'
 import { exclusiveKeys } from '@/modules/cloud/config/collisions'
@@ -431,7 +432,7 @@ function UninstallDialog({
               e.preventDefault()
               void runRemove().catch((err) => {
                 console.error('Failed to uninstall:', err)
-                toast.error(err instanceof Error ? err.message : 'Failed to uninstall')
+                toast.error(describeCloudError(err, "Couldn't uninstall the package. Try again."))
               })
             }}
             disabled={isRemoving}

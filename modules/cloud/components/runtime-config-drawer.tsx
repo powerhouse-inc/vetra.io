@@ -4,6 +4,7 @@ import { FileJson2, Loader2, RotateCcw } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { isDeepEqual } from 'remeda'
 import { toast } from 'sonner'
+import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
 
 import { AsyncButton } from '@/modules/cloud/components/async-button'
 import { RuntimeConfigForm } from '@/modules/cloud/components/runtime-config-form'
@@ -176,7 +177,7 @@ export function RuntimeConfigDrawer({
       // Surface the full error in the console (the toast only carries the
       // message) so failed pushes to the subgraph can be diagnosed.
       console.error('[runtime-config] failed to save runtime config:', err)
-      toast.error(err instanceof Error ? err.message : 'Failed to save')
+      toast.error(describeCloudError(err, "Couldn't save the runtime settings. Try again."))
     } finally {
       setIsSaving(false)
     }

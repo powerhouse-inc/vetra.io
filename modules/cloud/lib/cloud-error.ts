@@ -39,6 +39,9 @@ export type CloudErrorCode =
   | 'DEPLOYMENT_NOT_FOUND'
   | 'AMBIGUOUS_SERVICE'
   | 'INVALID_RETENTION'
+  | 'DOMAIN_TAKEN'
+  | 'INVALID_APEX_SERVICE'
+  | 'INVALID_REGISTRY'
   | 'NETWORK'
   | 'RATE_LIMITED'
   | 'SERVER_ERROR'
@@ -61,6 +64,9 @@ const DEFAULT_MESSAGES: Record<CloudErrorCode, string> = {
   DEPLOYMENT_NOT_FOUND: "This service isn't deployed yet.",
   AMBIGUOUS_SERVICE: 'Could not tell which service to act on. Try again or contact support.',
   INVALID_RETENTION: 'Keep between 1 and 30 backups.',
+  DOMAIN_TAKEN: 'Another environment already uses this domain.',
+  INVALID_APEX_SERVICE: "That service can't be served at the bare domain.",
+  INVALID_REGISTRY: "That package registry address isn't valid.",
   NETWORK: "Couldn't reach Vetra Cloud. Check your connection and try again.",
   RATE_LIMITED: 'Too many requests. Wait a moment and try again.',
   SERVER_ERROR: 'Vetra Cloud is having trouble right now. Try again in a moment.',
@@ -84,6 +90,9 @@ const LITERAL_CODES: CloudErrorCode[] = [
   'DEPLOYMENT_NOT_FOUND',
   'AMBIGUOUS_SERVICE',
   'INVALID_RETENTION',
+  'DOMAIN_TAKEN',
+  'INVALID_APEX_SERVICE',
+  'INVALID_REGISTRY',
   'FORBIDDEN',
 ]
 
@@ -145,4 +154,13 @@ export function describeCloudError(
   const code = cloudErrorCode(err)
   if (!code) return fallback
   return overrides[code] ?? DEFAULT_MESSAGES[code]
+}
+
+/** User-facing sentence for a failed restart of a service or an agent. */
+export function describeRestartError(err: unknown, what: 'service' | 'agent'): string {
+  return describeCloudError(err, `Couldn't restart the ${what}. Try again.`, {
+    DEPLOYMENT_NOT_FOUND: `This ${what} isn't deployed yet.`,
+    AMBIGUOUS_SERVICE: `Could not identify the ${what}. Try again or contact support.`,
+    FORBIDDEN: 'Only the environment owner can restart.',
+  })
 }
