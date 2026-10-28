@@ -23,6 +23,44 @@ export function deploymentStatusMeta(status: AppDeploymentStatus | null | undefi
   return DEPLOYMENT_STATUS_META[status] ?? { label: status, tone: 'neutral', active: false }
 }
 
+export type DeploymentRowStatus = {
+  meta: StatusMeta
+  /** The backend's `error` text: red for failures, muted when it's just a reason. */
+  note: { text: string; tone: 'danger' | 'muted' } | null
+}
+
+const CLOSED_PR_REASON = /^pull request #\d+ (is )?closed$/
+
+/**
+ * Status for one row of the deployments table. Unlike Vercel, a replaced
+ * deployment here no longer runs (production redeploys onto the same env,
+ * closed-PR previews are deleted), so "Ready" would be misleading:
+ * - a READY production deployment that isn't the live one → Superseded
+ *   (still READY in the data, which is what rollback relies on);
+ * - a preview torn down because its PR closed → Closed.
+ * Only FAILED keeps its `error` red; other reasons are informational.
+ */
+export function deploymentRowStatus(
+  d: Pick<AppDeployment, 'id' | 'kind' | 'status' | 'error'>,
+  liveProductionId: string | undefined,
+): DeploymentRowStatus {
+  let meta = deploymentStatusMeta(d.status)
+  if (d.kind === 'PRODUCTION' && d.status === 'READY' && d.id !== liveProductionId) {
+    meta = DEPLOYMENT_STATUS_META.SUPERSEDED
+  } else if (
+    d.kind === 'PREVIEW' &&
+    d.status === 'SUPERSEDED' &&
+    d.error &&
+    CLOSED_PR_REASON.test(d.error)
+  ) {
+    meta = { label: 'Closed', tone: 'neutral', active: false }
+  }
+  const note = d.error
+    ? ({ text: d.error, tone: d.status === 'FAILED' ? 'danger' : 'muted' } as const)
+    : null
+  return { meta, note }
+}
+
 /** PENDING and DEPLOYING are the only states that can still change on their own. */
 export function isDeploymentInFlight(status: AppDeploymentStatus | null | undefined): boolean {
   return status === 'PENDING' || status === 'DEPLOYING'

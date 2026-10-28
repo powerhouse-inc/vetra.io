@@ -31,12 +31,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/modules/shared/components/ui/table'
+import { cn } from '@/shared/lib/utils'
 
 import { describeAppsError } from '../graphql'
 import { useRollbackApp } from '../hooks/use-apps'
 import {
   canRollback,
-  deploymentStatusMeta,
+  deploymentRowStatus,
   githubCommitUrl,
   githubPullUrl,
   isAppReadOnly,
@@ -225,16 +226,22 @@ export function AppDeployments({
           <TableBody>
             {deployments.map((d) => {
               const rollbackable = !readOnly && canRollback(d) && d.id !== liveProductionId
+              const rowStatus = deploymentRowStatus(d, liveProductionId)
               return (
                 <TableRow key={d.id} className="border-border">
                   <TableCell className="pl-4 align-top">
-                    <StatusInline meta={deploymentStatusMeta(d.status)} />
-                    {d.error && (
+                    <StatusInline meta={rowStatus.meta} />
+                    {rowStatus.note && (
                       <p
-                        className="text-destructive mt-1 max-w-[14rem] truncate text-xs"
-                        title={d.error}
+                        className={cn(
+                          'mt-1 max-w-[14rem] truncate text-xs',
+                          rowStatus.note.tone === 'danger'
+                            ? 'text-destructive'
+                            : 'text-muted-foreground',
+                        )}
+                        title={rowStatus.note.text}
                       >
-                        {d.error}
+                        {rowStatus.note.text}
                       </p>
                     )}
                     {d.id === liveProductionId && (
