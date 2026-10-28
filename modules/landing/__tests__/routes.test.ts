@@ -36,7 +36,15 @@ describe('isAppRoute', () => {
   })
 
   it('leaves the public pages alone', () => {
-    for (const p of ['/', '/cloud', '/studio', '/docs/deploy', '/redeem', '/privacy-policy', '/users']) {
+    for (const p of [
+      '/',
+      '/cloud',
+      '/studio',
+      '/docs/deploy',
+      '/redeem',
+      '/privacy-policy',
+      '/users',
+    ]) {
       expect(isAppRoute(p)).toBe(false)
     }
   })
