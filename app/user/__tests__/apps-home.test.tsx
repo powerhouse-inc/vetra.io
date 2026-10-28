@@ -83,4 +83,29 @@ describe('AppsHome', () => {
     expect(screen.getByText(/Ask an owner or admin of Acme to create apps/)).toBeTruthy()
     expect(screen.queryByRole('link', { name: /New app in Acme/ })).toBeNull()
   })
+
+  it('gates "New environment" like the "New app" tile', () => {
+    activeOrg = { id: 'o1', name: 'Acme', role: 'MEMBER' }
+    apps = []
+    render(<AppsHome />)
+    expect(screen.queryByRole('link', { name: 'New environment' })).toBeNull()
+    const button = screen.getByRole<HTMLButtonElement>('button', { name: 'New environment' })
+    expect(button.disabled).toBe(true)
+    expect(button.parentElement?.getAttribute('title')).toBe(
+      'Ask an owner or admin of Acme to create environments',
+    )
+  })
+
+  it('links "New environment" for an admin and for a personal account', () => {
+    activeOrg = { id: 'o1', name: 'Acme', role: 'ADMIN' }
+    apps = []
+    render(<AppsHome />)
+    expect(screen.getByRole('link', { name: 'New environment' }).getAttribute('href')).toBe(
+      '/user/environments/new',
+    )
+    cleanup()
+    activeOrg = null
+    render(<AppsHome />)
+    expect(screen.getByRole('link', { name: 'New environment' })).toBeTruthy()
+  })
 })

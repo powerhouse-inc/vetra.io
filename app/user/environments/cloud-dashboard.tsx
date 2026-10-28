@@ -1,6 +1,6 @@
 'use client'
 
-import { Boxes, Plus } from 'lucide-react'
+import { Boxes } from 'lucide-react'
 import Link from 'next/link'
 
 import { useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
@@ -8,8 +8,8 @@ import { splitEnvironments } from '@/modules/apps/lib/split'
 import { useEnvironments } from '@/modules/cloud/hooks/use-environment'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { PageHeader } from '@/modules/shared/components/page-header'
-import { Button } from '@/modules/shared/components/ui/button'
 import { CloudEnvironments } from './cloud-projects'
+import { NewEnvironmentButton } from './new-environment-button'
 
 export function CloudDashboard() {
   // Envs managed by an App (production + previews) live on their App's page.
@@ -27,14 +27,7 @@ export function CloudDashboard() {
       <PageHeader
         title={org ? `${org.name} environments` : 'Your environments'}
         description="Environments you manage by hand, not linked to an app."
-        actions={
-          <Button asChild>
-            <Link href="/user/environments/new">
-              <Plus className="h-4 w-4" />
-              New environment
-            </Link>
-          </Button>
-        }
+        actions={<NewEnvironmentButton />}
       />
 
       {environments.length > 0 && (

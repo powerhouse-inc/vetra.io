@@ -17,6 +17,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/modules/shared/components
 import { Button } from '@/modules/shared/components/ui/button'
 
 import { CloudEnvironments } from './environments/cloud-projects'
+import { NewEnvironmentButton } from './environments/new-environment-button'
 
 function AppCardSkeleton() {
   return (
@@ -209,12 +210,7 @@ export function AppsHome() {
               Environments you manage by hand, not linked to an app.
             </p>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href="/user/environments/new">
-              <Plus className="h-4 w-4" />
-              New environment
-            </Link>
-          </Button>
+          <NewEnvironmentButton variant="outline" size="sm" />
         </div>
         <CloudEnvironments
           filter={isStandalone}
