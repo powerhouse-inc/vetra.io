@@ -22,6 +22,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/modules/shared/components/ui/alert-dialog'
+import { EmptyState, TabError, TabSkeleton } from '@/modules/publisher/components/primitives'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   Table,
@@ -168,11 +169,16 @@ export function AppDeployments({
   deployments,
   isPending,
   error,
+  onRetry,
+  retrying = false,
 }: {
   app: App
   deployments: AppDeployment[]
   isPending: boolean
   error: Error | null
+  /** Re-runs the deployments query after a failed load. */
+  onRetry: () => void
+  retrying?: boolean
 }) {
   const [rollbackTarget, setRollbackTarget] = useState<AppDeployment | null>(null)
   // The newest READY production deployment is what's live; rolling back to it is a no-op.
@@ -183,25 +189,19 @@ export function AppDeployments({
   const readOnly = isAppReadOnly(app)
 
   if (isPending) {
-    return (
-      <div className="text-muted-foreground flex items-center justify-center gap-2 py-16 text-sm">
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        Loading deployments…
-      </div>
-    )
+    return <TabSkeleton label="Loading deployments" />
   }
   if (error) {
-    return <p className="text-destructive py-10 text-center text-sm">{describeAppsError(error)}</p>
+    // TabError words publisher errors; hand it the apps copy instead.
+    return (
+      <TabError error={new Error(describeAppsError(error))} onRetry={onRetry} retrying={retrying} />
+    )
   }
   if (deployments.length === 0) {
     return (
-      <div className="border-border flex flex-col items-center gap-3 rounded-xl border border-dashed py-16 text-center">
-        <History className="text-muted-foreground h-8 w-8" aria-hidden />
-        <p className="font-medium">No deployments yet</p>
-        <p className="text-muted-foreground max-w-sm text-sm">
-          Every push to {app.productionBranch} and every pull request shows up here.
-        </p>
-      </div>
+      <EmptyState icon={History} title="No deployments yet">
+        Every push to {app.productionBranch} and every pull request shows up here.
+      </EmptyState>
     )
   }
 
