@@ -63,7 +63,7 @@ describe('StudioProductsGrid', () => {
     expect(
       getByRole('heading', {
         level: 1,
-        name: 'A studio of your own, with an agent that builds alongside you',
+        name: 'A studio of your own, with an agent that builds alongside you.',
       }),
     ).toBeTruthy()
   })
