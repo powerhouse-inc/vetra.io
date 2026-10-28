@@ -227,6 +227,15 @@ async function withAppFields<T>(run: (fields: string) => Promise<T>): Promise<T>
 // Queries
 // ---------------------------------------------------------------------------
 
+/**
+ * An apps row with no repository (e.g. a Studio-made app published for licensing only) has
+ * nothing to deploy. The deploy UI assumes `repository` is set, so such rows are dropped here
+ * and the app is shown through its licensing-only page instead.
+ */
+function hasRepository(app: App | null | undefined): app is App {
+  return !!(app as { repository: App['repository'] | null } | null | undefined)?.repository
+}
+
 export async function fetchMyApps(
   token: string | null,
   fetchImpl?: FetchLike,
@@ -242,7 +251,7 @@ export async function fetchMyApps(
         )
       : appsGql<{ myApps: App[] }>(`query { myApps { ${fields} } }`, {}, token, fetchImpl),
   )
-  return data.myApps
+  return data.myApps.filter(hasRepository)
 }
 
 export async function fetchApp(
@@ -258,7 +267,7 @@ export async function fetchApp(
       fetchImpl,
     ),
   )
-  return data.app
+  return hasRepository(data.app) ? data.app : null
 }
 
 export async function fetchAppDeployments(

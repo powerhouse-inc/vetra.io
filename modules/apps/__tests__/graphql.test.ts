@@ -195,7 +195,11 @@ describe('optional App fields', () => {
         )
       }
       return Promise.resolve(
-        jsonResponse({ data: { myApps: [{ id: 'a1', ownerOrgId: 'org-1' }] } }),
+        jsonResponse({
+          data: {
+            myApps: [{ id: 'a1', ownerOrgId: 'org-1', repository: { fullName: 'acme/app' } }],
+          },
+        }),
       )
     })
     const apps = await fetchMyApps(null, fetchImpl)
@@ -309,5 +313,36 @@ describe('organisation apps', () => {
       "This repository's Renown identity belongs to another owner; delete the old App or ask its creator",
     )
     expect(describeCreateAppError(err, 'a/b', 'Acme')).toContain('already belongs to another owner')
+  })
+})
+
+describe('apps without a repository', () => {
+  afterEach(() => resetOptionalAppFields())
+  const repoApp = {
+    id: 'a1',
+    name: 'Has repo',
+    repository: { installationId: '1', repositoryId: '2', fullName: 'acme/app' },
+  }
+  const bareApp = { id: 'a2', name: 'Licensing only', repository: null }
+
+  it('fetchApp treats an app with no repository as not deployable (null)', async () => {
+    const fetchImpl: FetchLike = vi.fn(() =>
+      Promise.resolve(jsonResponse({ data: { app: bareApp } })),
+    )
+    expect(await fetchApp('a2', null, fetchImpl)).toBeNull()
+  })
+
+  it('fetchApp returns apps that have a repository', async () => {
+    const fetchImpl: FetchLike = vi.fn(() =>
+      Promise.resolve(jsonResponse({ data: { app: repoApp } })),
+    )
+    expect((await fetchApp('a1', null, fetchImpl))?.id).toBe('a1')
+  })
+
+  it('fetchMyApps leaves out apps with no repository', async () => {
+    const fetchImpl: FetchLike = vi.fn(() =>
+      Promise.resolve(jsonResponse({ data: { myApps: [repoApp, bareApp] } })),
+    )
+    expect((await fetchMyApps(null, fetchImpl)).map((a) => a.id)).toEqual(['a1'])
   })
 })
