@@ -1,21 +1,6 @@
-'use client'
-
-import { usePathname } from 'next/navigation'
 import type { ReactNode } from 'react'
-import { isConsoleRoute } from '@/modules/landing/lib/routes'
 
-/** Puts the footer on the dark console ground under the public landing pages. */
+/** Puts the footer on the dark console ground, the same as the navbar. */
 export function FooterScope({ children }: { children: ReactNode }) {
-  const pathname = usePathname()
-  return (
-    <div
-      className={
-        isConsoleRoute(pathname)
-          ? 'dark [&_footer]:border-console-line [&_footer]:bg-console-bg'
-          : undefined
-      }
-    >
-      {children}
-    </div>
-  )
+  return <div className="[&_footer]:border-console-line [&_footer]:bg-console-bg">{children}</div>
 }
