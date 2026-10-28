@@ -5,13 +5,13 @@ import { SubscriptionsView } from '@/modules/subscriptions/components/subscripti
 
 export default function SubscriptionsPage() {
   return (
-    <main className="mx-auto mt-20 max-w-4xl px-4 py-8 sm:px-6">
-      <RequireLogin title="See your subscriptions">
+    <RequireLogin title="See your subscriptions">
+      <main className="mx-auto mt-20 max-w-4xl px-4 py-8 sm:px-6">
         <Suspense fallback={<SubscriptionsSkeleton />}>
           <SubscriptionsView />
         </Suspense>
-      </RequireLogin>
-    </main>
+      </main>
+    </RequireLogin>
   )
 }
 
