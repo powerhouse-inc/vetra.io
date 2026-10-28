@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { isConsoleRoute, loggedOutDestination } from '@/modules/landing/lib/routes'
+import { isAppRoute, isConsoleRoute, loggedOutDestination } from '@/modules/landing/lib/routes'
 
 describe('isConsoleRoute', () => {
   it('matches the three public console pages', () => {
@@ -25,5 +25,19 @@ describe('loggedOutDestination', () => {
     expect(loggedOutDestination('/user')).toBe('/')
     expect(loggedOutDestination('/user/environments')).toBe('/')
     expect(loggedOutDestination('/profile')).toBe('/')
+  })
+})
+
+describe('isAppRoute', () => {
+  it('matches the console and profile routes', () => {
+    for (const p of ['/user', '/user/environments', '/profile', '/profile/create-team']) {
+      expect(isAppRoute(p)).toBe(true)
+    }
+  })
+
+  it('leaves the public pages alone', () => {
+    for (const p of ['/', '/cloud', '/studio', '/docs/deploy', '/redeem', '/privacy-policy', '/users']) {
+      expect(isAppRoute(p)).toBe(false)
+    }
   })
 })
