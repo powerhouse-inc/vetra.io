@@ -6,6 +6,7 @@ import {
   appPollInterval,
   appsPollInterval,
   canRollback,
+  deploymentRowStatus,
   deploymentStatusMeta,
   deploymentsPollInterval,
   displayHost,
@@ -234,5 +235,66 @@ describe('identityState', () => {
       identityState({ status: 'DELETED', identityExpiresAt: days(1), latestDeployment: null }, now)
         .kind,
     ).toBe('unknown')
+  })
+})
+
+describe('deploymentRowStatus', () => {
+  it('keeps the live production deployment Ready', () => {
+    const d = deployment({ id: 'live', status: 'READY' })
+    expect(deploymentRowStatus(d, 'live')).toEqual({
+      meta: { label: 'Ready', tone: 'success', active: false },
+      note: null,
+    })
+  })
+
+  it('shows an older READY production deployment as Superseded', () => {
+    const d = deployment({ id: 'old', status: 'READY' })
+    expect(deploymentRowStatus(d, 'live').meta).toEqual({
+      label: 'Superseded',
+      tone: 'neutral',
+      active: false,
+    })
+  })
+
+  it.each(['pull request #2 closed', 'pull request #12 is closed'])(
+    'shows a preview torn down because "%s" as Closed with a muted note',
+    (reason) => {
+      const d = deployment({ kind: 'PREVIEW', prNumber: 2, status: 'SUPERSEDED', error: reason })
+      expect(deploymentRowStatus(d, 'live')).toEqual({
+        meta: { label: 'Closed', tone: 'neutral', active: false },
+        note: { text: reason, tone: 'muted' },
+      })
+    },
+  )
+
+  it('keeps a preview replaced by a newer push Superseded', () => {
+    const d = deployment({ kind: 'PREVIEW', prNumber: 2, status: 'SUPERSEDED', error: null })
+    expect(deploymentRowStatus(d, 'live')).toEqual({
+      meta: { label: 'Superseded', tone: 'neutral', active: false },
+      note: null,
+    })
+  })
+
+  it('shows any other superseded reason as a muted note, not an error', () => {
+    const d = deployment({ status: 'SUPERSEDED', error: 'app deleted' })
+    expect(deploymentRowStatus(d, 'live').note).toEqual({ text: 'app deleted', tone: 'muted' })
+  })
+
+  it('keeps failures red', () => {
+    const d = deployment({ status: 'FAILED', error: 'image pull failed' })
+    expect(deploymentRowStatus(d, 'live')).toEqual({
+      meta: { label: 'Failed', tone: 'danger', active: false },
+      note: { text: 'image pull failed', tone: 'danger' },
+    })
+  })
+
+  it('leaves in-flight and READY previews alone', () => {
+    expect(deploymentRowStatus(deployment({ status: 'DEPLOYING' }), 'live').meta.label).toBe(
+      'Deploying',
+    )
+    expect(
+      deploymentRowStatus(deployment({ kind: 'PREVIEW', prNumber: 3, status: 'READY' }), 'live')
+        .meta.label,
+    ).toBe('Ready')
   })
 })
