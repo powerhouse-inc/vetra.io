@@ -41,17 +41,10 @@ import { routeEnvVars } from '@/modules/cloud/config/route-env-vars'
 import { useTenantConfig } from '@/modules/cloud/hooks/use-tenant-config'
 import { EndpointRow } from './endpoint-row'
 import { EnvVarsEditor } from './env-vars-editor'
+import { SIZE_LABELS } from '@/modules/cloud/lib/resource-maps'
 import { LiveStatusPill } from './live-status-pill'
 import { ResourceSizePicker } from './resource-size-picker'
 import { UpgradePackageModal } from './upgrade-package-modal'
-
-const SIZE_LABELS: Record<CloudResourceSize, string> = {
-  VETRA_AGENT_S: 'Small',
-  VETRA_AGENT_M: 'Medium',
-  VETRA_AGENT_L: 'Large',
-  VETRA_AGENT_XL: 'X-Large',
-  VETRA_AGENT_XXL: '2X-Large',
-}
 
 const SIZE_TO_TS: Record<string, CloudResourceSize> = {
   'vetra-agent-s': 'VETRA_AGENT_S',

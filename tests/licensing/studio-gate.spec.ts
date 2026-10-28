@@ -27,7 +27,7 @@ test('studio gate: no licence → redeem a studio code → the studio opens', as
 
   await page.goto('/user/studio')
   await expect(page.getByRole('heading', { name: 'Studio', exact: true })).toBeVisible()
-  await expect(page.getByText('No products yet')).toBeVisible()
+  await expect(page.getByText('No studios yet')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Vetra Studio is in early access' })).toHaveCount(
     0,
   )

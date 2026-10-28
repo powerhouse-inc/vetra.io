@@ -99,9 +99,9 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
 
       {showEmptyState ? (
         <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
-          <p className="text-lg font-medium">No products yet</p>
+          <p className="text-lg font-medium">No studios yet</p>
           <p className="text-muted-foreground max-w-sm text-sm">
-            Create your first product to spin up a dedicated Vetra Studio.
+            Create your first studio to spin up a dedicated Vetra Studio with its own AI agent.
           </p>
           <NewProductCard onCreate={handleCreate} createError={createError} variant="button" />
         </div>
@@ -134,7 +134,7 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
                 // spinner — using it here ballooned the grid cell.)
                 <div className="border-border flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-xl border">
                   <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-                  <p className="text-sm font-medium">Creating your product…</p>
+                  <p className="text-sm font-medium">Creating your studio…</p>
                 </div>
               ) : (
                 <NewProductCard

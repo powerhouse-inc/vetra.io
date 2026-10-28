@@ -13,6 +13,7 @@ import {
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { describeRestartError } from '@/modules/cloud/lib/cloud-error'
+import { serviceInstanceLabel } from '@/modules/cloud/lib/service-label'
 import { useRenown } from '@powerhousedao/reactor-browser'
 
 import { AsyncButton } from '@/modules/cloud/components/async-button'
@@ -268,7 +269,7 @@ export function AgentDetailDrawer({
                             service.prefix ?? null,
                             token,
                           )
-                          toast.success(`${service.prefix} restarting…`)
+                          toast.success(`Restarting ${serviceInstanceLabel(service)}…`)
                           setRestartOpen(false)
                         } catch (err) {
                           toast.error(describeRestartError(err, 'agent'))

@@ -56,7 +56,7 @@ export function StudioProductCard({
 
   // Cached brand from the switchboard; falls back to the env label when absent.
   const brand = product.brand
-  const title = brand?.title?.trim() || product.label || 'Untitled product'
+  const title = brand?.title?.trim() || product.label || 'Untitled studio'
 
   const cardClass = `border-border bg-card flex flex-col rounded-xl border p-5 ${
     canOpen ? 'hover:border-foreground/30 transition-colors' : 'cursor-default opacity-80'

@@ -81,15 +81,15 @@ describe('StudioProductsGrid', () => {
     }
     const { getByText } = render(<StudioProductsGrid />)
     getByText('Concord')
-    getByText(/create new product/i)
+    getByText(/^new studio$/i)
   })
 
   it('shows skeleton loaders on first load with no data', () => {
     state = { ...baseState, isScanning: true, products: [] }
     const { container, queryByText } = render(<StudioProductsGrid />)
     // No empty-state copy and no create CTA while still loading.
-    expect(queryByText(/no products yet/i)).toBeNull()
-    expect(queryByText(/create new product/i)).toBeNull()
+    expect(queryByText(/no studios yet/i)).toBeNull()
+    expect(queryByText(/^new studio$/i)).toBeNull()
     // Skeleton cards use animate-pulse placeholders.
     expect(container.querySelectorAll('.animate-pulse').length).toBeGreaterThan(0)
   })
@@ -97,8 +97,8 @@ describe('StudioProductsGrid', () => {
   it('shows a friendly empty state with a create CTA when authed and empty', () => {
     state = { ...baseState, isScanning: false, products: [] }
     const { getByText } = render(<StudioProductsGrid />)
-    getByText(/no products yet/i)
-    getByText(/create new product/i)
+    getByText(/no studios yet/i)
+    getByText(/^new studio$/i)
   })
 
   it('keeps listing existing studios after the licence lapsed, without creating', () => {
@@ -119,7 +119,7 @@ describe('StudioProductsGrid', () => {
     getByText('Concord')
     getByText('Your studio access has ended')
     getByText(/Studios stop on Oct 20\./)
-    expect(queryByText(/create new product/i)).toBeNull()
+    expect(queryByText(/^new studio$/i)).toBeNull()
     expect(getByRole('link', { name: 'Redeem a code' }).getAttribute('href')).toBe('/redeem')
   })
 
@@ -127,6 +127,6 @@ describe('StudioProductsGrid', () => {
     state = { ...baseState, products: [] }
     const { getByRole, queryByText } = render(<StudioProductsGrid locked />)
     getByRole('heading', { name: /vetra studio is in early access/i })
-    expect(queryByText(/create new product/i)).toBeNull()
+    expect(queryByText(/^new studio$/i)).toBeNull()
   })
 })

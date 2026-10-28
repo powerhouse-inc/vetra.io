@@ -25,7 +25,7 @@ describe('AgentCard collapsed', () => {
     render(<AgentCard service={service} env={null} canEdit={false} tenantId={null} />)
     expect(screen.queryByText(/ph-rupert@1\.2\.3/)).not.toBeNull()
     expect(screen.queryByText('rupert')).not.toBeNull()
-    expect(screen.queryByText('2X-Large')).not.toBeNull()
+    expect(screen.queryByText('XXL')).not.toBeNull()
   })
 
   it('prefers agent name + image from manifest features when available', () => {

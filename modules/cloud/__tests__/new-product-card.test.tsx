@@ -11,9 +11,9 @@ describe('NewProductCard', () => {
     const { getByText, container } = render(
       <NewProductCard onCreate={onCreate} createError={null} atLimit limit={3} />,
     )
-    getByText('Limit reached — 3 of 3 products')
+    getByText('Limit reached — 3 of 3 studios')
     expect(container.querySelector('button')).toBeNull()
-    fireEvent.click(getByText('Limit reached — 3 of 3 products'))
+    fireEvent.click(getByText('Limit reached — 3 of 3 studios'))
     expect(onCreate).not.toHaveBeenCalled()
   })
 
@@ -22,7 +22,7 @@ describe('NewProductCard', () => {
     const { getByText, queryByLabelText } = render(
       <NewProductCard onCreate={onCreate} createError={null} />,
     )
-    fireEvent.click(getByText(/create new product/i))
+    fireEvent.click(getByText(/^new studio$/i))
     expect(onCreate).toHaveBeenCalledOnce()
     expect(queryByLabelText(/api key/i)).toBeNull()
   })
