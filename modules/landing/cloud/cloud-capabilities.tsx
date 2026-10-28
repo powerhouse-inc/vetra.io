@@ -27,9 +27,9 @@ const CAPABILITIES = [
     body: 'Per-service logs and resource graphs in the console.',
   },
   {
-    tag: 'database',
-    title: 'Look inside your data',
-    body: 'A database explorer, right in the browser.',
+    tag: 'restore',
+    title: 'Restore in a few clicks',
+    body: 'Roll an environment back to any backup. A safety dump is taken first, so nothing is lost.',
   },
 ]
 
