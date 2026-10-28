@@ -10,21 +10,31 @@ describe('StudioPage', () => {
     expect(
       screen.getByRole('heading', {
         level: 1,
-        name: 'A studio of your own, with an agent that builds alongside you',
+        name: 'A studio of your own, with an agent that builds alongside you.',
       }),
     ).toBeTruthy()
     expect(container.textContent).toContain('pre-alpha')
     expect(container.textContent).toContain('monthly model budget')
   })
 
-  it('has an #access section with the waitlist form and redeem link', () => {
+  it('has an #access section with the request-access form and redeem link', () => {
     const { container } = render(<StudioPage />)
     const access = container.querySelector('#access')
     expect(access).toBeTruthy()
     const form = access?.querySelector('form')
     expect(form?.getAttribute('action')).toBe(WAITLIST_ACTION)
-    expect(screen.getByLabelText('Email for the waitlist')).toBeTruthy()
+    expect(screen.getByLabelText('Email to request access')).toBeTruthy()
     expect(access?.querySelector('a[href="/redeem"]')).toBeTruthy()
+  })
+
+  it('uses the shared CTA labels', () => {
+    const { container } = render(<StudioPage />)
+    const text = container.textContent ?? ''
+    expect(text).toContain('Request access')
+    expect(text).toContain('Redeem a code')
+    for (const old of ['Join the waitlist', 'I have an access code']) {
+      expect(text).not.toContain(old)
+    }
   })
 
   it('ships no placeholders and no open-cloud claim', () => {

@@ -19,7 +19,7 @@ export function HomeHero() {
           </p>
           <div className="flex max-w-full min-w-0 flex-wrap gap-3">
             <CtaLink href={EARLY_ACCESS_HREF} variant="primary">
-              Get early access
+              Request access
             </CtaLink>
             <InstallChip />
           </div>
