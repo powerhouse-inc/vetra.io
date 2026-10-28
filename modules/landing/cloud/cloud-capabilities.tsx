@@ -57,23 +57,34 @@ export function CloudCapabilities() {
         <h3 className="mt-8 text-[clamp(26px,3.5vw,40px)] leading-tight font-bold tracking-[-0.035em]">
           Add-ons, one switch each
         </h3>
-        <div className="border-console-line-strong bg-console-surface overflow-x-auto rounded-2xl border">
-          <table className="w-full min-w-[560px] border-collapse text-[15px]">
-            <thead>
+        {/* A table from sm up; below that each add-on stacks (name and plan, then the description). */}
+        <div className="border-console-line-strong bg-console-surface rounded-2xl border">
+          <table className="block w-full border-collapse text-[15px] sm:table">
+            <thead className="hidden sm:table-header-group">
               <tr className="font-console-mono text-console-faint text-left text-xs">
                 <th className="px-5 py-3.5 font-medium">add-on</th>
                 <th className="px-5 py-3.5 font-medium">what it does</th>
                 <th className="px-5 py-3.5 text-right font-medium">plan</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="block sm:table-row-group">
               {ADDONS.map((a) => (
-                <tr key={a.name} className="border-console-line border-t">
-                  <td className="font-console-mono px-5 py-4">{a.name}</td>
-                  <td className="text-console-muted px-5 py-4">{a.body}</td>
-                  <td className="px-5 py-4 text-right">
+                <tr
+                  key={a.name}
+                  className="border-console-line grid grid-cols-[1fr_auto] gap-x-4 gap-y-1.5 border-t px-5 py-4 first:border-t-0 sm:table-row sm:p-0 sm:first:border-t"
+                >
+                  <th
+                    scope="row"
+                    className="font-console-mono text-left font-normal sm:px-5 sm:py-4"
+                  >
+                    {a.name}
+                  </th>
+                  <td className="text-console-muted col-span-2 row-start-2 sm:px-5 sm:py-4">
+                    {a.body}
+                  </td>
+                  <td className="text-right sm:px-5 sm:py-4">
                     <span
-                      className={`font-console-mono rounded-full px-2.5 py-1 text-xs ${a.included ? 'bg-console-signal/10 text-console-signal' : 'border-console-line-strong text-console-muted border'}`}
+                      className={`font-console-mono rounded-full px-2.5 py-1 text-xs whitespace-nowrap ${a.included ? 'bg-console-signal/10 text-console-signal' : 'border-console-line-strong text-console-muted border'}`}
                     >
                       {a.included ? 'included' : 'optional'}
                     </span>
