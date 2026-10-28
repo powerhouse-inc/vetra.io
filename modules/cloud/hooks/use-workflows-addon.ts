@@ -4,6 +4,7 @@ import { useCallback } from 'react'
 
 import type { TenantEnvVar } from '../graphql'
 import type { AddonControl } from '../lib/addons'
+import { CloudUserError } from '../lib/cloud-error'
 import {
   PH_WORKFLOWS_ENABLED,
   connectWorkflowsEnabled,
@@ -45,13 +46,15 @@ export function useWorkflowsAddon({
       try {
         await setVar(PH_WORKFLOWS_ENABLED, next ? 'true' : 'false')
       } catch (err) {
-        throw new Error(`Couldn't ${verb} Workflows.`, { cause: err })
+        throw new CloudUserError(`Couldn't ${verb} Workflows.`, { cause: err })
       }
       // Both writes are idempotent, so a retry finishes a half-applied toggle.
       try {
         await setRuntimeConfig(withWorkflowsEnabled(runtimeConfig, next))
       } catch (err) {
-        throw new Error(`Workflows were only partly ${verb}d. Retry to finish.`, { cause: err })
+        throw new CloudUserError(`Workflows were only partly ${verb}d. Retry to finish.`, {
+          cause: err,
+        })
       }
     },
     [setVar, setRuntimeConfig, runtimeConfig],

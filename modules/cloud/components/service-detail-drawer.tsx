@@ -15,6 +15,7 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { describeRestartError } from '@/modules/cloud/lib/cloud-error'
 import { useRenown, useRenownAuth } from '@powerhousedao/reactor-browser'
 
 import { AsyncButton } from '@/modules/cloud/components/async-button'
@@ -130,7 +131,8 @@ type Props = {
     cadence: BackupCadence
     retention: number
   }) => Promise<void>
-  backupScheduleSupported?: boolean
+  /** Signed controller loaded, so the schedule can be changed. */
+  backupScheduleEditable?: boolean
   /**
    * Connect runtime config + write handler for the Runtime Config drawer,
    * threaded from the page's useEnvironmentDetail (same pattern as
@@ -139,22 +141,6 @@ type Props = {
   runtimeConfig?: { connect?: Record<string, unknown>; packageRegistryUrl?: string } | null
   onSaveRuntimeConfig?: (config: Record<string, unknown> | null) => Promise<void>
   runtimeConfigSupported?: boolean
-}
-
-function mapRestartError(message: string): string {
-  if (message.includes('DEPLOYMENT_NOT_FOUND')) {
-    return 'Service not deployed.'
-  }
-  if (message.includes('AMBIGUOUS_SERVICE')) {
-    return 'Could not identify the service.'
-  }
-  if (message.includes('RESTART_NOT_CONFIGURED')) {
-    return "Restart isn't available for this environment."
-  }
-  if (message.includes('FORBIDDEN')) {
-    return 'Only the environment owner can restart.'
-  }
-  return message
 }
 
 export function ServiceDetailDrawer({
@@ -174,7 +160,7 @@ export function ServiceDetailDrawer({
   onTabChange,
   backupSchedule,
   onSaveBackupSchedule,
-  backupScheduleSupported,
+  backupScheduleEditable,
   runtimeConfig,
   onSaveRuntimeConfig,
   runtimeConfigSupported,
@@ -213,7 +199,7 @@ export function ServiceDetailDrawer({
   // Runtime-config editor is a CONNECT-only affordance — that's the service
   // whose powerhouse.config.json this UI edits. Gated on the controller
   // exposing setRuntimeConfig (i.e. a logged-in viewer on a vetra-cloud-package
-  // build that ships SET_RUNTIME_CONFIG); mirrors backupScheduleSupported.
+  // build that ships SET_RUNTIME_CONFIG).
   const showRuntimeConfig = kind === 'connect' && !!runtimeConfigSupported && !!onSaveRuntimeConfig
   const renown = useRenown()
   const auth = useRenownAuth()
@@ -342,8 +328,7 @@ export function ServiceDetailDrawer({
                               toast.success(`${friendly} restarting…`)
                               setRestartOpen(false)
                             } catch (err) {
-                              const raw = err instanceof Error ? err.message : String(err)
-                              toast.error(mapRestartError(raw))
+                              toast.error(describeRestartError(err, 'service'))
                             }
                           }}
                         >
@@ -421,7 +406,7 @@ export function ServiceDetailDrawer({
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <MetricCard
                         title="CPU Usage"
-                        description="CPU cores consumed by this service"
+                        description="CPU cores this service is using"
                         series={filteredMetrics?.cpu ?? []}
                         kind="cpu"
                         quota={service ? getServiceQuota(service, 'cpu') : null}
@@ -430,7 +415,7 @@ export function ServiceDetailDrawer({
                       />
                       <MetricCard
                         title="Memory"
-                        description="Working set memory by this service"
+                        description="Memory this service is using"
                         series={filteredMetrics?.memory ?? []}
                         kind="memory"
                         quota={service ? getServiceQuota(service, 'memory') : null}
@@ -439,14 +424,14 @@ export function ServiceDetailDrawer({
                       />
                       <MetricCard
                         title="Request Rate"
-                        description="HTTP requests/sec on this service"
+                        description="HTTP requests per second handled by this service"
                         series={filteredMetrics?.requestRate ?? []}
                         formatValue={(v) => `${v.toFixed(1)} req/s`}
                         isLoading={metricsLoading}
                       />
                       <MetricCard
                         title="Latency (p99)"
-                        description="99th percentile HTTP response time"
+                        description="Response time of the slowest 1% of requests"
                         series={filteredMetrics?.latency ?? []}
                         formatValue={(v) => `${(v * 1000).toFixed(0)}ms`}
                         isLoading={metricsLoading}
@@ -470,7 +455,7 @@ export function ServiceDetailDrawer({
                 <EventTimeline events={filteredEvents} isLoading={eventsLoading} />
                 {!eventsLoading && filteredEvents.length === 0 && (
                   <p className="text-muted-foreground py-6 text-center text-sm">
-                    No recent kube events for this service.
+                    No recent activity for this service.
                   </p>
                 )}
               </TabsContent>
@@ -485,7 +470,7 @@ export function ServiceDetailDrawer({
                     canEdit={canEdit}
                     schedule={backupSchedule}
                     onSaveSchedule={onSaveBackupSchedule}
-                    scheduleSupported={backupScheduleSupported}
+                    scheduleEditable={backupScheduleEditable}
                   />
                   <p className="text-muted-foreground mt-4 text-[11px]">
                     Detailed metrics, replication lag and connection counts live in the cluster-wide

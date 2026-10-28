@@ -1,11 +1,22 @@
 'use client'
 
-import { KeyRound, Trash2, Type } from 'lucide-react'
+import { KeyRound, Loader2, Trash2, Type } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
 import { AsyncButton } from '@/modules/cloud/components/async-button'
 import type { ConfigEntry } from '@/modules/cloud/config/types'
+import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/modules/shared/components/ui/alert-dialog'
 import { Badge } from '@/modules/shared/components/ui/badge'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
@@ -41,6 +52,8 @@ export function ConfigRow({ entry, currentValue, isSet, onSave, onDelete }: Conf
   // up. `null` outside means "use server-reported state". For vars we hold the
   // typed value; for secrets we just remember "set" (the value is never shown).
   const [optimisticDraft, setOptimisticDraft] = useState<string | null>(null)
+  const [confirmDelete, setConfirmDelete] = useState(false)
+  const [isDeleting, setIsDeleting] = useState(false)
   const isVar = entry.type === 'var'
   const effectiveIsSet = optimisticDraft !== null ? true : isSet
   const effectiveValue = optimisticDraft !== null && isVar ? optimisticDraft : currentValue
@@ -72,19 +85,21 @@ export function ConfigRow({ entry, currentValue, isSet, onSave, onDelete }: Conf
       toast.success(`Updated ${label}`)
     } catch (err) {
       setOptimisticDraft(null) // revert
-      const msg = err instanceof Error ? err.message : `Failed to update ${label}`
-      toast.error(msg)
-      throw err instanceof Error ? err : new Error(msg)
+      toast.error(describeCloudError(err, `Couldn't update ${label}. Try again.`))
+      throw err instanceof Error ? err : new Error(`Failed to update ${label}`)
     }
   }
 
   const handleDelete = async () => {
+    setIsDeleting(true)
     try {
       await onDelete()
       toast.success(`Deleted ${label}`)
+      setConfirmDelete(false)
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : `Failed to delete ${label}`)
-      throw err
+      toast.error(describeCloudError(err, `Couldn't delete ${label}. Try again.`))
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -120,6 +135,7 @@ export function ConfigRow({ entry, currentValue, isSet, onSave, onDelete }: Conf
         {editing ? (
           <div className="flex gap-2">
             <Input
+              aria-label={`Value for ${label}`}
               type={entry.type === 'secret' ? 'password' : 'text'}
               autoComplete="off"
               value={draft}
@@ -183,16 +199,53 @@ export function ConfigRow({ entry, currentValue, isSet, onSave, onDelete }: Conf
       </TableCell>
       <TableCell className="text-right align-top">
         {effectiveIsSet && !editing && (
-          <AsyncButton
+          <Button
             size="sm"
             variant="ghost"
             className="text-destructive h-7 w-7 p-0"
-            onClickAsync={handleDelete}
+            onClick={() => setConfirmDelete(true)}
+            disabled={isDeleting}
           >
             <Trash2 className="h-3.5 w-3.5" />
-            <span className="sr-only">Delete</span>
-          </AsyncButton>
+            <span className="sr-only">Delete {label}</span>
+          </Button>
         )}
+        <AlertDialog
+          open={confirmDelete}
+          onOpenChange={(open) => !isDeleting && setConfirmDelete(open)}
+        >
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>
+                Delete {entry.type === 'secret' ? 'secret' : 'variable'} {label}?
+              </AlertDialogTitle>
+              <AlertDialogDescription>
+                {entry.type === 'secret'
+                  ? 'The stored value is removed and cannot be recovered.'
+                  : 'The stored value is removed.'}{' '}
+                {entry.default !== undefined
+                  ? 'The package falls back to its default.'
+                  : entry.required
+                    ? 'The package needs this value and may stop working until you set it again.'
+                    : ''}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={(e) => {
+                  e.preventDefault()
+                  void handleDelete()
+                }}
+                disabled={isDeleting}
+                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              >
+                {isDeleting && <Loader2 className="h-4 w-4 animate-spin" />}
+                Delete
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
       </TableCell>
     </TableRow>
   )

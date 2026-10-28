@@ -62,7 +62,7 @@ export const DOCLING_ADDON: AddonDefinition = {
   label: 'Document Conversion',
   icon: FileText,
   description:
-    'Converts PDF, DOCX and images into documents your reactor can index, and powers the Docling blocks in Workflows. Runs privately inside this environment — no public URL. Reserves ~2 GiB of memory and converts one document at a time.',
+    'Converts PDF, DOCX and images into documents your Switchboard can index, and powers the Docling blocks in Workflows. Runs privately inside this environment — no public URL. Reserves ~2 GiB of memory and converts one document at a time.',
   config: [],
 }
 
@@ -89,8 +89,8 @@ export const WORKFLOWS_ADDON: AddonDefinition = {
   label: 'Workflows',
   icon: Workflow,
   description:
-    'Runs workflow documents on this environment and adds the workflow editors and Workflow Studio to Connect. Each run executes in its own process on the reactor.',
-  note: 'Switching restarts the reactor right away; Connect picks it up on your next Approve / Deploy.',
+    'Runs workflow documents on this environment and adds the workflow editors and Workflow Studio to Connect. Each run executes in its own process on the Switchboard.',
+  note: 'Switching restarts the Switchboard right away; Connect picks it up on your next Approve / Deploy.',
   config: [
     {
       name: 'PH_WORKFLOWS_SECRETS_MASTER_KEY',

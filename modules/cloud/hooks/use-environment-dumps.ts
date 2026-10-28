@@ -2,6 +2,7 @@
 
 import { useRenown } from '@powerhousedao/reactor-browser'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { describeCloudError } from '../lib/cloud-error'
 import {
   cancelEnvironmentDump,
   fetchEnvironmentDumps,
@@ -63,7 +64,7 @@ export function useEnvironmentDumps(tenantId: string | null) {
       setState((s) => ({
         ...s,
         isLoading: false,
-        error: err instanceof Error ? err.message : 'Failed to load dumps',
+        error: describeCloudError(err, "Couldn't load backups. Try again in a moment."),
       }))
     }
   }, [tenantId])

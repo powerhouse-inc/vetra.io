@@ -335,6 +335,7 @@ export function MyPermissionsTab({ client, viewerAddress }: Props) {
           className="flex gap-2"
         >
           <Input
+            aria-label="Wallet address to look up"
             value={lookupAddress}
             onChange={(e) => setLookupAddress(e.target.value)}
             placeholder="0x… address"

@@ -12,6 +12,7 @@ import {
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
+import { describeRestartError } from '@/modules/cloud/lib/cloud-error'
 import { useRenown } from '@powerhousedao/reactor-browser'
 
 import { AsyncButton } from '@/modules/cloud/components/async-button'
@@ -60,27 +61,6 @@ import { LiveStatusPill } from './live-status-pill'
 import { LogViewer } from './log-viewer'
 import { MetricCard } from './metric-card'
 import { TimeRangePicker } from './time-range-picker'
-
-// Mirrors `service-detail-drawer.tsx` — the agent restart path bubbles
-// the exact same error codes from the backend resolver, so the mapping
-// is identical. Duplicated rather than shared because the two drawers
-// already diverge on layout and we don't want to pull a tiny helper
-// into a separate file until a third caller appears.
-function mapRestartError(message: string): string {
-  if (message.includes('DEPLOYMENT_NOT_FOUND')) {
-    return 'Agent not deployed.'
-  }
-  if (message.includes('AMBIGUOUS_SERVICE')) {
-    return 'Could not identify the agent.'
-  }
-  if (message.includes('RESTART_NOT_CONFIGURED')) {
-    return "Restart isn't available for this environment."
-  }
-  if (message.includes('FORBIDDEN')) {
-    return 'Only the environment owner can restart.'
-  }
-  return message
-}
 
 type Props = {
   open: boolean
@@ -291,8 +271,7 @@ export function AgentDetailDrawer({
                           toast.success(`${service.prefix} restarting…`)
                           setRestartOpen(false)
                         } catch (err) {
-                          const raw = err instanceof Error ? err.message : String(err)
-                          toast.error(mapRestartError(raw))
+                          toast.error(describeRestartError(err, 'agent'))
                         }
                       }}
                     >
@@ -336,15 +315,8 @@ export function AgentDetailDrawer({
                   <div className="bg-muted/40 text-muted-foreground flex items-start gap-2 rounded-md border p-3 text-xs">
                     <Info className="mt-0.5 h-3.5 w-3.5 shrink-0" />
                     <span>
-                      Showing logs for this agent (prefix{' '}
-                      <span className="font-mono">{service.prefix}</span>
-                      {agentPods[0] && (
-                        <>
-                          {' '}
-                          / pod <span className="font-mono">{agentPods[0].name}</span>
-                        </>
-                      )}
-                      ), matched server-side by pod label.
+                      Showing logs for the agent <span className="font-mono">{service.prefix}</span>{' '}
+                      only.
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
@@ -376,7 +348,7 @@ export function AgentDetailDrawer({
                   <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <MetricCard
                       title="CPU Usage"
-                      description="CPU cores consumed by this agent's pod(s)"
+                      description="CPU cores this agent is using"
                       series={filteredMetrics?.cpu ?? []}
                       kind="cpu"
                       quota={getServiceQuota(service, 'cpu')}
@@ -385,7 +357,7 @@ export function AgentDetailDrawer({
                     />
                     <MetricCard
                       title="Memory"
-                      description="Working set memory by this agent's pod(s)"
+                      description="Memory this agent is using"
                       series={filteredMetrics?.memory ?? []}
                       kind="memory"
                       quota={getServiceQuota(service, 'memory')}
@@ -394,14 +366,14 @@ export function AgentDetailDrawer({
                     />
                     <MetricCard
                       title="Request Rate"
-                      description="HTTP requests/sec from this agent's pod(s)"
+                      description="HTTP requests per second handled by this agent"
                       series={filteredMetrics?.requestRate ?? []}
                       formatValue={(v) => `${v.toFixed(1)} req/s`}
                       isLoading={metricsLoading}
                     />
                     <MetricCard
                       title="Latency (p99)"
-                      description="99th percentile HTTP response time"
+                      description="Response time of the slowest 1% of requests"
                       series={filteredMetrics?.latency ?? []}
                       formatValue={(v) => `${(v * 1000).toFixed(0)}ms`}
                       isLoading={metricsLoading}
@@ -425,7 +397,7 @@ export function AgentDetailDrawer({
               <EventTimeline events={filteredEvents} isLoading={eventsLoading} />
               {!eventsLoading && filteredEvents.length === 0 && (
                 <p className="text-muted-foreground py-6 text-center text-sm">
-                  No recent kube events for this agent.
+                  No recent activity for this agent.
                 </p>
               )}
             </TabsContent>

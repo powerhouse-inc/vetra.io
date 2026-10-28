@@ -3,6 +3,7 @@
 import { Check, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 import { toast } from 'sonner'
+import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
 
 import {
   ALL_SIZES,
@@ -43,7 +44,7 @@ export function ServiceSizePopover({ serviceType, prefix, currentSize, canEdit, 
       setOpen(false)
     } catch (err) {
       setPending(null)
-      toast.error(err instanceof Error ? err.message : 'Failed to resize service')
+      toast.error(describeCloudError(err, `Couldn't resize ${prefix}. Try again.`))
     }
   }
 

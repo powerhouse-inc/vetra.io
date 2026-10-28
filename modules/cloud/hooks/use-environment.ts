@@ -140,7 +140,13 @@ export function useEnvironments(
   viewScope: ViewScope = 'MINE',
   viewerAddress: string | null = null,
   options: { orgId?: string | null } = {},
-): { environments: CloudEnvironment[]; isPending: boolean; isError: boolean } {
+): {
+  environments: CloudEnvironment[]
+  isPending: boolean
+  isError: boolean
+  /** Re-runs the list query (for a Retry after a failed load). */
+  refetch: () => void
+} {
   const did = useDid()
   // In an organisation context the list is that organisation's envs (server
   // scope ORG); the personal MINE/UNCLAIMED/ALL views do not apply.
@@ -151,13 +157,17 @@ export function useEnvironments(
   // revalidates in the background. `MINE` and `UNCLAIMED` share the same
   // backend query (filtered in-memory below), so they dedupe to one fetch.
   const q = myEnvironmentsQuery(did, backendScope, orgId)
-  const { data, isError, isPending } = useAuthedQuery<EnvironmentSummary[]>(q.queryKey, q.fetch, {
-    // Keep the previous list only within the same context (the MINE/ALL toggle);
-    // a switch to another organisation (or to/from personal) shows loading
-    // rather than the previous context's environments.
-    placeholderData: (prev, prevQuery) =>
-      (prevQuery?.queryKey[3] ?? null) === orgId ? prev : undefined,
-  })
+  const { data, isError, isPending, refetch } = useAuthedQuery<EnvironmentSummary[]>(
+    q.queryKey,
+    q.fetch,
+    {
+      // Keep the previous list only within the same context (the MINE/ALL toggle);
+      // a switch to another organisation (or to/from personal) shows loading
+      // rather than the previous context's environments.
+      placeholderData: (prev, prevQuery) =>
+        (prevQuery?.queryKey[3] ?? null) === orgId ? prev : undefined,
+    },
+  )
 
   const environments = useMemo(() => {
     if (isError || !data) return []
@@ -165,7 +175,7 @@ export function useEnvironments(
     return filterByScope(data, viewScope, viewerAddress).map(summaryToCloudEnvironment)
   }, [data, isError, orgId, viewScope, viewerAddress])
 
-  return { environments, isPending, isError }
+  return { environments, isPending, isError, refetch: () => void refetch() }
 }
 
 /** Hook to get a single environment by ID, looked up in the user's MINE list. */

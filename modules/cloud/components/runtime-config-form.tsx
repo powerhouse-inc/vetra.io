@@ -186,7 +186,7 @@ function AppSection({ form, overrides }: SectionProps) {
         overrides={overrides}
         path="app.workflowsEnabled"
         label="Workflows enabled"
-        description="Loads the workflow package in Connect: the workflow and connection editors plus Workflow Studio. The engine that runs them is the reactor's own PH_WORKFLOWS_ENABLED, set from the Add-ons tab."
+        description="Loads the workflow package in Connect: the workflow and connection editors plus Workflow Studio. The engine that runs them is switched on separately with the Workflows add-on."
       />
     </SectionCard>
   )
@@ -285,17 +285,20 @@ function DrivesSection({ form, overrides }: SectionProps) {
               <div key={f.id} className="bg-muted/30 flex items-start gap-2 rounded-md border p-2">
                 <div className="flex-1 space-y-1">
                   <Input
+                    aria-label={`Drive ${i + 1} URL`}
                     placeholder="https://drive-url"
                     className="bg-background font-mono text-xs"
                     {...form.register(`drives.defaultDrives.${i}.url` as const)}
                   />
                   <div className="grid grid-cols-2 gap-2">
                     <Input
+                      aria-label={`Drive ${i + 1} name`}
                       placeholder="Name (optional)"
                       className="bg-background text-xs"
                       {...form.register(`drives.defaultDrives.${i}.name` as const)}
                     />
                     <Input
+                      aria-label={`Drive ${i + 1} icon URL`}
                       placeholder="Icon URL (optional)"
                       className="bg-background font-mono text-xs"
                       {...form.register(`drives.defaultDrives.${i}.icon` as const)}

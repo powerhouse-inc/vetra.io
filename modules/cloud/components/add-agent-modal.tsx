@@ -182,7 +182,7 @@ export function AddAgentModal({
     if (prefix.length > MAX_PREFIX_LENGTH)
       return {
         kind: 'length',
-        message: `must be ${MAX_PREFIX_LENGTH} characters or fewer (kubernetes Service name limit)`,
+        message: `must be ${MAX_PREFIX_LENGTH} characters or fewer (platform limit)`,
       }
     const collide = existingByPrefix.get(prefix)
     if (collide) {

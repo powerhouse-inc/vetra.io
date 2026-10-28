@@ -5,10 +5,9 @@ import { EnvVarsEditor } from '@/modules/cloud/components/env-vars-editor'
 describe('EnvVarsEditor', () => {
   it('renders existing env vars', () => {
     render(<EnvVarsEditor value={[{ name: 'FOO', value: 'bar' }]} onChange={() => {}} />)
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    expect((screen.getByLabelText('env-name-0') as HTMLInputElement).value).toBe('FOO')
-    // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
-    expect((screen.getByLabelText('env-value-0') as HTMLInputElement).value).toBe('bar')
+    expect(screen.getByLabelText<HTMLInputElement>('Variable 1 name').value).toBe('FOO')
+    expect(screen.getByLabelText<HTMLInputElement>('Variable 1 value').value).toBe('bar')
+    expect(screen.getByTestId('env-name-0')).toBeTruthy()
   })
 
   it('adds a new empty row when "Add" clicked', () => {
@@ -38,7 +37,7 @@ describe('EnvVarsEditor', () => {
   it('updates a row name', () => {
     const onChange = vi.fn()
     render(<EnvVarsEditor value={[{ name: 'FOO', value: 'bar' }]} onChange={onChange} />)
-    fireEvent.change(screen.getByLabelText('env-name-0'), { target: { value: 'BAZ' } })
+    fireEvent.change(screen.getByTestId('env-name-0'), { target: { value: 'BAZ' } })
     expect(onChange).toHaveBeenCalledWith([{ name: 'BAZ', value: 'bar' }])
   })
 
@@ -50,7 +49,7 @@ describe('EnvVarsEditor', () => {
         onChange={onChange}
       />,
     )
-    fireEvent.click(screen.getByRole('button', { name: 'mark-secret-0' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Store variable 1 as a secret' }))
     // The value is preserved on the toggle event itself; routeEnvVars
     // (called on submit by the parent) is what splits it into the
     // tenant_secrets write + clearing value=null in the document.
@@ -64,7 +63,7 @@ describe('EnvVarsEditor', () => {
         onChange={() => {}}
       />,
     )
-    const input = screen.getByLabelText<HTMLInputElement>('env-value-0')
+    const input = screen.getByTestId<HTMLInputElement>('env-value-0')
     expect(input.type).toBe('password')
   })
 
@@ -75,7 +74,7 @@ describe('EnvVarsEditor', () => {
         onChange={() => {}}
       />,
     )
-    const input = screen.getByLabelText<HTMLInputElement>('env-value-0')
+    const input = screen.getByTestId<HTMLInputElement>('env-value-0')
     expect(input.placeholder).toContain('encrypted')
   })
 
@@ -86,13 +85,13 @@ describe('EnvVarsEditor', () => {
         onChange={() => {}}
       />,
     )
-    expect(screen.getByRole('button', { name: 'mark-secret-0' })).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Store variable 1 as a secret' })).not.toBeNull()
   })
 
   it('renders lock icon button for secret rows', () => {
     render(
       <EnvVarsEditor value={[{ name: 'SECRET', value: '', isSecret: true }]} onChange={() => {}} />,
     )
-    expect(screen.getByRole('button', { name: 'unmark-secret-0' })).not.toBeNull()
+    expect(screen.getByRole('button', { name: 'Store variable 1 as plain text' })).not.toBeNull()
   })
 })

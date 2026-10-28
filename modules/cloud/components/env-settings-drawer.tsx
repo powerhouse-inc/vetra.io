@@ -21,6 +21,7 @@ import { useRenown } from '@powerhousedao/reactor-browser'
 
 import { AsyncButton } from '@/modules/cloud/components/async-button'
 import { AutoUpdateCard } from '@/modules/cloud/components/auto-update-card'
+import { DeleteEnvironmentDialog } from '@/modules/cloud/components/delete-environment-dialog'
 import { EnvOrgHandOver } from '@/modules/cloud/components/env-org-handover'
 import { CustomDomainSection } from '@/modules/cloud/components/custom-domain-section'
 import { EventTimeline } from '@/modules/cloud/components/event-timeline'
@@ -28,8 +29,8 @@ import { DRIVE_ID } from '@/modules/cloud/client'
 import { loadEnvironmentController } from '@/modules/cloud/controller'
 import { ensureCanOperateEnvironment } from '@/modules/cloud/org-sync'
 import { getAuthToken, resetEnvironment } from '@/modules/cloud/graphql'
-import { useAsyncAction } from '@/modules/cloud/hooks/use-async-action'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
+import { CloudUserError, describeCloudError } from '@/modules/cloud/lib/cloud-error'
 import { apexCandidateServices, apexServiceForCustomDomain } from '@/modules/cloud/lib/env-host'
 import { useEnvironmentEvents } from '@/modules/cloud/hooks/use-environment-events'
 import type {
@@ -40,7 +41,6 @@ import type {
 } from '@/modules/cloud/types'
 import {
   AlertDialog,
-  AlertDialogAction,
   AlertDialogCancel,
   AlertDialogContent,
   AlertDialogDescription,
@@ -296,6 +296,29 @@ function ActivityTab({
   )
 }
 
+/** Plain-language deployment state for the sync status the backend reports. */
+function syncLabel(status?: string | null): string {
+  if (status === 'SYNCED') return 'Changes applied'
+  if (status === 'OUT_OF_SYNC') return 'Changes are being applied'
+  return 'Deployment state unknown'
+}
+
+/** Plain-language health for the health status the backend reports. */
+function healthLabel(status: string): string {
+  switch (status) {
+    case 'Progressing':
+      return 'starting up'
+    case 'Degraded':
+      return 'some services are unhealthy'
+    case 'Suspended':
+      return 'paused'
+    case 'Missing':
+      return 'not deployed yet'
+    default:
+      return 'health unknown'
+  }
+}
+
 function ActivityStatusStrip({
   argoSyncStatus,
   argoHealthStatus,
@@ -328,9 +351,9 @@ function ActivityStatusStrip({
         )}
       >
         {syncedOk ? <CheckCircle className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
-        ArgoCD {argoSyncStatus ? argoSyncStatus.toLowerCase() : 'unknown'}
+        {syncLabel(argoSyncStatus)}
         {argoHealthStatus && argoHealthStatus !== 'Healthy' && (
-          <span className="text-muted-foreground">· {argoHealthStatus}</span>
+          <span className="text-muted-foreground">· {healthLabel(argoHealthStatus)}</span>
         )}
       </span>
       <span
@@ -340,11 +363,11 @@ function ActivityStatusStrip({
         )}
       >
         {driftOk ? <CheckCircle className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
-        {driftOk ? 'No drift' : 'Drift detected'}
+        {driftOk ? 'Configuration up to date' : 'Configuration out of date'}
       </span>
       {argoLastSyncedAt && (
         <span className="text-muted-foreground ml-auto">
-          last sync {new Date(argoLastSyncedAt).toLocaleTimeString()}
+          last applied {new Date(argoLastSyncedAt).toLocaleTimeString()}
         </span>
       )}
     </div>
@@ -405,22 +428,6 @@ function MetadataField({
   )
 }
 
-function mapResetError(message: string): string {
-  if (message.includes('RESET_NOT_CONFIGURED')) {
-    return "Reset isn't available for this environment."
-  }
-  if (message.includes('TRUNCATE_FAILED')) {
-    return 'Could not clear the database. Try again or contact support.'
-  }
-  if (message.includes('FORBIDDEN')) {
-    return 'Only the environment owner can reset.'
-  }
-  if (message.includes('ENV_NOT_FOUND')) {
-    return 'Environment not found.'
-  }
-  return message
-}
-
 function DangerZone({
   displayName,
   environment,
@@ -438,13 +445,20 @@ function DangerZone({
 }) {
   const [expanded, setExpanded] = useState(false)
   const [resetOpen, setResetOpen] = useState(false)
+  const [terminateOpen, setTerminateOpen] = useState(false)
+  const [isTerminating, setIsTerminating] = useState(false)
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const router = useRouter()
   const { signer } = useCanSign()
   const renown = useRenown()
 
-  const { run: runDelete, isPending: isDeleting } = useAsyncAction(async () => {
+  // App environments are hidden from the Cloud list, so after deleting one
+  // go back to its app instead.
+  const appId = environment.app?.appId ?? environment.state.app?.appId ?? null
+
+  const deleteEnvironment = async () => {
     if (!signer) {
-      throw new Error('You must be logged in with Renown to delete an environment')
+      throw new CloudUserError('Log in with Renown to delete this environment.')
     }
     const ctrl = await loadEnvironmentController({
       documentId: environment.id,
@@ -454,10 +468,23 @@ function DangerZone({
     })
     await ensureCanOperateEnvironment(environment.id, ctrl, signer.user?.address)
     await ctrl.delete()
-    toast.success('Environment deleted')
     onClose()
-    router.push('/user/environments')
-  })
+    router.push(appId ? `/user/apps/${appId}` : '/user/environments')
+  }
+
+  const handleTerminate = async () => {
+    if (!onTerminate) return
+    setIsTerminating(true)
+    try {
+      await onTerminate()
+      setTerminateOpen(false)
+      onClose()
+    } catch (err) {
+      toast.error(describeCloudError(err, "Couldn't terminate the environment. Try again."))
+    } finally {
+      setIsTerminating(false)
+    }
+  }
 
   const handleReset = async () => {
     if (!tenantId) {
@@ -498,7 +525,7 @@ function DangerZone({
               <p className="font-medium">Reset environment</p>
               <p className="text-muted-foreground text-xs">
                 Wipe all database rows and restart every service. Packages, env vars, secrets, and
-                dump history are preserved.
+                backups are preserved.
               </p>
             </div>
             <AlertDialog open={resetOpen} onOpenChange={setResetOpen}>
@@ -513,7 +540,7 @@ function DangerZone({
                   <AlertDialogTitle>Reset &ldquo;{displayName}&rdquo;?</AlertDialogTitle>
                   <AlertDialogDescription>
                     All database rows will be deleted. This cannot be undone, but you can restore
-                    from a recent dump if one exists.
+                    from a recent backup if one exists.
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
@@ -530,8 +557,11 @@ function DangerZone({
                       try {
                         await handleReset()
                       } catch (err) {
-                        const raw = err instanceof Error ? err.message : String(err)
-                        toast.error(mapResetError(raw))
+                        toast.error(
+                          describeCloudError(err, "Couldn't reset the environment. Try again.", {
+                            FORBIDDEN: 'Only the environment owner can reset.',
+                          }),
+                        )
                       }
                     }}
                   >
@@ -549,17 +579,39 @@ function DangerZone({
                   Stop all services and begin teardown.
                 </p>
               </div>
-              <AsyncButton
-                variant="destructive"
-                size="sm"
-                pendingLabel="Terminating…"
-                onClickAsync={async () => {
-                  await onTerminate?.()
-                  onClose()
-                }}
+              <AlertDialog
+                open={terminateOpen}
+                onOpenChange={(next) => !isTerminating && setTerminateOpen(next)}
               >
-                Terminate
-              </AsyncButton>
+                <AlertDialogTrigger asChild>
+                  <Button variant="destructive" size="sm" disabled={isTerminating}>
+                    {isTerminating ? 'Terminating…' : 'Terminate'}
+                  </Button>
+                </AlertDialogTrigger>
+                <AlertDialogContent>
+                  <AlertDialogHeader>
+                    <AlertDialogTitle>Terminate &ldquo;{displayName}&rdquo;?</AlertDialogTitle>
+                    <AlertDialogDescription>
+                      All services stop and the environment starts tearing down, so it goes offline
+                      right away.
+                    </AlertDialogDescription>
+                  </AlertDialogHeader>
+                  <AlertDialogFooter>
+                    <AlertDialogCancel disabled={isTerminating}>Cancel</AlertDialogCancel>
+                    <AsyncButton
+                      variant="destructive"
+                      size="sm"
+                      pendingLabel="Terminating…"
+                      onClickAsync={async (e) => {
+                        e.preventDefault()
+                        await handleTerminate()
+                      }}
+                    >
+                      Terminate
+                    </AsyncButton>
+                  </AlertDialogFooter>
+                </AlertDialogContent>
+              </AlertDialog>
             </div>
           )}
           <div className="flex items-center justify-between gap-3">
@@ -569,44 +621,16 @@ function DangerZone({
                 Permanently remove this environment. Cannot be undone.
               </p>
             </div>
-            <AlertDialog>
-              <AlertDialogTrigger asChild>
-                <Button variant="destructive" size="sm" disabled={isDeleting}>
-                  {isDeleting ? 'Deleting…' : 'Delete'}
-                </Button>
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Delete environment</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Delete &ldquo;{displayName}&rdquo;? This action cannot be undone and all data
-                    will be permanently lost.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Cancel</AlertDialogCancel>
-                  <AlertDialogAction
-                    // Don't auto-close: keep the confirm dialog open while
-                    // the delete is in flight so a failure leaves the user on
-                    // the confirm screen instead of an empty cloud page.
-                    onClick={(e) => {
-                      e.preventDefault()
-                      void runDelete().catch((err) => {
-                        console.error('Failed to delete environment:', err)
-                        toast.error(
-                          err instanceof Error ? err.message : 'Failed to delete environment',
-                        )
-                      })
-                    }}
-                    disabled={isDeleting}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
-                    {isDeleting && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
-                    {isDeleting ? 'Deleting…' : 'Delete'}
-                  </AlertDialogAction>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
+            <DeleteEnvironmentDialog
+              open={deleteOpen}
+              onOpenChange={setDeleteOpen}
+              displayName={displayName}
+              onConfirm={deleteEnvironment}
+            >
+              <Button variant="destructive" size="sm">
+                Delete
+              </Button>
+            </DeleteEnvironmentDialog>
           </div>
         </div>
       )}
