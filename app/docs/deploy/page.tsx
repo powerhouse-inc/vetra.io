@@ -7,6 +7,8 @@ import { DeployDiagram } from '@/modules/apps/components/deploy-diagram'
 import { buildWorkflowYaml, WORKFLOW_PATH } from '@/modules/apps/lib/workflow'
 import { Button } from '@/modules/shared/components/ui/button'
 
+import { DataTable } from '../_components/data-table'
+
 export const metadata: Metadata = {
   title: 'Deploy with Vetra Apps',
   description:
@@ -113,35 +115,6 @@ function P({ children }: { children: React.ReactNode }) {
 
 function C({ children }: { children: React.ReactNode }) {
   return <code className="bg-muted rounded px-1.5 py-0.5 font-mono text-[0.85em]">{children}</code>
-}
-
-function DataTable({ head, rows }: { head: string[]; rows: React.ReactNode[][] }) {
-  return (
-    <div className="overflow-x-auto rounded-xl border border-border">
-      <table className="w-full text-left text-sm">
-        <thead className="bg-muted/50">
-          <tr>
-            {head.map((h) => (
-              <th key={h} scope="col" className="px-4 py-2.5 font-medium whitespace-nowrap">
-                {h}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border">
-          {rows.map((row, i) => (
-            <tr key={i}>
-              {row.map((cell, j) => (
-                <td key={j} className="text-foreground/80 px-4 py-2.5 align-top">
-                  {cell}
-                </td>
-              ))}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
-  )
 }
 
 function Steps({ items }: { items: Array<{ title: string; body: React.ReactNode }> }) {
@@ -277,7 +250,7 @@ export default function DeployGuidePage() {
               head={['Input', 'Default', 'Description']}
               rows={INPUTS.map(([name, def, desc]) => [
                 <C key="n">{name}</C>,
-                <span key="d" className="font-mono text-xs whitespace-nowrap">
+                <span key="d" className="font-mono text-xs break-all sm:break-normal sm:whitespace-nowrap">
                   {def}
                 </span>,
                 desc,
