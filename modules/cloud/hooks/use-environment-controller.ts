@@ -13,6 +13,8 @@ export type UseEnvironmentControllerResult = {
   isLoading: boolean
   error: Error | null
   refresh: () => Promise<void>
+  /** Loads the controller again (after a failed load). */
+  retry: () => void
 }
 
 /**
@@ -51,6 +53,7 @@ export function useEnvironmentController(
   const [state, setState] = useState<VetraCloudEnvironmentState | null>(null)
   const [isLoading, setIsLoading] = useState<boolean>(true)
   const [error, setError] = useState<Error | null>(null)
+  const [attempt, setAttempt] = useState(0)
 
   useEffect(() => {
     if (!signer || !documentId) {
@@ -93,7 +96,9 @@ export function useEnvironmentController(
       controllerRef.current = null
       setController(null)
     }
-  }, [documentId, signer, queryClient])
+  }, [documentId, signer, queryClient, attempt])
+
+  const retry = useCallback(() => setAttempt((n) => n + 1), [])
 
   const refresh = useCallback(async () => {
     if (controllerRef.current) {
@@ -107,5 +112,6 @@ export function useEnvironmentController(
     isLoading,
     error,
     refresh,
+    retry,
   }
 }

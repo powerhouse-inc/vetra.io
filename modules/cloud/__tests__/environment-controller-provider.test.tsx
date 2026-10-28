@@ -35,6 +35,7 @@ describe('EnvironmentControllerProvider', () => {
       isLoading: false,
       error: null,
       refresh: vi.fn(),
+      retry: vi.fn(),
     })
     render(
       <EnvironmentControllerProvider documentId="doc1">

@@ -1,7 +1,7 @@
 'use client'
 
 import { EnvironmentLicenceBanner } from '@/modules/subscriptions/components/environment-licence'
-import { ArrowLeft, ExternalLink, Settings } from 'lucide-react'
+import { ArrowLeft, ExternalLink, Loader2, RefreshCw, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, use, useEffect, useMemo, useRef, useState } from 'react'
@@ -31,6 +31,13 @@ import {
   resolveGenericHost,
 } from '@/modules/cloud/lib/env-host'
 import { useTenantConfig } from '@/modules/cloud/hooks/use-tenant-config'
+import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
+import {
+  isVisitableService,
+  serviceInstanceKey,
+  serviceInstanceLabel,
+} from '@/modules/cloud/lib/service-label'
+import { useMyApps } from '@/modules/apps/hooks/use-apps'
 import {
   DOCLING_PREFIX,
   PAPERLESS_PREFIX,
@@ -124,6 +131,11 @@ function parseRuntimeConfig(
   }
 }
 
+/** A load error that means the document does not exist (or is not visible). */
+function isNotFoundError(error: Error): boolean {
+  return /ENV_NOT_FOUND|not found|does not exist|no document/i.test(error.message)
+}
+
 function EnvironmentDetail({ documentId }: { documentId: string }) {
   const searchParams = useSearchParams()
 
@@ -138,6 +150,10 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
 
   const state = environment?.state
   const subdomain = state?.genericSubdomain ?? null
+  // App environments are hidden from the Cloud list, so "back" leads to the app.
+  const appId = environment?.app?.appId ?? state?.app?.appId ?? null
+  const { data: myApps } = useMyApps()
+  const appName = appId ? myApps?.find((a) => a.id === appId)?.name : undefined
   const tenantId = subdomain && environment ? getTenantId(subdomain, environment.id) : null
   const TRULY_INACTIVE = new Set(['DRAFT', 'DESTROYED', 'ARCHIVED', 'STOPPED'])
   const isInactive = TRULY_INACTIVE.has(state?.status ?? 'DRAFT')
@@ -204,7 +220,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
       await detail.approveChanges()
     } catch (err) {
       setIntentDeploying(false)
-      toast.error(err instanceof Error ? err.message : 'Failed to approve changes')
+      toast.error(describeCloudError(err, "Couldn't deploy the changes. Try again."))
     }
   }
 
@@ -299,13 +315,48 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   }, [state, drawer.scope])
 
   if (isLoading) {
-    return <p className="text-muted-foreground">Loading environment...</p>
+    return (
+      <div
+        role="status"
+        className="text-muted-foreground flex min-h-[50vh] items-center justify-center gap-2 text-sm"
+      >
+        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
+        Loading environment…
+      </div>
+    )
+  }
+
+  if (!environment) {
+    const notFound = !detail.error || isNotFoundError(detail.error)
+    return (
+      <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">
+        <p className="text-lg font-semibold">
+          {notFound ? 'Environment not found' : 'Couldn’t load this environment'}
+        </p>
+        <p className="text-muted-foreground max-w-sm text-sm">
+          {notFound
+            ? 'It may have been deleted, or it belongs to another account.'
+            : describeCloudError(detail.error, 'Something went wrong while loading it. Try again.')}
+        </p>
+        <div className="flex flex-wrap justify-center gap-2">
+          {!notFound && (
+            <Button variant="outline" onClick={detail.retry}>
+              <RefreshCw className="h-4 w-4" />
+              Try again
+            </Button>
+          )}
+          <Button asChild variant={notFound ? 'outline' : 'ghost'}>
+            <Link href="/user/environments">Back to Cloud</Link>
+          </Button>
+        </div>
+      </div>
+    )
   }
 
   const displayName = state?.label || environment?.name || 'Environment'
 
-  // Build visit URLs from enabled services
-  const enabledServices = state?.services.filter((s) => s.enabled) ?? []
+  // Build visit URLs from enabled services that answer on a host.
+  const visitableServices = state?.services.filter((s) => s.enabled && isVisitableService(s)) ?? []
   const customDomain = state?.customDomain?.enabled ? (state.customDomain.domain ?? null) : null
   const customDomainVerified =
     envStatus?.domainResolves === true && envStatus?.tlsCertValid === true
@@ -331,11 +382,11 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           to Cloud" link sits outside the card as a breadcrumb. */}
       <div className="space-y-4">
         <Link
-          href="/user/environments"
+          href={appId ? `/user/apps/${appId}` : '/user/environments'}
           className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Cloud
+          {appId ? `Back to ${appName ?? 'app'}` : 'Back to Cloud'}
         </Link>
         <EnvironmentLicenceBanner environmentId={documentId} />
         <HeroCard glass>
@@ -388,7 +439,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
               </Button>
 
               {/* Visit dropdown */}
-              {subdomain && enabledServices.length > 0 && (
+              {subdomain && visitableServices.length > 0 && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm" className="flex items-center gap-1.5">
@@ -397,24 +448,20 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent>
-                    {enabledServices.map((svc) => {
+                    {visitableServices.map((svc) => {
                       // Switchboard's only useful entry-point is the GraphQL
                       // playground — the bare host returns a default page with
                       // no playground link. Append /graphql so "Visit" lands
                       // somewhere meaningful.
                       const path = svc.type === 'SWITCHBOARD' ? '/graphql' : ''
                       return (
-                        <DropdownMenuItem key={svc.type} asChild>
+                        <DropdownMenuItem key={serviceInstanceKey(svc)} asChild>
                           <a
                             href={`https://${visitHost(svc)}${path}`}
                             target="_blank"
                             rel="noopener noreferrer"
                           >
-                            {svc.type === 'CONNECT'
-                              ? 'Connect'
-                              : svc.type === 'SWITCHBOARD'
-                                ? 'Switchboard'
-                                : 'Fusion'}
+                            {serviceInstanceLabel(svc)}
                           </a>
                         </DropdownMenuItem>
                       )

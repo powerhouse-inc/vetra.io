@@ -40,7 +40,7 @@ import { useQueryClient } from '@tanstack/react-query'
 import { editGateOwnerOrgId, runSignedEnvironmentAction } from '../org-sync'
 import { CloudUserError } from '../lib/cloud-error'
 
-const NOT_LOGGED_IN_ERROR = 'You must be logged in with Renown to perform this action'
+const NOT_LOGGED_IN_ERROR = 'Log in with Renown to make changes to this environment.'
 
 /**
  * Construct a CloudEnvironment from controller state + optional metadata
@@ -181,7 +181,7 @@ export function useEnvironmentDetail(documentId: string) {
   const mutate = useCallback(
     async (fn: (c: NonNullable<typeof controller>) => void) => {
       if (!controller) {
-        throw new Error(NOT_LOGGED_IN_ERROR)
+        throw new CloudUserError(NOT_LOGGED_IN_ERROR)
       }
       // Organisation envs: sync the caller's operator entry and refuse unless
       // the backend says they can operate (C1 contract). A refusal re-asks the
@@ -208,7 +208,7 @@ export function useEnvironmentDetail(documentId: string) {
     async (enabled: boolean, domain?: string | null, apexService?: TenantService | null) => {
       const token = await getAuthToken(renownRef.current as never)
       if (!token) {
-        throw new Error(NOT_LOGGED_IN_ERROR)
+        throw new CloudUserError(NOT_LOGGED_IN_ERROR)
       }
       await setCustomDomainMutation(
         documentId,
@@ -350,8 +350,8 @@ export function useEnvironmentDetail(documentId: string) {
       mutate((c) => {
         const fn = (c as ControllerWithRuntimeConfig).setRuntimeConfig
         if (typeof fn !== 'function') {
-          throw new Error(
-            'setRuntimeConfig is not available in this controller version — update vetra-cloud-package.',
+          throw new CloudUserError(
+            "This environment can't store runtime settings yet. It needs a platform update.",
           )
         }
         const json = config === null ? null : JSON.stringify(config)
@@ -389,18 +389,25 @@ export function useEnvironmentDetail(documentId: string) {
     }
   }, [canSign, ctrlLoading, ctrlError, controller, runtimeConfigSupported])
 
+  const retryController = ctrlResult.retry
+  const retry = useCallback(() => {
+    setFallbackError(null)
+    void refetchFallback()
+    retryController()
+  }, [refetchFallback, retryController])
+
   /** Owner-triggered "update to latest" — pulls the env's subscribed
    *  channel's latest known tag and bumps all enabled services. */
   const updateToLatest = useCallback(async () => {
     const token = await getAuthToken(renownRef.current as never)
-    if (!token) throw new Error(NOT_LOGGED_IN_ERROR)
+    if (!token) throw new CloudUserError(NOT_LOGGED_IN_ERROR)
     return updateEnvironmentToLatest(documentId, token)
   }, [documentId])
 
   /** Owner-triggered revert to previous tag per enabled service. */
   const rollbackRelease = useCallback(async () => {
     const token = await getAuthToken(renownRef.current as never)
-    if (!token) throw new Error(NOT_LOGGED_IN_ERROR)
+    if (!token) throw new CloudUserError(NOT_LOGGED_IN_ERROR)
     return rollbackEnvironmentRelease(documentId, token)
   }, [documentId])
 
@@ -414,6 +421,8 @@ export function useEnvironmentDetail(documentId: string) {
     }),
     /** Re-pull the signed controller (e.g. after a hand-over). */
     refresh: ctrlResult.refresh,
+    /** Load the environment again after a failed load. */
+    retry,
     isLoading,
     error,
     setLabel,
