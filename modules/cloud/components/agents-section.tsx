@@ -82,7 +82,7 @@ export function AgentsSection({
         </div>
         {canEdit && (
           <Button size="sm" onClick={onAddAgent} className="gap-1.5">
-            <Plus className="h-3.5 w-3.5" /> Add Agent
+            <Plus className="h-3.5 w-3.5" /> Add agent
           </Button>
         )}
       </div>
@@ -99,7 +99,7 @@ export function AgentsSection({
           </div>
           {canEdit && (
             <Button size="sm" variant="outline" onClick={onAddAgent} className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> Add Agent
+              <Plus className="h-3.5 w-3.5" /> Add agent
             </Button>
           )}
         </div>

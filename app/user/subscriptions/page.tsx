@@ -6,7 +6,7 @@ import { SubscriptionsView } from '@/modules/subscriptions/components/subscripti
 export default function SubscriptionsPage() {
   return (
     <RequireLogin title="See your subscriptions">
-      <main className="mx-auto mt-20 max-w-4xl px-4 py-8 sm:px-6">
+      <main className="mx-auto mt-20 max-w-screen-xl px-6 py-8">
         <Suspense fallback={<SubscriptionsSkeleton />}>
           <SubscriptionsView />
         </Suspense>

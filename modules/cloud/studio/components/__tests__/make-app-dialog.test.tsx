@@ -49,7 +49,7 @@ afterEach(() => {
 
 function open() {
   render(<MakeAppDialog studioEnvironmentId="env-1" label="My Shop" />)
-  fireEvent.click(screen.getByRole('button', { name: 'Make it an App' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Make it an app' }))
 }
 
 describe('MakeAppDialog', () => {
@@ -76,7 +76,7 @@ describe('MakeAppDialog', () => {
   it('offers an Open App link instead of the trigger when the Studio is already an App', () => {
     apps.data = [{ id: 'a9', studioEnvironmentId: 'env-1' }]
     render(<MakeAppDialog studioEnvironmentId="env-1" label="My Shop" />)
-    expect(screen.queryByRole('button', { name: 'Make it an App' })).toBeNull()
+    expect(screen.queryByRole('button', { name: 'Make it an app' })).toBeNull()
     expect(screen.getByRole('link', { name: 'Open App' }).getAttribute('href')).toBe(
       '/user/apps/a9',
     )
@@ -85,7 +85,7 @@ describe('MakeAppDialog', () => {
   it('still offers the trigger when another Studio is the App', () => {
     apps.data = [{ id: 'a9', studioEnvironmentId: 'env-2' }]
     render(<MakeAppDialog studioEnvironmentId="env-1" label="My Shop" />)
-    expect(screen.getByRole('button', { name: 'Make it an App' })).toBeTruthy()
+    expect(screen.getByRole('button', { name: 'Make it an app' })).toBeTruthy()
   })
 
   it('creates in the active organisation', async () => {

@@ -122,7 +122,7 @@ function Steps({ items }: { items: Array<{ title: string; body: React.ReactNode 
     <ol className="relative space-y-6 border-l pl-8 border-border">
       {items.map((item, i) => (
         <li key={item.title} className="relative">
-          <span className="bg-foreground text-background absolute top-0 -left-[45px] flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold">
+          <span className="bg-muted text-primary border-border border absolute top-0 -left-[45px] flex h-7 w-7 items-center justify-center rounded-full text-xs font-semibold">
             {i + 1}
           </span>
           <p className="font-medium">{item.title}</p>
@@ -168,7 +168,7 @@ export default function DeployGuidePage() {
             <span className="bg-primary/10 text-primary inline-flex rounded-full px-3 py-1 text-xs font-medium">
               Guide
             </span>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Deploy with Vetra Apps</h1>
+            <h1 className="text-4xl font-bold tracking-[-0.03em] sm:text-5xl">Deploy with Vetra Apps</h1>
             <p className="text-muted-foreground text-lg leading-8">
               Connect a GitHub repository once. Every push to your production branch ships to
               production, and every pull request gets its own preview environment with Connect,

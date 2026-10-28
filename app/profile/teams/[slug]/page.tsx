@@ -83,7 +83,9 @@ function ManageTeamInner() {
               Back to settings
             </Link>
           </div>
-          <h1 className="truncate text-2xl font-bold tracking-tight">Manage {team.profileName}</h1>
+          <h1 className="truncate text-2xl font-bold tracking-[-0.03em]">
+            Manage {team.profileName}
+          </h1>
           <p className="text-muted-foreground mt-1 text-sm">
             Edit your team&apos;s profile, members, and packages.
           </p>

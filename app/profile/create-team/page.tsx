@@ -115,7 +115,7 @@ function CreateTeamInner() {
           <ArrowLeft className="size-3" />
           Back to settings
         </Link>
-        <h1 className="text-2xl font-bold tracking-tight">Create new team</h1>
+        <h1 className="text-2xl font-bold tracking-[-0.03em]">Create new team</h1>
         <p className="text-muted-foreground mt-1 text-sm">
           Set up your team&apos;s profile and invite your first members.
         </p>

@@ -123,7 +123,7 @@ export function RedeemFlow({ code }: { code: string }) {
         <Ticket className="h-4 w-4" aria-hidden />
         Invite code <span className="text-foreground font-mono">{code}</span>
       </p>
-      <h1 className="text-3xl font-bold tracking-tight">{info.appName}</h1>
+      <h1 className="text-3xl font-bold tracking-[-0.03em]">{info.appName}</h1>
       <div className="flex flex-wrap items-center gap-2 text-sm">
         <span className="bg-primary/10 text-primary rounded-full px-2.5 py-0.5 font-medium">
           {info.termLabel || info.kind}

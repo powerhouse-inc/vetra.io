@@ -4,11 +4,16 @@ import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 import { cn } from '@/modules/shared/lib/utils'
 
 /**
- * Page container that clears the fixed 64px navbar (pt-20 = 80px, same offset the
- * /user pages use). Pass a max width via `className`, e.g. `max-w-5xl`.
+ * Page container for the console: clears the fixed 64px navbar (pt-20) and lines up
+ * with it (max-w-screen-xl, px-6), like every /user list page. Focused flows (forms,
+ * wizards) may narrow it via `className`, e.g. `max-w-2xl`.
  */
 export function PageShell({ children, className }: { children: ReactNode; className?: string }) {
-  return <div className={cn('container mx-auto px-4 pt-20 pb-8', className)}>{children}</div>
+  return (
+    <div className={cn('mx-auto w-full max-w-screen-xl px-6 pt-20 pb-16', className)}>
+      {children}
+    </div>
+  )
 }
 
 /** Centred page-level spinner, offset below the navbar. Never leave a page blank while loading. */
