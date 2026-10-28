@@ -5,8 +5,10 @@ import { PackagesTab } from '@/app/profile/components/packages-tab'
 import { PageHeader } from '@/modules/shared/components/page-header'
 import { PageSpinner } from '@/modules/shared/components/page-shell'
 import { RequireLogin } from '@/modules/shared/components/renown/require-login'
+import { useDocumentTitle } from '@/modules/shared/hooks/use-document-title'
 
 function UserPackagesPageInner() {
+  useDocumentTitle('Packages')
   useEnsureUserDrive()
 
   return (

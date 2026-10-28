@@ -13,6 +13,7 @@ import { TeamTabs } from './components/team-tabs'
 import { ProfileSection } from './components/profile-section'
 import { MembersSection } from './components/members-section'
 import { SpacesSection } from './components/spaces-section'
+import { useDocumentTitle } from '@/modules/shared/hooks/use-document-title'
 
 /** Teams are managed from the settings page; team pages link back there. */
 const SETTINGS_TEAMS = '/user/settings?tab=teams'
@@ -25,6 +26,7 @@ function ManageTeamInner() {
   const toast = usePHToast()
 
   const { data: team, isLoading, isError } = useTeamBySlug(slug)
+  useDocumentTitle(team?.profileName ? `Manage ${team.profileName}` : null)
 
   const isMember = useMemo(() => {
     if (!team || !auth.address) return false

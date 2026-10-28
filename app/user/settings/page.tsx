@@ -11,6 +11,7 @@ import { PageSpinner } from '@/modules/shared/components/page-shell'
 import { RequireLogin } from '@/modules/shared/components/renown/require-login'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/modules/shared/components/ui/tabs'
+import { useDocumentTitle } from '@/modules/shared/hooks/use-document-title'
 
 const VALID_TABS = ['profile', 'teams'] as const
 type SettingsTab_ = (typeof VALID_TABS)[number]
@@ -20,6 +21,7 @@ function isValidTab(v: string | null): v is SettingsTab_ {
 }
 
 function UserSettingsPageInner() {
+  useDocumentTitle('Settings')
   const auth = useRenownAuthAsync()
   const router = useRouter()
   const params = useSearchParams()

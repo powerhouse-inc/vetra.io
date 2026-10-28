@@ -15,6 +15,7 @@ import { useCreateTeam, type CreateTeamForm } from '@/modules/profile/lib/use-cr
 import { useSlugAvailability } from '@/modules/profile/lib/use-slug-availability'
 import { PageShell, PageSpinner } from '@/modules/shared/components/page-shell'
 import { RequireLogin } from '@/modules/shared/components/renown/require-login'
+import { useDocumentTitle } from '@/modules/shared/hooks/use-document-title'
 
 const emptyForm: CreateTeamForm = {
   name: '',
@@ -28,6 +29,7 @@ const emptyForm: CreateTeamForm = {
 }
 
 function CreateTeamInner() {
+  useDocumentTitle('Create a team')
   const auth = useRenownAuthAsync()
   const router = useRouter()
   const params = useSearchParams()

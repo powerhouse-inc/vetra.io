@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import { Suspense } from 'react'
 import { RequireLogin } from '@/modules/shared/components/renown/require-login'
 import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 import { SubscriptionsView } from '@/modules/subscriptions/components/subscriptions-view'
+
+export const metadata: Metadata = { title: 'Subscriptions' }
 
 export default function SubscriptionsPage() {
   return (
