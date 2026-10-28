@@ -7,6 +7,11 @@ import { DatabaseExplorerTab } from '@/modules/cloud/components/database-explore
 import type { BackupCadence, BackupSchedule } from '@/modules/cloud/types'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/modules/shared/components/ui/tabs'
 
+// The explorer's `describeDatabase` / `executeReadOnlyQuery` resolvers were
+// never merged into vetra-cloud-package, so every request fails schema
+// validation with a 400. Hidden until the backend ships.
+const EXPLORER_SUPPORTED = false
+
 type Props = {
   tenantId: string | null
   canEdit: boolean
@@ -35,12 +40,13 @@ export function DatabaseTabBody({
   scheduleSupported,
 }: Props) {
   const [tab, setTab] = useState<'backups' | 'explorer'>('backups')
+  const showExplorer = EXPLORER_SUPPORTED && canEdit
 
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as 'backups' | 'explorer')}>
       <TabsList className="mb-3">
         <TabsTrigger value="backups">Backups</TabsTrigger>
-        {canEdit && <TabsTrigger value="explorer">Explorer</TabsTrigger>}
+        {showExplorer && <TabsTrigger value="explorer">Explorer</TabsTrigger>}
       </TabsList>
 
       <TabsContent value="backups" className="mt-0">
@@ -53,7 +59,7 @@ export function DatabaseTabBody({
         />
       </TabsContent>
 
-      {canEdit && (
+      {showExplorer && (
         <TabsContent value="explorer" className="mt-0">
           <DatabaseExplorerTab tenantId={tenantId} canEdit={canEdit} />
         </TabsContent>
