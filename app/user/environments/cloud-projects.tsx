@@ -1,28 +1,20 @@
 'use client'
 
-import { ExternalLink, Loader2, Package, Server, Trash2 } from 'lucide-react'
+import { AlertTriangle, ExternalLink, Loader2, Package, Server, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
-import { toast } from 'sonner'
+import { useQueryClient } from '@tanstack/react-query'
 
 import { DRIVE_ID } from '@/modules/cloud/client'
+import { DeleteEnvironmentDialog } from '@/modules/cloud/components/delete-environment-dialog'
 import { loadEnvironmentController } from '@/modules/cloud/controller'
 import { ensureCanOperateEnvironment } from '@/modules/cloud/org-sync'
+import { CloudUserError } from '@/modules/cloud/lib/cloud-error'
 import { resolveGenericHost, isTypeAtApex } from '@/modules/cloud/lib/env-host'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { useEnvironments, useViewer, type ViewScope } from '@/modules/cloud/hooks/use-environment'
 import { useOptimisticMutation } from '@/modules/cloud/query/use-optimistic-mutation'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/modules/shared/components/ui/alert-dialog'
 import { Button } from '@/modules/shared/components/ui/button'
 import { EnvironmentLicenceBadge } from '@/modules/subscriptions/components/environment-licence'
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/shared/components/ui/card'
@@ -62,6 +54,7 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
   const viewOnly = !!env.ownerOrgId && env.ownerOrgId === orgId && org?.role === 'MEMBER'
   const canSign = signerReady && !viewOnly
   const [showDeleteDialog, setShowDeleteDialog] = useState(false)
+  const queryClient = useQueryClient()
   const displayName = env.state.label || env.name || 'Unnamed'
   const packageCount = env.state.packages.length
 
@@ -80,12 +73,12 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
         )}`
       : null
 
-  // Optimistic delete: the card vanishes from every cached env list (and the
-  // studio products grid) the instant the user confirms; on failure the
-  // snapshot is restored and a toast surfaces the error.
+  // The confirm dialog stays open with a spinner while the delete runs (same
+  // as the settings drawer); once it lands the card is dropped from every
+  // cached env list (and the studio products grid) before the refetch.
   const deleteEnv = useOptimisticMutation<void, void>({
     mutationFn: async () => {
-      if (!signer) throw new Error('You must be logged in with Renown to delete an environment')
+      if (!signer) throw new CloudUserError('Log in with Renown to delete this environment.')
       const ctrl = await loadEnvironmentController({
         documentId: env.id,
         parentIdentifier: DRIVE_ID,
@@ -96,26 +89,16 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
       await ctrl.delete()
     },
     affectedKeys: () => [['environments'], ['studio-products']],
-    optimisticUpdate: (qc) => {
-      qc.setQueriesData<{ id: string }[]>({ queryKey: ['environments'] }, (old) =>
+    onSuccess: () => {
+      queryClient.setQueriesData<{ id: string }[]>({ queryKey: ['environments'] }, (old) =>
         Array.isArray(old) ? old.filter((e) => e?.id !== env.id) : old,
       )
-      qc.setQueriesData<{ envId: string }[]>({ queryKey: ['studio-products'] }, (old) =>
+      queryClient.setQueriesData<{ envId: string }[]>({ queryKey: ['studio-products'] }, (old) =>
         Array.isArray(old) ? old.filter((p) => p?.envId !== env.id) : old,
       )
     },
-    onSuccess: () => toast.success('Environment deleted successfully'),
-    onError: (error) => {
-      console.error('Failed to delete environment:', error)
-      toast.error(error.message || 'Failed to delete environment')
-    },
   })
   const isDeleting = deleteEnv.isPending
-
-  const handleDelete = () => {
-    setShowDeleteDialog(false)
-    deleteEnv.mutate()
-  }
 
   const enabledServices = env.state.services.filter((s) => s.enabled)
 
@@ -162,13 +145,18 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
               </a>
             </Button>
           )}
-          <AlertDialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
+          <DeleteEnvironmentDialog
+            open={showDeleteDialog}
+            onOpenChange={setShowDeleteDialog}
+            displayName={displayName}
+            onConfirm={() => deleteEnv.mutateAsync()}
+          >
             <Button
               variant="outline"
               size="icon"
               className="text-muted-foreground hover:text-destructive hover:border-destructive shrink-0"
-              onClick={() => setShowDeleteDialog(true)}
               disabled={isDeleting || !canSign}
+              aria-label={`Delete ${displayName}`}
               title={
                 canSign
                   ? 'Delete environment'
@@ -179,26 +167,7 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
             >
               <Trash2 className="h-4 w-4" />
             </Button>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Delete environment?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This will permanently delete &quot;{displayName}&quot;. This action cannot be
-                  undone.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={handleDelete}
-                  disabled={isDeleting}
-                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                >
-                  {isDeleting ? 'Deleting...' : 'Delete'}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          </DeleteEnvironmentDialog>
         </div>
       </CardContent>
     </Card>
@@ -237,11 +206,12 @@ export function CloudEnvironments({
   const [scope, setScope] = useState<VisibleScope>('MINE')
   const { viewer } = useViewer()
   const { orgId, org } = useActiveOrg()
-  const { environments: allEnvironments, isPending } = useEnvironments(
-    scope,
-    viewer?.address ?? null,
-    { orgId },
-  )
+  const {
+    environments: allEnvironments,
+    isPending,
+    isError,
+    refetch,
+  } = useEnvironments(scope, viewer?.address ?? null, { orgId })
   const environments = filter ? allEnvironments.filter(filter) : allEnvironments
   const isAdmin = viewer?.isAdmin ?? false
   const empty = orgId
@@ -278,6 +248,33 @@ export function CloudEnvironments({
         <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4 py-12">
           <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
           <p className="text-muted-foreground text-sm">Loading environments…</p>
+        </div>
+      ) : isError ? (
+        <div
+          role="alert"
+          className={
+            compactEmpty
+              ? 'text-muted-foreground flex flex-wrap items-center gap-3 rounded-xl border border-dashed px-5 py-4 text-sm'
+              : 'flex min-h-[300px] flex-col items-center justify-center space-y-4 py-12 text-center'
+          }
+        >
+          <AlertTriangle
+            className={compactEmpty ? 'h-4 w-4 shrink-0' : 'text-muted-foreground h-12 w-12'}
+            aria-hidden
+          />
+          <div>
+            {!compactEmpty && (
+              <h3 className="text-lg font-semibold">Couldn&rsquo;t load environments</h3>
+            )}
+            <p className="text-muted-foreground text-sm">
+              {compactEmpty
+                ? 'Couldn’t load environments.'
+                : 'Something went wrong while loading your environments.'}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={refetch}>
+            Retry
+          </Button>
         </div>
       ) : environments.length === 0 && compactEmpty ? (
         <div className="text-muted-foreground flex items-center gap-3 rounded-xl border border-dashed px-5 py-4 text-sm">
