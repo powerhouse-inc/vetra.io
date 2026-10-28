@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { BackupSchedulePanel } from '@/modules/cloud/components/backup-schedule-panel'
 import { DumpRow } from '@/modules/cloud/components/dump-row'
 import { useEnvironmentDumps } from '@/modules/cloud/hooks/use-environment-dumps'
+import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
 import {
   DEFAULT_BACKUP_SCHEDULE,
   type BackupCadence,
@@ -20,18 +21,17 @@ type Props = {
   canEdit: boolean
   /** Current schedule from `CloudEnvironmentState.backupSchedule`. */
   schedule?: BackupSchedule | null
-  /**
-   * Saves the schedule via the doc-model action. The wrapping hook gates this
-   * on `backupScheduleSupported`; when undefined here, the panel renders in
-   * "coming soon" mode.
-   */
+  /** Saves the schedule via the doc-model action. */
   onSaveSchedule?: (opts: {
     enabled: boolean
     cadence: BackupCadence
     retention: number
   }) => Promise<void>
-  /** Whether the controller exposes `setBackupSchedule` at runtime. */
-  scheduleSupported?: boolean
+  /**
+   * Signed controller loaded, so the schedule can be changed. While false
+   * (loading, logged out) the schedule renders read-only.
+   */
+  scheduleEditable?: boolean
 }
 
 const RESTORE_STEP_LABEL: Partial<Record<DatabaseRestoreStatus, string>> = {
@@ -58,7 +58,7 @@ export function DatabaseBackupsTab({
   canEdit,
   schedule,
   onSaveSchedule,
-  scheduleSupported = true,
+  scheduleEditable = true,
 }: Props) {
   const {
     dumps,
@@ -95,36 +95,31 @@ export function DatabaseBackupsTab({
         'Database restored. Reload any open Connect tabs so they pick up the restored data.',
       )
     } else if (watched.status === 'FAILED') {
-      toast.error(`Restore failed: ${watched.errorMessage ?? 'unknown error'}`)
+      toast.error(
+        watched.errorMessage ? `Restore failed: ${watched.errorMessage}` : 'Restore failed.',
+      )
     }
   }, [activeRestore, restores])
 
   const handleCreate = async () => {
     try {
       await request()
-      toast.success('Dump started — check back in a moment.')
+      toast.success('Backup started. Check back in a moment.')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to start dump'
-      // Surface the underlying contract errors with friendlier copy.
-      if (msg.includes('DUMP_IN_PROGRESS')) {
-        toast.error('A dump is already in progress for this environment.')
-      } else if (msg.includes('RESTORE_IN_PROGRESS')) {
-        toast.error('A restore is running. Try again once it has finished.')
-      } else if (msg.includes('FORBIDDEN')) {
-        toast.error('Only the environment owner can request a dump.')
-      } else {
-        toast.error(msg)
-      }
+      toast.error(
+        describeCloudError(err, "Couldn't start the backup. Try again.", {
+          FORBIDDEN: 'Only the environment owner can create a backup.',
+        }),
+      )
     }
   }
 
   const handleCancel = async (dumpId: string) => {
     try {
       await cancel(dumpId)
-      toast.success('Dump cancelled.')
+      toast.success('Backup cancelled.')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to cancel dump'
-      toast.error(msg)
+      toast.error(describeCloudError(err, "Couldn't cancel the backup. Try again."))
     }
   }
 
@@ -150,14 +145,11 @@ export function DatabaseBackupsTab({
       await onSaveSchedule(opts)
       toast.success(opts.enabled ? 'Scheduled backups enabled.' : 'Scheduled backups disabled.')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to update schedule'
-      if (msg.includes('INVALID_RETENTION')) {
-        toast.error('Retention must be between 1 and 30.')
-      } else if (msg.includes('NotOwnerError') || msg.includes('FORBIDDEN')) {
-        toast.error('Only the environment owner can change the schedule.')
-      } else {
-        toast.error(msg)
-      }
+      toast.error(
+        describeCloudError(err, "Couldn't update the backup schedule. Try again.", {
+          FORBIDDEN: 'Only the environment owner can change the schedule.',
+        }),
+      )
       // Re-throw so the panel's draft rollback runs.
       throw err
     }
@@ -168,20 +160,17 @@ export function DatabaseBackupsTab({
       await restore(dumpId)
       toast.success('Restore started. A safety backup of the current data is taken first.')
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to start restore'
-      if (msg.includes('RESTORE_IN_PROGRESS')) {
-        toast.error('A restore is already in progress for this environment.')
-      } else if (msg.includes('DUMP_IN_PROGRESS')) {
-        toast.error('A dump is running for this environment. Try again once it has finished.')
-      } else if (msg.includes('ENV_NOT_READY')) {
-        toast.error('The environment must be running to restore a dump.')
-      } else if (msg.includes('DUMP_NOT_READY') || msg.includes('DUMP_EXPIRED')) {
-        toast.error('This dump is no longer available for restore.')
-      } else if (msg.includes('FORBIDDEN')) {
-        toast.error('Only the environment owner can restore a dump.')
-      } else {
-        toast.error(msg)
-      }
+      toast.error(
+        describeCloudError(err, "Couldn't start the restore. Try again.", {
+          DUMP_IN_PROGRESS:
+            'A backup is running for this environment. Try again once it has finished.',
+          RESTORE_IN_PROGRESS: 'A restore is already in progress for this environment.',
+          ENV_NOT_READY: 'The environment must be running to restore a backup.',
+          DUMP_NOT_READY: 'This backup is no longer available for restore.',
+          DUMP_EXPIRED: 'This backup is no longer available for restore.',
+          FORBIDDEN: 'Only the environment owner can restore a backup.',
+        }),
+      )
     }
   }
 
@@ -192,11 +181,11 @@ export function DatabaseBackupsTab({
         canEdit={canEdit}
         onSave={handleSaveSchedule}
         nextRunAt={nextRunAt}
-        controllerSupported={scheduleSupported && !!onSaveSchedule}
+        editable={scheduleEditable && !!onSaveSchedule}
       />
       <div className="bg-background/40 flex items-center justify-between rounded-lg p-3">
         <div className="text-muted-foreground text-xs">
-          <span className="text-foreground font-medium">{dumps.length}</span> dump
+          <span className="text-foreground font-medium">{dumps.length}</span> backup
           {dumps.length === 1 ? '' : 's'} ·{' '}
           {effectiveSchedule.enabled
             ? `${CADENCE_LABEL[effectiveSchedule.cadence]} backups · ${effectiveSchedule.retention} kept`
@@ -205,7 +194,7 @@ export function DatabaseBackupsTab({
         {canEdit && (
           <Button size="sm" onClick={() => void handleCreate()} disabled={inFlight || isRequesting}>
             <Plus className="mr-1.5 h-3.5 w-3.5" />
-            {isRequesting ? 'Starting…' : inFlight ? 'In progress…' : 'Create dump'}
+            {isRequesting ? 'Starting…' : inFlight ? 'In progress…' : 'Create backup'}
           </Button>
         )}
       </div>
@@ -238,9 +227,9 @@ export function DatabaseBackupsTab({
             <Database className="h-6 w-6" />
           </div>
           <div className="space-y-1">
-            <p className="text-foreground text-sm font-medium">No dumps yet</p>
+            <p className="text-foreground text-sm font-medium">No backups yet</p>
             <p className="text-xs">
-              Create a dump to download a portable copy of this environment&rsquo;s database.
+              Create a backup to download a portable copy of this environment&rsquo;s database.
             </p>
           </div>
           {canEdit && (
@@ -251,7 +240,7 @@ export function DatabaseBackupsTab({
               disabled={isRequesting}
             >
               <Plus className="mr-1.5 h-3.5 w-3.5" />
-              {isRequesting ? 'Starting…' : 'Create dump'}
+              {isRequesting ? 'Starting…' : 'Create backup'}
             </Button>
           )}
         </div>

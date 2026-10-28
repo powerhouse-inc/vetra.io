@@ -21,7 +21,8 @@ type Props = {
     cadence: BackupCadence
     retention: number
   }) => Promise<void>
-  scheduleSupported?: boolean
+  /** Signed controller loaded, so the schedule can be changed. */
+  scheduleEditable?: boolean
 }
 
 /**
@@ -31,39 +32,44 @@ type Props = {
  *   `canEdit` is false)
  *
  * The explorer trigger is not rendered for non-owners; they see Backups only.
+ * With a single tab available no tab strip is rendered at all.
  */
 export function DatabaseTabBody({
   tenantId,
   canEdit,
   schedule,
   onSaveSchedule,
-  scheduleSupported,
+  scheduleEditable,
 }: Props) {
   const [tab, setTab] = useState<'backups' | 'explorer'>('backups')
   const showExplorer = EXPLORER_SUPPORTED && canEdit
+
+  const backups = (
+    <DatabaseBackupsTab
+      tenantId={tenantId}
+      canEdit={canEdit}
+      schedule={schedule}
+      onSaveSchedule={onSaveSchedule}
+      scheduleEditable={scheduleEditable}
+    />
+  )
+
+  if (!showExplorer) return backups
 
   return (
     <Tabs value={tab} onValueChange={(v) => setTab(v as 'backups' | 'explorer')}>
       <TabsList className="mb-3">
         <TabsTrigger value="backups">Backups</TabsTrigger>
-        {showExplorer && <TabsTrigger value="explorer">Explorer</TabsTrigger>}
+        <TabsTrigger value="explorer">Explorer</TabsTrigger>
       </TabsList>
 
       <TabsContent value="backups" className="mt-0">
-        <DatabaseBackupsTab
-          tenantId={tenantId}
-          canEdit={canEdit}
-          schedule={schedule}
-          onSaveSchedule={onSaveSchedule}
-          scheduleSupported={scheduleSupported}
-        />
+        {backups}
       </TabsContent>
 
-      {showExplorer && (
-        <TabsContent value="explorer" className="mt-0">
-          <DatabaseExplorerTab tenantId={tenantId} canEdit={canEdit} />
-        </TabsContent>
-      )}
+      <TabsContent value="explorer" className="mt-0">
+        <DatabaseExplorerTab tenantId={tenantId} canEdit={canEdit} />
+      </TabsContent>
     </Tabs>
   )
 }

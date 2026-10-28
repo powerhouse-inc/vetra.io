@@ -31,11 +31,11 @@ type Props = {
    */
   nextRunAt?: string | null
   /**
-   * `false` when the doc-model controller doesn't expose `setBackupSchedule`
-   * yet (consumer hasn't bumped the vetra-cloud-package version). Panel
-   * renders a muted "coming soon" notice and disables controls.
+   * `false` while the signed controller is not available (still loading, or
+   * a logged-out viewer). The current (or default) schedule then renders
+   * read-only.
    */
-  controllerSupported?: boolean
+  editable?: boolean
 }
 
 /**
@@ -49,7 +49,7 @@ export function BackupSchedulePanel({
   canEdit,
   onSave,
   nextRunAt,
-  controllerSupported = true,
+  editable = true,
 }: Props) {
   // No schedule set = the backend default: enabled, daily, keep 7.
   const enabled = schedule?.enabled ?? true
@@ -88,7 +88,8 @@ export function BackupSchedulePanel({
   const setDraftCadence = (cadence: BackupCadence) => setDraft((d) => ({ ...d, cadence }))
   const setDraftRetention = (retention: number) => setDraft((d) => ({ ...d, retention }))
 
-  const controlsDisabled = !canEdit || !controllerSupported
+  const canChange = canEdit && editable
+  const controlsDisabled = !canChange
 
   const handleToggle = async () => {
     await onSave({
@@ -136,22 +137,18 @@ export function BackupSchedulePanel({
       <div className="flex items-center justify-between gap-3">
         <div className="min-w-0">
           <div className="text-sm font-medium">Scheduled backups</div>
-          {!controllerSupported ? (
-            <div className="text-muted-foreground mt-0.5 text-xs">
-              Scheduled backups coming soon
-            </div>
-          ) : showNextRun ? (
+          {showNextRun ? (
             <div className="text-muted-foreground mt-0.5 flex items-center gap-1 text-xs">
               <Clock className="h-3 w-3" />
               <span>{nextRunLabel}</span>
             </div>
           ) : (
             <div className="text-muted-foreground mt-0.5 text-xs">
-              {enabled ? 'Waiting for first scheduled dump' : 'Off — manual dumps only'}
+              {enabled ? 'Waiting for the first scheduled backup' : 'Off. Manual backups only'}
             </div>
           )}
         </div>
-        {canEdit && controllerSupported && (
+        {canChange && (
           <AsyncButton
             size="sm"
             variant="outline"
@@ -194,7 +191,7 @@ export function BackupSchedulePanel({
                 variant="outline"
                 disabled={controlsDisabled || draftRetention <= RETENTION_MIN}
                 onClick={() => void handleRetentionStep(-1)}
-                aria-label="Decrease retention"
+                aria-label="Keep fewer backups"
               >
                 <Minus className="h-3 w-3" />
               </Button>
@@ -204,12 +201,12 @@ export function BackupSchedulePanel({
                 variant="outline"
                 disabled={controlsDisabled || draftRetention >= RETENTION_MAX}
                 onClick={() => void handleRetentionStep(1)}
-                aria-label="Increase retention"
+                aria-label="Keep more backups"
               >
                 <Plus className="h-3 w-3" />
               </Button>
               <span className="text-muted-foreground ml-1 text-xs">
-                scheduled dump{draftRetention === 1 ? '' : 's'}
+                scheduled backup{draftRetention === 1 ? '' : 's'}
               </span>
             </div>
           </div>

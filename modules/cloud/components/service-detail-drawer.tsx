@@ -130,7 +130,8 @@ type Props = {
     cadence: BackupCadence
     retention: number
   }) => Promise<void>
-  backupScheduleSupported?: boolean
+  /** Signed controller loaded, so the schedule can be changed. */
+  backupScheduleEditable?: boolean
   /**
    * Connect runtime config + write handler for the Runtime Config drawer,
    * threaded from the page's useEnvironmentDetail (same pattern as
@@ -174,7 +175,7 @@ export function ServiceDetailDrawer({
   onTabChange,
   backupSchedule,
   onSaveBackupSchedule,
-  backupScheduleSupported,
+  backupScheduleEditable,
   runtimeConfig,
   onSaveRuntimeConfig,
   runtimeConfigSupported,
@@ -213,7 +214,7 @@ export function ServiceDetailDrawer({
   // Runtime-config editor is a CONNECT-only affordance — that's the service
   // whose powerhouse.config.json this UI edits. Gated on the controller
   // exposing setRuntimeConfig (i.e. a logged-in viewer on a vetra-cloud-package
-  // build that ships SET_RUNTIME_CONFIG); mirrors backupScheduleSupported.
+  // build that ships SET_RUNTIME_CONFIG).
   const showRuntimeConfig = kind === 'connect' && !!runtimeConfigSupported && !!onSaveRuntimeConfig
   const renown = useRenown()
   const auth = useRenownAuth()
@@ -485,7 +486,7 @@ export function ServiceDetailDrawer({
                     canEdit={canEdit}
                     schedule={backupSchedule}
                     onSaveSchedule={onSaveBackupSchedule}
-                    scheduleSupported={backupScheduleSupported}
+                    scheduleEditable={backupScheduleEditable}
                   />
                   <p className="text-muted-foreground mt-4 text-[11px]">
                     Detailed metrics, replication lag and connection counts live in the cluster-wide

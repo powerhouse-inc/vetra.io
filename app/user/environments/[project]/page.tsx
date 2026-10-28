@@ -487,7 +487,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           onTabChange={drawer.setTab}
           backupSchedule={state.backupSchedule ?? null}
           onSaveBackupSchedule={detail.setBackupSchedule}
-          backupScheduleSupported={detail.backupScheduleSupported}
+          backupScheduleEditable={detail.backupScheduleEditable}
           runtimeConfig={runtimeConfig}
           onSaveRuntimeConfig={detail.setRuntimeConfig}
           runtimeConfigSupported={detail.runtimeConfigSupported}
