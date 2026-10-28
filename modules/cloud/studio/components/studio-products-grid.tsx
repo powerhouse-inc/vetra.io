@@ -9,7 +9,7 @@ import {
   useMySubscriptions,
   useStudioAccess,
 } from '@/modules/subscriptions/hooks/use-subscriptions'
-import { StudioBootScreen } from './studio-boot-screen'
+import { PageSpinner } from '@/modules/shared/components/page-shell'
 import { StudioProductCard } from './studio-product-card'
 import { NewProductCard } from './new-product-card'
 import { buildStudioEmbedUrl } from '../studio-embed-url'
@@ -70,7 +70,7 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
 
   // The page is gated by RequireLogin (via StudioLicenseGate); no Renown user here only
   // means the user object hasn't caught up yet, so wait rather than show the marketing page.
-  if (gate !== 'ready') return <StudioBootScreen title="Loading…" />
+  if (gate !== 'ready') return <PageSpinner label="Loading your studios" />
 
   // Provision a new product; it surfaces in the list optimistically (as
   // "Provisioning…") immediately, and the 30s poll reconciles it against the
@@ -125,7 +125,7 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
               ))}
               {locked ? null : creating ? (
                 // Card-sized creating state that sits in the grid alongside the
-                // product cards. (StudioBootScreen is a min-h-[60vh] full-screen
+                // product cards. (A min-h-[60vh] full-screen
                 // spinner — using it here ballooned the grid cell.)
                 <div className="border-border flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-xl border">
                   <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />

@@ -29,6 +29,7 @@ import { describePublisherError, isPublisherError } from '@/modules/publisher/gr
 import { useAppPublisher } from '@/modules/publisher/hooks/use-publisher'
 import type { PublisherApp } from '@/modules/publisher/types'
 import { OrgBadge } from '@/modules/orgs/components/org-badge'
+import { DetailPageSkeleton } from '@/modules/shared/components/page-shell'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/components/ui/tabs'
@@ -376,12 +377,7 @@ export function AppDetail({ appId }: { appId: string }) {
   )
 
   if (appQuery.isPending) {
-    return (
-      <div className="text-muted-foreground flex min-h-[50vh] items-center justify-center gap-2 text-sm">
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        Loading app…
-      </div>
-    )
+    return <DetailPageSkeleton label="Loading app" />
   }
 
   if (!app) {
@@ -410,12 +406,7 @@ export function AppDetail({ appId }: { appId: string }) {
       )
     }
     if (view === 'checking') {
-      return (
-        <div className="text-muted-foreground flex min-h-[50vh] items-center justify-center gap-2 text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          Loading app…
-        </div>
-      )
+      return <DetailPageSkeleton label="Loading app" />
     }
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">

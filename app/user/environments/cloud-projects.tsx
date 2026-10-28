@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle, ExternalLink, Loader2, Package, Server, Trash2 } from 'lucide-react'
+import { AlertTriangle, ExternalLink, Package, Server, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -18,6 +18,7 @@ import { useOptimisticMutation } from '@/modules/cloud/query/use-optimistic-muta
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { StatusPill } from '@/modules/shared/components/status'
 import { Button } from '@/modules/shared/components/ui/button'
+import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 import { EnvironmentLicenceBadge } from '@/modules/subscriptions/components/environment-licence'
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/shared/components/ui/card'
 
@@ -224,9 +225,21 @@ export function CloudEnvironments({
       )}
 
       {isPending ? (
-        <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4 py-12">
-          <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
-          <p className="text-muted-foreground text-sm">Loading environments…</p>
+        <div
+          role="status"
+          aria-label="Loading environments"
+          className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+        >
+          {Array.from({ length: compactEmpty ? 1 : 3 }, (_, i) => (
+            <div key={i} className="bg-card border-border space-y-4 rounded-xl border p-6">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-1/2" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          ))}
         </div>
       ) : isError ? (
         <div

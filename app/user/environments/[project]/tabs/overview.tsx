@@ -108,7 +108,7 @@ function domainCheckLabel(
 ): string {
   if (loading) return '...'
   if (!status) return 'Unknown'
-  if (value === null || value === undefined) return 'Checking...'
+  if (value === null || value === undefined) return 'Checking…'
   return value ? yes : no
 }
 
