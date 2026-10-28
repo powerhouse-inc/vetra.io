@@ -62,10 +62,16 @@ function AuthRedirectInner() {
         wasAuthenticated.current = false
         loggedOutAt.current = Date.now()
       }
-      // Logout while on a gated route: close the modal and leave the gated area.
+      // Logout (or no in-browser login) on a gated route: close the modal and leave
+      // the gated area. The session cookie can outlive the in-browser Renown state
+      // (cleared site data, another browser profile); the server would then redirect
+      // `/` straight back to /user, forever. Clear the cookie before leaving.
       if (isGatedPath(pathname)) {
         closeLogin()
-        router.replace(loggedOutDestination(pathname))
+        const destination = loggedOutDestination(pathname)
+        void fetch('/api/renown/session', { method: 'DELETE' })
+          .catch(() => undefined)
+          .finally(() => router.replace(destination))
         return
       }
       if (loginRequested) {

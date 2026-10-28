@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
-import { cleanup, render } from '@testing-library/react'
+import { cleanup, render, waitFor } from '@testing-library/react'
 import React from 'react'
 
 let state = 'resolving'
@@ -26,6 +26,7 @@ vi.mock('@/modules/shared/components/renown/login-modal-context', () => ({
 import { AuthRedirect, LOGIN_TO_CONTINUE } from '../auth-redirect'
 
 const locationReplace = vi.fn()
+const fetchMock = vi.fn(() => Promise.resolve(new Response('{"ok":true}')))
 
 describe('AuthRedirect', () => {
   beforeEach(() => {
@@ -35,12 +36,16 @@ describe('AuthRedirect', () => {
     synced = false
     pathname = '/'
     search = ''
+    vi.stubGlobal('fetch', fetchMock)
     Object.defineProperty(window, 'location', {
       configurable: true,
       value: { ...window.location, replace: locationReplace },
     })
   })
-  afterEach(() => cleanup())
+  afterEach(() => {
+    cleanup()
+    vi.unstubAllGlobals()
+  })
 
   it('opens the login dialog with a message when bounced here by the proxy', () => {
     state = 'unauthenticated'
@@ -90,14 +95,33 @@ describe('AuthRedirect', () => {
     },
   )
 
-  it('does not reopen the dialog right after a logout', () => {
+  it('clears a stale session cookie before leaving a gated page', async () => {
+    // The proxy let /user through on the cookie, but the browser has no Renown login.
+    state = 'unauthenticated'
+    pathname = '/user/environments'
+    render(<AuthRedirect />)
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/'))
+    expect(fetchMock).toHaveBeenCalledWith('/api/renown/session', { method: 'DELETE' })
+    // The cookie is gone before navigating, so `/` can't redirect back to /user.
+    expect(fetchMock.mock.invocationCallOrder[0]).toBeLessThan(replace.mock.invocationCallOrder[0])
+  })
+
+  it('still leaves the gated page when clearing the cookie fails', async () => {
+    fetchMock.mockRejectedValueOnce(new Error('offline'))
+    state = 'unauthenticated'
+    pathname = '/user'
+    render(<AuthRedirect />)
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/'))
+  })
+
+  it('does not reopen the dialog right after a logout', async () => {
     state = 'authenticated'
     pathname = '/user'
     const view = render(<AuthRedirect />)
     // Logout on the gated page: leave it.
     state = 'unauthenticated'
     view.rerender(<AuthRedirect />)
-    expect(replace).toHaveBeenCalledWith('/')
+    await waitFor(() => expect(replace).toHaveBeenCalledWith('/'))
     // The post-logout refetch lands on the proxy's ?login=1 redirect.
     pathname = '/'
     search = 'login=1&next=%2Fuser'
