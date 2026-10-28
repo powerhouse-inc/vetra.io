@@ -7,13 +7,13 @@ import { NavbarBrand } from './components/navbar-brand'
 import NavbarItemMobile from './components/navbar-item-mobile'
 import NavbarItemsDesk from './components/navbar-items-desk'
 import NavbarRightSide from './components/navbar-right-side'
+import { isAppRoute } from '@/modules/landing/lib/routes'
 import { cn } from '@/shared/lib/utils'
 import { getNavbarConfig, PRIVATE_NAV_ITEMS, PUBLIC_NAV_ITEMS } from './navbar-config'
 
 function AuthAwareNavItems({ pathname }: { pathname: string }) {
   const auth = useRenownAuth()
-  const isUserRoute = pathname === '/user' || pathname.startsWith('/user/')
-  const navItems = isUserRoute && !!auth.user ? PRIVATE_NAV_ITEMS : PUBLIC_NAV_ITEMS
+  const navItems = isAppRoute(pathname) && !!auth.user ? PRIVATE_NAV_ITEMS : PUBLIC_NAV_ITEMS
   return (
     <>
       <NavbarItemsDesk navItems={navItems} pathname={pathname} />

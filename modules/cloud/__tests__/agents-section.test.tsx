@@ -50,13 +50,13 @@ describe('AgentsSection', () => {
     expect(headings[1].textContent).toContain('zeta')
   })
 
-  it('shows "Add Agent" CTA in header and empty-state when canEdit', () => {
+  it('shows "Add agent" CTA in header and empty-state when canEdit', () => {
     render(<AgentsSection services={[]} env={null} canEdit tenantId={null} />)
     // Header CTA + empty-state CTA — two buttons.
     expect(screen.queryAllByRole('button', { name: /add agent/i }).length).toBe(2)
   })
 
-  it('hides "Add Agent" CTA when !canEdit', () => {
+  it('hides "Add agent" CTA when !canEdit', () => {
     render(<AgentsSection services={[]} env={null} canEdit={false} tenantId={null} />)
     expect(screen.queryByRole('button', { name: /add agent/i })).toBeNull()
   })

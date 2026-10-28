@@ -44,7 +44,7 @@ export function maxStudiosPerUser(): number {
 }
 
 /**
- * Whether Studios may be turned into Apps ("Make it an App"). Off unless the
+ * Whether Studios may be turned into Apps ("Make it an app"). Off unless the
  * deployment sets NEXT_PUBLIC_STUDIO_APPS_ENABLED=true, which it does once the
  * backend's Vetra-managed GitHub org is configured. Read at call time.
  */

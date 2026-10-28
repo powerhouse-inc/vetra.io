@@ -118,7 +118,7 @@ export function GithubCallback() {
 
   return (
     <main className="mx-auto mt-20 flex min-h-[60vh] max-w-md flex-col items-center justify-center gap-5 px-6 py-8 text-center">
-      <span className="bg-foreground text-background flex h-12 w-12 items-center justify-center rounded-2xl">
+      <span className="bg-muted text-primary border-border flex h-12 w-12 items-center justify-center rounded-2xl border">
         <Github className="h-6 w-6" aria-hidden />
       </span>
       {failure ? (

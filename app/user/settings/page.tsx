@@ -39,7 +39,7 @@ function UserSettingsPageInner() {
   if (!auth.address) return <PageSpinner />
 
   return (
-    <div className="container mx-auto max-w-5xl px-4 pt-20 pb-8">
+    <div className="mx-auto max-w-screen-xl px-6 pt-20 pb-16">
       <PageHeader
         eyebrow="~/settings"
         className="mb-8"

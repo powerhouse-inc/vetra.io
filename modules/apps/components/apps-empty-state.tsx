@@ -50,7 +50,7 @@ export function AppsEmptyState() {
             className="bg-background/60 border-border relative rounded-xl border p-5"
           >
             <div className="flex items-center gap-3">
-              <span className="bg-foreground text-background flex h-9 w-9 items-center justify-center rounded-lg">
+              <span className="bg-muted text-primary border-border flex h-9 w-9 items-center justify-center rounded-lg border">
                 <step.icon className="h-4 w-4" aria-hidden />
               </span>
               <span className="text-muted-foreground font-mono text-xs">0{i + 1}</span>

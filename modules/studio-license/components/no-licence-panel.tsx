@@ -45,7 +45,7 @@ export function NoLicencePanel() {
           <span className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-2xl">
             <Sparkles className="h-5 w-5" aria-hidden />
           </span>
-          <h1 className="text-3xl font-bold tracking-tight">Vetra Studio is in early access</h1>
+          <h1 className="text-3xl font-bold tracking-[-0.03em]">Vetra Studio is in early access</h1>
           <p className="text-muted-foreground max-w-xl">
             Building apps and running a studio needs an early-access licence. If someone gave you an
             invite code, redeem it and you are in.

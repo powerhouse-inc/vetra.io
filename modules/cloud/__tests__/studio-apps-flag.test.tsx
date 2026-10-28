@@ -43,17 +43,17 @@ describe('studioAppsEnabled', () => {
     expect(studioAppsEnabled()).toBe(true)
   })
 
-  it('hides "Make it an App" on Studio cards while off', () => {
+  it('hides "Make it an app" on Studio cards while off', () => {
     setFlag(undefined)
     const { queryByText } = render(
       <StudioProductCard product={product} href="https://x.vetra.io" />,
     )
-    expect(queryByText('Make it an App')).toBeNull()
+    expect(queryByText('Make it an app')).toBeNull()
   })
 
-  it('shows "Make it an App" on a ready Studio card when on', () => {
+  it('shows "Make it an app" on a ready Studio card when on', () => {
     setFlag('true')
     const { getByText } = render(<StudioProductCard product={product} href="https://x.vetra.io" />)
-    getByText('Make it an App')
+    getByText('Make it an app')
   })
 })

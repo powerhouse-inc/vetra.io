@@ -91,7 +91,7 @@ export default function AppStatsDocsPage() {
             <span className="bg-primary/10 text-primary inline-flex rounded-full px-3 py-1 text-xs font-medium">
               Guide
             </span>
-            <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">Report app stats</h1>
+            <h1 className="text-4xl font-bold tracking-[-0.03em] sm:text-5xl">Report app stats</h1>
             <p className="text-muted-foreground text-lg leading-8">
               Your environments report each user’s current value of the metrics you declare. Renown adds them up and
               shows them on your app’s public page and on every user’s profile.

@@ -579,7 +579,7 @@ export function InlineEditableTitle({
 
   return (
     <div className="flex items-center gap-2">
-      <h1 className="text-3xl font-bold tracking-tight">{displayValue}</h1>
+      <h1 className="text-3xl font-bold tracking-[-0.03em]">{displayValue}</h1>
       {!readOnly && (
         <Button
           variant="ghost"

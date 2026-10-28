@@ -40,7 +40,7 @@ export function ConnectGithub({
 }) {
   return (
     <div className="border-border flex flex-col items-center gap-5 rounded-xl border border-dashed px-6 py-10 text-center">
-      <span className="bg-foreground text-background flex h-12 w-12 items-center justify-center rounded-2xl">
+      <span className="bg-muted text-primary border-border flex h-12 w-12 items-center justify-center rounded-2xl border">
         <Github className="h-6 w-6" aria-hidden />
       </span>
       <div className="space-y-1.5">

@@ -50,7 +50,7 @@ export const envSchema = z.object({
   // maxStudiosPerUser(). Prod sets "3"; staging/local omit it (unlimited).
   NEXT_PUBLIC_MAX_STUDIOS_PER_USER: z.string().optional(),
 
-  // "true" shows "Make it an App" on Studio cards. Set only once the backend's
+  // "true" shows "Make it an app" on Studio cards. Set only once the backend's
   // managed GitHub org (VETRA_APPS_MANAGED_*) is configured. Read by
   // studioAppsEnabled().
   NEXT_PUBLIC_STUDIO_APPS_ENABLED: z.string().optional(),

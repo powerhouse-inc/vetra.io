@@ -14,12 +14,12 @@ export default function NotFound() {
     // pt clears the fixed 64px header so the large 404 is never tucked under it.
     <div className="flex flex-1 flex-col items-center justify-center px-6 pt-28 pb-12 text-center">
       {/* Large 404 */}
-      <div className="text-primary mb-[-16px] text-[160px] leading-none font-extrabold tracking-[-8px] opacity-20 select-none max-sm:text-[100px] max-sm:tracking-[-4px]">
+      <div className="text-primary mb-[-12px] font-mono text-[150px] leading-none font-bold tracking-[-6px] opacity-25 select-none max-sm:text-[96px] max-sm:tracking-[-3px]">
         404
       </div>
 
       {/* Heading */}
-      <h1 className="text-foreground mb-3 text-[32px] font-extrabold tracking-tight max-sm:text-2xl">
+      <h1 className="text-foreground mb-3 text-[32px] font-bold tracking-[-0.03em] max-sm:text-2xl">
         Page not found
       </h1>
       <p className="text-muted-foreground mx-auto mb-8 max-w-[420px] text-base leading-relaxed">
@@ -44,7 +44,7 @@ export default function NotFound() {
           href="https://academy.vetra.io/"
           className="bg-card border-border hover:border-primary-30 flex flex-col items-center gap-2.5 rounded-xl border p-6 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
-          <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-[10px]">
+          <div className="bg-muted border-border flex h-10 w-10 items-center justify-center rounded-[10px] border">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"

@@ -155,7 +155,7 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
           <AppAvatar name={app.name} seed={app.id} size="lg" />
           <div className="min-w-0 flex-1 space-y-2">
-            <h1 className="truncate text-3xl font-bold tracking-tight">{app.name}</h1>
+            <h1 className="truncate text-3xl font-bold tracking-[-0.03em]">{app.name}</h1>
             <p className="text-muted-foreground text-sm">
               Managed here for licensing only: its plans, who holds them and its invite codes.
             </p>
@@ -217,7 +217,7 @@ function Header({ app }: { app: App }) {
       <AppAvatar name={app.name} seed={app.id} size="lg" />
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="truncate text-3xl font-bold tracking-tight">{app.name}</h1>
+          <h1 className="truncate text-3xl font-bold tracking-[-0.03em]">{app.name}</h1>
           <StatusPill meta={appHeadlineStatus(app)} />
           <OrgBadge orgId={app.ownerOrgId} />
         </div>

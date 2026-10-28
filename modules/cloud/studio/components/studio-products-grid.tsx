@@ -89,7 +89,7 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
   if (locked && showEmptyState) return <NoLicencePanel />
 
   return (
-    <div className="mx-auto mt-24 max-w-screen-xl px-6 pb-16">
+    <div className="mx-auto mt-20 max-w-screen-xl px-6 py-8">
       <PageHeader
         eyebrow="~/studio"
         className="mb-6"

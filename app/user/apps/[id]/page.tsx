@@ -12,7 +12,7 @@ export default function AppPage({ params }: PageProps) {
   const { id } = use(params)
   return (
     <RequireLogin>
-      <main className="mx-auto mt-20 max-w-screen-xl px-4 py-8 sm:px-6">
+      <main className="mx-auto mt-20 max-w-screen-xl px-6 py-8">
         <Suspense fallback={<DetailPageSkeleton label="Loading app" />}>
           <AppDetail appId={id} />
         </Suspense>

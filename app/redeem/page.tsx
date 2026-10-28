@@ -14,7 +14,7 @@ export default function RedeemPage() {
           <Ticket className="h-5 w-5" aria-hidden />
         </span>
         <div className="space-y-1.5">
-          <h1 className="text-2xl font-bold tracking-tight">Redeem an invite code</h1>
+          <h1 className="text-2xl font-bold tracking-[-0.03em]">Redeem an invite code</h1>
           <p className="text-muted-foreground text-sm">
             Got a code from an app or an event? Enter it to see what it gives you.
           </p>

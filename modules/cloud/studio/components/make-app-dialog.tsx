@@ -69,7 +69,7 @@ export function MakeAppDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          Make it an App
+          Make it an app
         </Button>
       </DialogTrigger>
       <DialogContent>
@@ -130,7 +130,7 @@ function MakeAppForm({
   return (
     <form onSubmit={submit} className="space-y-4">
       <DialogHeader>
-        <DialogTitle>Make it an App</DialogTitle>
+        <DialogTitle>Make it an app</DialogTitle>
         <DialogDescription>
           Creates a private GitHub repository in{' '}
           {installation?.accountLogin ?? 'your GitHub account'} for this Studio, with Vetra deploys

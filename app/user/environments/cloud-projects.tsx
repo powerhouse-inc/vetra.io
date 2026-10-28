@@ -109,7 +109,7 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
         </div>
 
         <div className="flex gap-2">
-          <Button variant="default" size="sm" asChild className="flex-1">
+          <Button variant="outline" size="sm" asChild className="flex-1">
             <Link href={`/user/environments/${env.id}`}>Manage</Link>
           </Button>
           {visitUrl && (
