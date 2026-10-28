@@ -1,7 +1,9 @@
 'use client'
 
-import { Boxes, Loader2, Moon, PlugZap } from 'lucide-react'
+import { Boxes, Moon, PlugZap } from 'lucide-react'
 import { studioAppsEnabled } from '@/modules/cloud/switchboard-url'
+import { StatusPill } from '@/modules/shared/components/status'
+import { studioStatusMeta } from '../studio-readiness'
 import type { StudioProduct } from '../use-studio-products'
 import { MakeAppDialog } from './make-app-dialog'
 import { useStudioLlmStatus } from '../use-studio-llm-status'
@@ -16,7 +18,7 @@ const usd = (n: number) => `$${n.toFixed(2)}`
  *    wake activator, which redirects to the branded /studio/waking page that
  *    wakes it and opens it when ready. So the card just opens the host; it
  *    carries a 💤 badge so the resting state is visible.
- *  - booting → inert with a "Provisioning…" pill.
+ *  - booting → inert with a "Provisioning" pill.
  *
  * Brand metadata is cached server-side (myStudioProducts → obsDB) so the card
  * shows the real product name even while hibernated, with no per-card host fetch.
@@ -60,32 +62,20 @@ export function StudioProductCard({
     canOpen ? 'hover:border-foreground/30 transition-colors' : 'cursor-default opacity-80'
   }`
 
-  const statusBadge = isReady ? (
-    <span className="inline-flex items-center gap-1.5 rounded-full bg-green-500/10 px-2 py-0.5 text-xs font-medium text-green-600">
-      <span className="h-1.5 w-1.5 rounded-full bg-green-500" aria-hidden />
-      Ready
-    </span>
-  ) : isSleeping ? (
-    // Hibernated to save resources. Clicking opens it (a spinner wakes it,
-    // ~1-2 min). Communicate that it's intentional + resumable, not broken.
-    <span
-      title="This studio is asleep to save resources. Click to wake it — it opens when ready."
-      className="inline-flex items-center gap-1.5 rounded-full bg-indigo-500/10 px-2 py-0.5 text-xs font-medium text-indigo-500"
-    >
-      <Moon className="h-3 w-3" aria-hidden />
-      Sleeping
-    </span>
-  ) : (
-    // Still booting: the agent host isn't reachable yet (it restarts on claim),
-    // so the card stays inert until ready.
-    <span
-      role="status"
-      title="This studio is starting up and will be ready shortly."
-      className="bg-muted text-muted-foreground inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
-    >
-      <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-      Provisioning…
-    </span>
+  // Sleeping = hibernated to save resources; clicking wakes it (~1-2 min).
+  // Booting = the agent host isn't reachable yet, so the card stays inert.
+  const statusBadge = (
+    <StatusPill
+      meta={studioStatusMeta(product.status)}
+      icon={isSleeping ? <Moon className="h-3 w-3" aria-hidden /> : undefined}
+      title={
+        isSleeping
+          ? 'This studio is asleep to save resources. Click to wake it — it opens when ready.'
+          : isReady
+            ? undefined
+            : 'This studio is starting up and will be ready shortly.'
+      }
+    />
   )
 
   const body = (
@@ -114,13 +104,11 @@ export function StudioProductCard({
         <div className="flex items-center gap-2">
           {statusBadge}
           {needsModel && (
-            <span
+            <StatusPill
+              meta={{ label: 'Connect a model', tone: 'warning', active: false }}
+              icon={<PlugZap className="h-3 w-3" aria-hidden />}
               title="No model connected yet"
-              className="inline-flex items-center gap-1.5 rounded-full bg-amber-500/10 px-2 py-0.5 text-xs font-medium text-amber-600"
-            >
-              <PlugZap className="h-3 w-3" aria-hidden />
-              Connect a model
-            </span>
+            />
           )}
         </div>
         {budget && <span className="text-muted-foreground text-xs">{budget}</span>}

@@ -741,9 +741,9 @@ export function OverviewTab({
                 {statusLoading || !status || status.tlsCertValid === null ? (
                   <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />
                 ) : status.tlsCertValid ? (
-                  <ShieldCheck className="h-3 w-3 text-[#04c161]" />
+                  <ShieldCheck className="text-success h-3 w-3" />
                 ) : (
-                  <ShieldOff className="h-3 w-3 text-[#ea4335]" />
+                  <ShieldOff className="text-destructive h-3 w-3" />
                 )}
                 <span className="text-foreground font-medium">
                   {domainCheckLabel(

@@ -5,7 +5,7 @@ import { appHeadlineStatus, displayHost, primaryUrl, refLabel, shortSha } from '
 import { formatTimestamp, timeAgo } from '../lib/time'
 import type { App } from '../types'
 import { AppAvatar } from './app-avatar'
-import { StatusPill } from './status'
+import { StatusPill } from '@/modules/shared/components/status'
 
 /**
  * App tile on the Apps home. The whole card links to the App; the production

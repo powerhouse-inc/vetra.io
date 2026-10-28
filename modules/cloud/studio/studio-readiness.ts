@@ -1,4 +1,5 @@
 import type { ClintRuntimeEndpointsForPrefix } from '@/modules/cloud/types'
+import type { StatusMeta } from '@/modules/shared/lib/status'
 
 /** The studio is embeddable once its agent announces an enabled website route. */
 export function hasStudioWebsiteEndpoint(
@@ -9,6 +10,18 @@ export function hasStudioWebsiteEndpoint(
 }
 
 export type ProductStatus = 'ready' | 'booting' | 'sleeping'
+
+const STUDIO_STATUS_META: Record<ProductStatus, StatusMeta> = {
+  ready: { label: 'Ready', tone: 'success', active: false },
+  // Hibernated to save resources; opening it wakes it. Resting, not broken.
+  sleeping: { label: 'Sleeping', tone: 'neutral', active: false },
+  booting: { label: 'Provisioning', tone: 'progress', active: true },
+}
+
+/** The status a studio shows on its card and its group header. */
+export function studioStatusMeta(status: ProductStatus): StatusMeta {
+  return STUDIO_STATUS_META[status]
+}
 
 /** A product is 'ready' once its agent announces an enabled website endpoint. */
 export function deriveProductStatus(

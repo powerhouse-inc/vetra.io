@@ -58,7 +58,7 @@ import { AppSettings } from './app-settings'
 import { AppProfileTab } from './profile/profile-tab'
 import { GithubFlowLink } from './github-flow-link'
 import { Banner } from './banner'
-import { StatusPill } from './status'
+import { StatusPill } from '@/modules/shared/components/status'
 
 /** Owner-only tabs, in display order. Tasks append to this as each tab lands. */
 export const LICENSING_TABS = [

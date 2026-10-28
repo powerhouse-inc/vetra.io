@@ -2,7 +2,7 @@
 
 import { Loader2 } from 'lucide-react'
 import { CopyButton } from '@/modules/apps/components/copy-button'
-import { StatusPill } from '@/modules/apps/components/status'
+import { StatusPill } from '@/modules/shared/components/status'
 import { formatDate } from '@/modules/apps/lib/time'
 import { Button } from '@/modules/shared/components/ui/button'
 import {

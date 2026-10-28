@@ -1,14 +1,8 @@
+import type { StatusMeta } from '@/modules/shared/lib/status'
+
 import type { App, AppDeployment, AppDeploymentStatus, AppStatus } from '../types'
 
-/** Visual tone shared by status dots and badges. */
-export type StatusTone = 'success' | 'progress' | 'danger' | 'neutral' | 'warning'
-
-export type StatusMeta = {
-  label: string
-  tone: StatusTone
-  /** True while the deployment is still moving (pulse animation + polling). */
-  active: boolean
-}
+export type { StatusMeta, StatusTone } from '@/modules/shared/lib/status'
 
 const DEPLOYMENT_STATUS_META: Record<AppDeploymentStatus, StatusMeta> = {
   PENDING: { label: 'Queued', tone: 'progress', active: true },
@@ -85,23 +79,6 @@ export function appHeadlineStatus(app: Pick<App, 'status' | 'latestDeployment'>)
   if (app.status !== 'ACTIVE') return appStatusMeta(app.status)
   if (!app.latestDeployment) return { label: 'No deployments', tone: 'neutral', active: false }
   return deploymentStatusMeta(app.latestDeployment.status)
-}
-
-/** Tailwind classes per tone (dot fill / soft badge). */
-export const TONE_DOT: Record<StatusTone, string> = {
-  success: 'bg-success',
-  progress: 'bg-warning',
-  danger: 'bg-destructive',
-  warning: 'bg-warning',
-  neutral: 'bg-muted-foreground/60',
-}
-
-export const TONE_BADGE: Record<StatusTone, string> = {
-  success: 'bg-success/15 text-success',
-  progress: 'bg-warning/15 text-warning',
-  danger: 'bg-destructive/15 text-destructive',
-  warning: 'bg-warning/15 text-warning',
-  neutral: 'bg-muted text-muted-foreground',
 }
 
 // ---------------------------------------------------------------------------

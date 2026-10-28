@@ -10,41 +10,18 @@ import { DeleteEnvironmentDialog } from '@/modules/cloud/components/delete-envir
 import { loadEnvironmentController } from '@/modules/cloud/controller'
 import { ensureCanOperateEnvironment } from '@/modules/cloud/org-sync'
 import { CloudUserError } from '@/modules/cloud/lib/cloud-error'
+import { environmentStatusMeta } from '@/modules/cloud/lib/environment-status'
 import { resolveGenericHost, isTypeAtApex } from '@/modules/cloud/lib/env-host'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { useEnvironments, useViewer, type ViewScope } from '@/modules/cloud/hooks/use-environment'
 import { useOptimisticMutation } from '@/modules/cloud/query/use-optimistic-mutation'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
+import { StatusPill } from '@/modules/shared/components/status'
 import { Button } from '@/modules/shared/components/ui/button'
 import { EnvironmentLicenceBadge } from '@/modules/subscriptions/components/environment-licence'
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/shared/components/ui/card'
 
 import type { CloudEnvironment } from './types'
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  DRAFT: { label: 'Draft', color: 'bg-muted-foreground' },
-  CHANGES_PENDING: { label: 'Pending', color: 'bg-info' },
-  CHANGES_APPROVED: { label: 'Approved', color: 'bg-info' },
-  CHANGES_PUSHED: { label: 'Deploying', color: 'bg-warning' },
-  DEPLOYING: { label: 'Deploying', color: 'bg-warning' },
-  DEPLOYMENt_FAILED: { label: 'Failed', color: 'bg-destructive' },
-  READY: { label: 'Ready', color: 'bg-success' },
-  TERMINATING: { label: 'Terminating', color: 'bg-destructive' },
-  DESTROYED: { label: 'Destroyed', color: 'bg-muted-foreground' },
-  ARCHIVED: { label: 'Archived', color: 'bg-muted-foreground' },
-  STOPPED: { label: 'Stopped', color: 'bg-muted-foreground' },
-}
-
-function StatusDot({ status }: { status: string }) {
-  const config = STATUS_LABELS[status] ?? { label: status, color: 'bg-muted-foreground' }
-
-  return (
-    <span className="flex items-center gap-1.5 text-xs font-medium">
-      <span className={`inline-block h-2 w-2 rounded-full ${config.color}`} />
-      {config.label}
-    </span>
-  )
-}
 
 export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
   const { signer, canSign: signerReady } = useCanSign()
@@ -112,7 +89,9 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
           </CardTitle>
           {subdomain && <span className="text-muted-foreground truncate text-sm">{subdomain}</span>}
         </div>
-        <StatusDot status={env.state.status} />
+        {/* Same mapping as the detail page. The list query has no live ArgoCD
+            health, so a READY env reads "Ready" here until it is opened. */}
+        <StatusPill meta={environmentStatusMeta({ status: env.state.status })} />
       </CardHeader>
       <CardContent className="space-y-4 pt-0">
         <EnvironmentLicenceBadge environmentId={env.id} />

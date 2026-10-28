@@ -1,4 +1,4 @@
-import type { StatusMeta } from '@/modules/apps/lib/status'
+import type { StatusMeta } from '@/modules/shared/lib/status'
 import { formatDate } from '@/modules/apps/lib/time'
 import type { Subscription, SubscriptionWarningKind } from '../types'
 

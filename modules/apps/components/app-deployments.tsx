@@ -47,7 +47,7 @@ import {
 } from '../lib/status'
 import { formatTimestamp, timeAgo } from '../lib/time'
 import type { App, AppDeployment } from '../types'
-import { StatusInline } from './status'
+import { StatusInline } from '@/modules/shared/components/status'
 
 function KindLabel({ d, repo }: { d: AppDeployment; repo: string }) {
   if (d.kind === 'PREVIEW' && d.prNumber != null) {

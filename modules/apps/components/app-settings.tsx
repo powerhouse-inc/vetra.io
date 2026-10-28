@@ -36,7 +36,7 @@ import { formatDate } from '../lib/time'
 import type { App, UpdateAppInput } from '../types'
 import { CopyButton } from './copy-button'
 import { SetupDeploys } from './setup-deploys'
-import { StatusPill } from './status'
+import { StatusPill } from '@/modules/shared/components/status'
 
 // Mirror the vetra-apps subgraph's updateApp validation.
 export const PREVIEW_LIMIT_RANGE = { min: 1, max: 20 } as const
