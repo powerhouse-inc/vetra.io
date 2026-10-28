@@ -1,7 +1,7 @@
 'use client'
 
 import { EnvironmentLicenceBanner } from '@/modules/subscriptions/components/environment-licence'
-import { ArrowLeft, ExternalLink, Loader2, RefreshCw, Settings } from 'lucide-react'
+import { ArrowLeft, ExternalLink, RefreshCw, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, use, useEffect, useMemo, useRef, useState } from 'react'
@@ -48,6 +48,7 @@ import {
 } from '@/modules/cloud/lib/addons'
 import { useServiceAddon } from '@/modules/cloud/hooks/use-service-addon'
 import { useWorkflowsAddon } from '@/modules/cloud/hooks/use-workflows-addon'
+import { DetailPageSkeleton } from '@/modules/shared/components/page-shell'
 import { RequireLogin } from '@/modules/shared/components/renown/require-login'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
@@ -316,15 +317,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   }, [state, drawer.scope])
 
   if (isLoading) {
-    return (
-      <div
-        role="status"
-        className="text-muted-foreground flex min-h-[50vh] items-center justify-center gap-2 text-sm"
-      >
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        Loading environment…
-      </div>
-    )
+    return <DetailPageSkeleton label="Loading environment" />
   }
 
   if (!environment) {
@@ -623,7 +616,7 @@ export default function EnvironmentDetailPage({ params }: PageProps) {
   return (
     <RequireLogin title="Log in to see this environment">
       <main className="mx-auto mt-20 max-w-screen-xl space-y-8 px-6 py-8">
-        <Suspense fallback={<p className="text-muted-foreground">Loading...</p>}>
+        <Suspense fallback={<DetailPageSkeleton label="Loading environment" />}>
           <EnvironmentDetail documentId={project} />
         </Suspense>
       </main>

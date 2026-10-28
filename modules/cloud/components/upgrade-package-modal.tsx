@@ -257,14 +257,14 @@ export function UpgradePackageModal({
                   {versionsLoading ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
-                    selectedVersion || 'Select version...'
+                    selectedVersion || 'Select version…'
                   )}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command>
-                  <CommandInput placeholder="Search versions..." />
+                  <CommandInput placeholder="Search versions…" />
                   <CommandList>
                     <CommandEmpty>No versions found.</CommandEmpty>
                     <CommandGroup heading="Tags">
@@ -316,7 +316,7 @@ export function UpgradePackageModal({
           {selectedVersion && targetLoading && (
             <div className="text-muted-foreground flex items-center gap-2 text-xs">
               <Loader2 className="h-3 w-3 animate-spin" />
-              Checking manifest for new required config...
+              Checking manifest for new required config…
             </div>
           )}
 

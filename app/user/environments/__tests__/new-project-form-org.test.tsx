@@ -43,7 +43,7 @@ function submit(name = 'Shop') {
   fireEvent.change(screen.getByPlaceholderText('Enter environment name'), {
     target: { value: name },
   })
-  fireEvent.click(screen.getByRole('button', { name: 'Create Environment' }))
+  fireEvent.click(screen.getByRole('button', { name: 'Create environment' }))
 }
 
 describe('NewEnvironmentForm in an organisation', () => {
@@ -62,7 +62,7 @@ describe('NewEnvironmentForm in an organisation', () => {
     render(<NewEnvironmentForm />)
     expect(screen.getByText(/Members of Acme cannot create environments/)).toBeTruthy()
     expect(
-      screen.getByRole<HTMLButtonElement>('button', { name: 'Create Environment' }).disabled,
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Create environment' }).disabled,
     ).toBe(true)
   })
 
@@ -70,7 +70,7 @@ describe('NewEnvironmentForm in an organisation', () => {
     orgLoaded = false
     render(<NewEnvironmentForm />)
     expect(
-      screen.getByRole<HTMLButtonElement>('button', { name: 'Create Environment' }).disabled,
+      screen.getByRole<HTMLButtonElement>('button', { name: 'Create environment' }).disabled,
     ).toBe(true)
     submit()
     expect(createEnv).not.toHaveBeenCalled()

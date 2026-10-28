@@ -60,6 +60,7 @@ import {
 } from '@/modules/shared/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/components/ui/tabs'
 import { cn } from '@/shared/lib/utils'
+import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 
 type Props = {
   open: boolean
@@ -207,19 +208,11 @@ export function EnvSettingsDrawer({
                 <MetadataField label="Revision" value={String(environment.revision)} />
                 <MetadataField
                   label="Created"
-                  value={
-                    environment.createdAtUtcIso
-                      ? new Date(environment.createdAtUtcIso).toLocaleString()
-                      : '—'
-                  }
+                  value={formatTimestamp(environment.createdAtUtcIso) || '—'}
                 />
                 <MetadataField
                   label="Modified"
-                  value={
-                    environment.lastModifiedAtUtcIso
-                      ? new Date(environment.lastModifiedAtUtcIso).toLocaleString()
-                      : '—'
-                  }
+                  value={formatTimestamp(environment.lastModifiedAtUtcIso) || '—'}
                 />
               </dl>
               {canEdit && (
@@ -366,8 +359,8 @@ function ActivityStatusStrip({
         {driftOk ? 'Configuration up to date' : 'Configuration out of date'}
       </span>
       {argoLastSyncedAt && (
-        <span className="text-muted-foreground ml-auto">
-          last applied {new Date(argoLastSyncedAt).toLocaleTimeString()}
+        <span className="text-muted-foreground ml-auto" title={formatTimestamp(argoLastSyncedAt)}>
+          last applied {timeAgo(argoLastSyncedAt)}
         </span>
       )}
     </div>

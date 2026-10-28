@@ -2,7 +2,7 @@
 
 import { ArrowUpRight, Loader2, Server, Users } from 'lucide-react'
 import Link from 'next/link'
-import { StatusPill } from '@/modules/apps/components/status'
+import { StatusPill } from '@/modules/shared/components/status'
 import { Button } from '@/modules/shared/components/ui/button'
 import { cn } from '@/shared/lib/utils'
 import {

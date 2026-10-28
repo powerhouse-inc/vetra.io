@@ -26,7 +26,7 @@ describe('InlineEditableTitle', () => {
     fireEvent.click(cancel)
 
     expect(onSave).not.toHaveBeenCalled()
-    expect(screen.getByRole('heading', { name: 'My env' })).toBeTruthy()
+    expect(screen.getByRole('heading', { level: 1, name: 'My env' })).toBeTruthy()
   })
 
   it('save button saves the new name', () => {

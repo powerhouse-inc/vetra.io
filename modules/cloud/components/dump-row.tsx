@@ -3,7 +3,8 @@
 import { Clock, Database, Download, Loader2, RefreshCw, RotateCcw, X } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { AsyncButton } from '@/modules/cloud/components/async-button'
-import { fmtBytes, timeAgo, timeUntil } from '@/modules/cloud/lib/time-format'
+import { fmtBytes, timeUntil } from '@/modules/cloud/lib/time-format'
+import { timeAgo } from '@/modules/shared/lib/time'
 import type { DatabaseDump, DatabaseDumpStatus, DumpSource } from '@/modules/cloud/types'
 import {
   AlertDialog,

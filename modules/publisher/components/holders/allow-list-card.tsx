@@ -15,7 +15,7 @@ import {
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
 import { useLastPresent } from '@/modules/shared/hooks/use-last-present'
-import { formatDate } from '@/modules/apps/lib/time'
+import { formatDate } from '@/modules/shared/lib/time'
 import { describePublisherError } from '../../graphql'
 import { useAddToAllowList, useRemoveFromAllowList } from '../../hooks/use-publisher-mutations'
 import { shortDid } from '../../lib/format'

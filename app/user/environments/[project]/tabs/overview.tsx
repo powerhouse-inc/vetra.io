@@ -51,6 +51,7 @@ import { Input } from '@/modules/shared/components/ui/input'
 import { Switch } from '@/modules/shared/components/ui/switch'
 import { cn } from '@/shared/lib/utils'
 import { defaultPackageRegistry } from '@/modules/cloud/switchboard-url'
+import { formatDate, formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 
 // ---------------------------------------------------------------------------
 // Helper: StatusDot
@@ -108,7 +109,7 @@ function domainCheckLabel(
 ): string {
   if (loading) return '...'
   if (!status) return 'Unknown'
-  if (value === null || value === undefined) return 'Checking...'
+  if (value === null || value === undefined) return 'Checking…'
   return value ? yes : no
 }
 
@@ -550,7 +551,7 @@ export function InlineEditableTitle({
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          className="h-9 text-2xl font-bold"
+          className="h-10 text-3xl font-bold tracking-tight"
         />
         <Button
           variant="ghost"
@@ -578,7 +579,7 @@ export function InlineEditableTitle({
 
   return (
     <div className="flex items-center gap-2">
-      <h2 className="text-2xl font-bold">{displayValue}</h2>
+      <h1 className="text-3xl font-bold tracking-tight">{displayValue}</h1>
       {!readOnly && (
         <Button
           variant="ghost"
@@ -741,9 +742,9 @@ export function OverviewTab({
                 {statusLoading || !status || status.tlsCertValid === null ? (
                   <Loader2 className="text-muted-foreground h-3 w-3 animate-spin" />
                 ) : status.tlsCertValid ? (
-                  <ShieldCheck className="h-3 w-3 text-[#04c161]" />
+                  <ShieldCheck className="text-success h-3 w-3" />
                 ) : (
-                  <ShieldOff className="h-3 w-3 text-[#ea4335]" />
+                  <ShieldOff className="text-destructive h-3 w-3" />
                 )}
                 <span className="text-foreground font-medium">
                   {domainCheckLabel(
@@ -757,7 +758,7 @@ export function OverviewTab({
               </p>
               {status?.tlsCertExpiresAt && (
                 <p className="text-muted-foreground text-xs">
-                  Expires: {new Date(status.tlsCertExpiresAt).toLocaleDateString()}
+                  Expires: {formatDate(status.tlsCertExpiresAt)}
                 </p>
               )}
               {servedCustomHosts.length > 0 && (
@@ -767,8 +768,11 @@ export function OverviewTab({
                 </p>
               )}
               {status?.updatedAt && (
-                <p className="text-muted-foreground/70 text-xs">
-                  Checked {new Date(status.updatedAt).toLocaleTimeString()}
+                <p
+                  className="text-muted-foreground/70 text-xs"
+                  title={formatTimestamp(status.updatedAt)}
+                >
+                  Checked {timeAgo(status.updatedAt)}
                 </p>
               )}
             </div>

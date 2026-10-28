@@ -9,7 +9,8 @@ import {
   useMySubscriptions,
   useStudioAccess,
 } from '@/modules/subscriptions/hooks/use-subscriptions'
-import { StudioBootScreen } from './studio-boot-screen'
+import { PageHeader } from '@/modules/shared/components/page-header'
+import { PageSpinner } from '@/modules/shared/components/page-shell'
 import { StudioProductCard } from './studio-product-card'
 import { NewProductCard } from './new-product-card'
 import { buildStudioEmbedUrl } from '../studio-embed-url'
@@ -70,7 +71,7 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
 
   // The page is gated by RequireLogin (via StudioLicenseGate); no Renown user here only
   // means the user object hasn't caught up yet, so wait rather than show the marketing page.
-  if (gate !== 'ready') return <StudioBootScreen title="Loading…" />
+  if (gate !== 'ready') return <PageSpinner label="Loading your studios" />
 
   // Provision a new product; it surfaces in the list optimistically (as
   // "Provisioning…") immediately, and the 30s poll reconciles it against the
@@ -89,14 +90,18 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
 
   return (
     <div className="mx-auto mt-24 max-w-screen-xl px-6 pb-16">
-      <h1 className="mb-6 text-2xl font-semibold">Studio</h1>
+      <PageHeader
+        className="mb-6"
+        title="Studio"
+        description="Each studio is a dedicated Vetra Studio where an AI agent helps you design document models and apps."
+      />
       {locked && <LapsedBanner />}
 
       {showEmptyState ? (
         <div className="flex flex-col items-center justify-center gap-4 py-20 text-center">
-          <p className="text-lg font-medium">No products yet</p>
+          <p className="text-lg font-medium">No studios yet</p>
           <p className="text-muted-foreground max-w-sm text-sm">
-            Create your first product to spin up a dedicated Vetra Studio.
+            Create your first studio to spin up a dedicated Vetra Studio with its own AI agent.
           </p>
           <NewProductCard onCreate={handleCreate} createError={createError} variant="button" />
         </div>
@@ -125,11 +130,11 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
               ))}
               {locked ? null : creating ? (
                 // Card-sized creating state that sits in the grid alongside the
-                // product cards. (StudioBootScreen is a min-h-[60vh] full-screen
+                // product cards. (A min-h-[60vh] full-screen
                 // spinner — using it here ballooned the grid cell.)
                 <div className="border-border flex min-h-[200px] flex-col items-center justify-center gap-2 rounded-xl border">
                   <Loader2 className="text-muted-foreground h-6 w-6 animate-spin" />
-                  <p className="text-sm font-medium">Creating your product…</p>
+                  <p className="text-sm font-medium">Creating your studio…</p>
                 </div>
               ) : (
                 <NewProductCard

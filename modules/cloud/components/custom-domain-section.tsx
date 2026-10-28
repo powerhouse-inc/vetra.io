@@ -240,7 +240,7 @@ export function CustomDomainSection({
               disabled={isVerifying}
               className="text-xs"
             >
-              {isVerifying ? 'Verifying...' : 'Verify DNS'}
+              {isVerifying ? 'Verifying…' : 'Verify DNS'}
             </Button>
           </div>
           <Table>

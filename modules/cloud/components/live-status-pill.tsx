@@ -1,21 +1,13 @@
 import type { ClintAgentStatusTone } from '@/modules/cloud/lib/clint-agent-status'
-import { Badge } from '@/modules/shared/components/ui/badge'
-import { cn } from '@/shared/lib/utils'
+import { StatusPill } from '@/modules/shared/components/status'
+import type { StatusTone } from '@/modules/shared/lib/status'
 
-const DOT: Record<ClintAgentStatusTone, string> = {
-  healthy: 'bg-success',
-  starting: 'bg-warning animate-pulse',
-  restarting: 'bg-warning animate-pulse',
-  failed: 'bg-destructive',
-  stopped: 'bg-muted-foreground',
-}
-
-const PILL: Record<ClintAgentStatusTone, string> = {
-  healthy: 'bg-success/15 text-success',
-  starting: 'bg-warning/15 text-warning',
-  restarting: 'bg-warning/15 text-warning',
-  failed: 'bg-destructive/15 text-destructive',
-  stopped: 'bg-muted text-muted-foreground',
+const TONE: Record<ClintAgentStatusTone, StatusTone> = {
+  healthy: 'success',
+  starting: 'progress',
+  restarting: 'progress',
+  failed: 'danger',
+  stopped: 'neutral',
 }
 
 type Props = {
@@ -33,14 +25,12 @@ type Props = {
  * Connect/Switchboard service, or anything else with a derived tone.
  */
 export function LiveStatusPill({ tone, label, reason, className }: Props) {
+  const mapped = TONE[tone]
   return (
-    <Badge
-      variant="secondary"
-      className={cn('rounded-full border-transparent', PILL[tone], className)}
+    <StatusPill
+      meta={{ label, tone: mapped, active: mapped === 'progress' }}
       title={reason}
-    >
-      <span className={cn('mr-1.5 h-1.5 w-1.5 rounded-full', DOT[tone])} />
-      {label}
-    </Badge>
+      className={className}
+    />
   )
 }

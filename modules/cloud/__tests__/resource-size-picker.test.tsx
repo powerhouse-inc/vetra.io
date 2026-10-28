@@ -7,11 +7,11 @@ describe('ResourceSizePicker', () => {
 
   it('renders only supported sizes', () => {
     render(<ResourceSizePicker supported={[...supported]} value={null} onChange={() => {}} />)
-    expect(screen.queryByText('Small')).not.toBeNull()
-    expect(screen.queryByText('Medium')).not.toBeNull()
-    expect(screen.queryByText('Large')).not.toBeNull()
-    expect(screen.queryByText('X-Large')).toBeNull()
-    expect(screen.queryByText('2X-Large')).toBeNull()
+    expect(screen.queryByText('S')).not.toBeNull()
+    expect(screen.queryByText('M')).not.toBeNull()
+    expect(screen.queryByText('L')).not.toBeNull()
+    expect(screen.queryByText('XL')).toBeNull()
+    expect(screen.queryByText('XXL')).toBeNull()
   })
 
   it('preserves canonical order regardless of input order', () => {
@@ -22,14 +22,14 @@ describe('ResourceSizePicker', () => {
         onChange={() => {}}
       />,
     )
-    const labels = screen.getAllByText(/^(Small|Medium|Large)$/).map((el) => el.textContent ?? '')
-    expect(labels).toEqual(['Small', 'Medium', 'Large'])
+    const labels = screen.getAllByText(/^(S|M|L)$/).map((el) => el.textContent ?? '')
+    expect(labels).toEqual(['S', 'M', 'L'])
   })
 
   it('calls onChange with selected size', () => {
     const onChange = vi.fn()
     render(<ResourceSizePicker supported={[...supported]} value={null} onChange={onChange} />)
-    fireEvent.click(screen.getByLabelText('Medium'))
+    fireEvent.click(screen.getByLabelText('M'))
     expect(onChange).toHaveBeenCalledWith('VETRA_AGENT_M')
   })
 })

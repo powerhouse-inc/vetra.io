@@ -38,6 +38,7 @@ import { Button } from '@/modules/shared/components/ui/button'
 import { Card, CardContent, CardTitle } from '@/modules/shared/components/ui/card'
 import { RadioGroup, RadioGroupItem } from '@/modules/shared/components/ui/radio-group'
 import { cn } from '@/shared/lib/utils'
+import { timeAgo } from '@/modules/shared/lib/time'
 
 const CHANNEL_OPTIONS: { value: AutoUpdateChannel | 'OFF'; label: string; description: string }[] =
   [
@@ -55,19 +56,6 @@ const SERVICE_LABELS: Record<TenantService, string> = {
   DOCLING: 'Document Conversion',
   PAPERLESS: 'Document Archive',
   SPECKLE: '3D Models',
-}
-
-/** Human-readable relative time (e.g. "2m ago"). Keeps us off date-fns. */
-function timeAgo(iso: string): string {
-  const delta = Date.now() - new Date(iso).getTime()
-  const s = Math.max(1, Math.round(delta / 1000))
-  if (s < 60) return `${s}s ago`
-  const m = Math.round(s / 60)
-  if (m < 60) return `${m}m ago`
-  const h = Math.round(m / 60)
-  if (h < 48) return `${h}h ago`
-  const d = Math.round(h / 24)
-  return `${d}d ago`
 }
 
 type AutoUpdateCardProps = {

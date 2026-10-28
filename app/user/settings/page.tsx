@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback } from 'react'
 import { SettingsTab } from '@/app/profile/components/settings-tab'
 import { TeamsTab } from '@/app/profile/components/teams-tab'
+import { PageHeader } from '@/modules/shared/components/page-header'
 import { PageSpinner } from '@/modules/shared/components/page-shell'
 import { RequireLogin } from '@/modules/shared/components/renown/require-login'
 import { Button } from '@/modules/shared/components/ui/button'
@@ -39,22 +40,21 @@ function UserSettingsPageInner() {
 
   return (
     <div className="container mx-auto max-w-5xl px-4 pt-20 pb-8">
-      <div className="mb-8 flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">Profile settings</h1>
-          <p className="text-muted-foreground mt-1 text-sm">
-            Your Renown identity, account details, and teams.
-          </p>
-        </div>
-        {active === 'teams' && (
-          <Button asChild>
-            <Link href="/profile/create-team">
-              <Plus className="mr-1.5 size-4" />
-              Create team
-            </Link>
-          </Button>
-        )}
-      </div>
+      <PageHeader
+        className="mb-8"
+        title="Profile settings"
+        description="Your Renown identity, account details, and teams."
+        actions={
+          active === 'teams' && (
+            <Button asChild>
+              <Link href="/profile/create-team">
+                <Plus className="size-4" />
+                Create team
+              </Link>
+            </Button>
+          )
+        }
+      />
 
       <Tabs value={active} onValueChange={onChange} className="w-full">
         <TabsList className="mb-6 grid w-full grid-cols-2 sm:inline-flex sm:w-auto">

@@ -237,7 +237,7 @@ export function AddPackageModal({
               <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                 <Command shouldFilter={false}>
                   <CommandInput
-                    placeholder="Search packages..."
+                    placeholder="Search packages…"
                     value={packageSearch}
                     onValueChange={setPackageSearch}
                   />
@@ -304,7 +304,7 @@ export function AddPackageModal({
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Search versions..." />
+                    <CommandInput placeholder="Search versions…" />
                     <CommandList>
                       <CommandEmpty>No versions found.</CommandEmpty>
                       <CommandGroup heading="Tags">
@@ -355,7 +355,7 @@ export function AddPackageModal({
           {selectedPackage && candidateManifestLoading && (
             <div className="text-muted-foreground flex items-center gap-2 text-xs">
               <Loader2 className="h-3 w-3 animate-spin" />
-              Loading package manifest...
+              Loading package manifest…
             </div>
           )}
 

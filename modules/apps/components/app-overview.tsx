@@ -26,13 +26,13 @@ import {
   refLabel,
   shortSha,
 } from '../lib/status'
-import { formatTimestamp, timeAgo } from '../lib/time'
+import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 import type { App, AppDeployment, AppPreview } from '../types'
 import { AppAvatar } from './app-avatar'
 import { AppProfileCard } from './profile/app-profile-card'
 import { AppStatsCard } from './stats/app-stats-card'
 import { SetupDeploys } from './setup-deploys'
-import { StatusDot, StatusInline, StatusPill } from './status'
+import { StatusDot, StatusInline, StatusPill } from '@/modules/shared/components/status'
 import { UrlList } from './url-list'
 
 function SectionTitle({

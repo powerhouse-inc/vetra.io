@@ -453,7 +453,7 @@ export function AddAgentModal({
                 </PopoverTrigger>
                 <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Search versions..." />
+                    <CommandInput placeholder="Search versions…" />
                     <CommandList>
                       <CommandEmpty>No versions found.</CommandEmpty>
                       <CommandGroup heading="Tags">

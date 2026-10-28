@@ -309,7 +309,7 @@ describe('AppDetail tabs', () => {
     it('waits for the ownership check instead of saying "not found"', () => {
       publisher = { isPublisher: false, app: undefined, isPending: true }
       render(<AppDetail appId="studio-1" />)
-      expect(screen.getByText('Loading app…')).toBeTruthy()
+      expect(screen.getByRole('status', { name: 'Loading app' })).toBeTruthy()
       expect(screen.queryByText('App not found')).toBeNull()
     })
 

@@ -160,7 +160,7 @@ describe('AddAgentModal', () => {
     )
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     expect((screen.getByLabelText(/prefix/i) as HTMLInputElement).value).toBe('foo')
-    expect(screen.queryByText('Medium')).not.toBeNull() // first supported size label from ResourceSizePicker
+    expect(screen.queryByText('M')).not.toBeNull() // first supported size label from ResourceSizePicker
     // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
     expect((screen.getByLabelText(/service command/i) as HTMLTextAreaElement).value).toBe(
       'foo --run',

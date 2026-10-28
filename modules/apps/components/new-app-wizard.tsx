@@ -19,6 +19,7 @@ import { toast } from 'sonner'
 import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environment'
 import { canOfferCreateApp } from '@/modules/orgs/types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
+import { PageHeader } from '@/modules/shared/components/page-header'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
 import { Label } from '@/modules/shared/components/ui/label'
@@ -479,13 +480,10 @@ export function NewAppWizard() {
           <ArrowLeft className="h-4 w-4" />
           Apps
         </Link>
-        <div className="space-y-1.5">
-          <h1 className="text-3xl font-bold tracking-tight">Create an app</h1>
-          <p className="text-muted-foreground">
-            Connect a GitHub repository. Every push to production and every pull request deploys
-            automatically.
-          </p>
-        </div>
+        <PageHeader
+          title="Create an app"
+          description="Connect a GitHub repository. Every push to production and every pull request deploys automatically."
+        />
         <Stepper steps={STEPS} current={step} />
       </div>
 

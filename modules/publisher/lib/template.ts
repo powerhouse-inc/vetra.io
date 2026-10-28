@@ -1,3 +1,4 @@
+import { ALL_SIZES, SIZE_LABELS } from '@/modules/cloud/lib/resource-maps'
 import type { CloudResourceSize } from '@/modules/cloud/types'
 import type {
   PublisherTemplate,
@@ -21,13 +22,11 @@ export const SERVICE_TYPES = [
 
 export const NOT_PROVISIONABLE = new Set<string>(['CLINT'])
 
-export const SIZES: { value: CloudResourceSize; label: string }[] = [
-  { value: 'VETRA_AGENT_S', label: 'Small' },
-  { value: 'VETRA_AGENT_M', label: 'Medium' },
-  { value: 'VETRA_AGENT_L', label: 'Large' },
-  { value: 'VETRA_AGENT_XL', label: 'Extra large' },
-  { value: 'VETRA_AGENT_XXL', label: 'Double extra large' },
-]
+/** Same S–XXL labels the environment pages use. */
+export const SIZES: { value: CloudResourceSize; label: string }[] = ALL_SIZES.map((value) => ({
+  value,
+  label: SIZE_LABELS[value],
+}))
 
 /** "Connect", "Your app image": the part of the picker label before the dash. */
 export function serviceLabel(type: string): string {

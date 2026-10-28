@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
 import { NewEnvironmentForm } from '@/app/user/environments/new-project-form'
+import { PageHeader } from '@/modules/shared/components/page-header'
 import { StudioLicenseGate } from '@/modules/studio-license/components/studio-license-gate'
 
 export default function CreateEnvironmentPage() {
@@ -21,10 +22,11 @@ export default function CreateEnvironmentPage() {
           <ArrowLeft className="h-4 w-4" />
           Back to Cloud
         </Link>
-        <h1 className="mb-2 text-2xl font-bold">Create Environment</h1>
-        <p className="text-muted-foreground mb-8 text-sm">
-          Set up a new cloud environment to host your Powerhouse applications.
-        </p>
+        <PageHeader
+          className="mb-8"
+          title="Create an environment"
+          description="Set up a new cloud environment to host your Powerhouse applications."
+        />
         <NewEnvironmentForm onCreated={(id) => router.push(`/user/environments/${id}`)} />
       </main>
     </StudioLicenseGate>

@@ -32,11 +32,11 @@ import { Switch } from '@/modules/shared/components/ui/switch'
 import { describeAppsError } from '../graphql'
 import { useDeleteApp, useUpdateApp } from '../hooks/use-apps'
 import { appStatusMeta, identityState } from '../lib/status'
-import { formatDate } from '../lib/time'
+import { formatDate } from '@/modules/shared/lib/time'
 import type { App, UpdateAppInput } from '../types'
 import { CopyButton } from './copy-button'
 import { SetupDeploys } from './setup-deploys'
-import { StatusPill } from './status'
+import { StatusPill } from '@/modules/shared/components/status'
 
 // Mirror the vetra-apps subgraph's updateApp validation.
 export const PREVIEW_LIMIT_RANGE = { min: 1, max: 20 } as const

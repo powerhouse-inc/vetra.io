@@ -1,47 +1,13 @@
 'use client'
 
-import {
-  ArrowUpRight,
-  Boxes,
-  ChevronDown,
-  Loader2,
-  Moon,
-  Settings,
-  ShieldCheck,
-} from 'lucide-react'
+import { ArrowUpRight, Boxes, ChevronDown, Moon, Settings, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useDid } from '@powerhousedao/reactor-browser'
 import { Button } from '@/modules/shared/components/ui/button'
 import { buildStudioEmbedUrl } from '../studio-embed-url'
-import type { ProductStatus } from '../studio-readiness'
+import { StatusPill } from '@/modules/shared/components/status'
+import { studioStatusMeta } from '../studio-readiness'
 import type { StudioProduct } from '../use-studio-products'
-
-/** Status pill for the studio header. Maps the product's readiness to the
- * running / deploying / hibernating treatments the mock shows. */
-function StudioStatusPill({ status }: { status: ProductStatus }) {
-  if (status === 'sleeping') {
-    return (
-      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-600">
-        <Moon className="h-3 w-3" aria-hidden />
-        Hibernating
-      </span>
-    )
-  }
-  if (status === 'booting') {
-    return (
-      <span className="text-warning inline-flex items-center gap-1.5 text-xs font-medium">
-        <Loader2 className="h-3 w-3 animate-spin" aria-hidden />
-        Deploying
-      </span>
-    )
-  }
-  return (
-    <span className="text-success inline-flex items-center gap-1.5 text-xs font-medium">
-      <span className="inline-block h-2 w-2 rounded-full bg-green-500" aria-hidden />
-      Running
-    </span>
-  )
-}
 
 /**
  * Full-width managed-infra header for a Studio instance.
@@ -114,7 +80,10 @@ export function StudioGroupHeader({
       </div>
 
       <div className="relative z-10 flex shrink-0 items-center gap-3">
-        <StudioStatusPill status={studio.status} />
+        <StatusPill
+          meta={studioStatusMeta(studio.status)}
+          icon={studio.status === 'sleeping' ? <Moon className="h-3 w-3" aria-hidden /> : undefined}
+        />
         <Button
           variant="ghost"
           size="icon"

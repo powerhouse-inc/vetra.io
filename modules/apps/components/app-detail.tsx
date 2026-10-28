@@ -29,6 +29,7 @@ import { describePublisherError, isPublisherError } from '@/modules/publisher/gr
 import { useAppPublisher } from '@/modules/publisher/hooks/use-publisher'
 import type { PublisherApp } from '@/modules/publisher/types'
 import { OrgBadge } from '@/modules/orgs/components/org-badge'
+import { DetailPageSkeleton } from '@/modules/shared/components/page-shell'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/components/ui/tabs'
@@ -48,8 +49,8 @@ import {
   primaryUrl,
   refLabel,
 } from '../lib/status'
-import { formatDate, formatTimestamp } from '../lib/time'
-import { timeAgo } from '../lib/time'
+import { formatDate, formatTimestamp } from '@/modules/shared/lib/time'
+import { timeAgo } from '@/modules/shared/lib/time'
 import type { App } from '../types'
 import { AppAvatar } from './app-avatar'
 import { AppDeployments } from './app-deployments'
@@ -58,7 +59,7 @@ import { AppSettings } from './app-settings'
 import { AppProfileTab } from './profile/profile-tab'
 import { GithubFlowLink } from './github-flow-link'
 import { Banner } from './banner'
-import { StatusPill } from './status'
+import { StatusPill } from '@/modules/shared/components/status'
 
 /** Owner-only tabs, in display order. Tasks append to this as each tab lands. */
 export const LICENSING_TABS = [
@@ -376,12 +377,7 @@ export function AppDetail({ appId }: { appId: string }) {
   )
 
   if (appQuery.isPending) {
-    return (
-      <div className="text-muted-foreground flex min-h-[50vh] items-center justify-center gap-2 text-sm">
-        <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-        Loading app…
-      </div>
-    )
+    return <DetailPageSkeleton label="Loading app" />
   }
 
   if (!app) {
@@ -410,12 +406,7 @@ export function AppDetail({ appId }: { appId: string }) {
       )
     }
     if (view === 'checking') {
-      return (
-        <div className="text-muted-foreground flex min-h-[50vh] items-center justify-center gap-2 text-sm">
-          <Loader2 className="h-4 w-4 animate-spin" aria-hidden />
-          Loading app…
-        </div>
-      )
+      return <DetailPageSkeleton label="Loading app" />
     }
     return (
       <div className="flex min-h-[50vh] flex-col items-center justify-center gap-4 text-center">

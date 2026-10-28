@@ -1,4 +1,4 @@
-import type { StatusMeta } from '@/modules/apps/lib/status'
+import type { StatusMeta } from '@/modules/shared/lib/status'
 import type { PublisherInviteCode } from '../types'
 
 const TERM: Record<string, StatusMeta> = {

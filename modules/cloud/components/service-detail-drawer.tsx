@@ -16,6 +16,7 @@ import {
 import { useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { describeRestartError } from '@/modules/cloud/lib/cloud-error'
+import { serviceInstanceLabel } from '@/modules/cloud/lib/service-label'
 import { useRenown, useRenownAuth } from '@powerhousedao/reactor-browser'
 
 import { AsyncButton } from '@/modules/cloud/components/async-button'
@@ -321,11 +322,7 @@ export function ServiceDetailDrawer({
                                 service.prefix ?? null,
                                 token,
                               )
-                              const friendly =
-                                service.type === 'CLINT'
-                                  ? service.prefix
-                                  : service.type.toLowerCase()
-                              toast.success(`${friendly} restarting…`)
+                              toast.success(`Restarting ${serviceInstanceLabel(service)}…`)
                               setRestartOpen(false)
                             } catch (err) {
                               toast.error(describeRestartError(err, 'service'))

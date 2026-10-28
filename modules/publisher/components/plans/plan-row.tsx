@@ -1,7 +1,7 @@
 'use client'
 
 import { Pencil } from 'lucide-react'
-import { StatusPill } from '@/modules/apps/components/status'
+import { StatusPill } from '@/modules/shared/components/status'
 import { Button } from '@/modules/shared/components/ui/button'
 import { templateName, termName, validityText } from '../../lib/format'
 import { issuerLabel, publishBlocker } from '../../lib/plan'

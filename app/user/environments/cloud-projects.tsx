@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle, ExternalLink, Loader2, Package, Server, Trash2 } from 'lucide-react'
+import { AlertTriangle, ExternalLink, Package, Server, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -10,41 +10,19 @@ import { DeleteEnvironmentDialog } from '@/modules/cloud/components/delete-envir
 import { loadEnvironmentController } from '@/modules/cloud/controller'
 import { ensureCanOperateEnvironment } from '@/modules/cloud/org-sync'
 import { CloudUserError } from '@/modules/cloud/lib/cloud-error'
+import { environmentStatusMeta } from '@/modules/cloud/lib/environment-status'
 import { resolveGenericHost, isTypeAtApex } from '@/modules/cloud/lib/env-host'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { useEnvironments, useViewer, type ViewScope } from '@/modules/cloud/hooks/use-environment'
 import { useOptimisticMutation } from '@/modules/cloud/query/use-optimistic-mutation'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
+import { StatusPill } from '@/modules/shared/components/status'
 import { Button } from '@/modules/shared/components/ui/button'
+import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 import { EnvironmentLicenceBadge } from '@/modules/subscriptions/components/environment-licence'
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/shared/components/ui/card'
 
 import type { CloudEnvironment } from './types'
-
-const STATUS_LABELS: Record<string, { label: string; color: string }> = {
-  DRAFT: { label: 'Draft', color: 'bg-muted-foreground' },
-  CHANGES_PENDING: { label: 'Pending', color: 'bg-info' },
-  CHANGES_APPROVED: { label: 'Approved', color: 'bg-info' },
-  CHANGES_PUSHED: { label: 'Deploying', color: 'bg-warning' },
-  DEPLOYING: { label: 'Deploying', color: 'bg-warning' },
-  DEPLOYMENt_FAILED: { label: 'Failed', color: 'bg-destructive' },
-  READY: { label: 'Ready', color: 'bg-success' },
-  TERMINATING: { label: 'Terminating', color: 'bg-destructive' },
-  DESTROYED: { label: 'Destroyed', color: 'bg-muted-foreground' },
-  ARCHIVED: { label: 'Archived', color: 'bg-muted-foreground' },
-  STOPPED: { label: 'Stopped', color: 'bg-muted-foreground' },
-}
-
-function StatusDot({ status }: { status: string }) {
-  const config = STATUS_LABELS[status] ?? { label: status, color: 'bg-muted-foreground' }
-
-  return (
-    <span className="flex items-center gap-1.5 text-xs font-medium">
-      <span className={`inline-block h-2 w-2 rounded-full ${config.color}`} />
-      {config.label}
-    </span>
-  )
-}
 
 export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
   const { signer, canSign: signerReady } = useCanSign()
@@ -112,7 +90,9 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
           </CardTitle>
           {subdomain && <span className="text-muted-foreground truncate text-sm">{subdomain}</span>}
         </div>
-        <StatusDot status={env.state.status} />
+        {/* Same mapping as the detail page. The list query has no live ArgoCD
+            health, so a READY env reads "Ready" here until it is opened. */}
+        <StatusPill meta={environmentStatusMeta({ status: env.state.status })} />
       </CardHeader>
       <CardContent className="space-y-4 pt-0">
         <EnvironmentLicenceBadge environmentId={env.id} />
@@ -245,9 +225,21 @@ export function CloudEnvironments({
       )}
 
       {isPending ? (
-        <div className="flex min-h-[300px] flex-col items-center justify-center space-y-4 py-12">
-          <Loader2 className="text-muted-foreground h-8 w-8 animate-spin" />
-          <p className="text-muted-foreground text-sm">Loading environments…</p>
+        <div
+          role="status"
+          aria-label="Loading environments"
+          className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3"
+        >
+          {Array.from({ length: compactEmpty ? 1 : 3 }, (_, i) => (
+            <div key={i} className="bg-card border-border space-y-4 rounded-xl border p-6">
+              <div className="flex items-center justify-between">
+                <Skeleton className="h-5 w-1/2" />
+                <Skeleton className="h-5 w-16 rounded-full" />
+              </div>
+              <Skeleton className="h-4 w-1/3" />
+              <Skeleton className="h-8 w-full" />
+            </div>
+          ))}
         </div>
       ) : isError ? (
         <div
