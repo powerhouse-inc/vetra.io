@@ -3,6 +3,8 @@
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
+import { DISCORD_URL } from '@/modules/shared/config/constants'
+
 export default function NotFound() {
   const router = useRouter()
 
@@ -107,7 +109,7 @@ export default function NotFound() {
           <span className="text-foreground text-[13px] font-semibold">Cloud</span>
         </Link>
         <Link
-          href="https://discord.gg/pwQJwgaQKd"
+          href={DISCORD_URL}
           className="bg-card border-border hover:border-primary-30 flex flex-col items-center gap-2.5 rounded-xl border p-6 transition-all hover:-translate-y-0.5 hover:shadow-md"
         >
           <div className="bg-accent flex h-10 w-10 items-center justify-center rounded-[10px]">

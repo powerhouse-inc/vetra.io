@@ -13,9 +13,9 @@ import {
 import Link from 'next/link'
 import { CopyButton } from '@/modules/apps/components/copy-button'
 import { Button } from '@/modules/shared/components/ui/button'
+import { DISCORD_URL } from '@/modules/shared/config/constants'
 import { WAITLIST_ACTION } from '@/modules/studio-license/lib/waitlist'
 
-const DISCORD_URL = 'https://discord.gg/Py28EMafEr'
 const CURL_CMD = 'curl -fsSL https://get.vetra.io | sh'
 const NPM_CMD = 'npm install -g ph-cmd vetra'
 const GITHUB_URL = 'https://github.com/powerhouse-inc/vetra-cli'

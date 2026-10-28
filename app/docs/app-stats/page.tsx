@@ -124,7 +124,7 @@ export default function AppStatsDocsPage() {
               shows them on your app’s public page and on every user’s profile.
             </p>
             <Button asChild size="lg">
-              <Link href="/user/apps">
+              <Link href="/user">
                 Open your apps
                 <ArrowRight className="h-4 w-4" />
               </Link>
