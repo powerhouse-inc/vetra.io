@@ -1,6 +1,6 @@
 import { AlertTriangle, Clock } from 'lucide-react'
 import { Banner } from '@/modules/apps/components/banner'
-import { formatDate } from '@/modules/apps/lib/time'
+import { formatDate } from '@/modules/shared/lib/time'
 import { warningTone } from '../lib/subscriptions'
 import type { SubscriptionWarning } from '../types'
 

@@ -2,7 +2,7 @@ import { GitBranch, GitCommitHorizontal, GitPullRequest, Github, Globe } from 'l
 import Link from 'next/link'
 
 import { appHeadlineStatus, displayHost, primaryUrl, refLabel, shortSha } from '../lib/status'
-import { formatTimestamp, timeAgo } from '../lib/time'
+import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 import type { App } from '../types'
 import { AppAvatar } from './app-avatar'
 import { StatusPill } from '@/modules/shared/components/status'

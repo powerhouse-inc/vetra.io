@@ -26,7 +26,7 @@ import {
   refLabel,
   shortSha,
 } from '../lib/status'
-import { formatTimestamp, timeAgo } from '../lib/time'
+import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 import type { App, AppDeployment, AppPreview } from '../types'
 import { AppAvatar } from './app-avatar'
 import { AppProfileCard } from './profile/app-profile-card'

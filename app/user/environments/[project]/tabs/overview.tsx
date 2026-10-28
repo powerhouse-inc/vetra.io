@@ -51,6 +51,7 @@ import { Input } from '@/modules/shared/components/ui/input'
 import { Switch } from '@/modules/shared/components/ui/switch'
 import { cn } from '@/shared/lib/utils'
 import { defaultPackageRegistry } from '@/modules/cloud/switchboard-url'
+import { formatDate, formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 
 // ---------------------------------------------------------------------------
 // Helper: StatusDot
@@ -757,7 +758,7 @@ export function OverviewTab({
               </p>
               {status?.tlsCertExpiresAt && (
                 <p className="text-muted-foreground text-xs">
-                  Expires: {new Date(status.tlsCertExpiresAt).toLocaleDateString()}
+                  Expires: {formatDate(status.tlsCertExpiresAt)}
                 </p>
               )}
               {servedCustomHosts.length > 0 && (
@@ -767,8 +768,11 @@ export function OverviewTab({
                 </p>
               )}
               {status?.updatedAt && (
-                <p className="text-muted-foreground/70 text-xs">
-                  Checked {new Date(status.updatedAt).toLocaleTimeString()}
+                <p
+                  className="text-muted-foreground/70 text-xs"
+                  title={formatTimestamp(status.updatedAt)}
+                >
+                  Checked {timeAgo(status.updatedAt)}
                 </p>
               )}
             </div>

@@ -45,7 +45,7 @@ import {
   refLabel,
   shortSha,
 } from '../lib/status'
-import { formatTimestamp, timeAgo } from '../lib/time'
+import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 import type { App, AppDeployment } from '../types'
 import { StatusInline } from '@/modules/shared/components/status'
 

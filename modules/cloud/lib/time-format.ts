@@ -1,23 +1,7 @@
 /**
- * Time- and byte-formatting helpers shared by the Database tab UI.
- *
- * Extracted from `dump-row.tsx` so the upcoming `BackupSchedulePanel` can
- * reuse `timeUntil` for the "next run in Xh" line without duplicating the
- * formatting rules.
+ * Countdown and byte-formatting helpers for the Database tab UI. Relative past
+ * times ("3 minutes ago") come from the shared `@/modules/shared/lib/time`.
  */
-
-/** Compact relative-past formatter ("3m ago", "2h ago", "5d ago"). */
-export function timeAgo(iso: string | null): string {
-  if (!iso) return ''
-  const d = Date.now() - new Date(iso).getTime()
-  const s = Math.max(1, Math.round(d / 1000))
-  if (s < 60) return `${s}s ago`
-  const m = Math.round(s / 60)
-  if (m < 60) return `${m}m ago`
-  const h = Math.round(m / 60)
-  if (h < 48) return `${h}h ago`
-  return `${Math.round(h / 24)}d ago`
-}
 
 /** Compact relative-future formatter; returns `'expired'` for past dates. */
 export function timeUntil(iso: string): string {

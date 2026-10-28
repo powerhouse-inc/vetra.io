@@ -1,4 +1,4 @@
-import { formatDate } from '@/modules/apps/lib/time'
+import { formatDate } from '@/modules/shared/lib/time'
 import type { PublisherTemplate, PublisherTerm } from '../types'
 
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/

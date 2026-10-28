@@ -10,6 +10,7 @@ import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
 
 import { EnsAddress } from './ens-address'
+import { formatDate } from '@/modules/shared/lib/time'
 
 type PermissionLevel = 'READ' | 'WRITE' | 'ADMIN'
 
@@ -284,7 +285,7 @@ export function MyPermissionsTab({ client, viewerAddress }: Props) {
                         {p.grantedBy ? <EnsAddress address={p.grantedBy} /> : '—'}
                       </td>
                       <td className="text-muted-foreground border-b px-3 py-2 whitespace-nowrap">
-                        {p.createdAt ? new Date(p.createdAt).toLocaleDateString() : '—'}
+                        {formatDate(p.createdAt) || '—'}
                       </td>
                       <td className="border-b px-3 py-2">
                         <CopyId id={p.documentId} />

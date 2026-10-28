@@ -49,8 +49,8 @@ import {
   primaryUrl,
   refLabel,
 } from '../lib/status'
-import { formatDate, formatTimestamp } from '../lib/time'
-import { timeAgo } from '../lib/time'
+import { formatDate, formatTimestamp } from '@/modules/shared/lib/time'
+import { timeAgo } from '@/modules/shared/lib/time'
 import type { App } from '../types'
 import { AppAvatar } from './app-avatar'
 import { AppDeployments } from './app-deployments'
