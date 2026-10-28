@@ -371,9 +371,8 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
 
   return (
     <>
-      {/* Header — HeroCard with glass surface so it lifts off the
-          ambient background and reads as the page's anchor. The "Back
-          to Cloud" link sits outside the card as a breadcrumb. */}
+      {/* Header — the page's anchor card. The back link sits outside
+          the card as a breadcrumb. */}
       <div className="space-y-4">
         <Link
           href={appId ? `/user/apps/${appId}` : '/user/environments'}
@@ -383,7 +382,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           {appId ? `Back to ${appName ?? 'app'}` : 'Back to Cloud'}
         </Link>
         <EnvironmentLicenceBanner environmentId={documentId} />
-        <HeroCard glass>
+        <HeroCard>
           <div className="flex flex-wrap items-center gap-3 p-6">
             <div className="min-w-0 flex-1 space-y-1">
               <div className="flex items-center gap-3">

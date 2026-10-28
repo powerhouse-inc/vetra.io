@@ -481,6 +481,7 @@ export function NewAppWizard() {
           Apps
         </Link>
         <PageHeader
+          eyebrow="~/apps/new"
           title="Create an app"
           description="Connect a GitHub repository. Every push to production and every pull request deploys automatically."
         />

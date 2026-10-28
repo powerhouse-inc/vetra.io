@@ -91,6 +91,7 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
   return (
     <div className="mx-auto mt-24 max-w-screen-xl px-6 pb-16">
       <PageHeader
+        eyebrow="~/studio"
         className="mb-6"
         title="Studio"
         description="Each studio is a dedicated Vetra Studio where an AI agent helps you design document models and apps."

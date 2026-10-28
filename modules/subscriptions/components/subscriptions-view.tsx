@@ -85,6 +85,7 @@ export function SubscriptionsView() {
   return (
     <div className="space-y-8">
       <PageHeader
+        eyebrow="~/subscriptions"
         title="Subscriptions"
         description="Apps you have access to, how long for, and where they run."
         actions={

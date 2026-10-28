@@ -11,7 +11,12 @@ function UserPackagesPageInner() {
 
   return (
     <div className="container mx-auto max-w-5xl px-4 pt-20 pb-8">
-      <PageHeader className="mb-8" title="Packages" description="Packages you’ve published." />
+      <PageHeader
+        eyebrow="~/packages"
+        className="mb-8"
+        title="Packages"
+        description="Packages you’ve published."
+      />
       <PackagesTab />
     </div>
   )

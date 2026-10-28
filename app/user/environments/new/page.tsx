@@ -23,6 +23,7 @@ export default function CreateEnvironmentPage() {
           Back to Cloud
         </Link>
         <PageHeader
+          eyebrow="~/environments/new"
           className="mb-8"
           title="Create an environment"
           description="Set up a new cloud environment to host your Powerhouse applications."

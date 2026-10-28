@@ -25,6 +25,7 @@ export function CloudDashboard() {
   return (
     <main className="mx-auto mt-20 max-w-screen-xl space-y-8 px-6 py-8">
       <PageHeader
+        eyebrow="~/environments"
         title={org ? `${org.name} environments` : 'Your environments'}
         description="Environments you manage by hand, not linked to an app."
         actions={<NewEnvironmentButton />}

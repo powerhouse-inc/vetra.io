@@ -7,7 +7,7 @@ function Card({ className, ...props }: React.ComponentProps<'div'>) {
     <div
       data-slot="card"
       className={cn(
-        'bg-card text-card-foreground flex flex-col overflow-hidden rounded-xl shadow-sm dark:border dark:border-gray-800',
+        'bg-card text-card-foreground border-border flex flex-col overflow-hidden rounded-xl border shadow-sm',
         className,
       )}
       {...props}
@@ -69,28 +69,15 @@ function CardFooter({ className, ...props }: React.ComponentProps<'div'>) {
 }
 
 /**
- * "Hero" variant of Card for prominent moments — env-detail header,
- * primary status panel, big landing-page-style call-outs. Opt-in;
- * existing Card consumers are unchanged.
- *
- *  - `glass`: semi-transparent + backdrop blur, sits over the ambient
- *    background layer for a frosted-glass surface.
- *  - `accentTop`: a hairline brand-color stripe at the top edge.
+ * Prominent card for a page's main moment (the env-detail header): the
+ * console surface on the strong line, like the landing page windows.
  */
-function HeroCard({
-  className,
-  glass = false,
-  accentTop = true,
-  ...props
-}: React.ComponentProps<'div'> & { glass?: boolean; accentTop?: boolean }) {
+function HeroCard({ className, ...props }: React.ComponentProps<'div'>) {
   return (
     <div
       data-slot="hero-card"
       className={cn(
-        'relative flex flex-col overflow-hidden rounded-xl shadow-sm dark:border dark:border-gray-800',
-        glass ? 'bg-card/70 backdrop-blur-xl' : 'bg-card text-card-foreground',
-        accentTop &&
-          'before:via-primary before:pointer-events-none before:absolute before:inset-x-0 before:top-0 before:h-px before:bg-gradient-to-r before:from-transparent before:to-transparent before:opacity-50',
+        'bg-card text-card-foreground border-border relative flex flex-col overflow-hidden rounded-xl border shadow-sm',
         className,
       )}
       {...props}
