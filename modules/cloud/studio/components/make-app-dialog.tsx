@@ -198,7 +198,7 @@ function MakeAppForm({
       )}
       <DialogFooter>
         <Button type="submit" disabled={!trimmed || busy || blocked}>
-          {busy ? 'Creating…' : 'Create App'}
+          {busy ? 'Creating…' : 'Create app'}
         </Button>
       </DialogFooter>
     </form>
