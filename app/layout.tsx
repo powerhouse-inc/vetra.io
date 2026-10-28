@@ -131,8 +131,11 @@ export default async function RootLayout({
           strategy="afterInteractive"
         />
         <AmbientBackground />
+        {/* The NEXT_PUBLIC_ id is the vetra.io project. OPENPANEL_CLIENT_ID is injected
+            by the hosting chart for tenant Connects ("Vetra Environments", CORS
+            *.vetra.io only), so preferring it got every vetra.io event rejected. */}
         <OpenPanelProvider
-          clientId={process.env.OPENPANEL_CLIENT_ID || process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID}
+          clientId={process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || process.env.OPENPANEL_CLIENT_ID}
           apiUrl={process.env.OPENPANEL_API_URL || process.env.NEXT_PUBLIC_OPENPANEL_API_URL}
           environment={process.env.OPENPANEL_ENV || process.env.NEXT_PUBLIC_OPENPANEL_ENV}
         />
