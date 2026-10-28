@@ -12,6 +12,7 @@ import { describeAppsError, isAppsError } from '@/modules/apps/graphql'
 import { useMyApps, useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
 import { canOfferCreateApp, type MyOrg } from '@/modules/orgs/types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
+import { PageHeader } from '@/modules/shared/components/page-header'
 import { Alert, AlertDescription, AlertTitle } from '@/modules/shared/components/ui/alert'
 import { Button } from '@/modules/shared/components/ui/button'
 
@@ -175,29 +176,26 @@ export function AppsHome() {
   return (
     <main className="mx-auto mt-20 max-w-screen-xl space-y-12 px-6 py-8">
       <section className="space-y-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-1.5">
-            <h1 className="text-3xl font-bold tracking-tight">Your apps</h1>
-            <p className="text-muted-foreground max-w-2xl">
-              Push to GitHub, Vetra deploys. Production follows your main branch and every pull
-              request gets its own preview.
-            </p>
-          </div>
-          <div className="flex shrink-0 gap-2">
-            <Button asChild variant="ghost">
-              <Link href="/docs/deploy">
-                <BookOpen className="h-4 w-4" />
-                Deploy guide
-              </Link>
-            </Button>
-            <Button asChild>
-              <Link href="/user/apps/new">
-                <Plus className="h-4 w-4" />
-                New app
-              </Link>
-            </Button>
-          </div>
-        </div>
+        <PageHeader
+          title="Your apps"
+          description="Push to GitHub, Vetra deploys. Production follows your main branch and every pull request gets its own preview."
+          actions={
+            <>
+              <Button asChild variant="ghost">
+                <Link href="/docs/deploy">
+                  <BookOpen className="h-4 w-4" />
+                  Deploy guide
+                </Link>
+              </Button>
+              <Button asChild>
+                <Link href="/user/apps/new">
+                  <Plus className="h-4 w-4" />
+                  New app
+                </Link>
+              </Button>
+            </>
+          }
+        />
         <AppsSection />
       </section>
 

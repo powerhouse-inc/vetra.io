@@ -184,7 +184,7 @@ function NewEnvironmentFormInner({
         {orgRefusal && <p className="text-muted-foreground mt-2 text-sm">{orgRefusal}</p>}
         <div className="mt-4">
           <Button type="submit" disabled={isSubmitting || orgPending || !!orgRefusal} size="sm">
-            {isSubmitting ? 'Saving…' : isRenameMode ? 'Update Name' : 'Create Environment'}
+            {isSubmitting ? 'Saving…' : isRenameMode ? 'Update name' : 'Create environment'}
           </Button>
         </div>
       </form>

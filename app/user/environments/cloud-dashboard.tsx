@@ -7,14 +7,7 @@ import { useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
 import { splitEnvironments } from '@/modules/apps/lib/split'
 import { useEnvironments } from '@/modules/cloud/hooks/use-environment'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbSeparator,
-  BreadcrumbPage,
-} from '@/modules/shared/components/ui/breadcrumb'
+import { PageHeader } from '@/modules/shared/components/page-header'
 import { Button } from '@/modules/shared/components/ui/button'
 import { CloudEnvironments } from './cloud-projects'
 
@@ -31,30 +24,18 @@ export function CloudDashboard() {
 
   return (
     <main className="mx-auto mt-20 max-w-screen-xl space-y-8 px-6 py-8">
-      <div className="flex items-start justify-between">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">
-            {org ? `${org.name} environments` : 'Your Environments'}
-          </h1>
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem>
-                <BreadcrumbLink href="/user/environments">Cloud</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Dashboard</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-        <Button asChild>
-          <Link href="/user/environments/new">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Environment
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title={org ? `${org.name} environments` : 'Your environments'}
+        description="Environments you manage by hand, not linked to an app."
+        actions={
+          <Button asChild>
+            <Link href="/user/environments/new">
+              <Plus className="h-4 w-4" />
+              New environment
+            </Link>
+          </Button>
+        }
+      />
 
       {environments.length > 0 && (
         <div className="flex gap-6">

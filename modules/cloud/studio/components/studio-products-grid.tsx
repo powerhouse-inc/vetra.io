@@ -9,6 +9,7 @@ import {
   useMySubscriptions,
   useStudioAccess,
 } from '@/modules/subscriptions/hooks/use-subscriptions'
+import { PageHeader } from '@/modules/shared/components/page-header'
 import { PageSpinner } from '@/modules/shared/components/page-shell'
 import { StudioProductCard } from './studio-product-card'
 import { NewProductCard } from './new-product-card'
@@ -89,7 +90,11 @@ export function StudioProductsGrid({ locked = false }: { locked?: boolean }) {
 
   return (
     <div className="mx-auto mt-24 max-w-screen-xl px-6 pb-16">
-      <h1 className="mb-6 text-2xl font-semibold">Studio</h1>
+      <PageHeader
+        className="mb-6"
+        title="Studio"
+        description="Each studio is a dedicated Vetra Studio where an AI agent helps you design document models and apps."
+      />
       {locked && <LapsedBanner />}
 
       {showEmptyState ? (

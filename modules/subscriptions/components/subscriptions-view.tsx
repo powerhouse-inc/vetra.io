@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { EmptyState, TabError, TabSkeleton } from '@/modules/publisher/components/primitives'
+import { PageHeader } from '@/modules/shared/components/page-header'
 import { Button } from '@/modules/shared/components/ui/button'
 import { useMySubscriptions } from '../hooks/use-subscriptions'
 import { groupByApp, type AppGroup } from '../lib/subscriptions'
@@ -83,20 +84,18 @@ export function SubscriptionsView() {
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="space-y-1.5">
-          <h1 className="text-3xl font-bold tracking-tight">Subscriptions</h1>
-          <p className="text-muted-foreground max-w-2xl">
-            Apps you have access to, how long for, and where they run.
-          </p>
-        </div>
-        <Button asChild variant="outline" className="self-start sm:self-auto">
-          <Link href="/redeem">
-            <Ticket className="h-4 w-4" aria-hidden />
-            Redeem a code
-          </Link>
-        </Button>
-      </div>
+      <PageHeader
+        title="Subscriptions"
+        description="Apps you have access to, how long for, and where they run."
+        actions={
+          <Button asChild variant="outline">
+            <Link href="/redeem">
+              <Ticket className="h-4 w-4" aria-hidden />
+              Redeem a code
+            </Link>
+          </Button>
+        }
+      />
       {subs.isPending ? (
         <TabSkeleton rows={3} label="Loading subscriptions" />
       ) : subs.error ? (

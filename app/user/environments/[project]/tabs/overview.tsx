@@ -550,7 +550,7 @@ export function InlineEditableTitle({
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
-          className="h-9 text-2xl font-bold"
+          className="h-10 text-3xl font-bold tracking-tight"
         />
         <Button
           variant="ghost"
@@ -578,7 +578,7 @@ export function InlineEditableTitle({
 
   return (
     <div className="flex items-center gap-2">
-      <h2 className="text-2xl font-bold">{displayValue}</h2>
+      <h1 className="text-3xl font-bold tracking-tight">{displayValue}</h1>
       {!readOnly && (
         <Button
           variant="ghost"
