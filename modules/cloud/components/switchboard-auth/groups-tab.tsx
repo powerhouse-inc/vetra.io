@@ -175,12 +175,14 @@ export function GroupsTab({ client }: Props) {
           className="bg-muted/30 flex flex-col gap-2 rounded-md border p-3"
         >
           <Input
+            aria-label="Group name"
             value={newName}
             onChange={(e) => setNewName(e.target.value)}
             placeholder="Group name"
             className="h-8 text-sm"
           />
           <Input
+            aria-label="Group description"
             value={newDesc}
             onChange={(e) => setNewDesc(e.target.value)}
             placeholder="Description (optional)"
@@ -258,6 +260,7 @@ export function GroupsTab({ client }: Props) {
                         className="flex flex-wrap gap-2 sm:flex-nowrap"
                       >
                         <Input
+                          aria-label="Member wallet address"
                           value={newMemberAddress}
                           onChange={(e) => setNewMemberAddress(e.target.value)}
                           placeholder="0x… address"

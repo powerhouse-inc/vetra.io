@@ -95,7 +95,7 @@ export function DumpRow({ dump, onRetry, onCancel, isCancelling, onRestore, sour
           )}
           {isExpiredReady && <>expired {timeAgo(dump.expiresAt)}</>}
           {dump.status === 'RUNNING' && (
-            <>started {timeAgo(dump.startedAt ?? dump.requestedAt)} · pg_dump → S3</>
+            <>started {timeAgo(dump.startedAt ?? dump.requestedAt)} · saving backup</>
           )}
           {dump.status === 'PENDING' && <>requested {timeAgo(dump.requestedAt)}</>}
           {dump.status === 'FAILED' && (
@@ -131,13 +131,13 @@ export function DumpRow({ dump, onRetry, onCancel, isCancelling, onRestore, sour
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Restore this dump?</AlertDialogTitle>
+                <AlertDialogTitle>Restore this backup?</AlertDialogTitle>
                 <AlertDialogDescription asChild>
                   <div className="space-y-2">
                     <p>
                       The whole database is replaced with the contents of{' '}
                       <span className="font-mono">{filename}</span>. Everything written after this
-                      dump is removed.
+                      backup is removed.
                     </p>
                     <ul className="list-disc space-y-1 pl-4">
                       <li>

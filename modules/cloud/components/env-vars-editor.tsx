@@ -37,7 +37,8 @@ export function EnvVarsEditor({ value, onChange, disabled }: Props) {
         return (
           <div key={idx} className="flex items-center gap-2">
             <Input
-              aria-label={`env-name-${idx}`}
+              data-testid={`env-name-${idx}`}
+              aria-label={`Variable ${idx + 1} name`}
               placeholder="NAME"
               value={row.name}
               onChange={(e) => update(idx, { name: e.target.value })}
@@ -45,7 +46,8 @@ export function EnvVarsEditor({ value, onChange, disabled }: Props) {
               className="font-mono text-sm"
             />
             <Input
-              aria-label={`env-value-${idx}`}
+              data-testid={`env-value-${idx}`}
+              aria-label={`Variable ${idx + 1} value`}
               placeholder={
                 isSecret && valueStr === '' ? '•••• (encrypted — type to replace)' : 'value'
               }
@@ -60,7 +62,13 @@ export function EnvVarsEditor({ value, onChange, disabled }: Props) {
               variant="ghost"
               size="icon"
               type="button"
-              aria-label={isSecret ? `unmark-secret-${idx}` : `mark-secret-${idx}`}
+              data-testid={isSecret ? `unmark-secret-${idx}` : `mark-secret-${idx}`}
+              aria-label={
+                isSecret
+                  ? `Store variable ${idx + 1} as plain text`
+                  : `Store variable ${idx + 1} as a secret`
+              }
+              aria-pressed={isSecret}
               title={
                 isSecret
                   ? 'Currently encrypted. Click to mark as plain (value moves into document state).'
@@ -75,7 +83,7 @@ export function EnvVarsEditor({ value, onChange, disabled }: Props) {
               variant="ghost"
               size="icon"
               type="button"
-              aria-label="remove env var"
+              aria-label={`Remove env var ${idx + 1}`}
               onClick={() => remove(idx)}
               disabled={disabled}
             >

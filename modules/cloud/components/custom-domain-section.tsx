@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
 
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
 import { customDomainDnsRecords } from '@/modules/cloud/lib/env-host'
@@ -112,7 +113,7 @@ export function CustomDomainSection({
         setApexInput('')
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to update custom domain')
+      toast.error(describeCloudError(err, "Couldn't update the custom domain. Try again."))
     }
   }
 
@@ -122,7 +123,7 @@ export function CustomDomainSection({
       await onSetCustomDomain(true, domainInput.trim(), apexInput || null)
       toast.success('Custom domain saved')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to save custom domain')
+      toast.error(describeCloudError(err, "Couldn't save the custom domain. Try again."))
     }
   }
 

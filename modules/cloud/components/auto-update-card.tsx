@@ -15,6 +15,7 @@ import { toast } from 'sonner'
 
 import { fetchEnvironmentReleaseHistory, fetchLatestRelease } from '@/modules/cloud/graphql'
 import { useDebouncedOptimistic } from '@/modules/cloud/hooks/use-debounced-optimistic'
+import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
 import type {
   AutoUpdateChannel,
   CloudEnvironment,
@@ -22,6 +23,16 @@ import type {
   ReleaseIndexEntry,
   TenantService,
 } from '@/modules/cloud/types'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/modules/shared/components/ui/alert-dialog'
 import { Badge } from '@/modules/shared/components/ui/badge'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Card, CardContent, CardTitle } from '@/modules/shared/components/ui/card'
@@ -88,7 +99,7 @@ export function AutoUpdateCard({
     commit: onChangeChannel,
     delayMs: 300,
     onError: (err) => {
-      toast.error(err instanceof Error ? err.message : 'Failed to set auto-update channel')
+      toast.error(describeCloudError(err, "Couldn't change the update channel. Try again."))
     },
   })
 
@@ -170,9 +181,9 @@ export function AutoUpdateCard({
     try {
       const updated = await onUpdateNow()
       if (updated.length > 0) {
-        toast.success('Updating to latest — argo will roll the pod in a few seconds')
+        toast.success('Updating to the latest version. Services restart in a few seconds.')
       } else {
-        toast.info('Already on the latest tag')
+        toast.info('Already on the latest version')
       }
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
@@ -181,7 +192,7 @@ export function AutoUpdateCard({
       } else if (msg.includes('NO_RELEASE_KNOWN')) {
         toast.error('No release observed for this channel yet')
       } else {
-        toast.error(msg)
+        toast.error(describeCloudError(err, "Couldn't start the update. Try again."))
       }
     } finally {
       setIsUpdating(false)
@@ -189,21 +200,23 @@ export function AutoUpdateCard({
   }, [onUpdateNow])
 
   const [isRollingBack, setIsRollingBack] = useState(false)
+  const [rollbackOpen, setRollbackOpen] = useState(false)
   const handleRollback = useCallback(async () => {
     setIsRollingBack(true)
     try {
       const rolled = await onRollback()
       if (rolled.length > 0) {
-        toast.success('Rolling back to previous tag')
+        toast.success('Rolling back to the previous version')
       } else {
         toast.info('No prior version to roll back to')
       }
+      setRollbackOpen(false)
     } catch (err) {
       const msg = err instanceof Error ? err.message : String(err)
       if (msg.includes('NO_PRIOR_RELEASE')) {
         toast.error('No prior version recorded for any enabled service')
       } else {
-        toast.error(msg)
+        toast.error(describeCloudError(err, "Couldn't roll back. Try again."))
       }
     } finally {
       setIsRollingBack(false)
@@ -211,6 +224,13 @@ export function AutoUpdateCard({
   }, [onRollback])
 
   const hasHistory = history.length > 0
+
+  // What a rollback restores, per enabled service: the version it ran before
+  // its most recent change (history is newest first).
+  const rollbackTargets = enabledServices.flatMap((svc) => {
+    const last = history.find((h) => h.service === svc.type)
+    return last?.fromTag ? [{ service: svc.type, from: svc.version, to: last.fromTag }] : []
+  })
 
   // Collapsed by default — the card is useful but not essential for most
   // envs, and rendering a radio group + per-service rows + activity feed
@@ -365,20 +385,56 @@ export function AutoUpdateCard({
                   className="gap-1.5"
                 >
                   <ArrowUpCircle className="h-3.5 w-3.5" />
-                  {isUpdating ? 'Updating...' : 'Update now'}
+                  {isUpdating ? 'Updating…' : 'Update now'}
                 </Button>
                 {hasHistory && (
                   <Button
                     size="sm"
                     variant="outline"
-                    onClick={() => void handleRollback()}
+                    onClick={() => setRollbackOpen(true)}
                     disabled={isRollingBack || isChannelPending}
                     className="gap-1.5"
                   >
                     <ArrowDownCircle className="h-3.5 w-3.5" />
-                    {isRollingBack ? 'Rolling back...' : 'Rollback'}
+                    {isRollingBack ? 'Rolling back…' : 'Roll back'}
                   </Button>
                 )}
+                <AlertDialog
+                  open={rollbackOpen}
+                  onOpenChange={(open) => !isRollingBack && setRollbackOpen(open)}
+                >
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Roll back to the previous version?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        Each enabled service is redeployed with the version it ran before its last
+                        update. The next automatic update can move it forward again.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    {rollbackTargets.length > 0 && (
+                      <ul className="bg-muted/50 space-y-1 rounded-lg p-3 font-mono text-xs">
+                        {rollbackTargets.map((t) => (
+                          <li key={t.service}>
+                            {SERVICE_LABELS[t.service]}: {t.from ?? '—'} → {t.to}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                    <AlertDialogFooter>
+                      <AlertDialogCancel disabled={isRollingBack}>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        onClick={(e) => {
+                          e.preventDefault()
+                          void handleRollback()
+                        }}
+                        disabled={isRollingBack}
+                      >
+                        {isRollingBack && <Loader2 className="h-4 w-4 animate-spin" />}
+                        Roll back
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
               </div>
             </div>
           )}

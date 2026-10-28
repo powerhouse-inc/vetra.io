@@ -3,6 +3,7 @@
 import { ExternalLink, Settings2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
 
 import { AddonSettingsDialog } from '@/modules/cloud/components/addon-settings-dialog'
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
@@ -129,9 +130,15 @@ function AddonRow({
       setAwaiting({ value: checked, leftReady: false })
     } catch (error) {
       console.error(`Failed to toggle ${label}:`, error)
-      toast.error(error instanceof Error ? error.message : `Failed to toggle ${label}`, {
-        action: { label: 'Retry', onClick: () => void handleToggle(checked) },
-      })
+      toast.error(
+        describeCloudError(
+          error,
+          `Couldn't ${checked ? 'enable' : 'disable'} ${label}. Try again.`,
+        ),
+        {
+          action: { label: 'Retry', onClick: () => void handleToggle(checked) },
+        },
+      )
     }
   }
 

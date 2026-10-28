@@ -580,6 +580,8 @@ export function AppDetail({ appId }: { appId: string }) {
             deployments={deployments}
             isPending={deploymentsQuery.isPending}
             error={deploymentsQuery.error}
+            onRetry={() => void deploymentsQuery.refetch()}
+            retrying={deploymentsQuery.isRefetching}
           />
         </TabsContent>
         {!readOnly && (

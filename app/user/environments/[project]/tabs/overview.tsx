@@ -31,6 +31,7 @@ import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtim
 import { partitionPackagesByManifestType } from '@/modules/cloud/lib/module-package-filter'
 import { toServiceImageTag } from '@/modules/cloud/registry/channels'
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
+import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
 import {
   customDomainHosts,
   customDomainServiceHost,
@@ -204,7 +205,12 @@ function ServiceRow({
       toast.success(`${label} ${checked ? 'enabled' : 'disabled'}`)
     } catch (error) {
       console.error(`Failed to toggle ${label}:`, error)
-      toast.error(error instanceof Error ? error.message : `Failed to toggle ${label}`)
+      toast.error(
+        describeCloudError(
+          error,
+          `Couldn't ${checked ? 'enable' : 'disable'} ${label}. Try again.`,
+        ),
+      )
     }
   }
 
@@ -241,7 +247,7 @@ function ServiceRow({
       await setVersionOptimistic(versionWithPrefix)
       toast.success(`${label} version set to ${versionWithPrefix}`)
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : `Failed to set ${label} version`)
+      toast.error(describeCloudError(error, `Couldn't change the ${label} version. Try again.`))
     }
   }
 
@@ -486,6 +492,7 @@ export function InlineEditableTitle({
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(value)
   const inputRef = useRef<HTMLInputElement>(null)
+  const editorRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
@@ -507,7 +514,7 @@ export function InlineEditableTitle({
       toast.success('Name updated')
     } catch (error) {
       console.error('Failed to update name:', error)
-      toast.error(error instanceof Error ? error.message : 'Failed to update name')
+      toast.error(describeCloudError(error, "Couldn't rename the environment. Try again."))
     }
   }
 
@@ -521,21 +528,48 @@ export function InlineEditableTitle({
     if (e.key === 'Escape') handleCancel()
   }
 
+  // Clicking outside saves. Moving focus to the save/cancel buttons must not:
+  // the blur would otherwise save before the cancel click lands.
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement>) => {
+    const next = e.relatedTarget
+    if (next instanceof Node && editorRef.current?.contains(next)) return
+    void handleSave()
+  }
+
+  // Keep focus in the input on pointer press so the blur never fires first
+  // (Safari does not focus buttons on click, so relatedTarget alone is not enough).
+  const keepFocus = (e: React.MouseEvent) => e.preventDefault()
+
   if (isEditing) {
     return (
-      <div className="flex items-center gap-2">
+      <div ref={editorRef} className="flex items-center gap-2">
         <Input
           ref={inputRef}
+          aria-label="Environment name"
           value={editValue}
           onChange={(e) => setEditValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          onBlur={() => void handleSave()}
+          onBlur={handleBlur}
           className="h-9 text-2xl font-bold"
         />
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => void handleSave()}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          aria-label="Save name"
+          onMouseDown={keepFocus}
+          onClick={() => void handleSave()}
+        >
           <Check className="h-4 w-4" />
         </Button>
-        <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={handleCancel}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-8 w-8 p-0"
+          aria-label="Cancel renaming"
+          onMouseDown={keepFocus}
+          onClick={handleCancel}
+        >
           <X className="h-4 w-4" />
         </Button>
       </div>
@@ -550,6 +584,7 @@ export function InlineEditableTitle({
           variant="ghost"
           size="sm"
           className="text-muted-foreground hover:text-foreground h-8 w-8 p-0"
+          aria-label="Rename environment"
           onClick={() => {
             setEditValue(displayValue)
             setIsEditing(true)

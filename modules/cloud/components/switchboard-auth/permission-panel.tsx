@@ -250,6 +250,7 @@ export function PermissionPanel({
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <Input
+                  aria-label="New owner wallet address"
                   value={transferAddress}
                   onChange={(e) => setTransferAddress(e.target.value)}
                   placeholder="0x… new owner address"
@@ -299,6 +300,7 @@ export function PermissionPanel({
             className="mb-2 flex flex-wrap items-center gap-2 sm:flex-nowrap"
           >
             <Input
+              aria-label="Wallet address to grant access"
               value={grantAddress}
               onChange={(e) => setGrantAddress(e.target.value)}
               placeholder="0x… wallet address"

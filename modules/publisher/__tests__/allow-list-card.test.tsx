@@ -12,6 +12,13 @@ vi.mock('../hooks/use-publisher-mutations', () => ({
 
 import { AllowListCard } from '../components/holders/allow-list-card'
 
+/** Click, then let the async handler it starts settle. */
+const click = (el: HTMLElement) =>
+  act(async () => {
+    fireEvent.click(el)
+    await Promise.resolve()
+  })
+
 const A = '0xAbCdEf0123456789aBcDeF0123456789AbCdEf01'
 
 describe('AllowListCard', () => {
@@ -36,13 +43,21 @@ describe('AllowListCard', () => {
     expect((screen.getByRole('button', { name: 'Add' }) as HTMLButtonElement).disabled).toBe(true)
   })
 
-  it('removes an entry', async () => {
+  it('removes an entry only after confirming', async () => {
     remove.mockResolvedValue(true)
     render(<AllowListCard appId="app-1" entries={[{ user: A, addedAt: '2026-10-01T00:00:00Z' }]} />)
-    await act(async () =>
-      fireEvent.click(screen.getByRole('button', { name: `Remove ${A} from the allow list` })),
-    )
+    await click(screen.getByRole('button', { name: `Remove ${A} from the allow list` }))
+    expect(remove).not.toHaveBeenCalled()
+    expect(screen.getByText('Remove from the allow list?')).toBeTruthy()
+    await click(screen.getByRole('button', { name: 'Remove' }))
     expect(remove).toHaveBeenCalledWith({ user: A })
+  })
+
+  it('cancelling the confirmation keeps the entry', async () => {
+    render(<AllowListCard appId="app-1" entries={[{ user: A, addedAt: '2026-10-01T00:00:00Z' }]} />)
+    await click(screen.getByRole('button', { name: `Remove ${A} from the allow list` }))
+    await click(screen.getByRole('button', { name: 'Cancel' }))
+    expect(remove).not.toHaveBeenCalled()
   })
 })
 
