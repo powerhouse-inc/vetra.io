@@ -2,8 +2,19 @@
 
 import { Loader2, Trash2 } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/modules/shared/components/ui/alert-dialog'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
+import { useLastPresent } from '@/modules/shared/hooks/use-last-present'
 import { formatDate } from '@/modules/apps/lib/time'
 import { describePublisherError } from '../../graphql'
 import { useAddToAllowList, useRemoveFromAllowList } from '../../hooks/use-publisher-mutations'
@@ -29,6 +40,19 @@ export function AllowListCard({
   const remove = useRemoveFromAllowList(appId)
   const [user, setUser] = useState('')
   const valid = USER_PATTERN.test(user.trim())
+  // Entry awaiting removal confirmation; the last one is kept so the copy
+  // does not flip while the dialog fades out.
+  const [removing, setRemoving] = useState<string | null>(null)
+  const shownRemoving = useLastPresent(removing)
+
+  const confirmRemove = async () => {
+    if (!removing) return
+    const ok = await runWithToast(
+      () => remove.mutateAsync({ user: removing }),
+      'Removed from the allow list',
+    )
+    if (ok) setRemoving(null)
+  }
 
   const submit = async (e: FormEvent) => {
     e.preventDefault()
@@ -89,12 +113,7 @@ export function AllowListCard({
                 variant="ghost"
                 aria-label={`Remove ${e.user} from the allow list`}
                 disabled={remove.isPending}
-                onClick={() =>
-                  void runWithToast(
-                    () => remove.mutateAsync({ user: e.user }),
-                    'Removed from the allow list',
-                  )
-                }
+                onClick={() => setRemoving(e.user)}
               >
                 <Trash2 className="h-4 w-4" />
               </Button>
@@ -102,6 +121,34 @@ export function AllowListCard({
           ))}
         </ul>
       )}
+      <AlertDialog
+        open={!!removing}
+        onOpenChange={(o) => !o && !remove.isPending && setRemoving(null)}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remove from the allow list?</AlertDialogTitle>
+            <AlertDialogDescription>
+              <span className="font-mono">{shownRemoving ? shortDid(shownRemoving) : ''}</span> can
+              no longer be granted a licence until you add them again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={remove.isPending}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                void confirmRemove()
+              }}
+              disabled={remove.isPending}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {remove.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+              Remove
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </SectionCard>
   )
 }
