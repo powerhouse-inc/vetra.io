@@ -61,7 +61,7 @@ export function RepositoryActionButton({
             </div>
             <div className="flex flex-col items-start">
               <span className="text-xs font-medium tracking-wide uppercase">
-                {hasGithubUrl ? 'Explore Repository' : 'Create Repository'}
+                {hasGithubUrl ? 'Explore repository' : 'Create repository'}
               </span>
               <span className="text-sm font-bold">with Powerhouse</span>
             </div>

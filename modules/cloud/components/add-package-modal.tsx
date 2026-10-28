@@ -216,12 +216,12 @@ export function AddPackageModal({
       </DialogTrigger>
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>Add Package</DialogTitle>
+          <DialogTitle>Add package</DialogTitle>
         </DialogHeader>
         <div className="space-y-4">
           {/* Package name combobox */}
           <div className="space-y-2">
-            <label className="text-sm font-medium">Package Name</label>
+            <label className="text-sm font-medium">Package name</label>
             <Popover open={packagePopoverOpen} onOpenChange={setPackagePopoverOpen}>
               <PopoverTrigger asChild>
                 <Button
@@ -230,7 +230,7 @@ export function AddPackageModal({
                   aria-expanded={packagePopoverOpen}
                   className="w-full justify-between font-normal"
                 >
-                  {selectedPackage ?? 'Search Package'}
+                  {selectedPackage ?? 'Search packages'}
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </Button>
               </PopoverTrigger>
@@ -384,7 +384,7 @@ export function AddPackageModal({
         </div>
         <div className="mt-2 flex gap-2">
           <AsyncButton onClickAsync={handleSubmit} disabled={isAddDisabled} pendingLabel="Adding…">
-            Add Package
+            Add package
           </AsyncButton>
           <Button variant="outline" onClick={() => setOpen(false)}>
             Cancel

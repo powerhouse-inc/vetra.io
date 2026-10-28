@@ -61,7 +61,7 @@ describe('MakeAppDialog', () => {
     ).toBeTruthy()
     expect(screen.getByText(/It also creates the App's production environment\./)).toBeTruthy()
     expect((screen.getByLabelText('App name') as HTMLInputElement).value).toBe('My Shop')
-    fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create app' }))
     await waitFor(() =>
       expect(mutateAsync).toHaveBeenCalledWith({
         name: 'My Shop',
@@ -93,7 +93,7 @@ describe('MakeAppDialog', () => {
     org.org = { id: 'o1', name: 'Acme', role: 'ADMIN' }
     mutateAsync.mockResolvedValue({ id: 'a1' })
     open()
-    fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create app' }))
     await waitFor(() =>
       expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ orgId: 'o1' })),
     )
@@ -104,7 +104,7 @@ describe('MakeAppDialog', () => {
       new AppsApiError('BAD_USER_INPUT', 'This Studio is already an App'),
     )
     open()
-    fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create app' }))
     expect(await screen.findByText('This Studio is already an App')).toBeTruthy()
     expect(push).not.toHaveBeenCalled()
   })
@@ -112,7 +112,7 @@ describe('MakeAppDialog', () => {
   it('keeps the backend wording when the Studio is not yours', async () => {
     mutateAsync.mockRejectedValue(new AppsApiError('FORBIDDEN', 'You do not own this Studio'))
     open()
-    fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create app' }))
     expect(await screen.findByText('You do not own this Studio')).toBeTruthy()
   })
 
@@ -121,7 +121,7 @@ describe('MakeAppDialog', () => {
     org.org = { id: 'o1', name: 'Acme', role: 'MEMBER' }
     open()
     expect(screen.getByRole('alert').textContent).toContain('Ask an owner or admin of Acme')
-    const submit = screen.getByRole('button', { name: 'Create App' }) as HTMLButtonElement
+    const submit = screen.getByRole('button', { name: 'Create app' }) as HTMLButtonElement
     expect(submit.disabled).toBe(true)
     fireEvent.click(submit)
     expect(mutateAsync).not.toHaveBeenCalled()
@@ -131,7 +131,7 @@ describe('MakeAppDialog', () => {
     installs.data = []
     open()
     expect(screen.getByText('Install Vetra Deploy')).toBeTruthy()
-    const submit = screen.getByRole('button', { name: 'Create App' }) as HTMLButtonElement
+    const submit = screen.getByRole('button', { name: 'Create app' }) as HTMLButtonElement
     expect(submit.disabled).toBe(true)
     fireEvent.click(submit)
     expect(mutateAsync).not.toHaveBeenCalled()
@@ -146,7 +146,7 @@ describe('MakeAppDialog', () => {
     open()
     fireEvent.click(screen.getByRole('combobox', { name: 'Repository owner' }))
     fireEvent.click(await screen.findByRole('option', { name: /acme-inc/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create app' }))
     await waitFor(() =>
       expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ installationId: '22' })),
     )
@@ -155,7 +155,7 @@ describe('MakeAppDialog', () => {
   it('offers reconnect when GitHub is not connected', async () => {
     mutateAsync.mockRejectedValue(new AppsApiError('GITHUB_NOT_CONNECTED', 'x'))
     open()
-    fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create app' }))
     expect(await screen.findByText('Reconnect GitHub')).toBeTruthy()
   })
 
@@ -165,7 +165,7 @@ describe('MakeAppDialog', () => {
     open()
     expect(screen.getByText(/Could not reach Vetra/)).toBeTruthy()
     expect(screen.queryByText('Install Vetra Deploy')).toBeNull()
-    expect((screen.getByRole('button', { name: 'Create App' }) as HTMLButtonElement).disabled).toBe(
+    expect((screen.getByRole('button', { name: 'Create app' }) as HTMLButtonElement).disabled).toBe(
       true,
     )
   })
@@ -189,7 +189,7 @@ describe('MakeAppDialog', () => {
     expect(screen.getByText(/Could not reach Vetra/)).toBeTruthy()
     fireEvent.click(screen.getByRole('combobox', { name: 'Repository owner' }))
     fireEvent.click(await screen.findByRole('option', { name: /acme-inc/ }))
-    fireEvent.click(screen.getByRole('button', { name: 'Create App' }))
+    fireEvent.click(screen.getByRole('button', { name: 'Create app' }))
     await waitFor(() =>
       expect(mutateAsync).toHaveBeenCalledWith(expect.objectContaining({ installationId: '22' })),
     )
