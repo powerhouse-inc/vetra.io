@@ -12,13 +12,9 @@ export type SyncStatus = 'up-to-date' | 'refreshing' | 'offline' | 'error'
  * first element of the relevant React Query key (see modules/cloud/query/keys.ts
  * and the profile hooks). Packages are server-rendered and intentionally absent.
  */
-export const COORDINATED_KEY_PREFIXES = [
-  ['builder-account'],
-  ['my-teams'],
-  ['studio-products'],
-  ['environments'],
-  ['viewer'],
-] as const
+// Not builder-account / my-teams: their read-model queries aren't deployed on the
+// switchboard, so they 400 on every load and would pin the chip to "error".
+export const COORDINATED_KEY_PREFIXES = [['studio-products'], ['environments'], ['viewer']] as const
 
 /** How long the tab must be hidden before a return triggers a full refresh. */
 export const AWAY_THRESHOLD_MS = 60_000

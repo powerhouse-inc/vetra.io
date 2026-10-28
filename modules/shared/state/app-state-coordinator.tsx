@@ -11,10 +11,7 @@ import {
   useSyncExternalStore,
 } from 'react'
 import type { ReactNode } from 'react'
-import { useRenownAuth } from '@powerhousedao/reactor-browser'
 import { useIsFetching, useIsMutating, useQueryClient } from '@tanstack/react-query'
-import { useBuilderAccount } from '@/modules/profile/lib/use-builder-account'
-import { useMyTeams } from '@/modules/profile/lib/use-my-teams'
 import { useDocumentListSubscription } from '@/modules/cloud/hooks/use-document-subscription'
 import { createDebouncer } from '@/shared/lib/debounce'
 import {
@@ -44,34 +41,8 @@ function subscribeOnline(onChange: () => void): () => void {
   }
 }
 
-/** Returns the connected address when a user is present, else null. */
-function useViewerAddress(): string | null {
-  const auth = useRenownAuth()
-  // User-first: `status` stays "initial" after a reload even with a restored
-  // user, so key off the user (address is set iff a user is present).
-  return auth.address ?? null
-}
-
-/**
- * Invisible cache-warmer: mounting these existing hooks at the app root keeps
- * the user's cross-page data warm. React Query dedupes by key, so a page that
- * later mounts the same hook reads the warm cache instead of cold-fetching.
- * Each hook self-guards on `enabled`, so they no-op until identity resolves.
- *
- * Environments are intentionally not warmed here — they are cloud-only UI with
- * their own WS subscription + polling, and warming them globally would open a
- * redundant socket and fetch on every page. They are still kept fresh by the
- * coordinated refresh/WS below.
- */
-function CacheWarmers({ address }: { address: string | null }) {
-  useBuilderAccount(address)
-  useMyTeams(address ?? undefined)
-  return null
-}
-
 export function AppStateCoordinator({ children }: { children: ReactNode }) {
   const queryClient = useQueryClient()
-  const address = useViewerAddress()
 
   const [lastSyncedAt, setLastSyncedAt] = useState<number | null>(null)
   // External store so SSR + first client render agree (server snapshot = true),
@@ -159,12 +130,7 @@ export function AppStateCoordinator({ children }: { children: ReactNode }) {
     [status, lastSyncedAt, refreshAll],
   )
 
-  return (
-    <AppStateContext.Provider value={value}>
-      <CacheWarmers address={address} />
-      {children}
-    </AppStateContext.Provider>
-  )
+  return <AppStateContext.Provider value={value}>{children}</AppStateContext.Provider>
 }
 
 /** Reads the coordinated app-state context. Returns null outside the provider. */

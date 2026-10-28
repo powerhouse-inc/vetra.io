@@ -41,20 +41,20 @@ describe('shouldRefreshAfterAway', () => {
 
 describe('isCoordinatedKey', () => {
   it('matches a coordinated prefix', () => {
-    expect(isCoordinatedKey(['my-teams', '0xabc'])).toBe(true)
     expect(isCoordinatedKey(['studio-products', 'did:x'])).toBe(true)
     expect(isCoordinatedKey(['environments', 'MINE', null])).toBe(true)
   })
 
   it('rejects non-coordinated keys', () => {
     expect(isCoordinatedKey(['tenant-secrets', 'env1'])).toBe(false)
+    // Their read-model queries aren't deployed: they must not drive the chip.
+    expect(isCoordinatedKey(['my-teams', '0xabc'])).toBe(false)
+    expect(isCoordinatedKey(['builder-account', '0xabc'])).toBe(false)
     expect(isCoordinatedKey([])).toBe(false)
   })
 
   it('exposes the expected prefixes', () => {
     expect(COORDINATED_KEY_PREFIXES.map((k) => k[0])).toEqual([
-      'builder-account',
-      'my-teams',
       'studio-products',
       'environments',
       'viewer',
