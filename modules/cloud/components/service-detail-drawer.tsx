@@ -406,7 +406,7 @@ export function ServiceDetailDrawer({
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <MetricCard
                         title="CPU Usage"
-                        description="CPU cores consumed by this service"
+                        description="CPU cores this service is using"
                         series={filteredMetrics?.cpu ?? []}
                         kind="cpu"
                         quota={service ? getServiceQuota(service, 'cpu') : null}
@@ -415,7 +415,7 @@ export function ServiceDetailDrawer({
                       />
                       <MetricCard
                         title="Memory"
-                        description="Working set memory by this service"
+                        description="Memory this service is using"
                         series={filteredMetrics?.memory ?? []}
                         kind="memory"
                         quota={service ? getServiceQuota(service, 'memory') : null}
@@ -424,14 +424,14 @@ export function ServiceDetailDrawer({
                       />
                       <MetricCard
                         title="Request Rate"
-                        description="HTTP requests/sec on this service"
+                        description="HTTP requests per second handled by this service"
                         series={filteredMetrics?.requestRate ?? []}
                         formatValue={(v) => `${v.toFixed(1)} req/s`}
                         isLoading={metricsLoading}
                       />
                       <MetricCard
                         title="Latency (p99)"
-                        description="99th percentile HTTP response time"
+                        description="Response time of the slowest 1% of requests"
                         series={filteredMetrics?.latency ?? []}
                         formatValue={(v) => `${(v * 1000).toFixed(0)}ms`}
                         isLoading={metricsLoading}
@@ -455,7 +455,7 @@ export function ServiceDetailDrawer({
                 <EventTimeline events={filteredEvents} isLoading={eventsLoading} />
                 {!eventsLoading && filteredEvents.length === 0 && (
                   <p className="text-muted-foreground py-6 text-center text-sm">
-                    No recent kube events for this service.
+                    No recent activity for this service.
                   </p>
                 )}
               </TabsContent>

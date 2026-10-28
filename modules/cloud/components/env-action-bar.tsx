@@ -163,7 +163,7 @@ function renderBody({
     return (
       <>
         <AlertTriangle className="text-warning h-3.5 w-3.5" />
-        <span className="text-foreground text-sm">Config drift detected</span>
+        <span className="text-foreground text-sm">Running configuration is out of date</span>
       </>
     )
   }

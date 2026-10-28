@@ -162,7 +162,7 @@ describe('AddonsSection — workflows', () => {
   // deployed; unsaid, a user reads the unchanged Connect as a failed toggle.
   it('says when each half takes effect', () => {
     renderSection()
-    expect(screen.queryByText(/restarts the reactor right away/i)).not.toBeNull()
+    expect(screen.queryByText(/restarts the switchboard right away/i)).not.toBeNull()
     expect(screen.queryByText(/next approve \/ deploy/i)).not.toBeNull()
   })
 

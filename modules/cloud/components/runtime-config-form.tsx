@@ -186,7 +186,7 @@ function AppSection({ form, overrides }: SectionProps) {
         overrides={overrides}
         path="app.workflowsEnabled"
         label="Workflows enabled"
-        description="Loads the workflow package in Connect: the workflow and connection editors plus Workflow Studio. The engine that runs them is the reactor's own PH_WORKFLOWS_ENABLED, set from the Add-ons tab."
+        description="Loads the workflow package in Connect: the workflow and connection editors plus Workflow Studio. The engine that runs them is switched on separately with the Workflows add-on."
       />
     </SectionCard>
   )
