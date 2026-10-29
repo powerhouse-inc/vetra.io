@@ -576,6 +576,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           status={state?.status}
           intentDeploying={intentDeploying}
           driftDetected={!!envStatus?.configDriftDetected}
+          pendingChanges={detail.pendingChanges}
           onApprove={() => void handleApprove()}
         />
       )}
