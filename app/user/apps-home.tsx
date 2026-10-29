@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { AppCard } from '@/modules/apps/components/app-card'
 import { AppsEmptyState } from '@/modules/apps/components/apps-empty-state'
 import { LicensingOnlyAppCard } from '@/modules/apps/components/licensing-only-app-card'
+import { NeedsAttention } from '@/modules/apps/components/needs-attention'
 import { licensingOnlyApps } from '@/modules/apps/lib/licensing-only'
 import { usePublisherApps } from '@/modules/publisher/hooks/use-publisher'
 import { describeAppsError, isAppsError } from '@/modules/apps/graphql'
@@ -198,6 +199,7 @@ export function AppsHome() {
             </>
           }
         />
+        <NeedsAttention />
         <AppsSection />
       </section>
 
