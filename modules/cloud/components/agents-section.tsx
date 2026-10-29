@@ -10,6 +10,7 @@ import type {
   CloudServiceClintConfig,
   Pod,
 } from '@/modules/cloud/types'
+import { EmptyState } from '@/modules/shared/components/states'
 import { Badge } from '@/modules/shared/components/ui/badge'
 import { Button } from '@/modules/shared/components/ui/button'
 import { AgentCard } from './agent-card'
@@ -87,22 +88,18 @@ export function AgentsSection({
         )}
       </div>
       {clintServices.length === 0 ? (
-        <div className="text-muted-foreground bg-muted/30 flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center">
-          <div className="bg-background flex h-12 w-12 items-center justify-center rounded-full border">
-            <Bot className="h-6 w-6" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-foreground text-sm font-medium">No agents yet</p>
-            <p className="text-xs">
-              Install your first agent — they&rsquo;re packages whose name ends in -cli.
-            </p>
-          </div>
-          {canEdit && (
-            <Button size="sm" variant="outline" onClick={onAddAgent} className="gap-1.5">
-              <Plus className="h-3.5 w-3.5" /> Add agent
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={Bot}
+          title="No agents yet"
+          description="Install your first agent — they’re packages whose name ends in -cli."
+          action={
+            canEdit && (
+              <Button size="sm" variant="outline" onClick={onAddAgent} className="gap-1.5">
+                <Plus className="h-3.5 w-3.5" /> Add agent
+              </Button>
+            )
+          }
+        />
       ) : (
         <div className="space-y-3">
           {clintServices.map((s) => (

@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, BookOpen, Info, Plus, RefreshCw, Sparkles } from 'lucide-react'
+import { ArrowRight, BookOpen, Info, Plus, Sparkles } from 'lucide-react'
 import Link from 'next/link'
 
 import { AppCard } from '@/modules/apps/components/app-card'
@@ -13,6 +13,7 @@ import { useMyApps, useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps
 import { canOfferCreateApp, type MyOrg } from '@/modules/orgs/types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { PageHeader } from '@/modules/shared/components/page-header'
+import { ErrorState } from '@/modules/shared/components/states'
 import { Alert, AlertDescription, AlertTitle } from '@/modules/shared/components/ui/alert'
 import { Button } from '@/modules/shared/components/ui/button'
 
@@ -85,22 +86,13 @@ function AppsSection() {
 
   if (error && !apps) {
     return (
-      <Alert variant="destructive">
-        <Info className="h-4 w-4" />
-        <AlertTitle>Could not load your apps</AlertTitle>
-        <AlertDescription className="flex flex-wrap items-center gap-3">
-          {describeAppsError(error)}
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => void refetch()}
-            disabled={isRefetching}
-          >
-            <RefreshCw className={isRefetching ? 'h-3.5 w-3.5 animate-spin' : 'h-3.5 w-3.5'} />
-            Retry
-          </Button>
-        </AlertDescription>
-      </Alert>
+      <ErrorState
+        icon={Info}
+        title="Could not load your apps"
+        message={describeAppsError(error)}
+        onRetry={() => void refetch()}
+        retrying={isRefetching}
+      />
     )
   }
 
