@@ -4,18 +4,21 @@ import { LEGACY_REDIRECTS } from '@/modules/shared/config/redirects'
 function target(path: string) {
   for (const r of LEGACY_REDIRECTS) {
     if ('has' in r) continue
-    const prefix = r.source.replace(/\/:path\*$/, '')
-    if (r.source === path || (r.source.endsWith('/:path*') && path.startsWith(prefix + '/'))) {
+    // `:path*` also matches the bare prefix, `:path+` needs at least one segment.
+    const prefix = r.source.replace(/\/:path[*+]$/, '')
+    if (r.source === path) return r.destination
+    if (r.source.endsWith('/:path*') && (path === prefix || path.startsWith(prefix + '/'))) {
       return r.destination
     }
+    if (r.source.endsWith('/:path+') && path.startsWith(prefix + '/')) return r.destination
   }
   return undefined
 }
 
 describe('legacy redirects', () => {
-  it('sends the retired Packages pages to Cloud, where packages are installed', () => {
-    expect(target('/packages')).toBe('/cloud')
-    expect(target('/packages/@acme/invoices')).toBe('/cloud')
+  it('serves the package directory and sends old package detail links to it', () => {
+    expect(target('/packages')).toBeUndefined()
+    expect(target('/packages/@acme/invoices')).toBe('/packages')
   })
 
   it('sends Builders and team pages home', () => {
