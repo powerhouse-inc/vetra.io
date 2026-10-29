@@ -16,6 +16,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
 import { track } from '@/modules/shared/lib/track'
+import { pendingChanges } from '../lib/pending-changes'
 import {
   fetchEnvironment,
   getAuthToken,
@@ -173,6 +174,12 @@ export function useEnvironmentDetail(documentId: string) {
       ? projectFromController(documentId, ctrlState, fallbackEnv)
       : fallbackEnv // controller not ready yet — show what we have
     : fallbackEnv
+
+  // What Approve would deploy. Only the signed controller has the operation history.
+  const pending =
+    canSign && controller
+      ? pendingChanges(controller.operations.global ?? [], environment?.state.services ?? [])
+      : []
 
   const isLoading = canSign ? ctrlLoading && !fallbackEnv : fallbackLoading
   const error = canSign ? ctrlError : fallbackError
@@ -433,6 +440,8 @@ export function useEnvironmentDetail(documentId: string) {
     retry,
     isLoading,
     error,
+    /** Config changes since the last approval, for the review before Approve. */
+    pendingChanges: pending,
     setLabel,
     setGenericSubdomain,
     setCustomDomain,
