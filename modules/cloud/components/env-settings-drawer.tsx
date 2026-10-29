@@ -59,6 +59,7 @@ import {
   SheetTitle,
 } from '@/modules/shared/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/components/ui/tabs'
+import { parseSettingsTab, type SettingsTab } from '@/modules/cloud/hooks/use-settings-param'
 import { cn } from '@/shared/lib/utils'
 import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 
@@ -93,8 +94,9 @@ type Props = {
   canEdit?: boolean
   /** Organisation owning the env (null = personal), for the hand-over offer. */
   ownerOrgId?: string | null
-  /** Tab shown when the drawer opens (default: domain). */
-  defaultTab?: 'domain' | 'updates' | 'activity' | 'metadata'
+  /** Tab shown; the page keeps it in the URL (`?settings=<tab>`). */
+  tab: SettingsTab
+  onTabChange: (tab: SettingsTab) => void
   /** Called after a successful hand-over, to refresh the loaded document. */
   onHandedOver?: () => void
 }
@@ -122,7 +124,8 @@ export function EnvSettingsDrawer({
   onTerminate,
   canEdit = true,
   ownerOrgId = null,
-  defaultTab = 'domain',
+  tab,
+  onTabChange,
   onHandedOver,
 }: Props) {
   const state = environment.state
@@ -141,7 +144,14 @@ export function EnvSettingsDrawer({
           <SheetDescription>Domain, updates, activity and admin actions.</SheetDescription>
         </SheetHeader>
 
-        <Tabs defaultValue={defaultTab} className="flex flex-1 flex-col overflow-hidden">
+        <Tabs
+          value={tab}
+          onValueChange={(next) => {
+            const parsed = parseSettingsTab(next)
+            if (parsed) onTabChange(parsed)
+          }}
+          className="flex flex-1 flex-col overflow-hidden"
+        >
           <TabsList className="mx-6 mt-4 self-start">
             <TabsTrigger value="domain" className="gap-1.5">
               <Globe className="h-3.5 w-3.5" /> Domain
