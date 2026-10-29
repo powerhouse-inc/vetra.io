@@ -24,6 +24,7 @@ export const metadata: Metadata = {
 }
 
 const TABS: { id: DirectoryTab; label: string }[] = [
+  { id: 'used', label: 'Most used' },
   { id: 'updated', label: 'Recently updated' },
   { id: 'new', label: 'New' },
   { id: 'recommended', label: 'Recommended' },
@@ -48,26 +49,39 @@ function href(params: { tab: DirectoryTab; q: string; all: boolean }): string {
   return query ? `/packages?${query}` : '/packages'
 }
 
-async function loadView(tab: DirectoryTab, q: string, all: boolean) {
+async function loadView(requestedTab: string | undefined, q: string, all: boolean) {
   try {
-    const entries = await loadDirectory()
+    const { entries, hasInstallCounts } = await loadDirectory()
+    // Most used needs the cloud's install counts; without them the tab is not offered.
+    const tabs = TABS.filter((t) => t.id !== 'used' || hasInstallCounts)
+    const tab = tabs.find((t) => t.id === requestedTab)?.id ?? 'updated'
     const now = Date.now()
     return {
       ...directoryView(entries, { tab, query: q, showHidden: all }, now),
+      tab,
+      tabs,
       now,
       failed: false,
     }
   } catch {
-    return { entries: [], hiddenCount: 0, now: Date.now(), failed: true }
+    const tabs = TABS.filter((t) => t.id !== 'used')
+    return {
+      entries: [],
+      hiddenCount: 0,
+      tab: 'updated' as const,
+      tabs,
+      now: Date.now(),
+      failed: true,
+    }
   }
 }
 
 export default async function PackagesPage({ searchParams }: { searchParams: SearchParams }) {
   const params = await searchParams
-  const tab = TABS.some((t) => t.id === params.tab) ? (params.tab as DirectoryTab) : 'updated'
   const q = params.q ?? ''
   const all = params.all === '1'
-  const view = await loadView(tab, q, all)
+  const view = await loadView(params.tab, q, all)
+  const tab = view.tab
 
   return (
     <PageShell>
@@ -79,7 +93,7 @@ export default async function PackagesPage({ searchParams }: { searchParams: Sea
 
       <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
         <nav aria-label="Sort" className="border-border flex gap-1 border-b sm:flex-1">
-          {TABS.map((t) => (
+          {view.tabs.map((t) => (
             <Link
               key={t.id}
               href={href({ tab: t.id, q, all })}
@@ -174,6 +188,12 @@ function PackageRow({ entry, now }: { entry: DirectoryEntry; now: number }) {
         <p className="text-muted-foreground font-mono text-xs">
           {entry.version && <span className="text-foreground">{entry.version}</span>}
           {entry.releasedAt && <span> · {timeAgo(entry.releasedAt)}</span>}
+          {entry.installs !== null && entry.installs > 0 && (
+            <span>
+              {' '}
+              · {entry.installs} environment{entry.installs === 1 ? '' : 's'}
+            </span>
+          )}
         </p>
         <div className="flex gap-2">
           <CopyButton value={`ph install ${entry.name}`} label="Copy install" />

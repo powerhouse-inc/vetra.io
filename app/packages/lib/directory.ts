@@ -1,4 +1,5 @@
 import { type PackageInfo } from '@powerhousedao/shared'
+import { getCloudEndpoint } from '@/modules/cloud/graphql'
 import { packageModuleTypes } from './constants'
 import { isRecommended } from './recommended'
 import { getPackageRegistryData, listPackages, npmName, type RegistryPackageData } from './registry'
@@ -27,6 +28,8 @@ export type DirectoryEntry = {
   /** Platform major the package is built for, from its document-model dependency. */
   platformMajor: number | null
   recommended: boolean
+  /** Environments running the package; null when the cloud did not report counts. */
+  installs: number | null
 }
 
 export type HiddenReason = 'deprecated' | 'old-platform' | 'stale'
@@ -41,7 +44,11 @@ export const HIDDEN_REASON_LABEL: Record<HiddenReason, string> = {
 export function hiddenReason(entry: DirectoryEntry, now: number): HiddenReason | null {
   if (entry.deprecated) return 'deprecated'
   if (entry.platformMajor !== null && entry.platformMajor < PLATFORM_MAJOR) return 'old-platform'
-  if (entry.releasedAt && now - Date.parse(entry.releasedAt) > STALE_AFTER_MS) return 'stale'
+  // A package environments still run is never stale, however old its last release.
+  const unused = entry.installs === null || entry.installs === 0
+  if (unused && entry.releasedAt && now - Date.parse(entry.releasedAt) > STALE_AFTER_MS) {
+    return 'stale'
+  }
   return null
 }
 
@@ -66,6 +73,7 @@ export function majorOf(range: string | undefined): number | null {
 export function toDirectoryEntry(
   pkg: PackageInfo,
   data: RegistryPackageData | null,
+  installs: number | null = null,
 ): DirectoryEntry {
   const name = npmName(pkg)
   const latest = data?.['dist-tags'].latest ?? pkg.version ?? null
@@ -92,10 +100,11 @@ export function toDirectoryEntry(
     deprecated: Boolean(latestData?.deprecated),
     platformMajor: majorOf(platformRange),
     recommended: isRecommended(pkg.name),
+    installs,
   }
 }
 
-export type DirectoryTab = 'updated' | 'new' | 'recommended'
+export type DirectoryTab = 'used' | 'updated' | 'new' | 'recommended'
 
 const newestFirst = (a: string | null, b: string | null) =>
   (b ? Date.parse(b) : 0) - (a ? Date.parse(a) : 0)
@@ -116,21 +125,58 @@ export function directoryView(
   )
   const inTab = tab === 'recommended' ? matching.filter((e) => e.recommended) : matching
   const listed = inTab.filter((e) => showHidden || !hiddenReason(e, now))
-  const sorted = [...listed].sort((a, b) =>
-    tab === 'new' ? newestFirst(a.createdAt, b.createdAt) : newestFirst(a.releasedAt, b.releasedAt),
-  )
+  const sorted = [...listed].sort((a, b) => {
+    if (tab === 'used') {
+      const byInstalls = (b.installs ?? 0) - (a.installs ?? 0)
+      if (byInstalls !== 0) return byInstalls
+    }
+    return tab === 'new'
+      ? newestFirst(a.createdAt, b.createdAt)
+      : newestFirst(a.releasedAt, b.releasedAt)
+  })
   return { entries: sorted, hiddenCount: inTab.length - listed.length }
 }
 
+/**
+ * Environments running each package, from the cloud's `packageInstallCounts`, or
+ * null when the cloud does not answer (older cloud package, outage): the page then
+ * hides the Most used tab instead of showing zeros.
+ */
+export async function loadInstallCounts(): Promise<Map<string, number> | null> {
+  try {
+    const res = await fetch(getCloudEndpoint(), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: '{ packageInstallCounts { packageName environments } }' }),
+      next: { revalidate: 600 },
+    })
+    if (!res.ok) return null
+    const body = (await res.json()) as {
+      data?: { packageInstallCounts?: { packageName: string; environments: number }[] }
+    }
+    const counts = body.data?.packageInstallCounts
+    if (!counts) return null
+    return new Map(counts.map((c) => [c.packageName, c.environments]))
+  } catch {
+    return null
+  }
+}
+
 /** Every registry package with its release dates (one registry lookup per package). */
-export async function loadDirectory(): Promise<DirectoryEntry[]> {
-  const page = await listPackages(
-    { limit: 500 },
-    { detail: 'full', init: { next: { revalidate: 600 } } },
+export async function loadDirectory(): Promise<{
+  entries: DirectoryEntry[]
+  hasInstallCounts: boolean
+}> {
+  const [page, counts] = await Promise.all([
+    listPackages({ limit: 500 }, { detail: 'full', init: { next: { revalidate: 600 } } }),
+    loadInstallCounts(),
+  ])
+  const entries = await Promise.all(
+    page.items.map(async (pkg) => {
+      const name = npmName(pkg)
+      const installs = counts ? (counts.get(name) ?? 0) : null
+      return toDirectoryEntry(pkg, await getPackageRegistryData(name), installs)
+    }),
   )
-  return Promise.all(
-    page.items.map(async (pkg) =>
-      toDirectoryEntry(pkg, await getPackageRegistryData(npmName(pkg))),
-    ),
-  )
+  return { entries, hasInstallCounts: counts !== null }
 }

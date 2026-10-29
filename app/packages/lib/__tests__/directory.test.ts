@@ -23,6 +23,7 @@ const entry = (over: Partial<DirectoryEntry> = {}): DirectoryEntry => ({
   deprecated: false,
   platformMajor: 6,
   recommended: false,
+  installs: null,
   ...over,
 })
 
@@ -139,5 +140,24 @@ describe('toDirectoryEntry', () => {
       platformMajor: 6,
       publisher: 'Powerhouse',
     })
+  })
+})
+
+describe('install counts', () => {
+  it('never hides a package environments still run as stale', () => {
+    const old = '2025-01-01T00:00:00Z'
+    expect(hiddenReason(entry({ releasedAt: old, installs: 3 }), NOW)).toBeNull()
+    expect(hiddenReason(entry({ releasedAt: old, installs: 0 }), NOW)).toBe('stale')
+  })
+
+  it('sorts Most used by environments, then by latest release', () => {
+    const list = [
+      entry({ name: 'few', installs: 1 }),
+      entry({ name: 'many', installs: 9 }),
+      entry({ name: 'none-newer', installs: 0, releasedAt: '2026-10-25T00:00:00Z' }),
+      entry({ name: 'none-older', installs: 0, releasedAt: '2026-10-02T00:00:00Z' }),
+    ]
+    const view = directoryView(list, { tab: 'used', query: '', showHidden: false }, NOW)
+    expect(view.entries.map((e) => e.name)).toEqual(['many', 'few', 'none-newer', 'none-older'])
   })
 })
