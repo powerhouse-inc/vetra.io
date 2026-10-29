@@ -18,6 +18,7 @@ export class CloudUserError extends Error {
 const USER_FACING_ERROR_NAMES = new Set([
   'CloudUserError',
   'EnvironmentAccessError',
+  'EnvironmentActionRejectedError',
   'EnvironmentHandOverError',
 ])
 
