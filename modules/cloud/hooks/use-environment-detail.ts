@@ -290,8 +290,14 @@ export function useEnvironmentDetail(documentId: string) {
     [mutate],
   )
   const addPackage = useCallback(
-    async (name: string, version?: string) => {
-      await mutate((c) => c.addPackage({ packageName: name, version: version ?? undefined }))
+    async (name: string, version?: string, registry?: string) => {
+      await mutate((c) =>
+        c.addPackage({
+          packageName: name,
+          version: version ?? undefined,
+          registry: registry ?? undefined,
+        }),
+      )
       track('package_installed', { environmentId: documentId, packageName: name })
     },
     [mutate, documentId],
@@ -426,8 +432,16 @@ export function useEnvironmentDetail(documentId: string) {
     return result
   }, [documentId])
 
+  /**
+   * The document's global operation history (signed-in viewers only; null
+   * until the controller loads). Read on each render: the controller's
+   * onChange above re-renders this hook when it grows.
+   */
+  const operations = controller ? controller.operations.global : null
+
   return {
     environment,
+    operations,
     /** The env organisation for the R6 edit gate (see `editGateOwnerOrgId`). */
     editGateOwnerOrgId: editGateOwnerOrgId({
       canSign,
