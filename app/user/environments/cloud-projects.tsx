@@ -12,6 +12,7 @@ import { ensureCanOperateEnvironment } from '@/modules/cloud/org-sync'
 import { CloudUserError } from '@/modules/cloud/lib/cloud-error'
 import { environmentStatusMeta } from '@/modules/cloud/lib/environment-status'
 import { resolveGenericHost, isTypeAtApex } from '@/modules/cloud/lib/env-host'
+import { environmentHref, useAddPackageIntent } from '@/modules/cloud/hooks/use-add-package-intent'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { useEnvironments, useViewer, type ViewScope } from '@/modules/cloud/hooks/use-environment'
 import { useOptimisticMutation } from '@/modules/cloud/query/use-optimistic-mutation'
@@ -26,6 +27,7 @@ import type { CloudEnvironment } from './types'
 
 export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
   const { signer, canSign: signerReady } = useCanSign()
+  const addPackage = useAddPackageIntent()
   // Org envs: a plain MEMBER only views (R6); the delete itself is gated again
   // by the backend's canOperate answer (ensureCanOperateEnvironment).
   const { orgId, org } = useActiveOrg()
@@ -116,7 +118,9 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
 
         <div className="flex gap-2">
           <Button variant="outline" size="sm" asChild className="flex-1">
-            <Link href={`/user/environments/${env.id}`}>Manage</Link>
+            <Link href={environmentHref(env.id, addPackage)}>
+              {addPackage ? 'Add here' : 'Manage'}
+            </Link>
           </Button>
           {visitUrl && (
             <Button variant="outline" size="sm" asChild className="shrink-0">
