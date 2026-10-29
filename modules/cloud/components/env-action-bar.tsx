@@ -4,7 +4,9 @@ import { AnimatePresence, motion } from 'framer-motion'
 import { AlertTriangle, Loader2 } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
+import type { PendingChange } from '@/modules/cloud/lib/pending-changes'
 import { Button } from '@/modules/shared/components/ui/button'
+import { Popover, PopoverContent, PopoverTrigger } from '@/modules/shared/components/ui/popover'
 import { cn } from '@/shared/lib/utils'
 
 type Props = {
@@ -20,6 +22,8 @@ type Props = {
   intentDeploying: boolean
   /** Whether the cluster's config has drifted from the doc. */
   driftDetected: boolean
+  /** What Approve would deploy; listed behind the "N pending changes" count. */
+  pendingChanges?: readonly PendingChange[]
   onApprove: () => void
 }
 
@@ -48,7 +52,13 @@ const INTENT_WINDOW_MS = 3000
  * status. Once the window expires, raw status drives rendering normally —
  * by then the server has stabilised.
  */
-export function EnvActionBar({ status, intentDeploying, driftDetected, onApprove }: Props) {
+export function EnvActionBar({
+  status,
+  intentDeploying,
+  driftDetected,
+  pendingChanges = [],
+  onApprove,
+}: Props) {
   // Track when the intent was raised so we can drop the lock after the
   // window, even if the page keeps `intentDeploying` true longer than needed.
   const [intentSince, setIntentSince] = useState<number | null>(null)
@@ -75,7 +85,7 @@ export function EnvActionBar({ status, intentDeploying, driftDetected, onApprove
   // eslint-disable-next-line react-hooks/purity
   const intentActive = intentSince !== null && Date.now() - intentSince < INTENT_WINDOW_MS
 
-  const body = renderBody({ status, intentActive, driftDetected, onApprove })
+  const body = renderBody({ status, intentActive, driftDetected, pendingChanges, onApprove })
 
   return (
     <AnimatePresence>
@@ -111,11 +121,13 @@ function renderBody({
   status,
   intentActive,
   driftDetected,
+  pendingChanges,
   onApprove,
 }: {
   status: string | undefined
   intentActive: boolean
   driftDetected: boolean
+  pendingChanges: readonly PendingChange[]
   onApprove: () => void
 }): React.ReactNode {
   // Intent always wins while the window is open. The user just clicked; show
@@ -145,7 +157,7 @@ function renderBody({
   if (status === 'CHANGES_PENDING') {
     return (
       <>
-        <span className="text-foreground text-sm">Pending change</span>
+        <PendingSummary changes={pendingChanges} />
         <Button
           size="sm"
           variant="default"
@@ -168,6 +180,50 @@ function renderBody({
     )
   }
   return null
+}
+
+const KIND_SIGN: Record<PendingChange['kind'], string> = { add: '+', remove: '−', change: '~' }
+const KIND_CLASS: Record<PendingChange['kind'], string> = {
+  add: 'text-success',
+  remove: 'text-destructive',
+  change: 'text-warning',
+}
+
+/** "N pending changes", opening the list of what Approve deploys. */
+function PendingSummary({ changes }: { changes: readonly PendingChange[] }) {
+  // Without the operation history (still loading) keep the plain wording.
+  if (changes.length === 0) return <span className="text-foreground text-sm">Pending change</span>
+  const count = changes.length === 1 ? '1 pending change' : `${changes.length} pending changes`
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="text-foreground text-sm underline decoration-dotted underline-offset-4 hover:decoration-solid"
+        >
+          {count}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="center" className="w-80 p-0">
+        <p className="text-muted-foreground border-b px-3 py-2 text-xs">
+          Approve deploys these changes
+        </p>
+        <ul className="max-h-64 overflow-y-auto py-1">
+          {changes.map((change) => (
+            <li key={change.key} className="flex items-start gap-2 px-3 py-1.5 text-sm">
+              <span
+                aria-hidden
+                className={cn('w-3 shrink-0 text-center font-mono', KIND_CLASS[change.kind])}
+              >
+                {KIND_SIGN[change.kind]}
+              </span>
+              <span className="min-w-0 break-words">{change.label}</span>
+            </li>
+          ))}
+        </ul>
+      </PopoverContent>
+    </Popover>
+  )
 }
 
 function DeployingBody() {
