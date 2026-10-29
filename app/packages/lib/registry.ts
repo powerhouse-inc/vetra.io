@@ -17,6 +17,9 @@ export interface RegistryVersion {
   repository?: { type?: string; url?: string }
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
+  /** npm deprecation message; present only on deprecated versions. */
+  deprecated?: string
   maintainers?: { name: string; email?: string }[]
   dist?: RegistryVersionDist
   exports?: Record<string, unknown>
