@@ -7,6 +7,7 @@ import {
 } from '@/modules/cloud/graphql'
 import {
   EnvironmentAccessError,
+  describeRejection,
   EnvironmentHandOverError,
   cachedSyncEnvironmentOrg,
   describeEnvironmentOrgError,
@@ -202,6 +203,10 @@ describe('signed actions on organisation environments', () => {
 
   it('pulls when the local copy does not list the new operator yet', async () => {
     const ctrl = controller({ ownerOrgId: 'o1', orgOperators: ['0xother'] })
+    ctrl.pull.mockImplementation(() => {
+      ctrl.state.global = { ownerOrgId: 'o1', orgOperators: ['0xother', '0xme'] }
+      return Promise.resolve(undefined)
+    })
     await ensureCanOperateEnvironment(
       'e1',
       ctrl,
@@ -209,6 +214,22 @@ describe('signed actions on organisation environments', () => {
       deps(() => Promise.resolve(access(true))),
     )
     expect(ctrl.pull).toHaveBeenCalledTimes(1)
+  })
+
+  it('refuses a caller the server lets operate who never becomes an operator (platform admin)', async () => {
+    const ctrl = controller({ ownerOrgId: 'o1', orgOperators: ['0xowner'] })
+    const sleep = vi.fn(() => Promise.resolve())
+    await expect(
+      ensureCanOperateEnvironment('e1', ctrl, '0xadmin', {
+        ...deps(() => Promise.resolve(access(true))),
+        sleep,
+      }),
+    ).rejects.toMatchObject({
+      name: 'EnvironmentAccessError',
+      message: expect.stringContaining('not one of them') as unknown,
+    })
+    expect(ctrl.pull).toHaveBeenCalledTimes(3)
+    expect(sleep).toHaveBeenCalledTimes(2)
   })
 
   it('reuses a sync answer for ten seconds per caller and environment', async () => {
@@ -306,6 +327,52 @@ describe('signed action wiring (mutate)', () => {
     await runSignedEnvironmentAction('e1', c, '0xme', (x) => x.setLabel({ label: 'n' }), { gate })
     expect(order).toStrictEqual(['gate', 'dispatch', 'push'])
     expect(gate).toHaveBeenCalledWith('e1', c, '0xme')
+  })
+
+  it('reports an action the remote recorded with a reducer error', async () => {
+    const { c } = ctrl({ ownerOrgId: 'o1', orgOperators: ['0xme'] }, () => {
+      ;(c as unknown as { operations: unknown }).operations = {
+        global: [
+          { action: { id: 'a0' }, error: '' },
+          { action: { id: 'a1' }, error: 'APPROVE_CHANGES can only be called from DRAFT' },
+        ],
+      }
+      return Promise.resolve({ operations: [{ id: 'a1' }] })
+    })
+    const onOrgRefusal = vi.fn()
+    await expect(
+      runSignedEnvironmentAction('e1', c, '0xme', (x) => x.setLabel({ label: 'n' }), {
+        gate: () => Promise.resolve(),
+        onOrgRefusal,
+      }),
+    ).rejects.toMatchObject({
+      name: 'EnvironmentActionRejectedError',
+      message: 'The environment refused the change: APPROVE_CHANGES can only be called from DRAFT',
+    })
+    expect(onOrgRefusal).toHaveBeenCalledTimes(1)
+  })
+
+  it('passes when the pushed actions were applied without error', async () => {
+    const { c } = ctrl({ owner: '0xme', ownerOrgId: null }, () => {
+      ;(c as unknown as { operations: unknown }).operations = {
+        global: [
+          { action: { id: 'a1' }, error: 'unrelated older error', index: 0 },
+          { action: { id: 'a2' } },
+        ],
+      }
+      return Promise.resolve({ operations: [{ id: 'a2' }] })
+    })
+    await expect(
+      runSignedEnvironmentAction('e1', c, '0xme', (x) => x.setLabel({ label: 'n' }), {
+        gate: () => Promise.resolve(),
+      }),
+    ).resolves.toBeUndefined()
+  })
+
+  it('names the operator rule for a non-operator signature', () => {
+    expect(
+      describeRejection('Signer 0xabc is not an operator of this organisation environment'),
+    ).toContain('Ask an organisation admin for publisher access')
   })
 
   it('a gate refusal dispatches nothing and re-asks the access', async () => {

@@ -71,6 +71,26 @@ export class EnvironmentAccessError extends Error {
   }
 }
 
+/** The environment's reducer refused a signed action (it was recorded with an error). */
+export class EnvironmentActionRejectedError extends Error {
+  override name = 'EnvironmentActionRejectedError'
+  constructor(
+    readonly environmentId: string,
+    readonly reducerError: string,
+  ) {
+    super(describeRejection(reducerError))
+  }
+}
+
+/** User-facing text for a reducer error on an environment action. */
+export function describeRejection(reducerError: string): string {
+  if (/not an operator of this organisation environment/i.test(reducerError)) return NOT_AN_OPERATOR
+  return `The environment refused the change: ${reducerError}`
+}
+
+const NOT_AN_OPERATOR =
+  "Only the organisation's operators can sign changes to this environment, and you are not one of them. Ask an organisation admin for publisher access."
+
 /** The slice of a loaded environment controller the action gate needs. */
 export type GateableController = {
   state: { global: unknown }
@@ -97,6 +117,8 @@ export async function ensureCanOperateEnvironment(
   deps: {
     sync: (id: string, token: string | null, caller: string | null) => Promise<EnvironmentOrgAccess>
     token: () => Promise<string | null>
+    pullAttempts?: number
+    sleep?: (ms: number) => Promise<void>
   } = {
     sync: (id, token, who) => cachedSyncEnvironmentOrg(id, token, { caller: who }),
     token: resolveAuthToken,
@@ -121,7 +143,38 @@ export async function ensureCanOperateEnvironment(
       'Your organisation role does not allow changes to this environment. Ask an organisation admin for publisher access.',
     )
   }
-  if (who && !local.orgOperators.includes(who)) await controller.pull()
+  if (!who || local.orgOperators.includes(who)) return
+  // The sync just added the caller: pull until the local copy agrees. A caller
+  // the server lets operate without being an operator (a platform admin) would
+  // only have the reducer refuse the signed action, so refuse here instead.
+  for (let attempt = 0; attempt < (deps.pullAttempts ?? 3); attempt++) {
+    if (attempt > 0) await (deps.sleep ?? defaultSleep)(500)
+    await controller.pull()
+    if (orgFields(controller.state.global).orgOperators.includes(who)) return
+  }
+  throw new EnvironmentAccessError(environmentId, NOT_AN_OPERATOR)
+}
+
+const defaultSleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms))
+
+/** The reducer error of an action this push sent, if the remote recorded one. */
+export function rejectedPushError(controller: unknown, pushed: unknown): string | null {
+  const ids = new Set(
+    ((pushed as { operations?: ReadonlyArray<{ id?: unknown }> } | null)?.operations ?? [])
+      .map((a) => a.id)
+      .filter((id): id is string => typeof id === 'string'),
+  )
+  if (ids.size === 0) return null
+  const scopes = (controller as { operations?: Record<string, unknown> }).operations ?? {}
+  for (const ops of Object.values(scopes)) {
+    if (!Array.isArray(ops)) continue
+    for (const op of ops as ReadonlyArray<{ action?: { id?: unknown }; error?: unknown }>) {
+      if (typeof op.error === 'string' && op.error && ids.has(op.action?.id as string)) {
+        return op.error
+      }
+    }
+  }
+  return null
 }
 
 export class EnvironmentHandOverError extends Error {
@@ -225,7 +278,9 @@ export async function runSignedEnvironmentAction<
   try {
     await gate(environmentId, controller, caller)
     dispatch(controller)
-    await controller.push()
+    // A refused action is stored with its error, not thrown: report it.
+    const refused = rejectedPushError(controller, await controller.push())
+    if (refused) throw new EnvironmentActionRejectedError(environmentId, refused)
   } catch (err) {
     if (err instanceof EnvironmentAccessError || orgFields(controller.state.global).ownerOrgId) {
       forgetOrgSync(environmentId)
