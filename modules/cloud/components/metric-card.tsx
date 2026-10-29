@@ -141,6 +141,12 @@ function LimitedView({ series, quota, kind, restarts, hasData }: LimitedViewProp
         >
           {(peakUtil * 100).toFixed(peakUtil < 0.1 ? 1 : 0)}% of {formatVal(quota)} quota
         </p>
+        {/* Owners choose the size; near the limit we only recommend the next one. */}
+        {peakUtil >= WARN_THRESHOLD && (
+          <p className="text-muted-foreground mt-1 text-xs">
+            Close to its limit. We recommend the next size up, set from the service’s size control.
+          </p>
+        )}
       </div>
 
       {hasData ? (
