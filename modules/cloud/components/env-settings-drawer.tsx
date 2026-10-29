@@ -24,6 +24,7 @@ import { AutoUpdateCard } from '@/modules/cloud/components/auto-update-card'
 import { DeleteEnvironmentDialog } from '@/modules/cloud/components/delete-environment-dialog'
 import { EnvOrgHandOver } from '@/modules/cloud/components/env-org-handover'
 import { CustomDomainSection } from '@/modules/cloud/components/custom-domain-section'
+import { ConfigHistorySection } from '@/modules/cloud/components/config-history-section'
 import { EventTimeline } from '@/modules/cloud/components/event-timeline'
 import { DRIVE_ID } from '@/modules/cloud/client'
 import { loadEnvironmentController } from '@/modules/cloud/controller'
@@ -31,6 +32,7 @@ import { ensureCanOperateEnvironment } from '@/modules/cloud/org-sync'
 import { getAuthToken, resetEnvironment } from '@/modules/cloud/graphql'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { CloudUserError, describeCloudError } from '@/modules/cloud/lib/cloud-error'
+import type { HistoryOperation, RestoreActions } from '@/modules/cloud/lib/config-history'
 import { apexCandidateServices, apexServiceForCustomDomain } from '@/modules/cloud/lib/env-host'
 import { useEnvironmentEvents } from '@/modules/cloud/hooks/use-environment-events'
 import type {
@@ -99,6 +101,14 @@ type Props = {
   onTabChange: (tab: SettingsTab) => void
   /** Called after a successful hand-over, to refresh the loaded document. */
   onHandedOver?: () => void
+  /**
+   * Operation history + the detail-hook methods a restore calls. When unset,
+   * the Activity tab has no configuration history.
+   */
+  configHistory?: {
+    operations: readonly HistoryOperation[] | null
+    actions: RestoreActions
+  }
 }
 
 const TERMINAL_STATUSES = new Set(['DRAFT', 'TERMINATING', 'DESTROYED', 'ARCHIVED'])
@@ -127,6 +137,7 @@ export function EnvSettingsDrawer({
   tab,
   onTabChange,
   onHandedOver,
+  configHistory,
 }: Props) {
   const state = environment.state
   const { signer } = useCanSign()
@@ -209,6 +220,17 @@ export function EnvSettingsDrawer({
                 statusLoading={statusLoading}
                 isOpen={open}
               />
+              {configHistory && (
+                <div className="mt-6">
+                  <ConfigHistorySection
+                    operations={configHistory.operations}
+                    current={state}
+                    actions={configHistory.actions}
+                    canEdit={canEdit}
+                    viewerAddress={signer?.user?.address}
+                  />
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="metadata" className="mt-0 space-y-4">

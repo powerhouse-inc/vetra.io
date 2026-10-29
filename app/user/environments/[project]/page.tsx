@@ -603,6 +603,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           tab={settings.tab ?? 'domain'}
           onTabChange={settings.setTab}
           onHandedOver={() => void detail.refresh()}
+          configHistory={{ operations: detail.operations, actions: detail }}
         />
       )}
     </>
