@@ -3,6 +3,7 @@
 import { Boxes, Moon, PlugZap } from 'lucide-react'
 import { studioAppsEnabled } from '@/modules/cloud/switchboard-url'
 import { StatusPill } from '@/modules/shared/components/status'
+import { track } from '@/modules/shared/lib/track'
 import { studioStatusMeta } from '../studio-readiness'
 import type { StudioProduct } from '../use-studio-products'
 import { MakeAppDialog } from './make-app-dialog'
@@ -119,7 +120,15 @@ export function StudioProductCard({
   )
 
   const card = canOpen ? (
-    <a href={href} target="_blank" rel="noopener noreferrer" className={cardClass}>
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className={cardClass}
+      onClick={() =>
+        track('studio_app_opened', { environmentId: product.envId, status: product.status })
+      }
+    >
       {body}
     </a>
   ) : (

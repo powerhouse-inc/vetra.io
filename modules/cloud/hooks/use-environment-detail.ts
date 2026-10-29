@@ -15,6 +15,7 @@
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { track } from '@/modules/shared/lib/track'
 import {
   fetchEnvironment,
   getAuthToken,
@@ -282,9 +283,11 @@ export function useEnvironmentDetail(documentId: string) {
     [mutate],
   )
   const addPackage = useCallback(
-    (name: string, version?: string) =>
-      mutate((c) => c.addPackage({ packageName: name, version: version ?? undefined })),
-    [mutate],
+    async (name: string, version?: string) => {
+      await mutate((c) => c.addPackage({ packageName: name, version: version ?? undefined }))
+      track('package_installed', { environmentId: documentId, packageName: name })
+    },
+    [mutate, documentId],
   )
   const removePackage = useCallback(
     (name: string) => mutate((c) => c.removePackage({ packageName: name })),
@@ -301,7 +304,10 @@ export function useEnvironmentDetail(documentId: string) {
       ),
     [mutate],
   )
-  const approveChanges = useCallback(() => mutate((c) => c.approveChanges({})), [mutate])
+  const approveChanges = useCallback(async () => {
+    await mutate((c) => c.approveChanges({}))
+    track('changes_approved', { environmentId: documentId })
+  }, [mutate, documentId])
   const terminate = useCallback(() => mutate((c) => c.terminateEnvironment({})), [mutate])
   const setServiceVersion = useCallback(
     (type: CloudEnvironmentServiceType, version: string) =>
@@ -408,7 +414,9 @@ export function useEnvironmentDetail(documentId: string) {
   const rollbackRelease = useCallback(async () => {
     const token = await getAuthToken(renownRef.current as never)
     if (!token) throw new CloudUserError(NOT_LOGGED_IN_ERROR)
-    return rollbackEnvironmentRelease(documentId, token)
+    const result = await rollbackEnvironmentRelease(documentId, token)
+    track('release_rolled_back', { environmentId: documentId })
+    return result
   }, [documentId])
 
   return {
