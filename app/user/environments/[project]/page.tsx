@@ -17,6 +17,7 @@ import { StatusBadge } from '@/modules/cloud/components/status-badge'
 import { useClintPackages } from '@/modules/cloud/hooks/use-clint-packages'
 import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtime-endpoints'
 import { useDetailDrawer } from '@/modules/cloud/hooks/use-detail-drawer'
+import { useSettingsParam } from '@/modules/cloud/hooks/use-settings-param'
 import { useEnvironmentDetail } from '@/modules/cloud/hooks/use-environment-detail'
 import { useCanEditEnvironment } from '@/modules/cloud/hooks/use-environment-org'
 import { OrgBadge } from '@/modules/orgs/components/org-badge'
@@ -207,10 +208,12 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   // states; the bar's own 3s window covers the early window in case the
   // useEffect below clears too early.
   const [intentDeploying, setIntentDeploying] = useState(false)
-  // `?settings=organisation` (the retry link after a failed hand-over at create
-  // time) opens the settings drawer on the tab holding "Move to an organisation".
-  const settingsParam = searchParams.get('settings')
-  const [settingsOpen, setSettingsOpen] = useState(settingsParam === 'organisation')
+  // Settings drawer lives in the URL (`?settings=<tab>`), so each section can be
+  // linked. `?settings=organisation` (the retry link after a failed hand-over at
+  // create time) still opens the tab holding "Move to an organisation".
+  const settings = useSettingsParam()
+  const settingsOpen = settings.tab !== null
+  const setSettingsOpen = (open: boolean) => settings.setTab(open ? 'domain' : null)
   const statusStr = state?.status ?? 'DRAFT'
   useEffect(() => {
     if (intentDeploying && statusStr !== 'CHANGES_PENDING' && statusStr !== 'DRAFT') {
@@ -596,7 +599,8 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           onTerminate={detail.terminate}
           canEdit={canEdit}
           ownerOrgId={ownerOrgId}
-          defaultTab={settingsParam === 'organisation' ? 'metadata' : undefined}
+          tab={settings.tab ?? 'domain'}
+          onTabChange={settings.setTab}
           onHandedOver={() => void detail.refresh()}
         />
       )}
