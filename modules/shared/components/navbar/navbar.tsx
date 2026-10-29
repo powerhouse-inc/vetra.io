@@ -13,10 +13,12 @@ import { getNavbarConfig, PRIVATE_NAV_ITEMS, PUBLIC_NAV_ITEMS } from './navbar-c
 
 function AuthAwareNavItems({ pathname }: { pathname: string }) {
   const auth = useRenownAuth()
-  const navItems = isAppRoute(pathname) && !!auth.user ? PRIVATE_NAV_ITEMS : PUBLIC_NAV_ITEMS
+  const inConsole = isAppRoute(pathname) && !!auth.user
+  const navItems = inConsole ? PRIVATE_NAV_ITEMS : PUBLIC_NAV_ITEMS
   return (
     <>
-      <NavbarItemsDesk navItems={navItems} pathname={pathname} />
+      {/* In the console the sidebar carries the desktop navigation. */}
+      {!inConsole && <NavbarItemsDesk navItems={navItems} pathname={pathname} />}
       <NavbarItemMobile navItems={navItems} pathname={pathname} />
     </>
   )
