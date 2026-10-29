@@ -14,6 +14,7 @@ import { Input } from '@/modules/shared/components/ui/input'
 import { Label } from '@/modules/shared/components/ui/label'
 import { RadioGroup, RadioGroupItem } from '@/modules/shared/components/ui/radio-group'
 import { Skeleton } from '@/modules/shared/components/ui/skeleton'
+import { track } from '@/modules/shared/lib/track'
 import {
   useInviteCodeCheck,
   useMySubscriptions,
@@ -209,6 +210,7 @@ export function RedeemFlow({ code }: { code: string }) {
         redeemInput({ code, choice: redeemChoice, label, mode: info.mode }),
       )
       setDone(true)
+      track('code_redeemed', { mode: info.mode })
       toast.success(`${subscriptionName(sub)} is yours`)
       router.push(subscriptionHref(sub.licenseId))
     } catch (err) {
