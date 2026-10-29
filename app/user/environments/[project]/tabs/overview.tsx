@@ -33,6 +33,11 @@ import { toServiceImageTag } from '@/modules/cloud/registry/channels'
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
 import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
 import {
+  SERVICE_HEALTH_LABEL,
+  serviceHealth,
+  type ServiceHealth,
+} from '@/modules/cloud/lib/service-health'
+import {
   customDomainHosts,
   customDomainServiceHost,
   isPinnedToCustomApex,
@@ -57,7 +62,26 @@ import { formatDate, formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 // Helper: StatusDot
 // ---------------------------------------------------------------------------
 
-function StatusDot({ status }: { status: string }) {
+const HEALTH_DOT_CLASS: Record<ServiceHealth, string> = {
+  running: 'bg-success',
+  starting: 'bg-warning',
+  failing: 'bg-destructive',
+  'not-running': 'bg-muted-foreground',
+}
+
+/** Live pod health when known, else the document's service status. */
+function StatusDot({ status, health }: { status: string; health?: ServiceHealth | null }) {
+  if (health) {
+    const label = SERVICE_HEALTH_LABEL[health]
+    return (
+      <span
+        title={label}
+        className={`inline-block h-2 w-2 rounded-full ${HEALTH_DOT_CLASS[health]}`}
+      >
+        <span className="sr-only">{label}</span>
+      </span>
+    )
+  }
   const colorClass =
     status === 'READY' || status === 'ACTIVE'
       ? 'bg-success'
@@ -123,6 +147,7 @@ function ServiceRow({
   isApexService,
   isEnabled: serverIsEnabled,
   serviceStatus,
+  health,
   environmentStatus,
   currentVersion,
   selectedRessource,
@@ -149,6 +174,8 @@ function ServiceRow({
   isApexService?: boolean
   isEnabled: boolean
   serviceStatus: string
+  /** Live health from the environment's pods; null falls back to `serviceStatus`. */
+  health?: ServiceHealth | null
   environmentStatus: string
   currentVersion: string | null
   selectedRessource: import('@/modules/cloud/types').CloudResourceSize | null
@@ -281,7 +308,7 @@ function ServiceRow({
               <span className={cn('text-sm font-medium', !isEnabled && 'text-muted-foreground')}>
                 {label}
               </span>
-              {isEnabled && <StatusDot status={serviceStatus} />}
+              {isEnabled && <StatusDot status={serviceStatus} health={health} />}
               {!isEnabled && (
                 <Badge
                   size="xs"
@@ -831,6 +858,7 @@ export function OverviewTab({
                   }
                   tagsImage={type === 'FUSION' ? (state.fusion?.image ?? null) : undefined}
                   serviceStatus={service?.status ?? 'PROVISIONING'}
+                  health={serviceHealth(pods, type)}
                   environmentStatus={state.status}
                   currentVersion={service?.version ?? null}
                   selectedRessource={service?.selectedRessource ?? null}
