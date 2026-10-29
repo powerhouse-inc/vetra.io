@@ -598,6 +598,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           ownerOrgId={ownerOrgId}
           defaultTab={settingsParam === 'organisation' ? 'metadata' : undefined}
           onHandedOver={() => void detail.refresh()}
+          configHistory={{ operations: detail.operations, actions: detail }}
         />
       )}
     </>
