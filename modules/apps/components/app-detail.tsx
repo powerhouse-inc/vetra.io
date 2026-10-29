@@ -26,6 +26,7 @@ import { ArtifactsTab } from '@/modules/publisher/components/artifacts/artifacts
 import { LicensingUnavailableBanner } from '@/modules/publisher/components/licensing-unavailable-banner'
 import { TabSkeleton } from '@/modules/publisher/components/primitives'
 import { describePublisherError, isPublisherError } from '@/modules/publisher/graphql'
+import { PublisherSummaryRow } from '@/modules/publisher/components/publisher-summary'
 import { useAppPublisher } from '@/modules/publisher/hooks/use-publisher'
 import type { PublisherApp } from '@/modules/publisher/types'
 import { OrgBadge } from '@/modules/orgs/components/org-badge'
@@ -165,6 +166,8 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
       </div>
 
       {app.status !== 'ACTIVE' && <LicensingUnavailableBanner status={app.status} />}
+
+      <PublisherSummaryRow appId={app.id} />
 
       <Tabs value={tab} onValueChange={setTab} className="gap-8">
         <TabsList className={TAB_LIST_CLASS}>
@@ -531,6 +534,8 @@ export function AppDetail({ appId }: { appId: string }) {
           {describePublisherError(licensingError)}
         </Banner>
       )}
+
+      {showLicensing && <PublisherSummaryRow appId={appId} />}
 
       <Tabs value={tab} onValueChange={setTab} className="gap-8">
         {/* The baseline is an inset shadow, not a border: a scrolling list clips anything that
