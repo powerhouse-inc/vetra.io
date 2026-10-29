@@ -1,7 +1,7 @@
 'use client'
 
 import { EnvironmentLicenceBanner } from '@/modules/subscriptions/components/environment-licence'
-import { ArrowLeft, ExternalLink, RefreshCw, Settings } from 'lucide-react'
+import { ExternalLink, RefreshCw, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, use, useEffect, useMemo, useRef, useState } from 'react'
@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 
 import { AgentDetailDrawer } from '@/modules/cloud/components/agent-detail-drawer'
 import { EnvActionBar } from '@/modules/cloud/components/env-action-bar'
+import { EnvBreadcrumb } from '@/modules/cloud/components/env-breadcrumb'
 import { useDebouncedValue } from '@/modules/cloud/hooks/use-debounced-value'
 import { AddonsSection } from '@/modules/cloud/components/addons-section'
 import { EnvSettingsDrawer } from '@/modules/cloud/components/env-settings-drawer'
@@ -376,13 +377,12 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
       {/* Header — the page's anchor card. The back link sits outside
           the card as a breadcrumb. */}
       <div className="space-y-4">
-        <Link
-          href={appId ? `/user/apps/${appId}` : '/user/environments'}
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {appId ? `Back to ${appName ?? 'app'}` : 'Back to Cloud'}
-        </Link>
+        <EnvBreadcrumb
+          environmentId={documentId}
+          environmentName={displayName}
+          appId={appId}
+          appName={appName}
+        />
         <EnvironmentLicenceBanner environmentId={documentId} />
         <HeroCard>
           <div className="flex flex-wrap items-center gap-3 p-6">
