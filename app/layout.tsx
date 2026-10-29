@@ -6,6 +6,7 @@ import { AuthRedirect } from '@/modules/shared/components/renown/auth-redirect'
 import { LoginModalProvider } from '@/modules/shared/components/renown/login-modal-context'
 import { RenownLoginModal } from '@/modules/shared/components/renown/renown-login-modal'
 import { RenownProviders } from '@/modules/shared/components/renown/renown-providers'
+import { SignInTracker } from '@/modules/shared/components/renown/sign-in-tracker'
 import { WalletSwitchGuard } from '@/modules/shared/components/renown/wallet-switch-guard'
 import { GlobalRefreshIndicator } from '@/modules/shared/components/ui/global-refresh-indicator'
 import { SyncStatusChip } from '@/modules/shared/components/ui/sync-status-chip'
@@ -152,6 +153,7 @@ export default async function RootLayout({
                     <SyncStatusChip />
                     <CloudAuthBridge />
                     <AuthRedirect />
+                    <SignInTracker />
                     <WalletSwitchGuard />
                     <RenownLoginModal />
                     <div className="items-right flex min-h-screen flex-col">

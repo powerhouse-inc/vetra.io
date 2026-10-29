@@ -15,6 +15,8 @@
  */
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react'
+import { track } from '@/modules/shared/lib/track'
+import { pendingChanges } from '../lib/pending-changes'
 import {
   fetchEnvironment,
   getAuthToken,
@@ -173,6 +175,12 @@ export function useEnvironmentDetail(documentId: string) {
       : fallbackEnv // controller not ready yet — show what we have
     : fallbackEnv
 
+  // What Approve would deploy. Only the signed controller has the operation history.
+  const pending =
+    canSign && controller
+      ? pendingChanges(controller.operations.global ?? [], environment?.state.services ?? [])
+      : []
+
   const isLoading = canSign ? ctrlLoading && !fallbackEnv : fallbackLoading
   const error = canSign ? ctrlError : fallbackError
 
@@ -282,9 +290,17 @@ export function useEnvironmentDetail(documentId: string) {
     [mutate],
   )
   const addPackage = useCallback(
-    (name: string, version?: string) =>
-      mutate((c) => c.addPackage({ packageName: name, version: version ?? undefined })),
-    [mutate],
+    async (name: string, version?: string, registry?: string) => {
+      await mutate((c) =>
+        c.addPackage({
+          packageName: name,
+          version: version ?? undefined,
+          registry: registry ?? undefined,
+        }),
+      )
+      track('package_installed', { environmentId: documentId, packageName: name })
+    },
+    [mutate, documentId],
   )
   const removePackage = useCallback(
     (name: string) => mutate((c) => c.removePackage({ packageName: name })),
@@ -301,7 +317,10 @@ export function useEnvironmentDetail(documentId: string) {
       ),
     [mutate],
   )
-  const approveChanges = useCallback(() => mutate((c) => c.approveChanges({})), [mutate])
+  const approveChanges = useCallback(async () => {
+    await mutate((c) => c.approveChanges({}))
+    track('changes_approved', { environmentId: documentId })
+  }, [mutate, documentId])
   const terminate = useCallback(() => mutate((c) => c.terminateEnvironment({})), [mutate])
   const setServiceVersion = useCallback(
     (type: CloudEnvironmentServiceType, version: string) =>
@@ -408,11 +427,21 @@ export function useEnvironmentDetail(documentId: string) {
   const rollbackRelease = useCallback(async () => {
     const token = await getAuthToken(renownRef.current as never)
     if (!token) throw new CloudUserError(NOT_LOGGED_IN_ERROR)
-    return rollbackEnvironmentRelease(documentId, token)
+    const result = await rollbackEnvironmentRelease(documentId, token)
+    track('release_rolled_back', { environmentId: documentId })
+    return result
   }, [documentId])
+
+  /**
+   * The document's global operation history (signed-in viewers only; null
+   * until the controller loads). Read on each render: the controller's
+   * onChange above re-renders this hook when it grows.
+   */
+  const operations = controller ? controller.operations.global : null
 
   return {
     environment,
+    operations,
     /** The env organisation for the R6 edit gate (see `editGateOwnerOrgId`). */
     editGateOwnerOrgId: editGateOwnerOrgId({
       canSign,
@@ -425,6 +454,8 @@ export function useEnvironmentDetail(documentId: string) {
     retry,
     isLoading,
     error,
+    /** Config changes since the last approval, for the review before Approve. */
+    pendingChanges: pending,
     setLabel,
     setGenericSubdomain,
     setCustomDomain,

@@ -36,6 +36,7 @@ vi.mock('@/modules/apps/components/apps-empty-state', () => ({
   AppsEmptyState: () => <div>empty-state</div>,
 }))
 vi.mock('../environments/cloud-projects', () => ({ CloudEnvironments: () => null }))
+vi.mock('@/modules/apps/components/needs-attention', () => ({ NeedsAttention: () => null }))
 
 import { AppsHome } from '../apps-home'
 

@@ -1,7 +1,7 @@
 'use client'
 
 import { EnvironmentLicenceBanner } from '@/modules/subscriptions/components/environment-licence'
-import { ArrowLeft, ExternalLink, RefreshCw, Settings } from 'lucide-react'
+import { ExternalLink, RefreshCw, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, use, useEffect, useMemo, useRef, useState } from 'react'
@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 
 import { AgentDetailDrawer } from '@/modules/cloud/components/agent-detail-drawer'
 import { EnvActionBar } from '@/modules/cloud/components/env-action-bar'
+import { EnvBreadcrumb } from '@/modules/cloud/components/env-breadcrumb'
 import { useDebouncedValue } from '@/modules/cloud/hooks/use-debounced-value'
 import { AddonsSection } from '@/modules/cloud/components/addons-section'
 import { EnvSettingsDrawer } from '@/modules/cloud/components/env-settings-drawer'
@@ -17,6 +18,7 @@ import { StatusBadge } from '@/modules/cloud/components/status-badge'
 import { useClintPackages } from '@/modules/cloud/hooks/use-clint-packages'
 import { useClintRuntimeEndpoints } from '@/modules/cloud/hooks/use-clint-runtime-endpoints'
 import { useDetailDrawer } from '@/modules/cloud/hooks/use-detail-drawer'
+import { useSettingsParam } from '@/modules/cloud/hooks/use-settings-param'
 import { useEnvironmentDetail } from '@/modules/cloud/hooks/use-environment-detail'
 import { useCanEditEnvironment } from '@/modules/cloud/hooks/use-environment-org'
 import { OrgBadge } from '@/modules/orgs/components/org-badge'
@@ -207,10 +209,12 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   // states; the bar's own 3s window covers the early window in case the
   // useEffect below clears too early.
   const [intentDeploying, setIntentDeploying] = useState(false)
-  // `?settings=organisation` (the retry link after a failed hand-over at create
-  // time) opens the settings drawer on the tab holding "Move to an organisation".
-  const settingsParam = searchParams.get('settings')
-  const [settingsOpen, setSettingsOpen] = useState(settingsParam === 'organisation')
+  // Settings drawer lives in the URL (`?settings=<tab>`), so each section can be
+  // linked. `?settings=organisation` (the retry link after a failed hand-over at
+  // create time) still opens the tab holding "Move to an organisation".
+  const settings = useSettingsParam()
+  const settingsOpen = settings.tab !== null
+  const setSettingsOpen = (open: boolean) => settings.setTab(open ? 'domain' : null)
   const statusStr = state?.status ?? 'DRAFT'
   useEffect(() => {
     if (intentDeploying && statusStr !== 'CHANGES_PENDING' && statusStr !== 'DRAFT') {
@@ -376,13 +380,12 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
       {/* Header — the page's anchor card. The back link sits outside
           the card as a breadcrumb. */}
       <div className="space-y-4">
-        <Link
-          href={appId ? `/user/apps/${appId}` : '/user/environments'}
-          className="text-muted-foreground hover:text-foreground inline-flex items-center gap-2 text-sm transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-          {appId ? `Back to ${appName ?? 'app'}` : 'Back to Cloud'}
-        </Link>
+        <EnvBreadcrumb
+          environmentId={documentId}
+          environmentName={displayName}
+          appId={appId}
+          appName={appName}
+        />
         <EnvironmentLicenceBanner environmentId={documentId} />
         <HeroCard>
           <div className="flex flex-wrap items-center gap-3 p-6">
@@ -576,6 +579,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           status={state?.status}
           intentDeploying={intentDeploying}
           driftDetected={!!envStatus?.configDriftDetected}
+          pendingChanges={detail.pendingChanges}
           onApprove={() => void handleApprove()}
         />
       )}
@@ -596,8 +600,10 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
           onTerminate={detail.terminate}
           canEdit={canEdit}
           ownerOrgId={ownerOrgId}
-          defaultTab={settingsParam === 'organisation' ? 'metadata' : undefined}
+          tab={settings.tab ?? 'domain'}
+          onTabChange={settings.setTab}
           onHandedOver={() => void detail.refresh()}
+          configHistory={{ operations: detail.operations, actions: detail }}
         />
       )}
     </>

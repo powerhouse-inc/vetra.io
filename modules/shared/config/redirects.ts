@@ -7,11 +7,12 @@ type Redirect = {
 
 /**
  * Public pages retired from the site for now. Temporary (307) so they can
- * come back. Packages now live on Cloud, where they are installed.
+ * come back. The package directory is back as a single list, so old package
+ * detail links land on it.
  */
 export const LEGACY_REDIRECTS: Redirect[] = [
-  { source: '/packages', destination: '/cloud', permanent: false },
-  { source: '/packages/:path*', destination: '/cloud', permanent: false },
+  // `:path+`, not `:path*`: zero segments would match /packages itself and loop.
+  { source: '/packages/:path+', destination: '/packages', permanent: false },
   { source: '/builders', destination: '/', permanent: false },
   { source: '/builders/:path*', destination: '/', permanent: false },
   // Empty placeholders that were never linked from the site.

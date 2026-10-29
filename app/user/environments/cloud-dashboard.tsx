@@ -1,10 +1,11 @@
 'use client'
 
-import { Boxes } from 'lucide-react'
+import { Boxes, PackagePlus } from 'lucide-react'
 import Link from 'next/link'
 
 import { useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
 import { splitEnvironments } from '@/modules/apps/lib/split'
+import { useAddPackageIntent } from '@/modules/cloud/hooks/use-add-package-intent'
 import { useEnvironments } from '@/modules/cloud/hooks/use-environment'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { PageHeader } from '@/modules/shared/components/page-header'
@@ -21,6 +22,7 @@ export function CloudDashboard() {
   )
   const readyCount = environments.filter((e) => e.state.status === 'READY').length
   const totalPackages = environments.reduce((sum, e) => sum + e.state.packages.length, 0)
+  const addPackage = useAddPackageIntent()
 
   return (
     <main className="mx-auto mt-20 max-w-screen-xl space-y-8 px-6 py-8">
@@ -30,6 +32,18 @@ export function CloudDashboard() {
         description="Environments you manage by hand, not linked to an app."
         actions={<NewEnvironmentButton />}
       />
+
+      {addPackage && (
+        <div className="border-primary/40 bg-primary/5 flex flex-wrap items-center gap-3 rounded-lg border px-4 py-3 text-sm">
+          <PackagePlus className="text-primary h-4 w-4" aria-hidden />
+          <span className="min-w-0 flex-1">
+            Choose the environment to add <span className="font-mono">{addPackage}</span> to.
+          </span>
+          <Link href="/user/environments" className="text-muted-foreground hover:text-foreground">
+            Cancel
+          </Link>
+        </div>
+      )}
 
       {environments.length > 0 && (
         <div className="flex gap-6">

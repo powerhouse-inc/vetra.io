@@ -14,6 +14,7 @@ import {
   type BackupSchedule,
   type DatabaseRestoreStatus,
 } from '@/modules/cloud/types'
+import { EmptyState } from '@/modules/shared/components/states'
 import { Button } from '@/modules/shared/components/ui/button'
 
 type Props = {
@@ -222,28 +223,24 @@ export function DatabaseBackupsTab({
       {isLoading && dumps.length === 0 ? (
         <div className="text-muted-foreground py-8 text-center text-sm">Loading…</div>
       ) : dumps.length === 0 ? (
-        <div className="text-muted-foreground bg-muted/30 flex flex-col items-center gap-3 rounded-xl border border-dashed p-10 text-center">
-          <div className="bg-background flex h-12 w-12 items-center justify-center rounded-full border">
-            <Database className="h-6 w-6" />
-          </div>
-          <div className="space-y-1">
-            <p className="text-foreground text-sm font-medium">No backups yet</p>
-            <p className="text-xs">
-              Create a backup to download a portable copy of this environment&rsquo;s database.
-            </p>
-          </div>
-          {canEdit && (
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => void handleCreate()}
-              disabled={isRequesting}
-            >
-              <Plus className="mr-1.5 h-3.5 w-3.5" />
-              {isRequesting ? 'Starting…' : 'Create backup'}
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={Database}
+          title="No backups yet"
+          description="Create a backup to download a portable copy of this environment’s database."
+          action={
+            canEdit && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => void handleCreate()}
+                disabled={isRequesting}
+              >
+                <Plus className="mr-1.5 h-3.5 w-3.5" />
+                {isRequesting ? 'Starting…' : 'Create backup'}
+              </Button>
+            )
+          }
+        />
       ) : (
         <div className="space-y-2">
           {dumps.map((d) => (

@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback } from 'react'
+import { track } from '@/modules/shared/lib/track'
 import { DRIVE_ID, resolveAuthToken } from '../client'
 import { createNewEnvironmentController } from '../controller'
 import { handOverToOrg } from '../org-sync'
@@ -58,6 +59,7 @@ export function useCreateEnvironment() {
       }
       const result = await controller.push()
       const documentId = result.remoteDocument.id
+      track('env_created', { environmentId: documentId })
       if (input.orgId) await handOverToOrg(documentId, input.orgId, await resolveAuthToken())
       return { documentId }
     },

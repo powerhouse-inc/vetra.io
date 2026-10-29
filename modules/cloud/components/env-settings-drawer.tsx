@@ -24,6 +24,7 @@ import { AutoUpdateCard } from '@/modules/cloud/components/auto-update-card'
 import { DeleteEnvironmentDialog } from '@/modules/cloud/components/delete-environment-dialog'
 import { EnvOrgHandOver } from '@/modules/cloud/components/env-org-handover'
 import { CustomDomainSection } from '@/modules/cloud/components/custom-domain-section'
+import { ConfigHistorySection } from '@/modules/cloud/components/config-history-section'
 import { EventTimeline } from '@/modules/cloud/components/event-timeline'
 import { DRIVE_ID } from '@/modules/cloud/client'
 import { loadEnvironmentController } from '@/modules/cloud/controller'
@@ -31,6 +32,7 @@ import { ensureCanOperateEnvironment } from '@/modules/cloud/org-sync'
 import { getAuthToken, resetEnvironment } from '@/modules/cloud/graphql'
 import { useCanSign } from '@/modules/cloud/hooks/use-can-sign'
 import { CloudUserError, describeCloudError } from '@/modules/cloud/lib/cloud-error'
+import type { HistoryOperation, RestoreActions } from '@/modules/cloud/lib/config-history'
 import { apexCandidateServices, apexServiceForCustomDomain } from '@/modules/cloud/lib/env-host'
 import { useEnvironmentEvents } from '@/modules/cloud/hooks/use-environment-events'
 import type {
@@ -59,6 +61,7 @@ import {
   SheetTitle,
 } from '@/modules/shared/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/components/ui/tabs'
+import { parseSettingsTab, type SettingsTab } from '@/modules/cloud/hooks/use-settings-param'
 import { cn } from '@/shared/lib/utils'
 import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 
@@ -93,10 +96,19 @@ type Props = {
   canEdit?: boolean
   /** Organisation owning the env (null = personal), for the hand-over offer. */
   ownerOrgId?: string | null
-  /** Tab shown when the drawer opens (default: domain). */
-  defaultTab?: 'domain' | 'updates' | 'activity' | 'metadata'
+  /** Tab shown; the page keeps it in the URL (`?settings=<tab>`). */
+  tab: SettingsTab
+  onTabChange: (tab: SettingsTab) => void
   /** Called after a successful hand-over, to refresh the loaded document. */
   onHandedOver?: () => void
+  /**
+   * Operation history + the detail-hook methods a restore calls. When unset,
+   * the Activity tab has no configuration history.
+   */
+  configHistory?: {
+    operations: readonly HistoryOperation[] | null
+    actions: RestoreActions
+  }
 }
 
 const TERMINAL_STATUSES = new Set(['DRAFT', 'TERMINATING', 'DESTROYED', 'ARCHIVED'])
@@ -122,8 +134,10 @@ export function EnvSettingsDrawer({
   onTerminate,
   canEdit = true,
   ownerOrgId = null,
-  defaultTab = 'domain',
+  tab,
+  onTabChange,
   onHandedOver,
+  configHistory,
 }: Props) {
   const state = environment.state
   const { signer } = useCanSign()
@@ -141,7 +155,14 @@ export function EnvSettingsDrawer({
           <SheetDescription>Domain, updates, activity and admin actions.</SheetDescription>
         </SheetHeader>
 
-        <Tabs defaultValue={defaultTab} className="flex flex-1 flex-col overflow-hidden">
+        <Tabs
+          value={tab}
+          onValueChange={(next) => {
+            const parsed = parseSettingsTab(next)
+            if (parsed) onTabChange(parsed)
+          }}
+          className="flex flex-1 flex-col overflow-hidden"
+        >
           <TabsList className="mx-6 mt-4 self-start">
             <TabsTrigger value="domain" className="gap-1.5">
               <Globe className="h-3.5 w-3.5" /> Domain
@@ -199,6 +220,17 @@ export function EnvSettingsDrawer({
                 statusLoading={statusLoading}
                 isOpen={open}
               />
+              {configHistory && (
+                <div className="mt-6">
+                  <ConfigHistorySection
+                    operations={configHistory.operations}
+                    current={state}
+                    actions={configHistory.actions}
+                    canEdit={canEdit}
+                    viewerAddress={signer?.user?.address}
+                  />
+                </div>
+              )}
             </TabsContent>
 
             <TabsContent value="metadata" className="mt-0 space-y-4">

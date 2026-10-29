@@ -3,7 +3,7 @@
 import { ArrowRight, Github, Globe, Loader2, Lock, Plus, Search } from 'lucide-react'
 import { useMemo, useState } from 'react'
 
-import { Alert, AlertDescription, AlertTitle } from '@/modules/shared/components/ui/alert'
+import { ErrorState } from '@/modules/shared/components/states'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
 import {
@@ -212,10 +212,10 @@ export function RepoPicker({
 
   if (installations.error) {
     return (
-      <Alert variant="destructive">
-        <AlertTitle>Could not load your GitHub connection</AlertTitle>
-        <AlertDescription>{describeAppsError(installations.error)}</AlertDescription>
-      </Alert>
+      <ErrorState
+        title="Could not load your GitHub connection"
+        message={describeAppsError(installations.error)}
+      />
     )
   }
 
@@ -224,10 +224,10 @@ export function RepoPicker({
   // no GitHub App configured, so say why instead of rendering a dead button.
   if (list.length === 0 && info.error) {
     return (
-      <Alert variant="destructive">
-        <AlertTitle>GitHub deployment is unavailable</AlertTitle>
-        <AlertDescription>{describeAppsError(info.error)}</AlertDescription>
-      </Alert>
+      <ErrorState
+        title="GitHub deployment is unavailable"
+        message={describeAppsError(info.error)}
+      />
     )
   }
 

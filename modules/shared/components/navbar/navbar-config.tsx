@@ -1,5 +1,6 @@
 import VetraLogoWithText from '@/modules/shared/components/svgs/Vetra-logo-with-text-black.svg'
 import VetraIcon from '@/modules/shared/components/svgs/Vetra-200x200.svg'
+import { CONSOLE_NAV_SECTIONS } from '@/modules/shared/components/console-sidebar/console-nav'
 import type { NavItem, NavbarConfig } from './types'
 
 export const PUBLIC_NAV_ITEMS: NavItem[] = [
@@ -16,33 +17,10 @@ export const PUBLIC_NAV_ITEMS: NavItem[] = [
   { label: 'Docs', href: 'https://academy.vetra.io/', isExternal: true },
 ]
 
-export const PRIVATE_NAV_ITEMS: NavItem[] = [
-  {
-    label: 'Apps',
-    href: '/user',
-    isActive: (p) => p === '/user' || p.startsWith('/user/apps'),
-  },
-  {
-    label: 'Environments',
-    href: '/user/environments',
-    isActive: (p) => p.includes('/user/environments'),
-  },
-  {
-    label: 'Subscriptions',
-    href: '/user/subscriptions',
-    isActive: (p) => p.startsWith('/user/subscriptions'),
-  },
-  {
-    label: 'Studio',
-    href: '/user/studio',
-    isActive: (p) => p.includes('/user/studio') || p.includes('/user/products'),
-  },
-  {
-    label: 'Packages',
-    href: '/user/packages',
-    isActive: (p) => p.includes('/user/packages'),
-  },
-]
+/** The console sections, flattened for the mobile menu (the sidebar shows them grouped). */
+export const PRIVATE_NAV_ITEMS: NavItem[] = CONSOLE_NAV_SECTIONS.flatMap((section) =>
+  section.items.map(({ label, href, isActive }) => ({ label, href, isActive })),
+)
 
 export const NAVBAR_CONFIGS: Record<string, NavbarConfig> = {
   '/vetra': {

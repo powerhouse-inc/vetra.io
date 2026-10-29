@@ -32,6 +32,13 @@ import { partitionPackagesByManifestType } from '@/modules/cloud/lib/module-pack
 import { toServiceImageTag } from '@/modules/cloud/registry/channels'
 import { useOptimistic } from '@/modules/cloud/hooks/use-optimistic'
 import { describeCloudError } from '@/modules/cloud/lib/cloud-error'
+import { EnvTopology, ServicesViewToggle } from '@/modules/cloud/components/env-topology'
+import { statusTone, type TopologyTone } from '@/modules/cloud/lib/env-topology'
+import {
+  SERVICE_HEALTH_LABEL,
+  serviceHealth,
+  type ServiceHealth,
+} from '@/modules/cloud/lib/service-health'
 import {
   customDomainHosts,
   customDomainServiceHost,
@@ -57,17 +64,35 @@ import { formatDate, formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 // Helper: StatusDot
 // ---------------------------------------------------------------------------
 
-function StatusDot({ status }: { status: string }) {
-  const colorClass =
-    status === 'READY' || status === 'ACTIVE'
-      ? 'bg-success'
-      : status === 'DEPLOYING'
-        ? 'bg-warning'
-        : status === 'PROVISIONING'
-          ? 'bg-info'
-          : status === 'SUSPENDED' || status === 'BILLING_ISSUE'
-            ? 'bg-destructive'
-            : 'bg-muted-foreground'
+const HEALTH_DOT_CLASS: Record<ServiceHealth, string> = {
+  running: 'bg-success',
+  starting: 'bg-warning',
+  failing: 'bg-destructive',
+  'not-running': 'bg-muted-foreground',
+}
+
+const STATUS_DOT_CLASS: Record<TopologyTone, string> = {
+  success: 'bg-success',
+  warning: 'bg-warning',
+  info: 'bg-info',
+  destructive: 'bg-destructive',
+  muted: 'bg-muted-foreground',
+}
+
+/** Live pod health when known, else the document's service status. */
+function StatusDot({ status, health }: { status: string; health?: ServiceHealth | null }) {
+  if (health) {
+    const label = SERVICE_HEALTH_LABEL[health]
+    return (
+      <span
+        title={label}
+        className={`inline-block h-2 w-2 rounded-full ${HEALTH_DOT_CLASS[health]}`}
+      >
+        <span className="sr-only">{label}</span>
+      </span>
+    )
+  }
+  const colorClass = STATUS_DOT_CLASS[statusTone(status)]
 
   return <span className={`inline-block h-2 w-2 rounded-full ${colorClass}`} />
 }
@@ -123,6 +148,7 @@ function ServiceRow({
   isApexService,
   isEnabled: serverIsEnabled,
   serviceStatus,
+  health,
   environmentStatus,
   currentVersion,
   selectedRessource,
@@ -149,6 +175,8 @@ function ServiceRow({
   isApexService?: boolean
   isEnabled: boolean
   serviceStatus: string
+  /** Live health from the environment's pods; null falls back to `serviceStatus`. */
+  health?: ServiceHealth | null
   environmentStatus: string
   currentVersion: string | null
   selectedRessource: import('@/modules/cloud/types').CloudResourceSize | null
@@ -281,7 +309,7 @@ function ServiceRow({
               <span className={cn('text-sm font-medium', !isEnabled && 'text-muted-foreground')}>
                 {label}
               </span>
-              {isEnabled && <StatusDot status={serviceStatus} />}
+              {isEnabled && <StatusDot status={serviceStatus} health={health} />}
               {!isEnabled && (
                 <Badge
                   size="xs"
@@ -683,6 +711,7 @@ export function OverviewTab({
   const canEdit = useCanEditEnvironment(environment.id, environment.state.ownerOrgId)
   const [addAgentOpen, setAddAgentOpen] = useState(false)
   const [fusionConfigOpen, setFusionConfigOpen] = useState(false)
+  const [servicesView, setServicesView] = useState<'list' | 'map'>('list')
   const { setSecret: setTenantSecret } = useTenantConfig(tenantId)
 
   const state = environment.state
@@ -795,71 +824,84 @@ export function OverviewTab({
               <Server className="h-4 w-4" />
               Services
             </CardTitle>
+            <ServicesViewToggle value={servicesView} onChange={setServicesView} />
           </div>
         </CardHeader>
         <CardContent className="space-y-6">
-          <div className="space-y-3">
-            {(['CONNECT', 'SWITCHBOARD', 'FUSION'] as const).map((type) => {
-              const service = getServiceEnabled(type)
-              return (
-                <ServiceRow
-                  key={type}
-                  serviceType={type}
-                  prefix={service?.prefix ?? defaultPrefixes[type]}
-                  subdomain={subdomain}
-                  customHost={customDomainServiceHost(
-                    state.services,
-                    state.apexService,
-                    activeCustomDomain,
-                    type,
-                  )}
-                  customHostPinned={isPinnedToCustomApex(
-                    state.services,
-                    state.apexService,
-                    activeCustomDomain,
-                    type,
-                  )}
-                  customDomainValid={
-                    status?.domainResolves === true && status?.tlsCertValid === true
-                  }
-                  isApexService={isTypeAtApex(state.services, state.apexService, type)}
-                  isEnabled={service?.enabled ?? false}
-                  onConfigure={
-                    type === 'FUSION' && setFusionConfig
-                      ? () => setFusionConfigOpen(true)
-                      : undefined
-                  }
-                  tagsImage={type === 'FUSION' ? (state.fusion?.image ?? null) : undefined}
-                  serviceStatus={service?.status ?? 'PROVISIONING'}
-                  environmentStatus={state.status}
-                  currentVersion={service?.version ?? null}
-                  selectedRessource={service?.selectedRessource ?? null}
-                  canResize={canEdit}
-                  onToggle={(enabled) =>
-                    enabled
-                      ? enableService(type, service?.prefix ?? defaultPrefixes[type])
-                      : disableService(type)
-                  }
-                  onSetVersion={
-                    setServiceVersion ? (version) => setServiceVersion(type, version) : undefined
-                  }
-                  onResize={
-                    setServiceSize && service
-                      ? (size) => setServiceSize(service.prefix, size)
-                      : undefined
-                  }
-                  onOpenDetail={
-                    onOpenServiceDetail && service?.enabled
-                      ? () =>
-                          onOpenServiceDetail(
-                            type.toLowerCase() as 'connect' | 'switchboard' | 'fusion',
-                          )
-                      : undefined
-                  }
-                />
-              )
-            })}
-          </div>
+          {servicesView === 'map' ? (
+            // Agent (clint-project) packages run in their own pods, so the
+            // map shows the same module list as the Packages card.
+            <EnvTopology
+              services={state.services}
+              packages={modulePackages}
+              onOpenServiceDetail={onOpenServiceDetail}
+              onOpenAgentDetail={onOpenAgentDetail}
+            />
+          ) : (
+            <div className="space-y-3">
+              {(['CONNECT', 'SWITCHBOARD', 'FUSION'] as const).map((type) => {
+                const service = getServiceEnabled(type)
+                return (
+                  <ServiceRow
+                    key={type}
+                    serviceType={type}
+                    prefix={service?.prefix ?? defaultPrefixes[type]}
+                    subdomain={subdomain}
+                    customHost={customDomainServiceHost(
+                      state.services,
+                      state.apexService,
+                      activeCustomDomain,
+                      type,
+                    )}
+                    customHostPinned={isPinnedToCustomApex(
+                      state.services,
+                      state.apexService,
+                      activeCustomDomain,
+                      type,
+                    )}
+                    customDomainValid={
+                      status?.domainResolves === true && status?.tlsCertValid === true
+                    }
+                    isApexService={isTypeAtApex(state.services, state.apexService, type)}
+                    isEnabled={service?.enabled ?? false}
+                    onConfigure={
+                      type === 'FUSION' && setFusionConfig
+                        ? () => setFusionConfigOpen(true)
+                        : undefined
+                    }
+                    tagsImage={type === 'FUSION' ? (state.fusion?.image ?? null) : undefined}
+                    serviceStatus={service?.status ?? 'PROVISIONING'}
+                    health={serviceHealth(pods, type)}
+                    environmentStatus={state.status}
+                    currentVersion={service?.version ?? null}
+                    selectedRessource={service?.selectedRessource ?? null}
+                    canResize={canEdit}
+                    onToggle={(enabled) =>
+                      enabled
+                        ? enableService(type, service?.prefix ?? defaultPrefixes[type])
+                        : disableService(type)
+                    }
+                    onSetVersion={
+                      setServiceVersion ? (version) => setServiceVersion(type, version) : undefined
+                    }
+                    onResize={
+                      setServiceSize && service
+                        ? (size) => setServiceSize(service.prefix, size)
+                        : undefined
+                    }
+                    onOpenDetail={
+                      onOpenServiceDetail && service?.enabled
+                        ? () =>
+                            onOpenServiceDetail(
+                              type.toLowerCase() as 'connect' | 'switchboard' | 'fusion',
+                            )
+                        : undefined
+                    }
+                  />
+                )
+              })}
+            </div>
+          )}
         </CardContent>
       </Card>
 
