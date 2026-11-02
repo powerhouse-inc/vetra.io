@@ -19,6 +19,7 @@ test('publisher: manage the licensing-only Vetra Studio app from the apps list',
     packages: [],
     templateHash: 'h-studio',
     environmentCount: 0,
+    warmPoolSize: 0,
   })
   state.terms.push({
     id: 'term-studio',

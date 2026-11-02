@@ -64,6 +64,17 @@ type PublisherTemplate {
   templateHash: String!
   "Environments currently provisioned from this template (DEDICATED), for the 'affects N' warning."
   environmentCount: Int!
+  warmPoolSize: Int!
+}
+
+type WarmPool {
+  size: Int!
+  warming: Int!
+  available: Int!
+  claimedThisMonth: Int!
+  warmHoursThisMonth: Float!
+  warmHoursLastMonth: Float!
+  estimatePerEnvironmentEur: Float!
 }
 
 type PublisherTemplateService { # unchanged
@@ -146,6 +157,7 @@ input SetTemplateDetailsInput {
   size: String
   baseDomain: String
   packageRegistry: String
+  warmPoolSize: Int
 }
 input AddTemplateServiceInput {
   appId: String!
@@ -216,6 +228,7 @@ input CreateInviteCodeInput {
 type VetraPublisherQueries {
   myApps: [PublisherApp!]!
   templates(appId: String!): [PublisherTemplate!]!
+  warmPool(appId: String!, templateId: String!): WarmPool!
   terms(appId: String!): [PublisherTerm!]!
   appArtifacts(appId: String!): [PublisherAppArtifact!]!
   licenses(appId: String!, status: String): [PublisherLicense!]!

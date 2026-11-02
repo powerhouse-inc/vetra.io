@@ -4,7 +4,14 @@
  * prefix used to invalidate one resource of one app for every viewer.
  */
 export type PublisherResource =
-  'templates' | 'terms' | 'artifacts' | 'licenses' | 'environments' | 'inviteCodes' | 'allowList'
+  | 'templates'
+  | 'terms'
+  | 'artifacts'
+  | 'licenses'
+  | 'environments'
+  | 'inviteCodes'
+  | 'allowList'
+  | 'warmPool'
 
 export const publisherKeys = {
   all: ['publisher'] as const,

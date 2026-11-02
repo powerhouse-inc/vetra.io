@@ -29,6 +29,7 @@ const tpl = (over: Partial<PublisherTemplate> = {}): PublisherTemplate => ({
   packages: [],
   templateHash: 'h',
   environmentCount: 2,
+  warmPoolSize: 0,
   ...over,
 })
 const image: PublisherAppArtifact = {

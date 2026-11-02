@@ -13,6 +13,7 @@ import type {
   PublisherInviteCode,
   PublisherLicense,
   PublisherTemplate,
+  WarmPool,
   PublisherTerm,
   RemoveTemplateEntryInput,
   ReplaceGrantInput,
@@ -218,9 +219,10 @@ export function retryPublisher(failureCount: number, error: unknown): boolean {
 const APP_FIELDS_BASE = `id name status`
 const APP_FIELDS = `${APP_FIELDS_BASE} identityDid`
 const TEMPLATE_FIELDS = `id name mode sharedEnvironment size baseDomain packageRegistry
-  templateHash environmentCount
+  templateHash environmentCount warmPoolSize
   services { id type prefix artifactName artifactChannel }
   packages { id packageName version }`
+const WARM_POOL_FIELDS = `size warming available claimedThisMonth warmHoursThisMonth warmHoursLastMonth estimatePerEnvironmentEur`
 const TERM_FIELDS = `id kind label templateId validityDays issuers status activeLicenses`
 const ARTIFACT_FIELDS = `kind name versions { version reference } channels { channel version }`
 const LICENSE_FIELDS = `id user kind issuer status start end environmentId replacedBy`
@@ -301,6 +303,21 @@ export const fetchTemplates = (appId: string, token: string | null, fetchImpl?: 
     APP_ID,
     `templates(appId: $appId) { ${TEMPLATE_FIELDS} }`,
     { appId },
+    token,
+    fetchImpl,
+  )
+
+export const fetchWarmPool = (
+  appId: string,
+  templateId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+) =>
+  read<WarmPool>(
+    'warmPool',
+    '($appId: String!, $templateId: String!)',
+    `warmPool(appId: $appId, templateId: $templateId) { ${WARM_POOL_FIELDS} }`,
+    { appId, templateId },
     token,
     fetchImpl,
   )

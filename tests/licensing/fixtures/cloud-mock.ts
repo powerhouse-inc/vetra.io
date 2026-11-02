@@ -109,6 +109,7 @@ const HANDLERS: Handler[] = [
         packages: [],
         templateHash: `h-${id}`,
         environmentCount: 0,
+        warmPoolSize: 0,
       })
       return pub('addTemplate', id)
     },

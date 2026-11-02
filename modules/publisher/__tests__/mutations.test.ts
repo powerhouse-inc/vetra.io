@@ -18,7 +18,7 @@ const INPUT_WRITES: Array<[keyof typeof api, string, Record<string, unknown>, un
   [
     'setTemplateDetails',
     'SetTemplateDetailsInput',
-    { appId: 'a', templateId: 't', size: null },
+    { appId: 'a', templateId: 't', size: null, warmPoolSize: 3 },
     true,
   ],
   [

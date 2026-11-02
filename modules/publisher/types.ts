@@ -48,6 +48,19 @@ export type PublisherTemplate = {
   templateHash: string
   /** Environments currently provisioned from this template (DEDICATED). */
   environmentCount: number
+  /** Warm environments kept ready for this template; 0 means no pool. */
+  warmPoolSize: number
+}
+
+/** A template's warm pool: live counts plus this and last month's usage. */
+export type WarmPool = {
+  size: number
+  warming: number
+  available: number
+  claimedThisMonth: number
+  warmHoursThisMonth: number
+  warmHoursLastMonth: number
+  estimatePerEnvironmentEur: number
 }
 
 export type PublisherTerm = {
@@ -121,6 +134,7 @@ export type SetTemplateDetailsInput = {
   size?: string | null
   baseDomain?: string | null
   packageRegistry?: string | null
+  warmPoolSize?: number | null
 }
 export type AddTemplateServiceInput = {
   appId: string

@@ -53,6 +53,7 @@ const tpl = (over: Partial<PublisherTemplate>): PublisherTemplate => ({
   packages: [],
   templateHash: 'h',
   environmentCount: 0,
+  warmPoolSize: 0,
   ...over,
 })
 const term = (over: Partial<PublisherTerm>): PublisherTerm => ({
