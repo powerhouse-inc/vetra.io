@@ -237,5 +237,56 @@ describe('TemplateDetailsForm', () => {
       expect(saveBtn().disabled).toBe(true)
       expect(screen.queryByText(/estimate\)/)).toBeNull()
     })
+
+    it.each(['11', '-1', '2.5'])('says why %s is refused', (value) => {
+      renderForm()
+      expect(screen.queryByText('Enter a whole number from 0 to 10.')).toBeNull()
+      fireEvent.change(field(), { target: { value } })
+      const msg = screen.getByText('Enter a whole number from 0 to 10.')
+      expect(msg.id).toBeTruthy()
+      expect((field().getAttribute('aria-describedby') ?? '').split(' ')).toContain(msg.id)
+    })
+
+    it('describes the field by the hint and the app-contract note', () => {
+      renderForm()
+      const ids = (field().getAttribute('aria-describedby') ?? '').split(' ')
+      const hint = screen.getByText(/Kept running and ready to hand out/)
+      const note = screen.getByText(/start before anyone owns them/)
+      expect(hint.id).toBeTruthy()
+      expect(note.id).toBeTruthy()
+      expect(ids).toContain(hint.id)
+      expect(ids).toContain(note.id)
+    })
+
+    it('refuses an unparseable entry such as a stray "-" or "e"', () => {
+      renderForm()
+      fireEvent.change(field(), { target: { value: '3' } })
+      Object.defineProperty(field(), 'validity', {
+        configurable: true,
+        value: { badInput: true },
+      })
+      fireEvent.change(field(), { target: { value: '' } })
+      expect(saveBtn().disabled).toBe(true)
+      expect(field().getAttribute('aria-invalid')).toBe('true')
+      expect(screen.getByText('Enter a whole number from 0 to 10.')).toBeTruthy()
+      Object.defineProperty(field(), 'validity', {
+        configurable: true,
+        value: { badInput: false },
+      })
+      fireEvent.change(field(), { target: { value: '2' } })
+      expect(screen.queryByText('Enter a whole number from 0 to 10.')).toBeNull()
+    })
+
+    it('shows the estimate only for the saved size', () => {
+      renderForm({ size: 'SMALL' as PublisherTemplate['size'] })
+      fireEvent.change(field(), { target: { value: '3' } })
+      expect(screen.getByText('≈ €240/month (estimate)')).toBeTruthy()
+      expect(screen.queryByText('Save to see the estimate for this size.')).toBeNull()
+      fireEvent.change(screen.getByLabelText('Size'), { target: { value: 'LARGE' } })
+      expect(screen.queryByText(/€/)).toBeNull()
+      expect(screen.getByText('Save to see the estimate for this size.')).toBeTruthy()
+      fireEvent.change(field(), { target: { value: '0' } })
+      expect(screen.queryByText('Save to see the estimate for this size.')).toBeNull()
+    })
   })
 })

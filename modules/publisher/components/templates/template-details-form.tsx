@@ -57,7 +57,10 @@ export function TemplateDetailsForm({
     setForm((f) => ({ ...f, [key]: value }))
   const dirty = isTemplateFormDirty(template, form)
   const warmCount = warmPoolCount(form)
-  const warmValid = isWarmPoolValid(form)
+  // An unparseable entry ("-", "e") reads as '' in a number input, so it is tracked apart.
+  const [warmBadInput, setWarmBadInput] = useState(false)
+  const warmValid = isWarmPoolValid(form) && (form.mode === 'SHARED' || !warmBadInput)
+  const sizeIsSaved = form.size === (template.size ?? '')
   const warmPool = useWarmPool(appId, template.id, form.mode === 'DEDICATED' && warmCount > 0)
   const estimate = warmPool.data?.estimatePerEnvironmentEur
 
@@ -151,17 +154,34 @@ export function TemplateDetailsForm({
               placeholder="0"
               className="w-full sm:w-32"
               aria-invalid={!warmValid}
-              aria-describedby="template-warm-pool-hint"
+              aria-describedby={
+                warmValid
+                  ? 'template-warm-pool-hint template-warm-pool-note'
+                  : 'template-warm-pool-hint template-warm-pool-note template-warm-pool-error'
+              }
               value={form.warmPoolSize}
-              onChange={(e) => set('warmPoolSize', e.target.value)}
+              onChange={(e) => {
+                setWarmBadInput(e.target.validity.badInput)
+                set('warmPoolSize', e.target.value)
+              }}
             />
+            {!warmValid && (
+              <p id="template-warm-pool-error" className="text-destructive text-xs">
+                Enter a whole number from 0 to 10.
+              </p>
+            )}
             <p id="template-warm-pool-hint" className="text-muted-foreground text-xs">
               Kept running and ready to hand out. You pay for them while they wait.
             </p>
-            {warmValid && warmCount > 0 && estimate != null && (
+            {warmValid && warmCount > 0 && sizeIsSaved && estimate != null && (
               <p className="text-sm">{`≈ €${warmCount * estimate}/month (estimate)`}</p>
             )}
-            <p className="text-muted-foreground text-xs">
+            {warmValid && warmCount > 0 && !sizeIsSaved && (
+              <p className="text-muted-foreground text-sm">
+                Save to see the estimate for this size.
+              </p>
+            )}
+            <p id="template-warm-pool-note" className="text-muted-foreground text-xs">
               Warm environments start before anyone owns them. Your app must start without an owner
               and create nothing for a person until it is claimed.
             </p>
