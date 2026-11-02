@@ -43,6 +43,8 @@ function usePublisherMutation<V, R>(
 const TEMPLATE_WRITES = ['templates'] as const
 // A template edit re-applies to its environments, so their hashes change too.
 const TEMPLATE_CONTENT_WRITES = ['templates', 'environments'] as const
+// The pool size lives on the template and the pool's counts follow it.
+const TEMPLATE_DETAILS_WRITES = ['templates', 'environments', 'warmPool'] as const
 const TERM_WRITES = ['terms'] as const
 // Licence changes move counts on plans (activeLicenses) and templates (environmentCount).
 const LICENCE_WRITES = ['licenses', 'environments', 'terms', 'templates'] as const
@@ -57,7 +59,7 @@ export const useSetTemplateDetails = (appId: string) =>
   usePublisherMutation<NoApp<SetTemplateDetailsInput>, boolean>(
     appId,
     (v, t) => api.setTemplateDetails({ appId, ...v }, t),
-    TEMPLATE_CONTENT_WRITES,
+    TEMPLATE_DETAILS_WRITES,
   )
 export const useAddTemplateService = (appId: string) =>
   usePublisherMutation<NoApp<AddTemplateServiceInput>, boolean>(

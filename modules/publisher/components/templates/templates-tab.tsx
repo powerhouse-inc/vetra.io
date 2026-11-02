@@ -70,6 +70,7 @@ export function TemplatesTab({ appId }: { appId: string }) {
           {list.map((t) => (
             <TemplateCard
               key={t.id}
+              appId={appId}
               template={t}
               usedBy={usedBy(t.id)}
               usage={usage}

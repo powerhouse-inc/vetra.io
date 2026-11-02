@@ -2,17 +2,20 @@
 
 import { Pencil, Server, Trash2, Users } from 'lucide-react'
 import { Button } from '@/modules/shared/components/ui/button'
-import { envCountText, templateName, termName } from '../../lib/format'
+import { useWarmPool } from '../../hooks/use-publisher'
+import { envCountText, templateName, termName, warmPoolText } from '../../lib/format'
 import { describeTemplate } from '../../lib/template'
 import type { PublisherTemplate, PublisherTerm } from '../../types'
 
 export function TemplateCard({
+  appId,
   template,
   usedBy,
   usage = 'ready',
   onEdit,
   onDelete,
 }: {
+  appId: string
   template: PublisherTemplate
   usedBy: PublisherTerm[]
   /** Whether plan usage is known yet; until it is, nothing claims the template is free. */
@@ -32,6 +35,9 @@ export function TemplateCard({
         : running
           ? 'Environments still run on it'
           : undefined
+  // A pool that has not loaded, or failed to, simply adds no lines; the card never waits on it.
+  const pool = useWarmPool(appId, template.id, template.mode === 'DEDICATED')
+  const poolLines = pool.data ? warmPoolText(pool.data) : []
   const Icon = template.mode === 'SHARED' ? Users : Server
   return (
     <article
@@ -63,6 +69,7 @@ export function TemplateCard({
                 : 'Not used by a plan yet'}
         </span>
         {template.mode === 'DEDICATED' && <span>{envCountText(template.environmentCount)}</span>}
+        {template.mode === 'DEDICATED' && poolLines.map((l) => <span key={l}>{l}</span>)}
       </div>
       <div className="border-border mt-auto flex gap-2 border-t pt-3">
         <Button size="sm" variant="outline" onClick={onEdit}>

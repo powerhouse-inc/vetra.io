@@ -15,6 +15,7 @@ import {
   fetchPublisherApps,
   fetchTemplates,
   fetchTerms,
+  fetchWarmPool,
   retryPublisher,
 } from '../graphql'
 import type {
@@ -26,12 +27,14 @@ import type {
   PublisherLicense,
   PublisherTemplate,
   PublisherTerm,
+  WarmPool,
 } from '../types'
 import { publisherKeys, type PublisherResource } from './keys'
 import { useViewerDid } from './use-viewer-did'
 
 const ENVIRONMENTS_POLL_MS = 10_000
 const LICENCES_POLL_MS = 15_000
+const WARM_POOL_POLL_MS = 30_000
 
 /**
  * Token resolver for mutations. Goes through waitForToken so a write fired right
@@ -115,3 +118,18 @@ export const usePublisherInviteCodes = (appId: string | null) =>
 
 export const usePublisherAllowList = (appId: string | null) =>
   useAppList<PublisherAllowListEntry>('allowList', appId, fetchAllowList)
+
+/** One template's warm pool. Counts move as the keeper warms and claims, so it polls while mounted. */
+export function useWarmPool(appId: string, templateId: string, enabled: boolean) {
+  const { did, keyDid } = useViewerDid()
+  return useAuthedQuery<WarmPool>(
+    [...publisherKeys.of('warmPool', appId), templateId, keyDid],
+    (token) => fetchWarmPool(appId, templateId, token),
+    {
+      retry: retryPublisher,
+      enabled: !!did && enabled,
+      refetchInterval: WARM_POOL_POLL_MS,
+      refetchIntervalInBackground: false,
+    },
+  )
+}

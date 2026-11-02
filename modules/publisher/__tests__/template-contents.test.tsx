@@ -36,6 +36,7 @@ const tpl: PublisherTemplate = {
   packages: [],
   templateHash: 'h',
   environmentCount: 2,
+  warmPoolSize: 0,
 }
 
 function Harness() {

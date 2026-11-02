@@ -78,6 +78,19 @@ const HANDLERS: Handler[] = [
   },
   { match: /vetraPublisher\s*\{\s*myApps/, reply: (_, s) => pub('myApps', s.publisherApps) },
   { match: /vetraPublisher\s*\{\s*templates\(/, reply: (_, s) => pub('templates', s.templates) },
+  {
+    match: /vetraPublisher\s*\{\s*warmPool\(/,
+    reply: () =>
+      pub('warmPool', {
+        size: 0,
+        warming: 0,
+        available: 0,
+        claimedThisMonth: 0,
+        warmHoursThisMonth: 0,
+        warmHoursLastMonth: 0,
+        estimatePerEnvironmentEur: 40,
+      }),
+  },
   { match: /vetraPublisher\s*\{\s*terms\(/, reply: (_, s) => pub('terms', s.terms) },
   {
     match: /vetraPublisher\s*\{\s*appArtifacts\(/,
@@ -109,6 +122,7 @@ const HANDLERS: Handler[] = [
         packages: [],
         templateHash: `h-${id}`,
         environmentCount: 0,
+        warmPoolSize: 0,
       })
       return pub('addTemplate', id)
     },

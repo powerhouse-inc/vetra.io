@@ -10,6 +10,7 @@ vi.mock('../hooks/use-publisher-mutations', () => ({
 }))
 vi.mock('../hooks/use-publisher', () => ({
   usePublisherAppArtifacts: () => ({ data: [], isLoading: false }),
+  useWarmPool: () => ({ data: undefined }),
 }))
 vi.mock('@/modules/cloud/hooks/use-environment', () => ({
   useViewer: () => ({ viewer: { address: '0xme', isAdmin: false }, isLoading: false }),
@@ -40,6 +41,7 @@ const tpl = (over: Partial<PublisherTemplate> = {}): PublisherTemplate => ({
   packages: [],
   templateHash: 'h',
   environmentCount: 3,
+  warmPoolSize: 0,
   ...over,
 })
 
