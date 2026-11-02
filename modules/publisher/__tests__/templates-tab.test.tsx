@@ -18,6 +18,7 @@ vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock('../hooks/use-publisher', () => ({
   usePublisherTemplates: () => ({ ...templates, refetch: vi.fn(), isRefetching: false }),
   usePublisherTerms: () => ({ data: terms, ...termsState }),
+  useWarmPool: () => ({ data: undefined }),
 }))
 vi.mock('../hooks/use-publisher-mutations', () => ({
   useAddTemplate: () => ({ mutateAsync: addTemplate, isPending: false }),

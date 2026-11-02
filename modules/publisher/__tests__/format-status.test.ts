@@ -6,6 +6,7 @@ import {
   templateName,
   termName,
   validityText,
+  warmPoolText,
 } from '../lib/format'
 import { inviteCodeState, licenseStatusMeta, termStatusMeta } from '../lib/status'
 
@@ -61,5 +62,26 @@ describe('status meta', () => {
     expect(inviteCodeState({ ...base, expiresAt: '2026-10-08T11:59:59Z' }, now)).toBe('expired')
     expect(inviteCodeState({ ...base, maxUses: 3, redemptions: 3 }, now)).toBe('used-up')
     expect(inviteCodeState({ ...base, maxUses: 3, redemptions: 2 }, now)).toBe('active')
+  })
+})
+
+describe('warmPoolText', () => {
+  const pool = (over = {}) => ({
+    size: 3,
+    warming: 1,
+    available: 2,
+    claimedThisMonth: 0,
+    warmHoursThisMonth: 12.46,
+    warmHoursLastMonth: 0,
+    estimatePerEnvironmentEur: 0,
+    ...over,
+  })
+  it('counts warm and ready, and rounds hours to one decimal', () => {
+    expect(warmPoolText(pool())).toEqual(['3 warm, 2 ready', '12.5 warm hours this month'])
+  })
+  it('says nothing for an empty pool with no hours', () => {
+    expect(
+      warmPoolText(pool({ size: 0, warming: 0, available: 0, warmHoursThisMonth: 0 })),
+    ).toEqual([])
   })
 })
