@@ -32,6 +32,7 @@ const A = 'app-1'
 const CALLS: Record<string, (f: publisher.FetchLike) => Promise<unknown>> = {
   fetchPublisherApps: (f) => publisher.fetchPublisherApps('t', f),
   fetchTemplates: (f) => publisher.fetchTemplates(A, 't', f),
+  fetchWarmPool: (f) => publisher.fetchWarmPool(A, 'tpl', 't', f),
   fetchTerms: (f) => publisher.fetchTerms(A, 't', f),
   fetchAppArtifacts: (f) => publisher.fetchAppArtifacts(A, 't', f),
   fetchLicenses: (f) => publisher.fetchLicenses(A, null, 't', f),
@@ -51,6 +52,7 @@ const CALLS: Record<string, (f: publisher.FetchLike) => Promise<unknown>> = {
         size: null,
         baseDomain: null,
         packageRegistry: null,
+        warmPoolSize: 2,
       },
       't',
       f,

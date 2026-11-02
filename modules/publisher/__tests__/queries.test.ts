@@ -67,6 +67,7 @@ const READS: Read[] = [
       'packageRegistry',
       'templateHash',
       'environmentCount',
+      'warmPoolSize',
       'services',
       'packages',
     ],
@@ -162,6 +163,26 @@ describe.each(READS)('$name', ({ field, call, variables, fields }) => {
     expect(calls[0].query).toMatch(/vetraPublisher\s*\{/)
     expect(calls[0].variables).toEqual(variables)
     expect(fieldsOf(calls[0].query, field)).toEqual(fields)
+  })
+})
+
+describe('fetchWarmPool', () => {
+  it('asks for one template pool and returns the parsed object', async () => {
+    const pool = {
+      size: 2,
+      warming: 1,
+      available: 1,
+      claimedThisMonth: 4,
+      warmHoursThisMonth: 10.5,
+      warmHoursLastMonth: 20,
+      estimatePerEnvironmentEur: 1.25,
+    }
+    const { calls, fetchImpl } = capture({ vetraPublisher: { warmPool: pool } })
+    await expect(api.fetchWarmPool('app-1', 'tpl-1', 't', fetchImpl)).resolves.toEqual(pool)
+    expect(calls[0].query).toBe(
+      'query ($appId: String!, $templateId: String!) { vetraPublisher { warmPool(appId: $appId, templateId: $templateId) { size warming available claimedThisMonth warmHoursThisMonth warmHoursLastMonth estimatePerEnvironmentEur } } }',
+    )
+    expect(calls[0].variables).toEqual({ appId: 'app-1', templateId: 'tpl-1' })
   })
 })
 

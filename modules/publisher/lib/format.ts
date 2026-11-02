@@ -1,5 +1,5 @@
 import { formatDate } from '@/modules/shared/lib/time'
-import type { PublisherTemplate, PublisherTerm } from '../types'
+import type { PublisherTemplate, PublisherTerm, WarmPool } from '../types'
 
 const ADDRESS = /^0x[0-9a-fA-F]{40}$/
 const PKH = /^did:pkh:eip155:\d+:(0x[0-9a-fA-F]{40})$/
@@ -30,6 +30,16 @@ export function validityText(days: number | null): string {
 export function envCountText(n: number): string {
   if (n === 0) return 'No environments yet'
   return n === 1 ? '1 environment' : `${n} environments`
+}
+
+/** The pool lines for a template card; empty when there is no pool and no warm hours to account for. */
+export function warmPoolText(pool: WarmPool): string[] {
+  const lines: string[] = []
+  if (pool.size > 0) lines.push(`${pool.warming + pool.available} warm, ${pool.available} ready`)
+  if (pool.warmHoursThisMonth > 0) {
+    lines.push(`${Math.round(pool.warmHoursThisMonth * 10) / 10} warm hours this month`)
+  }
+  return lines
 }
 
 export function dateRange(start: string | null, end: string | null): string {

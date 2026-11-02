@@ -13,14 +13,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/modules/shared/components/ui/select'
+import { useWarmPool } from '../../hooks/use-publisher'
 import { useSetTemplateDetails } from '../../hooks/use-publisher-mutations'
 import { runWithToast } from '../../lib/run'
 import {
   isTemplateFormDirty,
+  isWarmPoolValid,
   SIZES,
   sharedModeBlocker,
   templateDetailsInput,
   templateToForm,
+  WARM_POOL_MAX,
+  warmPoolCount,
   type TemplateForm,
 } from '../../lib/template'
 import type { PublisherTemplate } from '../../types'
@@ -52,6 +56,13 @@ export function TemplateDetailsForm({
   const set = <K extends keyof TemplateForm>(key: K, value: TemplateForm[K]) =>
     setForm((f) => ({ ...f, [key]: value }))
   const dirty = isTemplateFormDirty(template, form)
+  const warmCount = warmPoolCount(form)
+  // An unparseable entry ("-", "e") reads as '' in a number input, so it is tracked apart.
+  const [warmBadInput, setWarmBadInput] = useState(false)
+  const warmValid = isWarmPoolValid(form) && (form.mode === 'SHARED' || !warmBadInput)
+  const sizeIsSaved = form.size === (template.size ?? '')
+  const warmPool = useWarmPool(appId, template.id, form.mode === 'DEDICATED' && warmCount > 0)
+  const estimate = warmPool.data?.estimatePerEnvironmentEur
 
   const save = () =>
     guard('Save template changes?', () =>
@@ -131,6 +142,50 @@ export function TemplateDetailsForm({
               </SelectContent>
             </Select>
           </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="template-warm-pool">Warm environments</Label>
+            <Input
+              id="template-warm-pool"
+              type="number"
+              inputMode="numeric"
+              min={0}
+              max={WARM_POOL_MAX}
+              step={1}
+              placeholder="0"
+              className="w-full sm:w-32"
+              aria-invalid={!warmValid}
+              aria-describedby={
+                warmValid
+                  ? 'template-warm-pool-hint template-warm-pool-note'
+                  : 'template-warm-pool-hint template-warm-pool-note template-warm-pool-error'
+              }
+              value={form.warmPoolSize}
+              onChange={(e) => {
+                setWarmBadInput(e.target.validity.badInput)
+                set('warmPoolSize', e.target.value)
+              }}
+            />
+            {!warmValid && (
+              <p id="template-warm-pool-error" className="text-destructive text-xs">
+                Enter a whole number from 0 to 10.
+              </p>
+            )}
+            <p id="template-warm-pool-hint" className="text-muted-foreground text-xs">
+              Kept running and ready to hand out. You pay for them while they wait.
+            </p>
+            {warmValid && warmCount > 0 && sizeIsSaved && estimate != null && (
+              <p className="text-sm">{`≈ €${warmCount * estimate}/month (estimate)`}</p>
+            )}
+            {warmValid && warmCount > 0 && !sizeIsSaved && (
+              <p className="text-muted-foreground text-sm">
+                Save to see the estimate for this size.
+              </p>
+            )}
+            <p id="template-warm-pool-note" className="text-muted-foreground text-xs">
+              Warm environments start before anyone owns them. Your app must start without an owner
+              and create nothing for a person until it is claimed.
+            </p>
+          </div>
           <Button
             type="button"
             variant="ghost"
@@ -176,7 +231,7 @@ export function TemplateDetailsForm({
       )}
 
       <div className="flex justify-end">
-        <Button onClick={save} disabled={!dirty || setDetails.isPending}>
+        <Button onClick={save} disabled={!dirty || !warmValid || setDetails.isPending}>
           {setDetails.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
           Save changes
         </Button>
