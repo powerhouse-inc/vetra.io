@@ -74,6 +74,22 @@ export type TemplateForm = {
   size: string
   baseDomain: string
   packageRegistry: string
+  /** '' = 0. Only meaningful for DEDICATED templates. */
+  warmPoolSize: string
+}
+
+export const WARM_POOL_MAX = 10
+
+/** The warm count the form stands for: empty is 0, anything not a whole 0-10 is NaN. */
+export function warmPoolCount(f: TemplateForm): number {
+  const raw = f.warmPoolSize.trim()
+  if (raw === '') return 0
+  const n = Number(raw)
+  return Number.isInteger(n) && n >= 0 && n <= WARM_POOL_MAX ? n : Number.NaN
+}
+
+export function isWarmPoolValid(f: TemplateForm): boolean {
+  return f.mode === 'SHARED' || !Number.isNaN(warmPoolCount(f))
 }
 
 export function templateToForm(t: PublisherTemplate): TemplateForm {
@@ -84,6 +100,7 @@ export function templateToForm(t: PublisherTemplate): TemplateForm {
     size: t.size ?? '',
     baseDomain: t.baseDomain ?? '',
     packageRegistry: t.packageRegistry ?? '',
+    warmPoolSize: t.warmPoolSize > 0 ? String(t.warmPoolSize) : '',
   }
 }
 
@@ -105,12 +122,16 @@ export function templateDetailsInput(
     size: orNull(f.size),
     baseDomain: orNull(f.baseDomain),
     packageRegistry: orNull(f.packageRegistry),
+    // A shared template runs nothing per owner, so nothing can be kept warm.
+    warmPoolSize: f.mode === 'SHARED' ? 0 : warmPoolCount(f),
   }
 }
 
 export function isTemplateFormDirty(t: PublisherTemplate, f: TemplateForm): boolean {
   const next = templateDetailsInput(t.id, f)
   const current = templateDetailsInput(t.id, templateToForm(t))
+  // Going shared must clear a leftover warm count even though both inputs say 0.
+  if (f.mode === 'SHARED' && t.warmPoolSize > 0) return true
   return (Object.keys(next) as Array<keyof typeof next>).some((k) => next[k] !== current[k])
 }
 

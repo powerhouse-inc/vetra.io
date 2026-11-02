@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
   describeTemplate,
   isTemplateFormDirty,
+  isWarmPoolValid,
   sharedModeBlocker,
   templateDetailsInput,
   templateToForm,
@@ -72,6 +73,7 @@ describe('template form', () => {
       size: '',
       baseDomain: '',
       packageRegistry: '',
+      warmPoolSize: '',
     })
     expect(isTemplateFormDirty(t, form)).toBe(false)
     expect(templateDetailsInput('tpl-1', { ...form, name: '  Pro 2 ' })).toEqual({
@@ -82,7 +84,27 @@ describe('template form', () => {
       size: null,
       baseDomain: null,
       packageRegistry: null,
+      warmPoolSize: 0,
     })
+  })
+
+  it('reads an empty warm count as 0 and refuses anything but a whole 0-10', () => {
+    const f = templateToForm(tpl({ warmPoolSize: 3 }))
+    expect(f.warmPoolSize).toBe('3')
+    expect(templateDetailsInput('tpl-1', f).warmPoolSize).toBe(3)
+    expect(templateDetailsInput('tpl-1', { ...f, warmPoolSize: '' }).warmPoolSize).toBe(0)
+    expect(isTemplateFormDirty(tpl(), { ...templateToForm(tpl()), warmPoolSize: '0' })).toBe(false)
+    expect(isWarmPoolValid({ ...f, warmPoolSize: '10' })).toBe(true)
+    for (const bad of ['11', '-1', '1.5', 'x']) {
+      expect(isWarmPoolValid({ ...f, warmPoolSize: bad })).toBe(false)
+    }
+  })
+
+  it('sends 0 for a shared template and counts clearing a leftover size as a change', () => {
+    const t = tpl({ warmPoolSize: 2 })
+    const shared = { ...templateToForm(t), mode: 'SHARED' as const }
+    expect(templateDetailsInput('tpl-1', shared).warmPoolSize).toBe(0)
+    expect(isTemplateFormDirty(t, shared)).toBe(true)
   })
 
   it('drops the shared environment when the template is dedicated', () => {
