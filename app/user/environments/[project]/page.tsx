@@ -350,7 +350,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
             </Button>
           )}
           <Button asChild variant={notFound ? 'outline' : 'ghost'}>
-            <Link href="/user/environments">Back to Cloud</Link>
+            <Link href="/user/environments">Back to environments</Link>
           </Button>
         </div>
       </div>
