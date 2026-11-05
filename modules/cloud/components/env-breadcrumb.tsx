@@ -68,7 +68,8 @@ export function EnvBreadcrumb({ environmentId, environmentName, appId, appName }
           </DropdownMenuTrigger>
           <DropdownMenuContent align="start" className="w-72">
             {siblings.map((env) => {
-              const role = roleLabel(env)
+              // Among standalone envs an app role is a leftover of a deleted app.
+              const role = appId ? roleLabel(env) : null
               return (
                 <DropdownMenuItem key={env.id} asChild>
                   <Link href={`/user/environments/${env.id}`} className="flex items-center gap-2">
