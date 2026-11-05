@@ -3,7 +3,7 @@
 import { ExternalLink, Plus, Server, Ticket, LayoutGrid } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react'
-import { useMyApps } from '@/modules/apps/hooks/use-apps'
+import { useMyApps, useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
 import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environment'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { CONSOLE_NAV_SECTIONS } from '@/modules/shared/components/console-sidebar/console-nav'
@@ -17,6 +17,16 @@ import {
 } from '@/modules/shared/components/ui/command'
 
 const DOCS_URL = 'https://academy.vetra.io/'
+
+/**
+ * Every typed word must appear in the item's value (name, subdomain, slug). cmdk's default
+ * fuzzy score matched scattered letters, so "achra" also found unrelated apps.
+ */
+export function paletteFilter(value: string, search: string, keywords?: string[]): number {
+  const haystack = [value, ...(keywords ?? [])].join(' ').toLowerCase()
+  const words = search.toLowerCase().split(/\s+/).filter(Boolean)
+  return words.every((w) => haystack.includes(w)) ? 1 : 0
+}
 
 const CommandPaletteContext = createContext<{ open: () => void } | null>(null)
 
@@ -50,6 +60,7 @@ export function CommandPaletteProvider({ children }: { children: ReactNode }) {
         onOpenChange={setOpen}
         title="Search the console"
         description="Jump to a page, environment or app, or start something new"
+        filter={paletteFilter}
       >
         <CommandInput placeholder="Search pages, environments, apps…" />
         <CommandList>
@@ -66,8 +77,13 @@ function PaletteResults({ onDone }: { onDone: () => void }) {
   const router = useRouter()
   const { viewer } = useViewer()
   const { orgId } = useActiveOrg()
-  const { environments } = useEnvironments('MINE', viewer?.address ?? null, { orgId })
+  const { environments: allEnvironments } = useEnvironments('MINE', viewer?.address ?? null, {
+    orgId,
+  })
   const { data: apps } = useMyApps()
+  // An app's own environments are reached through the app, as on the Environments page.
+  const { isStandalone } = useStandaloneEnvFilter()
+  const environments = allEnvironments.filter(isStandalone)
 
   const go = (href: string) => {
     onDone()
@@ -114,11 +130,17 @@ function PaletteResults({ onDone }: { onDone: () => void }) {
           {environments.map((env) => (
             <CommandItem
               key={env.id}
-              value={`${env.name} ${env.id}`}
+              // Unique per env (cmdk dedupes by value); ids stay out of the matched text.
+              value={`${env.name} ${env.state.genericSubdomain ?? env.id}`}
               onSelect={() => go(`/user/environments/${env.id}`)}
             >
               <Server aria-hidden />
-              {env.name}
+              <span className="truncate">{env.name}</span>
+              {env.state.genericSubdomain && (
+                <span className="text-muted-foreground ml-auto truncate font-mono text-xs">
+                  {env.state.genericSubdomain}
+                </span>
+              )}
             </CommandItem>
           ))}
         </CommandGroup>
@@ -129,7 +151,7 @@ function PaletteResults({ onDone }: { onDone: () => void }) {
           {apps.map((app) => (
             <CommandItem
               key={app.id}
-              value={`${app.name} ${app.slug} ${app.id}`}
+              value={`${app.name} ${app.slug}`}
               onSelect={() => go(`/user/apps/${app.id}`)}
             >
               <LayoutGrid aria-hidden />
