@@ -16,6 +16,13 @@ describe('licensing-only apps', () => {
       'studio',
     ])
     expect(licensingOnlyApps(undefined, [{ id: 'vault' }])).toEqual([])
+    // A soft-deleted app is missing from myApps but is not licensing-only.
+    expect(
+      licensingOnlyApps(
+        [...published, { id: 'gone', name: 'Achra', status: 'DELETED' }],
+        [{ id: 'vault' }],
+      ).map((a) => a.id),
+    ).toEqual(['beta', 'studio'])
     // Exact ids only: no prefix, case or substring matches.
     expect(
       licensingOnlyApps(published, [{ id: 'VAULT' }, { id: 'stud' }, { id: 'beta-2' }]).length,

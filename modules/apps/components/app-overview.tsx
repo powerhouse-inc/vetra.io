@@ -226,6 +226,10 @@ function ProductionCard({ app, deployment }: { app: App; deployment: AppDeployme
         <div className="flex min-w-0 flex-col gap-5">
           {deployment ? (
             <DeploymentMeta deployment={deployment} repo={app.repository.fullName} />
+          ) : readOnly ? (
+            <p className="text-muted-foreground text-sm">
+              This app never had a production deployment.
+            </p>
           ) : (
             <p className="text-muted-foreground text-sm">
               Nothing deployed yet. Push to{' '}
