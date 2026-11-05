@@ -28,6 +28,8 @@ import { cn } from '@/shared/lib/utils'
  * - `lg`      — landing-page hero CTAs.
  * - `icon`    — square icon-only buttons.
  *
+ * Disabled buttons fade (and the primary one turns neutral grey) and ignore the pointer.
+ *
  * Async clicks should use <AsyncButton> from `@/modules/cloud/components/async-button`
  * — it provides the pending spinner + disable while a mutation is in flight.
  */
@@ -36,7 +38,10 @@ const buttonVariants = cva(
   {
     variants: {
       variant: {
-        default: 'bg-primary text-primary-foreground hover:bg-primary/90',
+        // Half-opacity brand green still reads as clickable on the dark console, so a
+        // disabled primary turns neutral instead.
+        default:
+          'bg-primary text-primary-foreground hover:bg-primary/90 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100',
         destructive:
           'bg-destructive text-white hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60',
         outline:
