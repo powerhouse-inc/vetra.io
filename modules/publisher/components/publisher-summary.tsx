@@ -8,9 +8,9 @@ import {
 } from '@/modules/publisher/hooks/use-publisher'
 import { publisherSummary } from '@/modules/publisher/lib/summary'
 
-function Stat({ label, value }: { label: string; value: string | null }) {
+function Stat({ label, value, hint }: { label: string; value: string | null; hint?: string }) {
   return (
-    <div className="bg-card border-border rounded-lg border px-4 py-3">
+    <div className="bg-card border-border rounded-lg border px-4 py-3" title={hint}>
       <p className="text-muted-foreground text-xs font-medium">{label}</p>
       <p className="text-2xl font-bold tabular-nums">{value ?? '–'}</p>
     </div>
@@ -49,7 +49,8 @@ export function PublisherSummaryRow({ appId }: { appId: string }) {
         }
       />
       <Stat
-        label="Environments running"
+        label="Holder environments"
+        hint="Environments running for your licence holders. Your own production and previews are not counted."
         value={summary ? String(summary.runningEnvironments) : null}
       />
     </div>
