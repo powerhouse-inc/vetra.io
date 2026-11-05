@@ -6,11 +6,45 @@ export type LogLevelFilter = 'all' | 'error' | 'warn'
 const ERROR_LEVELS = new Set(['error', 'fatal'])
 const WARN_LEVELS = new Set(['warn', 'warning', 'error', 'fatal'])
 
+/** Postgres severities that are worse than the "info" CloudNativePG logs them under. */
+const PG_SEVERITY_LEVEL: Record<string, string> = {
+  WARNING: 'warn',
+  ERROR: 'error',
+  FATAL: 'fatal',
+  PANIC: 'fatal',
+}
+
+/**
+ * The postgres log record inside a CloudNativePG line. CNPG wraps every server
+ * log line as `{"logger":"postgres","msg":"record","record":{error_severity,
+ * message, detail, …}}`, so the outer `msg` is always the literal "record".
+ */
+export function postgresRecord(
+  obj: Record<string, unknown>,
+): { message: string; severity: string | null; detail: string | null } | null {
+  const record = obj.record
+  if (!record || typeof record !== 'object') return null
+  const { message, error_severity: severity, detail } = record as Record<string, unknown>
+  if (typeof message !== 'string') return null
+  return {
+    message,
+    severity: typeof severity === 'string' ? severity : null,
+    detail: typeof detail === 'string' ? detail : null,
+  }
+}
+
+/** Lowercased level of a parsed JSON log line; a postgres record's own severity wins. */
+export function logLevelOf(obj: Record<string, unknown>): string | null {
+  const severity = postgresRecord(obj)?.severity
+  if (severity && PG_SEVERITY_LEVEL[severity]) return PG_SEVERITY_LEVEL[severity]
+  return typeof obj.level === 'string' ? obj.level.toLowerCase() : null
+}
+
 /** Lowercased `level` of a JSON log line, or null for plain-text lines. */
 export function logLevel(line: string): string | null {
   try {
-    const level = (JSON.parse(line) as { level?: unknown }).level
-    return typeof level === 'string' ? level.toLowerCase() : null
+    const obj: unknown = JSON.parse(line)
+    return obj && typeof obj === 'object' ? logLevelOf(obj as Record<string, unknown>) : null
   } catch {
     return null
   }
