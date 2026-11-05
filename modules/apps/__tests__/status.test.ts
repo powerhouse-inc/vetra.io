@@ -267,6 +267,17 @@ describe('deploymentRowStatus', () => {
     },
   )
 
+  it.each(['no deploy for 7 days', 'no deploy for 1 day'])(
+    'shows a preview the idle sweeper removed ("%s") as Expired with a muted note',
+    (reason) => {
+      const d = deployment({ kind: 'PREVIEW', prNumber: 2, status: 'SUPERSEDED', error: reason })
+      expect(deploymentRowStatus(d, 'live')).toEqual({
+        meta: { label: 'Expired', tone: 'neutral', active: false },
+        note: { text: reason, tone: 'muted' },
+      })
+    },
+  )
+
   it('keeps a preview replaced by a newer push Superseded', () => {
     const d = deployment({ kind: 'PREVIEW', prNumber: 2, status: 'SUPERSEDED', error: null })
     expect(deploymentRowStatus(d, 'live')).toEqual({
