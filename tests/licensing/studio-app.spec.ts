@@ -41,9 +41,10 @@ test('publisher: manage the licensing-only Vetra Studio app from the apps list',
   await snap(page, 'apps-home-licensing-only')
   await card.getByRole('link', { name: 'Vetra Studio', exact: true }).click()
 
-  await expect(page).toHaveURL(/\/user\/apps\/app-studio\?tab=plans$/)
+  await expect(page).toHaveURL(/\/user\/apps\/app-studio$/)
   await expect(page.getByRole('heading', { name: 'Vetra Studio', level: 1 })).toBeVisible()
-  await expect(page.getByRole('tab', { name: 'Plans', selected: true })).toBeVisible()
+  await expect(page.getByRole('tab', { name: 'Profile', selected: true })).toBeVisible()
+  await page.getByRole('tab', { name: 'Plans' }).click()
   await expect(page.getByRole('tab', { name: 'Invite codes' })).toBeVisible()
   for (const absent of ['Overview', 'Deployments', 'Artifacts', 'Settings']) {
     await expect(page.getByRole('tab', { name: absent })).toHaveCount(0)

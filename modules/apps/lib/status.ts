@@ -24,6 +24,8 @@ export type DeploymentRowStatus = {
 }
 
 const CLOSED_PR_REASON = /^pull request #\d+ (is )?closed$/
+/** The preview sweeper's reason: `no deploy for 7 days` (the app's preview TTL). */
+const IDLE_PREVIEW_REASON = /^no deploy for \d+ days?$/
 
 /**
  * Status for one row of the deployments table. Unlike Vercel, a replaced
@@ -31,7 +33,8 @@ const CLOSED_PR_REASON = /^pull request #\d+ (is )?closed$/
  * closed-PR previews are deleted), so "Ready" would be misleading:
  * - a READY production deployment that isn't the live one → Superseded
  *   (still READY in the data, which is what rollback relies on);
- * - a preview torn down because its PR closed → Closed.
+ * - a preview torn down because its PR closed → Closed;
+ * - a preview removed by the idle sweeper (no deploy within the preview TTL) → Expired.
  * Only FAILED keeps its `error` red; other reasons are informational.
  */
 export function deploymentRowStatus(
@@ -48,6 +51,13 @@ export function deploymentRowStatus(
     CLOSED_PR_REASON.test(d.error)
   ) {
     meta = { label: 'Closed', tone: 'neutral', active: false }
+  } else if (
+    d.kind === 'PREVIEW' &&
+    d.status === 'SUPERSEDED' &&
+    d.error &&
+    IDLE_PREVIEW_REASON.test(d.error)
+  ) {
+    meta = { label: 'Expired', tone: 'neutral', active: false }
   }
   const note = d.error
     ? ({ text: d.error, tone: d.status === 'FAILED' ? 'danger' : 'muted' } as const)
@@ -151,6 +161,20 @@ export function primaryUrl(
 ): string | null {
   if (!urls) return null
   return urls.app ?? urls.connect ?? urls.switchboard ?? null
+}
+
+/**
+ * Whether the production environment runs the app's own code. Until the first production
+ * deployment it serves the platform-default Connect, so a "Visit" link would mislead.
+ * `deployments` is the full list when loaded; the app's latest deployment covers the rest.
+ */
+export function hasProductionDeployment(
+  app: Pick<App, 'latestDeployment'>,
+  deployments: ReadonlyArray<Pick<AppDeployment, 'kind'>> = [],
+): boolean {
+  return (
+    deployments.some((d) => d.kind === 'PRODUCTION') || app.latestDeployment?.kind === 'PRODUCTION'
+  )
 }
 
 /** `https://foo-connect.vetra.io/` → `foo-connect.vetra.io` for compact display. */

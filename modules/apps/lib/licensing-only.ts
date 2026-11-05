@@ -17,5 +17,5 @@ export function licensingOnlyApps(
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
-export const licensingOnlyHref = (id: string): string =>
-  `/user/apps/${encodeURIComponent(id)}?tab=plans`
+/** Opens on the page's first tab (Profile), like every other app. */
+export const licensingOnlyHref = (id: string): string => `/user/apps/${encodeURIComponent(id)}`
