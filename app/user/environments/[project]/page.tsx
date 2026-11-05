@@ -39,7 +39,7 @@ import {
   serviceInstanceKey,
   serviceInstanceLabel,
 } from '@/modules/cloud/lib/service-label'
-import { useMyApps } from '@/modules/apps/hooks/use-apps'
+import { useMyApps, useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
 import {
   DOCLING_PREFIX,
   PAPERLESS_PREFIX,
@@ -157,7 +157,11 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   useDocumentTitle(state?.label || environment?.name || null)
   const subdomain = state?.genericSubdomain ?? null
   // App environments are hidden from the Cloud list, so "back" leads to the app.
-  const appId = environment?.app?.appId ?? state?.app?.appId ?? null
+  // An env whose app was deleted keeps its appId but is standalone again — the
+  // same rule (isAppEnvironment) the environments list uses.
+  const { appIds } = useStandaloneEnvFilter()
+  const linkedAppId = environment?.app?.appId ?? state?.app?.appId ?? null
+  const appId = linkedAppId && (!appIds || appIds.has(linkedAppId)) ? linkedAppId : null
   const { data: myApps } = useMyApps()
   const appName = appId ? myApps?.find((a) => a.id === appId)?.name : undefined
   const tenantId = subdomain && environment ? getTenantId(subdomain, environment.id) : null
