@@ -32,14 +32,14 @@ describe('licensing-only apps', () => {
     ).toEqual([])
   })
 
-  it('opens the card on the app plans, labelled as licensing only', () => {
+  it('opens the card on the app page, labelled as licensing only', () => {
     render(
       <LicensingOnlyAppCard app={{ id: 'studio-1', name: 'Vetra Studio', status: 'ACTIVE' }} />,
     )
     expect(screen.getByRole('link', { name: 'Vetra Studio' }).getAttribute('href')).toBe(
-      '/user/apps/studio-1?tab=plans',
+      '/user/apps/studio-1',
     )
     expect(screen.getByText('Licensing only')).toBeTruthy()
-    expect(licensingOnlyHref('a b')).toBe('/user/apps/a%20b?tab=plans')
+    expect(licensingOnlyHref('a b')).toBe('/user/apps/a%20b')
   })
 })

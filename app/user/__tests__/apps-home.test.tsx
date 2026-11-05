@@ -56,7 +56,7 @@ describe('AppsHome', () => {
     expect(screen.getByText('card:Knowledge Vault')).toBeTruthy()
     expect(screen.queryByText('card:Vetra Studio')).toBeNull()
     expect(screen.getByRole('link', { name: 'Vetra Studio' }).getAttribute('href')).toBe(
-      '/user/apps/studio-1?tab=plans',
+      '/user/apps/studio-1',
     )
     expect(screen.getByText('Licensing only')).toBeTruthy()
   })

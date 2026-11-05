@@ -91,7 +91,8 @@ const isLicensingTab = (t: AppTab): boolean => (LICENSING_TABS as readonly strin
 
 /**
  * Tabs of a licensing-only app: one that exists only as a licensing document (Vetra Studio),
- * with no repository, so no Overview, Deployments, Artifacts or Settings. Opens on Plans.
+ * with no repository, so no Overview, Deployments, Artifacts or Settings. Opens on the first
+ * tab (Profile) unless the URL asks for another.
  */
 export const LICENSING_ONLY_TABS = [
   'profile',
@@ -101,7 +102,7 @@ export const LICENSING_ONLY_TABS = [
   'invite-codes',
 ] as const
 type LicensingOnlyTab = (typeof LICENSING_ONLY_TABS)[number]
-const LICENSING_ONLY_DEFAULT: LicensingOnlyTab = 'plans'
+const LICENSING_ONLY_DEFAULT: LicensingOnlyTab = LICENSING_ONLY_TABS[0]
 
 /**
  * Which page to show when the apps API does not have the app: the licensing-only page when the
@@ -142,8 +143,10 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
     : LICENSING_ONLY_DEFAULT
   const setTab = (value: string) => {
     const next = new URLSearchParams(params.toString())
-    next.set('tab', value)
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false })
+    if (value === LICENSING_ONLY_DEFAULT) next.delete('tab')
+    else next.set('tab', value)
+    const qs = next.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
   return (
     <div className="space-y-8">
