@@ -1,7 +1,9 @@
-import { AlertTriangle, Clock } from 'lucide-react'
+import { AlertTriangle, Clock, Ticket } from 'lucide-react'
+import Link from 'next/link'
 import { Banner } from '@/modules/apps/components/banner'
+import { Button } from '@/modules/shared/components/ui/button'
 import { formatDate } from '@/modules/shared/lib/time'
-import { warningTone } from '../lib/subscriptions'
+import { warningTone, withDisplayDates } from '../lib/subscriptions'
 import type { SubscriptionWarning } from '../types'
 
 const TITLE: Record<string, string> = {
@@ -18,8 +20,18 @@ export function WarningBanner({ warning }: { warning: SubscriptionWarning }) {
       tone={tone}
       icon={tone === 'danger' ? AlertTriangle : Clock}
       title={`${TITLE[warning.kind] ?? 'Heads up'} · ${formatDate(warning.at)}`}
+      actions={
+        // Renewing is redeeming a new code for the same app: the redeem flow offers to
+        // continue this environment instead of starting a new one.
+        <Button asChild size="sm" variant="outline">
+          <Link href="/redeem">
+            <Ticket className="h-3.5 w-3.5" aria-hidden />
+            Renew with a code
+          </Link>
+        </Button>
+      }
     >
-      {warning.message}
+      {withDisplayDates(warning.message)}
     </Banner>
   )
 }
