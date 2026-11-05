@@ -1,4 +1,5 @@
 import { Ticket } from 'lucide-react'
+import { RedeemBackLink } from '@/modules/subscriptions/components/redeem/redeem-back-link'
 import { RedeemCodeForm } from '@/modules/subscriptions/components/redeem/redeem-code-form'
 
 export const metadata = {
@@ -9,6 +10,7 @@ export const metadata = {
 export default function RedeemPage() {
   return (
     <main className="mx-auto mt-24 max-w-xl px-4 py-10 sm:px-6">
+      <RedeemBackLink />
       <div className="bg-card border-border space-y-6 rounded-2xl border p-6 shadow-sm sm:p-8">
         <span className="bg-primary/10 text-primary flex h-12 w-12 items-center justify-center rounded-2xl">
           <Ticket className="h-5 w-5" aria-hidden />
