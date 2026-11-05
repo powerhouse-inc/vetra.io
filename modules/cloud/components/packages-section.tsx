@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertCircle, Loader2 } from 'lucide-react'
+import { AlertCircle, ChevronDown, Loader2, Lock } from 'lucide-react'
 import { useMemo } from 'react'
 
 import { AddPackageModal } from '@/modules/cloud/components/add-package-modal'
@@ -10,7 +10,7 @@ import type { PackageManifest } from '@/modules/cloud/config/types'
 import { useRegistryManifests } from '@/modules/cloud/hooks/use-registry-search'
 import { useTenantConfig } from '@/modules/cloud/hooks/use-tenant-config'
 import { ADDON_CONFIG_KEYS } from '@/modules/cloud/lib/addons'
-import { MANAGED_SECRET_KEYS } from '@/modules/cloud/config/managed'
+import { isPlatformConfigKey } from '@/modules/cloud/config/managed'
 import type { CloudPackage } from '@/modules/cloud/types'
 import {
   Table,
@@ -19,6 +19,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/modules/shared/components/ui/table'
+import { Badge } from '@/modules/shared/components/ui/badge'
 
 export type PackagesSectionProps = {
   tenantId: string | null
@@ -99,15 +100,18 @@ export function PackagesSection({
     return set
   }, [manifests])
 
-  const orphanVars = envVars.filter(
-    (v) => !declaredKeyNames.has(v.key) && !ADDON_CONFIG_KEYS.has(v.key),
-  )
-  const orphanSecrets = secrets.filter(
-    (s) =>
-      !declaredKeyNames.has(s.key) &&
-      !ADDON_CONFIG_KEYS.has(s.key) &&
-      !MANAGED_SECRET_KEYS.has(s.key),
-  )
+  const undeclared = (key: string) => !declaredKeyNames.has(key) && !ADDON_CONFIG_KEYS.has(key)
+  // Keys Vetra writes itself (licensing, Studio) are shown read-only, never as "unused".
+  const orphanVars = envVars.filter((v) => undeclared(v.key) && !isPlatformConfigKey(v.key))
+  const orphanSecrets = secrets.filter((s) => undeclared(s.key) && !isPlatformConfigKey(s.key))
+  const platformEntries = [
+    ...envVars
+      .filter((v) => undeclared(v.key) && isPlatformConfigKey(v.key))
+      .map((v) => ({ key: v.key, type: 'var' as const, value: v.value })),
+    ...secrets
+      .filter((s) => undeclared(s.key) && isPlatformConfigKey(s.key))
+      .map((s) => ({ key: s.key, type: 'secret' as const, value: null })),
+  ]
 
   // While manifests are still in-flight we can't yet tell "manifest missing"
   // from "manifest still loading", so the per-row "Could not load" copy is
@@ -181,7 +185,7 @@ export function PackagesSection({
       )}
 
       {(orphanVars.length > 0 || orphanSecrets.length > 0) && (
-        <div className="mt-6 rounded-md border p-4">
+        <div className="border-border mt-6 rounded-md border p-4">
           <div className="mb-3 flex items-center gap-2">
             <AlertCircle className="text-muted-foreground h-4 w-4" />
             <h4 className="text-sm font-semibold">Unused Config</h4>
@@ -223,6 +227,43 @@ export function PackagesSection({
           </Table>
         </div>
       )}
+
+      {platformEntries.length > 0 && <PlatformConfig entries={platformEntries} />}
     </div>
+  )
+}
+
+type PlatformEntry = { key: string; type: 'var' | 'secret'; value: string | null }
+
+/** Config Vetra manages on this environment: visible for transparency, not editable here. */
+function PlatformConfig({ entries }: { entries: PlatformEntry[] }) {
+  return (
+    <details className="border-border group mt-6 rounded-md border">
+      <summary className="flex cursor-pointer list-none items-center gap-2 p-4 select-none">
+        <Lock className="text-muted-foreground h-4 w-4" aria-hidden />
+        <h4 className="text-sm font-semibold">Set by Vetra</h4>
+        <span className="text-muted-foreground min-w-0 text-xs">
+          {entries.length} key{entries.length === 1 ? '' : 's'} Vetra manages for licensing and
+          Studio. Read-only.
+        </span>
+        <ChevronDown
+          className="text-muted-foreground ml-auto h-4 w-4 shrink-0 transition-transform group-open:rotate-180"
+          aria-hidden
+        />
+      </summary>
+      <ul className="divide-border border-border divide-y border-t px-4">
+        {entries.map((e) => (
+          <li key={`${e.type}-${e.key}`} className="flex min-w-0 items-center gap-3 py-2 text-xs">
+            <span className="shrink-0 font-mono">{e.key}</span>
+            <Badge variant="outline" className="shrink-0 text-[10px]">
+              {e.type}
+            </Badge>
+            <span className="text-muted-foreground min-w-0 truncate font-mono">
+              {e.type === 'secret' ? '•••••' : e.value}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </details>
   )
 }
