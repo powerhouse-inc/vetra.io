@@ -19,8 +19,7 @@ export const LEGACY_REDIRECTS: Redirect[] = [
   { source: '/contributors', destination: '/', permanent: false },
   { source: '/finances', destination: '/', permanent: false },
   // The old /profile hub duplicated the console: its tabs live in /user/settings
-  // (profile, teams) and /user/packages. The query string (e.g. ?tab=teams) carries
-  // over. Team pages under /profile/teams and /profile/create-team stay.
+  // (profile, organisations) and /user/packages. The query string carries over.
   {
     source: '/profile',
     has: [{ type: 'query', key: 'tab', value: 'packages' }],
@@ -28,4 +27,15 @@ export const LEGACY_REDIRECTS: Redirect[] = [
     permanent: false,
   },
   { source: '/profile', destination: '/user/settings', permanent: false },
+  // Builder teams were replaced by Renown organisations.
+  {
+    source: '/profile/create-team',
+    destination: '/user/settings?tab=organisations',
+    permanent: false,
+  },
+  {
+    source: '/profile/teams/:path*',
+    destination: '/user/settings?tab=organisations',
+    permanent: false,
+  },
 ]

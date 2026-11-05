@@ -1,5 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
+
+const studioAccess = vi.hoisted(() => ({ data: null as { allowed: boolean } | null }))
+vi.mock('@/modules/subscriptions/hooks/use-subscriptions', () => ({
+  useStudioAccess: () => studioAccess,
+}))
 import { StudioPage } from '@/modules/landing/studio/studio-page'
 import { WAITLIST_ACTION } from '@/modules/studio-license/lib/waitlist'
 import { expectNoOpenCloudClaim, expectNoPlaceholders } from './page-checks'
@@ -66,6 +71,18 @@ describe('StudioPage', () => {
       'You steer every step',
     ]) {
       expect(text).toContain(here)
+    }
+  })
+
+  it('sends someone who already has Studio to it instead of asking for access', () => {
+    studioAccess.data = { allowed: true }
+    try {
+      render(<StudioPage />)
+      expect(screen.getByRole('link', { name: 'Open your studio' }).getAttribute('href')).toBe(
+        '/user/studio',
+      )
+    } finally {
+      studioAccess.data = null
     }
   })
 })

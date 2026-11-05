@@ -1,6 +1,7 @@
 'use client'
 
 import { AlertTriangle, ExternalLink, Package, Server, Trash2 } from 'lucide-react'
+import { shortAddress } from '@/modules/shared/lib/wallet-switch'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -25,7 +26,14 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/modules/shared/compo
 
 import type { CloudEnvironment } from './types'
 
-export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
+export function CloudEnvironmentCard({
+  env,
+  viewerAddress,
+}: {
+  env: CloudEnvironment
+  /** Set in the admin "All" view: cards of someone else's environment name their owner. */
+  viewerAddress?: string | null
+}) {
   const { signer, canSign: signerReady } = useCanSign()
   const addPackage = useAddPackageIntent()
   // Org envs: a plain MEMBER only views (R6); the delete itself is gated again
@@ -104,6 +112,13 @@ export function CloudEnvironmentCard({ env }: { env: CloudEnvironment }) {
       </CardHeader>
       <CardContent className="space-y-4 pt-0">
         <EnvironmentLicenceBadge environmentId={env.id} />
+        {viewerAddress !== undefined &&
+          env.state.owner &&
+          env.state.owner !== viewerAddress?.toLowerCase() && (
+            <p className="text-warning font-mono text-xs" title={env.state.owner}>
+              Owned by {shortAddress(env.state.owner)}
+            </p>
+          )}
         <div className="flex items-center gap-4 text-sm">
           <div className="text-muted-foreground flex items-center gap-1.5">
             <Package className="h-3.5 w-3.5" />
@@ -213,7 +228,7 @@ export function CloudEnvironments({
       {/* Scope toggle is admin-only. Non-admins always see their own envs;
           in an organisation context the list is that organisation's envs. */}
       {isAdmin && !orgId && (
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex flex-wrap items-center gap-2 text-sm">
           <span className="text-muted-foreground">View:</span>
           <div className="bg-muted inline-flex rounded-md p-0.5">
             {ADMIN_SCOPE_OPTIONS.map((option) => (
@@ -231,6 +246,11 @@ export function CloudEnvironments({
               </button>
             ))}
           </div>
+          {scope === 'ALL' && (
+            <span className="text-warning text-xs">
+              Admin view: every environment on Vetra, including other people&rsquo;s.
+            </span>
+          )}
         </div>
       )}
 
@@ -294,7 +314,11 @@ export function CloudEnvironments({
       ) : (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
           {environments.map((env) => (
-            <CloudEnvironmentCard key={env.id} env={env} />
+            <CloudEnvironmentCard
+              key={env.id}
+              env={env}
+              viewerAddress={scope === 'ALL' ? (viewer?.address ?? null) : undefined}
+            />
           ))}
         </div>
       )}

@@ -6,6 +6,7 @@ import { StatusPill } from '@/modules/shared/components/status'
 import { Button } from '@/modules/shared/components/ui/button'
 import { cn } from '@/shared/lib/utils'
 import {
+  environmentHint,
   environmentHref,
   isLive,
   issuerText,
@@ -26,13 +27,15 @@ function EnvironmentLine({ s }: { s: Subscription }) {
     )
   }
   const href = environmentHref(s)
+  const hint = environmentHint(s)
   if (href) {
     return (
-      <span className="inline-flex items-center gap-1.5">
+      <span className="inline-flex min-w-0 flex-wrap items-center gap-x-1.5">
         <Server className="h-4 w-4 shrink-0" aria-hidden />
         <Link href={href} className="text-foreground font-medium break-all hover:underline">
           {s.environmentLabel || 'Your environment'}
         </Link>
+        {hint && <span className="font-mono text-xs break-all">{hint}</span>}
       </span>
     )
   }

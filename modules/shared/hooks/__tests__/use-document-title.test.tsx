@@ -23,4 +23,13 @@ describe('useDocumentTitle', () => {
     view.rerender(<Titled title="acme-ops" />)
     expect(document.title).toBe('acme-ops · Vetra')
   })
+
+  it('puts its title back when the router rewrites the layout title', async () => {
+    document.title = 'Vetra'
+    const view = render(<Titled title="Settings" />)
+    document.title = 'Vetra' // what Next does on router.replace(?tab=...)
+    await new Promise((r) => setTimeout(r, 0)) // MutationObserver callbacks are microtasks
+    expect(document.title).toBe('Settings · Vetra')
+    view.unmount()
+  })
 })

@@ -22,7 +22,7 @@ export default function CreateEnvironmentPage() {
           className="text-muted-foreground hover:text-foreground mb-6 inline-flex items-center gap-2 text-sm transition-colors"
         >
           <ArrowLeft className="h-4 w-4" />
-          Back to Cloud
+          Environments
         </Link>
         <PageHeader
           eyebrow="~/environments/new"

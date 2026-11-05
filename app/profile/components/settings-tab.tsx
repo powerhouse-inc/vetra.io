@@ -19,12 +19,20 @@ function Row({ label, value }: { label: string; value: string | undefined | null
   )
 }
 
+/**
+ * Renown fills `ensName` with the shortened address ("0x2BbE…3aC6") when the wallet has no
+ * ENS name; only a real name (vitalik.eth) counts.
+ */
+export const realEnsName = (name: string | null | undefined): string | null =>
+  name && name.includes('.') && !/^0x/i.test(name) ? name : null
+
 export function SettingsTab() {
   const auth = useRenownAuth()
   const avatarUrl = useRenownAvatarUrl()
   // `status` stays "initial" after a reload even with a restored user, so key
   // off the user rather than the resolved status.
   if (!auth.user) return null
+  const ensName = realEnsName(auth.ensName)
 
   return (
     <Card>
@@ -40,14 +48,14 @@ export function SettingsTab() {
             <div className="truncate text-lg font-semibold">
               {auth.displayName ?? 'Renown user'}
             </div>
-            {auth.ensName && <div className="text-muted-foreground text-sm">{auth.ensName}</div>}
+            {ensName && <div className="text-muted-foreground text-sm">{ensName}</div>}
           </div>
         </div>
 
         <div className="flex flex-col gap-3 border-t pt-6">
           <Row label="Address" value={auth.address} />
           <Row label="Display name" value={auth.displayName} />
-          <Row label="ENS" value={auth.ensName} />
+          <Row label="ENS" value={ensName} />
           <Row label="Profile ID" value={auth.profileId} />
         </div>
 

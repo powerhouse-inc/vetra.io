@@ -31,3 +31,24 @@ export function serviceHealth(
   if (own.every((pod) => pod.ready && pod.phase === 'RUNNING')) return 'running'
   return 'starting'
 }
+
+/**
+ * How far behind the freshest pod row a pod may be and still count as live. The
+ * backend re-upserts every pod still in the cluster once a minute, but never
+ * removes rows for pods that are gone, so rows that stopped updating are ghosts.
+ */
+const LIVE_POD_WINDOW_MS = 5 * 60_000
+
+/**
+ * The pods that still exist. The observability read model keeps every pod an
+ * environment ever had (a replaced crash-looping switchboard stays FAILED in it
+ * forever), so a pod is only current when its row was refreshed by the latest
+ * reconcile, measured against the newest row rather than the clock so a stalled
+ * reconciler does not empty the list.
+ */
+export function livePods<T extends Pick<Pod, 'updatedAt'>>(pods: readonly T[]): T[] {
+  const times = pods.map((pod) => Date.parse(pod.updatedAt))
+  const newest = Math.max(...times.filter((t) => !Number.isNaN(t)))
+  if (!Number.isFinite(newest)) return [...pods]
+  return pods.filter((_, i) => Number.isNaN(times[i]) || newest - times[i] <= LIVE_POD_WINDOW_MS)
+}

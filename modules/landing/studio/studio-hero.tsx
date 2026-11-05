@@ -1,7 +1,6 @@
-import { CtaLink } from '../components/cta-link'
 import { PromptLine } from '../components/prompt-line'
 import { Container } from '../components/section-heading'
-import { EARLY_ACCESS_HREF, REDEEM_HREF } from '../lib/links'
+import { StudioHeroActions } from './studio-hero-actions'
 
 export function StudioHero() {
   return (
@@ -19,12 +18,7 @@ export function StudioHero() {
             Vetra Studio turns a conversation into a working Powerhouse package: document models,
             editors, APIs and tests. You steer every step and keep every line.
           </p>
-          <div className="flex flex-wrap gap-3">
-            <CtaLink href={EARLY_ACCESS_HREF} variant="primary">
-              Request access
-            </CtaLink>
-            <CtaLink href={REDEEM_HREF}>Redeem a code</CtaLink>
-          </div>
+          <StudioHeroActions />
         </div>
       </Container>
     </section>
