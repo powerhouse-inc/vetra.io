@@ -2,6 +2,8 @@
 
 import { Check, ChevronDown } from 'lucide-react'
 import Link from 'next/link'
+import { useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
+import { isAppEnvironment } from '@/modules/apps/lib/split'
 import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environment'
 import type { CloudEnvironment } from '@/modules/cloud/types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
@@ -35,8 +37,10 @@ export function EnvBreadcrumb({ environmentId, environmentName, appId, appName }
   const { viewer } = useViewer()
   const { orgId } = useActiveOrg()
   const { environments } = useEnvironments('MINE', viewer?.address ?? null, { orgId })
+  // Same split as the environments list: an env of a deleted app is standalone.
+  const { appIds } = useStandaloneEnvFilter()
   const siblings = environments.filter((env) =>
-    appId ? env.app?.appId === appId : !env.app?.appId,
+    appId ? env.app?.appId === appId : !isAppEnvironment(env, appIds),
   )
 
   const parent = appId ? (
@@ -62,13 +66,20 @@ export function EnvBreadcrumb({ environmentId, environmentName, appId, appName }
             <ChevronDown className="h-3.5 w-3.5" aria-hidden />
             <span className="sr-only">Switch environment</span>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="start" className="w-64">
+          <DropdownMenuContent align="start" className="w-72">
             {siblings.map((env) => {
               const role = roleLabel(env)
               return (
                 <DropdownMenuItem key={env.id} asChild>
                   <Link href={`/user/environments/${env.id}`} className="flex items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate">{env.name}</span>
+                    <span className="flex min-w-0 flex-1 flex-col">
+                      <span className="truncate">{env.state.label || env.name}</span>
+                      {env.state.genericSubdomain && (
+                        <span className="text-muted-foreground truncate font-mono text-xs">
+                          {env.state.genericSubdomain}
+                        </span>
+                      )}
+                    </span>
                     {role && <span className="text-muted-foreground text-xs">{role}</span>}
                     {env.id === environmentId && <Check className="h-4 w-4" aria-hidden />}
                   </Link>

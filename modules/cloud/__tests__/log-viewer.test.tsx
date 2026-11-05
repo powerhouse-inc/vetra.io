@@ -57,3 +57,39 @@ describe('LogViewer filters', () => {
     expect(screen.getByText('crm_deals missing')).toBeTruthy()
   })
 })
+
+const pgLine = (record: Record<string, string>) =>
+  JSON.stringify({ level: 'info', logger: 'postgres', msg: 'record', record })
+
+describe('LogViewer postgres (CloudNativePG) lines', () => {
+  it('shows the record message instead of the literal "record"', () => {
+    render(
+      <LogViewer
+        logs={[
+          {
+            timestamp: 1000,
+            line: pgLine({ error_severity: 'LOG', message: 'connection received: host=[local]' }),
+          },
+        ]}
+      />,
+    )
+    expect(screen.getByText('connection received: host=[local]')).toBeTruthy()
+  })
+
+  it('prefixes non-LOG severities and counts them as errors', () => {
+    render(
+      <LogViewer
+        logs={[
+          { timestamp: 1000, line: pgLine({ error_severity: 'LOG', message: 'checkpoint' }) },
+          {
+            timestamp: 1010,
+            line: pgLine({ error_severity: 'ERROR', message: 'relation "x" does not exist' }),
+          },
+        ]}
+      />,
+    )
+    fireEvent.click(screen.getByRole('button', { name: 'Errors' }))
+    expect(screen.queryByText('checkpoint')).toBeNull()
+    expect(screen.getByText('ERROR: relation "x" does not exist')).toBeTruthy()
+  })
+})

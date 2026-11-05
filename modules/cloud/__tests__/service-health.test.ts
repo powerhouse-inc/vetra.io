@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { serviceHealth } from '../lib/service-health'
+import { livePods, serviceHealth } from '../lib/service-health'
 import type { Pod } from '../types'
 
 const pod = (over: Partial<Pod> = {}): Pod => ({
@@ -38,5 +38,28 @@ describe('serviceHealth', () => {
 
   it('reports not running when the service has no pods', () => {
     expect(serviceHealth([pod({ service: 'CONNECT' })], 'SWITCHBOARD')).toBe('not-running')
+  })
+})
+
+describe('livePods', () => {
+  it('drops rows the reconciler stopped refreshing (pods that no longer exist)', () => {
+    const live = pod({ name: 'switchboard-new', updatedAt: '2026-11-05T12:34:28Z' })
+    const ghost = pod({
+      name: 'switchboard-old',
+      phase: 'FAILED',
+      ready: false,
+      restartCount: 6,
+      updatedAt: '2026-11-04T15:12:01Z',
+    })
+    expect(livePods([ghost, live])).toEqual([live])
+    expect(serviceHealth(livePods([ghost, live]), 'SWITCHBOARD')).toBe('running')
+  })
+
+  it('keeps rows refreshed within the same reconcile window, and all when stalled', () => {
+    const a = pod({ updatedAt: '2026-11-05T12:34:28Z' })
+    const b = pod({ updatedAt: '2026-11-05T12:31:00Z' })
+    expect(livePods([a, b])).toEqual([a, b])
+    expect(livePods([b])).toEqual([b])
+    expect(livePods([])).toEqual([])
   })
 })

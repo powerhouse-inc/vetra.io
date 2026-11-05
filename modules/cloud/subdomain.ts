@@ -125,6 +125,9 @@ export function generateSubdomain(documentId: string): string {
   // fragment gitops appends for the namespace). Replaces the old `hash % 100`,
   // whose ~5k-combo space collided after ~80 envs and produced duplicate
   // ingress hosts (the host uses the bare subdomain).
-  const shortId = documentId.replace(/-/g, '').slice(0, 8).toLowerCase()
+  const shortId = documentId
+    .replace(/[^a-zA-Z0-9]/g, '')
+    .slice(0, 8)
+    .toLowerCase()
   return `${adjective}-${animal}-${shortId}`
 }

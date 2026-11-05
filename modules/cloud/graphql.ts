@@ -13,6 +13,7 @@ import type {
   ReleaseIndexEntry,
   TenantService,
 } from './types'
+import { livePods } from './lib/service-health'
 
 // Read env vars from window.__ENV (injected at runtime by the server layout)
 // with fallback to process.env (inlined at build time by Next.js).
@@ -674,7 +675,7 @@ export async function fetchEnvironmentPods(
     { tenantId },
     token,
   )
-  return data.environmentPods
+  return livePods(data.environmentPods)
 }
 
 /**
@@ -705,7 +706,7 @@ export async function fetchEnvironmentOverview(
     { tenantId },
     token,
   )
-  return { status: data.environmentStatus, pods: data.environmentPods }
+  return { status: data.environmentStatus, pods: livePods(data.environmentPods) }
 }
 
 export async function fetchEnvironmentEvents(

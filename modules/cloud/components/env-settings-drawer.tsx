@@ -35,7 +35,10 @@ import { CloudUserError, describeCloudError } from '@/modules/cloud/lib/cloud-er
 import type { HistoryOperation, RestoreActions } from '@/modules/cloud/lib/config-history'
 import { apexCandidateServices, apexServiceForCustomDomain } from '@/modules/cloud/lib/env-host'
 import { useEnvironmentEvents } from '@/modules/cloud/hooks/use-environment-events'
+import { environmentStatusMeta } from '@/modules/cloud/lib/environment-status'
 import type {
+  ArgoHealthStatus,
+  ArgoSyncStatus,
   AutoUpdateChannel,
   CloudEnvironment,
   EnvironmentStatus,
@@ -63,6 +66,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/components/ui/tabs'
 import { parseSettingsTab, type SettingsTab } from '@/modules/cloud/hooks/use-settings-param'
 import { cn } from '@/shared/lib/utils'
+import { TONE_TEXT } from '@/modules/shared/lib/status'
 import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 
 type Props = {
@@ -216,6 +220,7 @@ export function EnvSettingsDrawer({
                 subdomain={subdomain}
                 tenantId={tenantId}
                 environmentId={environment.id}
+                environmentStatus={environment.state.status}
                 status={status}
                 statusLoading={statusLoading}
                 isOpen={open}
@@ -286,6 +291,7 @@ function ActivityTab({
   subdomain,
   tenantId,
   environmentId,
+  environmentStatus,
   status,
   statusLoading,
   isOpen,
@@ -293,6 +299,7 @@ function ActivityTab({
   subdomain: string | null
   tenantId: string | null
   environmentId: string
+  environmentStatus: string
   status: EnvironmentStatus | null
   statusLoading: boolean
   isOpen: boolean
@@ -310,6 +317,7 @@ function ActivityTab({
   return (
     <div className="space-y-4">
       <ActivityStatusStrip
+        environmentStatus={environmentStatus}
         argoSyncStatus={status?.argoSyncStatus}
         argoHealthStatus={status?.argoHealthStatus}
         argoLastSyncedAt={status?.argoLastSyncedAt}
@@ -323,36 +331,22 @@ function ActivityTab({
 
 /** Plain-language deployment state for the sync status the backend reports. */
 function syncLabel(status?: string | null): string {
-  if (status === 'SYNCED') return 'Changes applied'
-  if (status === 'OUT_OF_SYNC') return 'Changes are being applied'
-  return 'Deployment state unknown'
-}
-
-/** Plain-language health for the health status the backend reports. */
-function healthLabel(status: string): string {
-  switch (status) {
-    case 'Progressing':
-      return 'starting up'
-    case 'Degraded':
-      return 'some services are unhealthy'
-    case 'Suspended':
-      return 'paused'
-    case 'Missing':
-      return 'not deployed yet'
-    default:
-      return 'health unknown'
-  }
+  if (status === 'SYNCED') return 'changes applied'
+  if (status === 'OUT_OF_SYNC') return 'changes are being applied'
+  return 'deployment state unknown'
 }
 
 function ActivityStatusStrip({
+  environmentStatus,
   argoSyncStatus,
   argoHealthStatus,
   argoLastSyncedAt,
   configDriftDetected,
   isLoading,
 }: {
-  argoSyncStatus?: string | null
-  argoHealthStatus?: string | null
+  environmentStatus: string
+  argoSyncStatus?: ArgoSyncStatus | null
+  argoHealthStatus?: ArgoHealthStatus | null
   argoLastSyncedAt?: string | null
   configDriftDetected?: boolean | null
   isLoading: boolean
@@ -365,21 +359,20 @@ function ActivityStatusStrip({
       </div>
     )
   }
-  const syncedOk = argoSyncStatus === 'SYNCED'
+  // Same status, in the same words, as the badge in the page header.
+  const meta = environmentStatusMeta({
+    status: environmentStatus,
+    argoHealthStatus,
+    argoSyncStatus,
+  })
+  const statusOk = meta.tone === 'success'
   const driftOk = !configDriftDetected
   return (
     <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs">
-      <span
-        className={cn(
-          'inline-flex items-center gap-1.5',
-          syncedOk ? 'text-success' : 'text-warning',
-        )}
-      >
-        {syncedOk ? <CheckCircle className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
-        {syncLabel(argoSyncStatus)}
-        {argoHealthStatus && argoHealthStatus !== 'Healthy' && (
-          <span className="text-muted-foreground">· {healthLabel(argoHealthStatus)}</span>
-        )}
+      <span className={cn('inline-flex items-center gap-1.5', TONE_TEXT[meta.tone])}>
+        {statusOk ? <CheckCircle className="h-3 w-3" /> : <AlertTriangle className="h-3 w-3" />}
+        {meta.label}
+        <span className="text-muted-foreground">· {syncLabel(argoSyncStatus)}</span>
       </span>
       <span
         className={cn(
