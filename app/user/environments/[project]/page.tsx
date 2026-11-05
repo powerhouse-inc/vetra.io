@@ -394,7 +394,7 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
         <HeroCard>
           <div className="flex flex-wrap items-center gap-3 p-6">
             <div className="min-w-0 flex-1 space-y-1">
-              <div className="flex items-center gap-3">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
                 <InlineEditableTitle
                   value={displayName}
                   onSave={detail.setLabel}

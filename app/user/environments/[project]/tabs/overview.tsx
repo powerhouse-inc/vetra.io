@@ -53,7 +53,7 @@ import type {
 } from '@/modules/cloud/types'
 import { Badge } from '@/modules/shared/components/ui/badge'
 import { Button } from '@/modules/shared/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/modules/shared/components/ui/card'
+import { Card, CardContent, CardTitle } from '@/modules/shared/components/ui/card'
 import { Input } from '@/modules/shared/components/ui/input'
 import { Switch } from '@/modules/shared/components/ui/switch'
 import { cn } from '@/shared/lib/utils'
@@ -289,11 +289,11 @@ function ServiceRow({
           : 'border-border/50 bg-muted/30 opacity-70',
       )}
     >
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+        <div className="flex min-w-0 items-center gap-3">
           <div
             className={cn(
-              'flex h-9 w-9 items-center justify-center rounded-md',
+              'flex h-9 w-9 shrink-0 items-center justify-center rounded-md',
               isEnabled ? 'bg-success/15 dark:bg-success/20' : 'bg-muted',
             )}
           >
@@ -332,7 +332,7 @@ function ServiceRow({
                 }
               }
               return (
-                <div className="flex items-center gap-1">
+                <div className="flex min-w-0 items-center gap-1">
                   {isEnabled && environmentStatus === 'READY' ? (
                     <a
                       href={fullUrl}
@@ -343,7 +343,7 @@ function ServiceRow({
                       {fullUrl}
                     </a>
                   ) : (
-                    <span className="text-muted-foreground/60 font-mono text-xs">
+                    <span className="text-muted-foreground/60 truncate font-mono text-xs">
                       {serviceUrl}
                       {suffix}
                     </span>
@@ -365,8 +365,9 @@ function ServiceRow({
         </div>
         {/* Reserve the action-slot width unconditionally so toggling Enabled
             doesn't shift the row. Buttons that only make sense while enabled
-            are still gated, but their place is held. */}
-        <div className="flex min-w-44 items-center justify-end gap-2">
+            are still gated, but their place is held. On phones the controls
+            drop onto their own line under the name so none is cut off. */}
+        <div className="flex flex-wrap items-center gap-2 sm:min-w-44 sm:shrink-0 sm:justify-end">
           {onConfigure && (
             <Button
               variant="outline"
@@ -385,7 +386,7 @@ function ServiceRow({
               size="sm"
               onClick={onOpenDetail}
               aria-label={`View ${label} details`}
-              className={cn('hidden sm:inline-flex', !isEnabled && 'pointer-events-none invisible')}
+              className={cn(!isEnabled && 'pointer-events-none invisible')}
               tabIndex={isEnabled ? undefined : -1}
             >
               Details
@@ -406,11 +407,7 @@ function ServiceRow({
             checked={isEnabled}
             onCheckedChange={(checked) => void handleToggle(checked)}
             aria-label={`Toggle ${label}`}
-            className={cn(
-              isEnabled
-                ? 'data-[state=checked]:bg-success'
-                : 'data-[state=unchecked]:bg-zinc-400 dark:data-[state=unchecked]:bg-zinc-600',
-            )}
+            className="data-[state=checked]:bg-success ml-auto sm:ml-0"
           />
         </div>
       </div>
@@ -612,8 +609,8 @@ export function InlineEditableTitle({
   }
 
   return (
-    <div className="flex items-center gap-2">
-      <h1 className="text-3xl font-bold tracking-[-0.03em]">{displayValue}</h1>
+    <div className="flex min-w-0 items-center gap-2">
+      <h1 className="min-w-0 text-3xl font-bold tracking-[-0.03em] break-words">{displayValue}</h1>
       {!readOnly && (
         <Button
           variant="ghost"
@@ -818,16 +815,16 @@ export function OverviewTab({
       {/* b. Services — runtime hosts. Each enabled service can be opened in
           a per-service drawer (Logs / Metrics / Activity). */}
       <Card>
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Server className="h-4 w-4" />
-              Services
-            </CardTitle>
-            <ServicesViewToggle value={servicesView} onChange={setServicesView} />
-          </div>
-        </CardHeader>
-        <CardContent className="space-y-6">
+        {/* Plain flex header: CardHeader's two-row grid plus both paddings left
+            an empty band above the first service row. */}
+        <div className="flex flex-wrap items-center justify-between gap-2 px-6 pt-6 pb-4">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <Server className="h-4 w-4" />
+            Services
+          </CardTitle>
+          <ServicesViewToggle value={servicesView} onChange={setServicesView} />
+        </div>
+        <CardContent className="pt-0">
           {servicesView === 'map' ? (
             // Agent (clint-project) packages run in their own pods, so the
             // map shows the same module list as the Packages card.

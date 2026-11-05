@@ -120,8 +120,8 @@ export function PackagesSection({
 
   return (
     <div>
-      <div className="mb-3 flex items-center justify-between">
-        <div className="flex items-center gap-2">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5">
           <h2 className="text-lg font-semibold">Packages</h2>
           <span className="text-muted-foreground text-xs">Reactor modules &amp; Connect apps</span>
           {(tenantLoading || manifestsLoading) && (
