@@ -52,8 +52,12 @@ function href(params: { tab: DirectoryTab; q: string; all: boolean }): string {
 async function loadView(requestedTab: string | undefined, q: string, all: boolean) {
   try {
     const { entries, hasInstallCounts } = await loadDirectory()
-    // Most used needs the cloud's install counts; without them the tab is not offered.
-    const tabs = TABS.filter((t) => t.id !== 'used' || hasInstallCounts)
+    // Most used needs the cloud's install counts, Recommended a curated list
+    // (PACKAGES_RECOMMENDED); without them the tab is not offered.
+    const anyRecommended = entries.some((e) => e.recommended)
+    const tabs = TABS.filter(
+      (t) => (t.id !== 'used' || hasInstallCounts) && (t.id !== 'recommended' || anyRecommended),
+    )
     const tab = tabs.find((t) => t.id === requestedTab)?.id ?? 'updated'
     const now = Date.now()
     return {
@@ -64,7 +68,7 @@ async function loadView(requestedTab: string | undefined, q: string, all: boolea
       failed: false,
     }
   } catch {
-    const tabs = TABS.filter((t) => t.id !== 'used')
+    const tabs = TABS.filter((t) => t.id !== 'used' && t.id !== 'recommended')
     return {
       entries: [],
       hiddenCount: 0,
