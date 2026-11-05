@@ -13,7 +13,9 @@ import { StatusPill } from '@/modules/shared/components/status'
  */
 export function AppCard({ app }: { app: App }) {
   const status = appHeadlineStatus(app)
-  const url = primaryUrl(app.productionUrls)
+  // With no deployments ("No deployments") the URL serves the platform-default Connect. The
+  // card only knows the latest deployment, which may be a preview after a production deploy.
+  const url = app.latestDeployment ? primaryUrl(app.productionUrls) : null
   const latest = app.latestDeployment
   const previewCount = app.previews.length
 

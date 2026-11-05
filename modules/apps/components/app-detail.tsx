@@ -45,6 +45,7 @@ import {
 import {
   appHeadlineStatus,
   githubRepoUrl,
+  hasProductionDeployment,
   identityState,
   isAppReadOnly,
   primaryUrl,
@@ -90,7 +91,8 @@ const isLicensingTab = (t: AppTab): boolean => (LICENSING_TABS as readonly strin
 
 /**
  * Tabs of a licensing-only app: one that exists only as a licensing document (Vetra Studio),
- * with no repository, so no Overview, Deployments, Artifacts or Settings. Opens on Plans.
+ * with no repository, so no Overview, Deployments, Artifacts or Settings. Opens on the first
+ * tab (Profile) unless the URL asks for another.
  */
 export const LICENSING_ONLY_TABS = [
   'profile',
@@ -100,7 +102,7 @@ export const LICENSING_ONLY_TABS = [
   'invite-codes',
 ] as const
 type LicensingOnlyTab = (typeof LICENSING_ONLY_TABS)[number]
-const LICENSING_ONLY_DEFAULT: LicensingOnlyTab = 'plans'
+const LICENSING_ONLY_DEFAULT: LicensingOnlyTab = LICENSING_ONLY_TABS[0]
 
 /**
  * Which page to show when the apps API does not have the app: the licensing-only page when the
@@ -141,8 +143,10 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
     : LICENSING_ONLY_DEFAULT
   const setTab = (value: string) => {
     const next = new URLSearchParams(params.toString())
-    next.set('tab', value)
-    router.replace(`${pathname}?${next.toString()}`, { scroll: false })
+    if (value === LICENSING_ONLY_DEFAULT) next.delete('tab')
+    else next.set('tab', value)
+    const qs = next.toString()
+    router.replace(qs ? `${pathname}?${qs}` : pathname, { scroll: false })
   }
   return (
     <div className="space-y-8">
@@ -212,9 +216,10 @@ export function visibleAppTabs({
   return tabs
 }
 
-function Header({ app }: { app: App }) {
+function Header({ app, deployed }: { app: App; deployed: boolean }) {
   const identity = identityState(app)
-  const url = primaryUrl(app.productionUrls)
+  // Before the first production deploy the URL serves the platform-default Connect.
+  const url = deployed ? primaryUrl(app.productionUrls) : null
   const latest = app.latestDeployment
   return (
     <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -438,7 +443,7 @@ export function AppDetail({ appId }: { appId: string }) {
           <ArrowLeft className="h-4 w-4" />
           Apps
         </Link>
-        <Header app={app} />
+        <Header app={app} deployed={hasProductionDeployment(app, deployments)} />
 
         {identity.kind === 'pending' && (
           <Banner

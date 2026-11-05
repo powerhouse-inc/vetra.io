@@ -32,7 +32,7 @@ import { Input } from '@/modules/shared/components/ui/input'
 import { defaultPackageRegistry } from '@/modules/cloud/switchboard-url'
 
 const schema = z.object({
-  name: z.string().min(1, 'Name is required'),
+  name: z.string().trim().min(1, 'Name is required'),
 })
 
 export type EnvironmentFormValues = z.infer<typeof schema>
@@ -183,7 +183,11 @@ function NewEnvironmentFormInner({
         )}
         {orgRefusal && <p className="text-muted-foreground mt-2 text-sm">{orgRefusal}</p>}
         <div className="mt-4">
-          <Button type="submit" disabled={isSubmitting || orgPending || !!orgRefusal} size="sm">
+          <Button
+            type="submit"
+            disabled={isSubmitting || orgPending || !!orgRefusal || !form.watch('name').trim()}
+            size="sm"
+          >
             {isSubmitting ? 'Saving…' : isRenameMode ? 'Update name' : 'Create environment'}
           </Button>
         </div>

@@ -150,6 +150,18 @@
   --font-size-5xl: clamp(2.25rem, 5vw, 3rem);
 }
 
+/* Tailwind 4 borders default to currentColor; on the dark theme that drew bare
+   `border`/`border-b` (tables, cards) in the text colour. */
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-border);
+  }
+}
+
 /* Indeterminate sweep for the global background-refresh indicator. */
 @keyframes refresh-slide {
   0% {

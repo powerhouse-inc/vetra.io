@@ -286,13 +286,15 @@ describe('AppDetail tabs', () => {
       expect(retry).toHaveBeenCalledTimes(1)
     })
 
-    it('shows only the licensing tabs, opening on Plans, for its publisher', () => {
+    it('shows only the licensing tabs, opening on the first (Profile), for its publisher', () => {
       publisher = { isPublisher: true, app: studio, isPending: false }
       render(<AppDetail appId="studio-1" />)
       expect(screen.getByRole('heading', { name: 'Vetra Studio' })).toBeTruthy()
       expect(tabNames()).toEqual(['Profile', 'Templates', 'Plans', 'Holders', 'Invite codes'])
-      expect(screen.getByRole('tab', { name: 'Plans' }).getAttribute('aria-selected')).toBe('true')
-      expect(screen.getByText('plans-content')).toBeTruthy()
+      expect(screen.getByRole('tab', { name: 'Profile' }).getAttribute('aria-selected')).toBe(
+        'true',
+      )
+      expect(screen.getByText(/profile-content/)).toBeTruthy()
       expect(screen.queryByRole('link', { name: /visit/i })).toBeNull()
       expect(screen.queryByText('acme/vault')).toBeNull()
       expect(screen.queryByText('App not found')).toBeNull()
@@ -304,9 +306,13 @@ describe('AppDetail tabs', () => {
       render(<AppDetail appId="studio-1" />)
       expect(screen.getByText('invite-codes-content')).toBeTruthy()
       cleanup()
-      searchParams = new URLSearchParams('tab=settings')
+      searchParams = new URLSearchParams('tab=plans')
       render(<AppDetail appId="studio-1" />)
       expect(screen.getByText('plans-content')).toBeTruthy()
+      cleanup()
+      searchParams = new URLSearchParams('tab=settings')
+      render(<AppDetail appId="studio-1" />)
+      expect(screen.getByText(/profile-content/)).toBeTruthy()
     })
 
     it('waits for the ownership check instead of saying "not found"', () => {

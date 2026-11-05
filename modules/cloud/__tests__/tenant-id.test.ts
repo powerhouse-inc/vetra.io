@@ -15,4 +15,10 @@ describe('getTenantId', () => {
       'noble-fox-31bf9f74-31bf9f74',
     )
   })
+
+  it('drops underscores like the backend does', () => {
+    expect(getTenantId('dao-treasury', 'dIxU_XWyp5uoEwfTU1C-K0W2eYOHpqYdLZtUZ_JwUyw')).toBe(
+      'dao-treasury-dixuxwyp',
+    )
+  })
 })

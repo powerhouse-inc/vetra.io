@@ -83,3 +83,21 @@ export const environmentHref = (s: Pick<Subscription, 'environmentId'>): string 
 
 export const subscriptionHref = (licenseId: string): string =>
   `/user/subscriptions?highlight=${encodeURIComponent(licenseId)}`
+
+/**
+ * Tells a subscription's environment apart from siblings with the same label (five "Sektar"
+ * environments): the first DNS label of its URL, e.g. "fair-bull-b6t7wwqr". Null for SHARED
+ * subscriptions or before the environment has a URL.
+ */
+export function environmentHint(s: Pick<Subscription, 'mode' | 'openUrl'>): string | null {
+  if (s.mode !== 'DEDICATED' || !s.openUrl) return null
+  try {
+    return new URL(s.openUrl).hostname.split('.')[0] || null
+  } catch {
+    return null
+  }
+}
+
+/** The server words dates as 2026-11-16; show them like every other date in the console. */
+export const withDisplayDates = (message: string): string =>
+  message.replace(/\b(\d{4}-\d{2}-\d{2})\b/g, (iso) => formatDate(iso) || iso)

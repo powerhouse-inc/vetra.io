@@ -1,6 +1,11 @@
 import { environmentStatusMeta } from '@/modules/cloud/lib/environment-status'
 import type { CloudEnvironment } from '@/modules/cloud/types'
-import { subscriptionHref, subscriptionName } from '@/modules/subscriptions/lib/subscriptions'
+import {
+  environmentHint,
+  subscriptionHref,
+  subscriptionName,
+  withDisplayDates,
+} from '@/modules/subscriptions/lib/subscriptions'
 import type { Subscription, SubscriptionWarningKind } from '@/modules/subscriptions/types'
 
 /** One thing on the console home that needs the owner to act. */
@@ -50,8 +55,10 @@ export function attentionItems(
       items.push({
         key: `sub:${sub.licenseId}:${warning.kind}`,
         tone: URGENT_WARNINGS.has(warning.kind) ? 'danger' : 'warning',
-        title: `${subscriptionName(sub)} · ${sub.appName}`,
-        detail: warning.message,
+        title: [subscriptionName(sub), sub.appName, environmentHint(sub)]
+          .filter(Boolean)
+          .join(' · '),
+        detail: withDisplayDates(warning.message),
         href: subscriptionHref(sub.licenseId),
       })
     }

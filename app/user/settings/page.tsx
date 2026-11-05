@@ -1,19 +1,17 @@
 'use client'
 import { useRenownAuthAsync } from '@powerhousedao/reactor-browser'
-import { Plus, Settings, Users } from 'lucide-react'
-import Link from 'next/link'
+import { Building2, Settings } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback } from 'react'
 import { SettingsTab } from '@/app/profile/components/settings-tab'
-import { TeamsTab } from '@/app/profile/components/teams-tab'
 import { PageHeader } from '@/modules/shared/components/page-header'
 import { PageSpinner } from '@/modules/shared/components/page-shell'
 import { RequireLogin } from '@/modules/shared/components/renown/require-login'
-import { Button } from '@/modules/shared/components/ui/button'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/modules/shared/components/ui/tabs'
 import { useDocumentTitle } from '@/modules/shared/hooks/use-document-title'
+import { CreateOrgButton, OrgsTab } from './orgs-tab'
 
-const VALID_TABS = ['profile', 'teams'] as const
+const VALID_TABS = ['profile', 'organisations'] as const
 type SettingsTab_ = (typeof VALID_TABS)[number]
 
 function isValidTab(v: string | null): v is SettingsTab_ {
@@ -25,7 +23,8 @@ function UserSettingsPageInner() {
   const auth = useRenownAuthAsync()
   const router = useRouter()
   const params = useSearchParams()
-  const rawTab = params.get('tab')
+  // ?tab=teams predates Renown organisations; old links land on the new tab.
+  const rawTab = params.get('tab') === 'teams' ? 'organisations' : params.get('tab')
   const active: SettingsTab_ = isValidTab(rawTab) ? rawTab : 'profile'
 
   const onChange = useCallback(
@@ -46,17 +45,8 @@ function UserSettingsPageInner() {
         eyebrow="~/settings"
         className="mb-8"
         title="Profile settings"
-        description="Your Renown identity, account details, and teams."
-        actions={
-          active === 'teams' && (
-            <Button asChild>
-              <Link href="/profile/create-team">
-                <Plus className="size-4" />
-                Create team
-              </Link>
-            </Button>
-          )
-        }
+        description="Your Renown identity, account details, and organisations."
+        actions={active === 'organisations' && <CreateOrgButton />}
       />
 
       <Tabs value={active} onValueChange={onChange} className="w-full">
@@ -64,16 +54,16 @@ function UserSettingsPageInner() {
           <TabsTrigger value="profile" className="gap-1.5">
             <Settings className="size-4" /> Profile settings
           </TabsTrigger>
-          <TabsTrigger value="teams" className="gap-1.5">
-            <Users className="size-4" /> Teams
+          <TabsTrigger value="organisations" className="gap-1.5">
+            <Building2 className="size-4" /> Organisations
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="profile">
           <SettingsTab />
         </TabsContent>
-        <TabsContent value="teams">
-          <TeamsTab address={auth.address} />
+        <TabsContent value="organisations">
+          <OrgsTab />
         </TabsContent>
       </Tabs>
     </div>

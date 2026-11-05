@@ -17,7 +17,7 @@ function UserPackagesPageInner() {
         eyebrow="~/packages"
         className="mb-8"
         title="Packages"
-        description="Packages you’ve published."
+        description="Packages your apps have published."
       />
       <PackagesTab />
     </div>

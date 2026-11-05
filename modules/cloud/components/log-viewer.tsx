@@ -1,7 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { filterLogs, logBuckets, type LogLevelFilter } from '@/modules/cloud/lib/log-filter'
+import {
+  filterLogs,
+  logBuckets,
+  logLevelOf,
+  postgresRecord,
+  type LogLevelFilter,
+} from '@/modules/cloud/lib/log-filter'
 import type { LogEntry } from '@/modules/cloud/types'
 import { cn } from '@/shared/lib/utils'
 
@@ -31,12 +37,16 @@ const LEVEL_STYLES: Record<string, { badge: string; text: string }> = {
 function parseLogLine(line: string): ParsedLog {
   try {
     const obj = JSON.parse(line) as Record<string, unknown>
-    const level = (obj.level as string)?.toLowerCase() ?? null
-    const msg =
-      (obj.msg as string) ??
-      (obj.message as string) ??
-      ((obj.record as Record<string, unknown>)?.message as string) ??
-      ''
+    const level = logLevelOf(obj)
+    const pg = postgresRecord(obj)
+    const msg = pg
+      ? [
+          pg.severity && pg.severity !== 'LOG' ? `${pg.severity}: ${pg.message}` : pg.message,
+          pg.detail,
+        ]
+          .filter(Boolean)
+          .join(' — ')
+      : ((obj.msg as string) ?? (obj.message as string) ?? '')
     const pod = (obj.logging_pod as string) ?? null
     const logger = (obj.logger as string) ?? null
 

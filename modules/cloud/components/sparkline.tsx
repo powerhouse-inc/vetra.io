@@ -3,6 +3,7 @@
 import { useCallback, useRef, useState } from 'react'
 import type { MetricSeries } from '@/modules/cloud/types'
 import { CHART_SERIES_COLORS } from '@/modules/cloud/lib/chart-colors'
+import { UI_LOCALE } from '@/modules/shared/lib/time'
 
 const COLORS = CHART_SERIES_COLORS
 
@@ -164,7 +165,7 @@ export function Sparkline({ series, width = 300, height = 100, formatValue }: Sp
           }}
         >
           <div className="text-muted-foreground mb-1 text-[10px]">
-            {new Date(hover.timestamp * 1000).toLocaleTimeString()}
+            {new Date(hover.timestamp * 1000).toLocaleTimeString(UI_LOCALE)}
           </div>
           {hover.values.map((v, i) => {
             const shortLabel = v.label.replace(/^.*-(?=(connect|switchboard|pg|pooler))/, '')

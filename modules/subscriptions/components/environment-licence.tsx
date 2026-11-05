@@ -5,7 +5,13 @@ import Link from 'next/link'
 import { Banner } from '@/modules/apps/components/banner'
 import { Button } from '@/modules/shared/components/ui/button'
 import { useSubscriptionForEnvironment } from '../hooks/use-subscriptions'
-import { isLive, subscriptionHref, subscriptionName, warningTone } from '../lib/subscriptions'
+import {
+  isLive,
+  subscriptionHref,
+  subscriptionName,
+  warningTone,
+  withDisplayDates,
+} from '../lib/subscriptions'
 
 export function EnvironmentLicenceBadge({ environmentId }: { environmentId: string }) {
   const { subscription: s } = useSubscriptionForEnvironment(environmentId)
@@ -25,7 +31,7 @@ export function EnvironmentLicenceBadge({ environmentId }: { environmentId: stri
       </p>
       {warning && (
         <p className={warningTone(warning.kind) === 'danger' ? 'text-destructive' : 'text-warning'}>
-          {warning.message}
+          {withDisplayDates(warning.message)}
         </p>
       )}
     </div>
@@ -49,7 +55,7 @@ export function EnvironmentLicenceBanner({ environmentId }: { environmentId: str
       }
     >
       {warning
-        ? warning.message
+        ? withDisplayDates(warning.message)
         : isLive(s)
           ? `This environment comes with your ${subscriptionName(s)} licence for ${s.appName}.`
           : `Your ${subscriptionName(s)} licence for ${s.appName} has ended.`}
