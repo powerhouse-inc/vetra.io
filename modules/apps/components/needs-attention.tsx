@@ -45,14 +45,17 @@ export function NeedsAttention() {
                   item.tone === 'danger' ? 'bg-destructive' : 'bg-warning',
                 )}
               />
-              <span className="min-w-0 flex-1 truncate font-medium">{item.title}</span>
-              <span
-                className={cn(
-                  'shrink-0 text-xs',
-                  item.tone === 'danger' ? 'text-destructive' : 'text-warning',
-                )}
-              >
-                {item.detail}
+              {/* Stacked on phones: the detail is a sentence and must wrap, not push the page wide. */}
+              <span className="flex min-w-0 flex-1 flex-col gap-0.5 sm:flex-row sm:items-center sm:gap-3">
+                <span className="min-w-0 truncate font-medium sm:flex-1">{item.title}</span>
+                <span
+                  className={cn(
+                    'text-xs sm:shrink-0 sm:text-right',
+                    item.tone === 'danger' ? 'text-destructive' : 'text-warning',
+                  )}
+                >
+                  {item.detail}
+                </span>
               </span>
               <ChevronRight className="text-muted-foreground h-4 w-4 shrink-0" aria-hidden />
             </Link>
