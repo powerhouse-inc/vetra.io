@@ -60,7 +60,8 @@ export function PackagesTab() {
   return (
     <div className="space-y-4">
       {live.length > 0 && (
-        <Card>
+        // Each app renders its own rows once its artifacts load; with none, no empty frame.
+        <Card className="[&:not(:has(li))]:hidden">
           <ul className="divide-border divide-y">
             {live.map((app) => (
               <AppPackages key={app.id} app={app} />
