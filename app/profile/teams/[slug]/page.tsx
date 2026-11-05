@@ -16,7 +16,7 @@ import { SpacesSection } from './components/spaces-section'
 import { useDocumentTitle } from '@/modules/shared/hooks/use-document-title'
 
 /** Teams are managed from the settings page; team pages link back there. */
-const SETTINGS_TEAMS = '/user/settings?tab=teams'
+const SETTINGS_TEAMS = '/user/settings?tab=organisations'
 
 function ManageTeamInner() {
   const params = useParams<{ slug: string }>()
