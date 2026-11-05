@@ -238,7 +238,7 @@ function ProductionCard({ app, deployment }: { app: App; deployment: AppDeployme
             </p>
           )}
           <UrlList urls={app.productionUrls} />
-          {url && !readOnly && (
+          {url && deployment && !readOnly && (
             <Button asChild className="self-start">
               <a href={url} target="_blank" rel="noopener noreferrer">
                 Visit

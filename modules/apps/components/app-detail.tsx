@@ -45,6 +45,7 @@ import {
 import {
   appHeadlineStatus,
   githubRepoUrl,
+  hasProductionDeployment,
   identityState,
   isAppReadOnly,
   primaryUrl,
@@ -212,9 +213,10 @@ export function visibleAppTabs({
   return tabs
 }
 
-function Header({ app }: { app: App }) {
+function Header({ app, deployed }: { app: App; deployed: boolean }) {
   const identity = identityState(app)
-  const url = primaryUrl(app.productionUrls)
+  // Before the first production deploy the URL serves the platform-default Connect.
+  const url = deployed ? primaryUrl(app.productionUrls) : null
   const latest = app.latestDeployment
   return (
     <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
@@ -438,7 +440,7 @@ export function AppDetail({ appId }: { appId: string }) {
           <ArrowLeft className="h-4 w-4" />
           Apps
         </Link>
-        <Header app={app} />
+        <Header app={app} deployed={hasProductionDeployment(app, deployments)} />
 
         {identity.kind === 'pending' && (
           <Banner

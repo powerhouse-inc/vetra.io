@@ -163,6 +163,20 @@ export function primaryUrl(
   return urls.app ?? urls.connect ?? urls.switchboard ?? null
 }
 
+/**
+ * Whether the production environment runs the app's own code. Until the first production
+ * deployment it serves the platform-default Connect, so a "Visit" link would mislead.
+ * `deployments` is the full list when loaded; the app's latest deployment covers the rest.
+ */
+export function hasProductionDeployment(
+  app: Pick<App, 'latestDeployment'>,
+  deployments: ReadonlyArray<Pick<AppDeployment, 'kind'>> = [],
+): boolean {
+  return (
+    deployments.some((d) => d.kind === 'PRODUCTION') || app.latestDeployment?.kind === 'PRODUCTION'
+  )
+}
+
 /** `https://foo-connect.vetra.io/` → `foo-connect.vetra.io` for compact display. */
 export function displayHost(url: string | null | undefined): string {
   if (!url) return ''

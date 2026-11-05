@@ -11,6 +11,7 @@ import {
   deploymentsPollInterval,
   displayHost,
   githubCommitUrl,
+  hasProductionDeployment,
   identityState,
   isAppReadOnly,
   isDeploymentInFlight,
@@ -307,5 +308,21 @@ describe('deploymentRowStatus', () => {
       deploymentRowStatus(deployment({ kind: 'PREVIEW', prNumber: 3, status: 'READY' }), 'live')
         .meta.label,
     ).toBe('Ready')
+  })
+})
+
+describe('hasProductionDeployment', () => {
+  it('is false before any deployment, and for previews only', () => {
+    expect(hasProductionDeployment({ latestDeployment: null })).toBe(false)
+    expect(hasProductionDeployment({ latestDeployment: null }, [{ kind: 'PREVIEW' }])).toBe(false)
+  })
+
+  it('is true once a production deployment exists', () => {
+    expect(hasProductionDeployment({ latestDeployment: null }, [{ kind: 'PRODUCTION' }])).toBe(true)
+    expect(
+      hasProductionDeployment({
+        latestDeployment: deployment(),
+      }),
+    ).toBe(true)
   })
 })
