@@ -1,11 +1,10 @@
 'use client'
-import { ArrowRight, Package } from 'lucide-react'
+import { Package } from 'lucide-react'
 import Link from 'next/link'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { usePublisherAppArtifacts, usePublisherApps } from '@/modules/publisher/hooks/use-publisher'
 import type { PublisherApp, PublisherAppArtifact } from '@/modules/publisher/types'
-import { Button } from '@/modules/shared/components/ui/button'
-import { Card, CardContent } from '@/modules/shared/components/ui/card'
+import { Card } from '@/modules/shared/components/ui/card'
 import { TabErrorState } from './tab-error-state'
 
 const latest = (a: PublisherAppArtifact) => a.versions[a.versions.length - 1]?.version ?? null
@@ -57,34 +56,15 @@ export function PackagesTab() {
     return <TabErrorState message="Couldn’t load your apps" onRetry={() => void apps.refetch()} />
   }
 
+  if (live.length === 0) return null
+  // Each app renders its own rows once its artifacts load; with none, no empty frame.
   return (
-    <div className="space-y-4">
-      {live.length > 0 && (
-        // Each app renders its own rows once its artifacts load; with none, no empty frame.
-        <Card className="[&:not(:has(li))]:hidden">
-          <ul className="divide-border divide-y">
-            {live.map((app) => (
-              <AppPackages key={app.id} app={app} />
-            ))}
-          </ul>
-        </Card>
-      )}
-      <Card>
-        <CardContent className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center">
-          <p className="text-muted-foreground flex-1 text-sm">
-            Packages appear here once an app’s deploy workflow publishes them. Everything on the
-            registry, including packages published with{' '}
-            <code className="bg-muted rounded px-1 py-0.5 text-xs">ph publish</code>, is in the
-            directory.
-          </p>
-          <Button variant="outline" size="sm" asChild className="self-start sm:self-auto">
-            <Link href="/packages">
-              Browse all packages
-              <ArrowRight className="size-3.5" />
-            </Link>
-          </Button>
-        </CardContent>
-      </Card>
-    </div>
+    <Card className="[&:not(:has(li))]:hidden">
+      <ul className="divide-border divide-y">
+        {live.map((app) => (
+          <AppPackages key={app.id} app={app} />
+        ))}
+      </ul>
+    </Card>
   )
 }
