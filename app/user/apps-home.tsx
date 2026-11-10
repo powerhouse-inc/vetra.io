@@ -10,16 +10,13 @@ import { NeedsAttention } from '@/modules/apps/components/needs-attention'
 import { licensingOnlyApps } from '@/modules/apps/lib/licensing-only'
 import { usePublisherApps } from '@/modules/publisher/hooks/use-publisher'
 import { describeAppsError, isAppsError } from '@/modules/apps/graphql'
-import { useMyApps, useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
+import { useMyApps } from '@/modules/apps/hooks/use-apps'
 import { canOfferCreateApp, type MyOrg } from '@/modules/orgs/types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { PageHeader } from '@/modules/shared/components/page-header'
 import { ErrorState } from '@/modules/shared/components/states'
 import { Alert, AlertDescription, AlertTitle } from '@/modules/shared/components/ui/alert'
 import { Button } from '@/modules/shared/components/ui/button'
-
-import { CloudEnvironments } from './environments/cloud-projects'
-import { NewEnvironmentButton } from './environments/new-environment-button'
 
 function AppCardSkeleton() {
   return (
@@ -164,9 +161,8 @@ function StudioCard() {
   )
 }
 
-/** `/user` — Apps first, then standalone environments, then Studio. */
+/** `/user` — Apps, then Studio. Standalone environments live on /user/environments. */
 export function AppsHome() {
-  const { isStandalone } = useStandaloneEnvFilter()
   return (
     <main className="mx-auto mt-20 max-w-screen-xl space-y-12 px-6 py-8">
       <section className="space-y-6">
@@ -193,25 +189,6 @@ export function AppsHome() {
         />
         <NeedsAttention />
         <AppsSection />
-      </section>
-
-      <section className="space-y-4" aria-labelledby="standalone-envs">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-          <div className="space-y-1">
-            <h2 id="standalone-envs" className="text-xl font-semibold">
-              Standalone environments
-            </h2>
-            <p className="text-muted-foreground text-sm">
-              Environments you manage by hand, not linked to an app.
-            </p>
-          </div>
-          <NewEnvironmentButton variant="outline" size="sm" />
-        </div>
-        <CloudEnvironments
-          filter={isStandalone}
-          emptyCopy="No standalone environments. Everything you run is part of an app."
-          compactEmpty
-        />
       </section>
 
       <StudioCard />
