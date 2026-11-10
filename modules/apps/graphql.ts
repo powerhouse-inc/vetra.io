@@ -267,7 +267,8 @@ export async function fetchApp(
       fetchImpl,
     ),
   )
-  return hasRepository(data.app) ? data.app : null
+  // The API still returns a deleted app to admins; deleted is gone for everyone here.
+  return hasRepository(data.app) && data.app.status !== 'DELETED' ? data.app : null
 }
 
 export async function fetchAppDeployments(

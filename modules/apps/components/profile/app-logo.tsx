@@ -4,14 +4,6 @@ import { useState } from 'react'
 import { cn } from '@/shared/lib/utils'
 import { AppAvatar } from '../app-avatar'
 
-/** Legacy profile logos that may be shown: https URLs and raster data URLs. */
-export function safeLegacyLogo(url: string | null | undefined): string | null {
-  if (!url) return null
-  return /^https:\/\//i.test(url) || /^data:image\/(png|jpeg|webp|gif);base64,/i.test(url)
-    ? url
-    : null
-}
-
 /** The app's logo image, or its monogram tile when there is none (or it fails to load). */
 export function AppLogo({
   name,

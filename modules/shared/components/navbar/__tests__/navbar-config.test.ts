@@ -24,24 +24,23 @@ describe('navigation', () => {
     ).toBe(true)
   })
 
-  it('shows Studio, Cloud, Packages and Docs to visitors', () => {
-    expect(PUBLIC_NAV_ITEMS.map((i) => i.label)).toEqual(['Studio', 'Cloud', 'Packages', 'Docs'])
+  it('shows Studio, Cloud, Apps and Docs to visitors', () => {
+    expect(PUBLIC_NAV_ITEMS.map((i) => i.label)).toEqual(['Studio', 'Cloud', 'Apps', 'Docs'])
     expect(PUBLIC_NAV_ITEMS.find((i) => i.label === 'Studio')?.href).toBe('/studio')
-    expect(PUBLIC_NAV_ITEMS.find((i) => i.label === 'Packages')?.href).toBe('/packages')
+    expect(PUBLIC_NAV_ITEMS.find((i) => i.label === 'Apps')?.href).toBe('/apps')
   })
 
-  it('links the package directory in the middle of the console header', () => {
-    expect(CONSOLE_HEADER_NAV_ITEMS.map((i) => [i.label, i.href])).toEqual([
-      ['Packages', '/packages'],
-    ])
+  it('links the apps directory in the middle of the console header', () => {
+    expect(CONSOLE_HEADER_NAV_ITEMS.map((i) => [i.label, i.href])).toEqual([['Apps', '/apps']])
     const item = CONSOLE_HEADER_NAV_ITEMS[0]
     const isActive = (p: string) => (item && 'isActive' in item ? item.isActive(p) : false)
-    expect(isActive('/packages')).toBe(true)
-    expect(isActive('/user/packages')).toBe(false)
+    expect(isActive('/apps')).toBe(true)
+    expect(isActive('/user/apps/abc')).toBe(false)
   })
 
-  it('no longer links the retired Builders page publicly', () => {
+  it('no longer links the retired Packages and Builders pages in the header', () => {
     for (const list of [PUBLIC_NAV_ITEMS, NAVBAR_CONFIGS['/vetra'].navItems]) {
+      expect(list.find((i) => i.href === '/packages')).toBeUndefined()
       expect(list.find((i) => i.href === '/builders')).toBeUndefined()
     }
   })

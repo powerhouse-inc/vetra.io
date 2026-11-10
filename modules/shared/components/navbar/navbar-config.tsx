@@ -3,11 +3,11 @@ import VetraIcon from '@/modules/shared/components/svgs/Vetra-200x200.svg'
 import { CONSOLE_NAV_SECTIONS } from '@/modules/shared/components/console-sidebar/console-nav'
 import type { NavItem, NavbarConfig } from './types'
 
-/** The public package directory: everything on the registry, not only the viewer's own. */
-const PACKAGES_NAV_ITEM: NavItem = {
-  label: 'Packages',
-  href: '/packages',
-  isActive: (p) => p === '/packages',
+/** The public apps directory: every app you can get, most used first. */
+const APPS_NAV_ITEM: NavItem = {
+  label: 'Apps',
+  href: '/apps',
+  isActive: (p) => p === '/apps',
 }
 
 export const PUBLIC_NAV_ITEMS: NavItem[] = [
@@ -21,12 +21,12 @@ export const PUBLIC_NAV_ITEMS: NavItem[] = [
     href: '/cloud',
     isActive: (p) => p === '/cloud',
   },
-  PACKAGES_NAV_ITEM,
+  APPS_NAV_ITEM,
   { label: 'Docs', href: 'https://academy.vetra.io/', isExternal: true },
 ]
 
 /** The middle of the console header (the sidebar carries the console's own navigation). */
-export const CONSOLE_HEADER_NAV_ITEMS: NavItem[] = [PACKAGES_NAV_ITEM]
+export const CONSOLE_HEADER_NAV_ITEMS: NavItem[] = [APPS_NAV_ITEM]
 
 /** The console sections, flattened for the mobile menu (the sidebar shows them grouped). */
 export const PRIVATE_NAV_ITEMS: NavItem[] = CONSOLE_NAV_SECTIONS.flatMap((section) =>
