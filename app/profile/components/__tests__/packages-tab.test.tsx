@@ -36,8 +36,7 @@ describe('PackagesTab', () => {
     expect(screen.getByText('1.0.2')).toBeTruthy()
     expect(screen.queryByText('frontend')).toBeNull()
     expect(screen.queryByText('@x/should-not-show')).toBeNull()
-    expect(screen.getByRole('link', { name: /browse all packages/i }).getAttribute('href')).toBe(
-      '/packages',
-    )
+    expect(screen.queryByRole('link', { name: /browse all packages/i })).toBeNull()
+    expect(screen.queryByText(/appear here once/i)).toBeNull()
   })
 })
