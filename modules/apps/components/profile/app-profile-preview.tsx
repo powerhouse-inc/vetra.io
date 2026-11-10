@@ -5,7 +5,8 @@ import { isHttpUrl, type AppProfileForm } from '../../lib/app-profile/form'
 import type { ImageKind } from '../../lib/app-profile/image'
 import { renownMediaUrl } from '../../lib/app-profile/renown'
 import { hueFor } from '../app-avatar'
-import { AppLogo, safeLegacyLogo } from './app-logo'
+import { safeLegacyLogo } from '@/modules/apps/lib/app-profile/logo'
+import { AppLogo } from './app-logo'
 import { MarkdownLite } from './markdown-lite'
 
 /** Local previews of images uploaded in this session (they win over stored ones). */
