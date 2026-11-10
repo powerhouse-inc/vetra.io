@@ -15,7 +15,6 @@ describe('console navigation', () => {
       '/user/apps/abc',
       '/user/studio',
       '/user/products',
-      '/user/packages',
       '/user/environments/env-1',
       '/user/subscriptions',
       '/user/settings',
@@ -23,6 +22,10 @@ describe('console navigation', () => {
     for (const route of routes) {
       expect(items.filter((i) => i.isActive(route)).map((i) => i.label)).toHaveLength(1)
     }
+  })
+
+  it('leaves packages to the header (the directory), not the sidebar', () => {
+    expect(items.find((i) => i.label === 'Packages')).toBeUndefined()
   })
 
   it('does not mark Apps active on other console pages', () => {
