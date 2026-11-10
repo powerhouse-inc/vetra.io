@@ -121,4 +121,25 @@ describe('SubscriptionCard', () => {
     )
     expect(screen.queryByRole('link', { name: /open/i })).toBeNull()
   })
+
+  it('an ended licence says so above the stop date, without repeating it', () => {
+    render(
+      <SubscriptionCard
+        subscription={sub({
+          status: 'REVOKED',
+          warnings: [
+            {
+              kind: 'ENDED_STOP_PENDING',
+              at: '2026-11-16T18:59:54.208Z',
+              message: 'Your environment stops on 2026-11-16. Renew to keep it running.',
+            },
+          ],
+        })}
+        highlighted={false}
+        onCancel={() => {}}
+      />,
+    )
+    expect(screen.getByText('Licence ended')).toBeTruthy()
+    expect(screen.getAllByText(/Nov 16, 2026/)).toHaveLength(1)
+  })
 })
