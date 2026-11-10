@@ -9,7 +9,6 @@ import {
   Github,
   Loader2,
   RefreshCw,
-  Trash2,
   TriangleAlert,
   Unplug,
 } from 'lucide-react'
@@ -47,7 +46,6 @@ import {
   githubRepoUrl,
   hasProductionDeployment,
   identityState,
-  isAppReadOnly,
   primaryUrl,
   refLabel,
 } from '../lib/status'
@@ -201,19 +199,9 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
   )
 }
 
-/** Licensing tabs only for the app's publisher; nothing editable on a deleted app. */
-export function visibleAppTabs({
-  readOnly,
-  isPublisher,
-}: {
-  readOnly: boolean
-  isPublisher: boolean
-}): AppTab[] {
-  const tabs: AppTab[] = ['overview', 'deployments']
-  if (!readOnly) tabs.push('profile')
-  if (isPublisher && !readOnly) tabs.push(...LICENSING_TABS)
-  if (!readOnly) tabs.push('settings')
-  return tabs
+/** Licensing tabs only for the app's publisher. */
+export function visibleAppTabs({ isPublisher }: { isPublisher: boolean }): AppTab[] {
+  return ['overview', 'deployments', 'profile', ...(isPublisher ? LICENSING_TABS : []), 'settings']
 }
 
 function Header({ app, deployed }: { app: App; deployed: boolean }) {
@@ -264,7 +252,7 @@ function Header({ app, deployed }: { app: App; deployed: boolean }) {
           )}
         </div>
       </div>
-      {url && !isAppReadOnly(app) && (
+      {url && (
         <Button asChild size="lg" className="shrink-0">
           <a href={url} target="_blank" rel="noopener noreferrer">
             Visit
@@ -292,22 +280,19 @@ export function AppDetail({ appId }: { appId: string }) {
   useDocumentTitle(app?.name ?? publisher.app?.name ?? null)
 
   const tabParam = params.get('tab')
-  const readOnly = app ? isAppReadOnly(app) : false
   const identity = app ? identityState(app) : ({ kind: 'unknown' } as const)
-  // A deleted app is read-only: no Settings tab, no actions.
-  const visibleTabs = visibleAppTabs({ readOnly, isPublisher: publisher.isPublisher })
+  const visibleTabs = visibleAppTabs({ isPublisher: publisher.isPublisher })
   // While ownership is still being checked, a deep link to a licensing tab waits on a skeleton
   // instead of flashing Overview.
-  const checkingLicensing = publisher.isPending && !readOnly
+  const checkingLicensing = publisher.isPending
   const awaitingTab =
     checkingLicensing && isLicensingTab(tabParam as AppTab) ? (tabParam as AppTab) : null
   const tab: AppTab =
     awaitingTab ?? (visibleTabs.includes(tabParam as AppTab) ? (tabParam as AppTab) : 'overview')
-  const showLicensing = publisher.isPublisher && !readOnly
+  const showLicensing = publisher.isPublisher
   // A failed ownership check hides the licensing tabs; say so, with a retry. "Not deployed here
   // yet" is only worth a banner when they came for a licensing tab.
   const licensingError =
-    !readOnly &&
     publisher.error &&
     (!isPublisherError(publisher.error, 'PUBLISHER_UNAVAILABLE') ||
       isLicensingTab(tabParam as AppTab))
@@ -481,13 +466,6 @@ export function AppDetail({ appId }: { appId: string }) {
           </Banner>
         )}
 
-        {readOnly && (
-          <Banner tone="neutral" icon={Trash2} title="This app was deleted">
-            Deleted {formatTimestamp(app.updatedAt)}. You can see it because you are an admin; its
-            history is read-only.
-          </Banner>
-        )}
-
         {app.status === 'DISCONNECTED' && (
           <Banner
             tone="danger"
@@ -574,7 +552,7 @@ export function AppDetail({ appId }: { appId: string }) {
             deployments={deployments}
             deploymentsLoaded={!deploymentsQuery.isPending}
             onAuthorize={authorize}
-            onEditProfile={readOnly ? undefined : () => setTab('profile')}
+            onEditProfile={() => setTab('profile')}
           />
         </TabsContent>
         <TabsContent value="deployments">
@@ -587,11 +565,9 @@ export function AppDetail({ appId }: { appId: string }) {
             retrying={deploymentsQuery.isRefetching}
           />
         </TabsContent>
-        {!readOnly && (
-          <TabsContent value="profile">
-            <AppProfileTab appId={appId} appName={app.name} appDid={app.identityDid} />
-          </TabsContent>
-        )}
+        <TabsContent value="profile">
+          <AppProfileTab appId={appId} appName={app.name} appDid={app.identityDid} />
+        </TabsContent>
         {showLicensing && (
           <TabsContent value="artifacts">
             <ArtifactsTab appId={appId} />
@@ -617,11 +593,9 @@ export function AppDetail({ appId }: { appId: string }) {
             <InviteCodesTab appId={appId} />
           </TabsContent>
         )}
-        {!readOnly && (
-          <TabsContent value="settings">
-            <AppSettings app={app} onAuthorize={authorize} />
-          </TabsContent>
-        )}
+        <TabsContent value="settings">
+          <AppSettings app={app} onAuthorize={authorize} />
+        </TabsContent>
       </Tabs>
     </div>
   )

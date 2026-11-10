@@ -21,7 +21,6 @@ import {
   githubCommitUrl,
   githubRepoUrl,
   identityState,
-  isAppReadOnly,
   primaryUrl,
   refLabel,
   shortSha,
@@ -199,21 +198,18 @@ function DeploymentMeta({ deployment, repo }: { deployment: AppDeployment; repo:
 }
 
 function ProductionCard({ app, deployment }: { app: App; deployment: AppDeployment | null }) {
-  const readOnly = isAppReadOnly(app)
   const url = primaryUrl(app.productionUrls)
   const meta = deploymentStatusMeta(deployment?.status)
   return (
     <section className="space-y-4" aria-labelledby="production-heading">
       <SectionTitle
         action={
-          readOnly ? null : (
-            <Button asChild variant="ghost" size="sm">
-              <Link href={`/user/environments/${app.productionEnvironmentId}`}>
-                <Settings2 className="h-4 w-4" />
-                Environment
-              </Link>
-            </Button>
-          )
+          <Button asChild variant="ghost" size="sm">
+            <Link href={`/user/environments/${app.productionEnvironmentId}`}>
+              <Settings2 className="h-4 w-4" />
+              Environment
+            </Link>
+          </Button>
         }
       >
         <span id="production-heading" className="flex items-center gap-2">
@@ -226,10 +222,6 @@ function ProductionCard({ app, deployment }: { app: App; deployment: AppDeployme
         <div className="flex min-w-0 flex-col gap-5">
           {deployment ? (
             <DeploymentMeta deployment={deployment} repo={app.repository.fullName} />
-          ) : readOnly ? (
-            <p className="text-muted-foreground text-sm">
-              This app never had a production deployment.
-            </p>
           ) : (
             <p className="text-muted-foreground text-sm">
               Nothing deployed yet. Push to{' '}
@@ -238,7 +230,7 @@ function ProductionCard({ app, deployment }: { app: App; deployment: AppDeployme
             </p>
           )}
           <UrlList urls={app.productionUrls} />
-          {url && deployment && !readOnly && (
+          {url && deployment && (
             <Button asChild className="self-start">
               <a href={url} target="_blank" rel="noopener noreferrer">
                 Visit
@@ -379,9 +371,7 @@ export function AppOverview({
     deployments.find((d) => d.kind === 'PRODUCTION') ??
     (app.latestDeployment?.kind === 'PRODUCTION' ? app.latestDeployment : null)
   const hasDeployments = deployments.length > 0 || !!app.latestDeployment
-  const readOnly = isAppReadOnly(app)
   const showChecklist =
-    !readOnly &&
     app.status !== 'DISCONNECTED' &&
     // Expired identities get the page banner; the checklist is for first-time setup.
     (identityState(app).kind === 'pending' || (deploymentsLoaded && !hasDeployments))
@@ -394,7 +384,7 @@ export function AppOverview({
       <ProductionCard app={app} deployment={production} />
       <AppProfileCard appDid={app.identityDid} appName={app.name} onEdit={onEditProfile} />
       <AppStatsCard appDid={app.identityDid} onEdit={onEditProfile} />
-      {!readOnly && <PreviewsSection app={app} />}
+      <PreviewsSection app={app} />
     </div>
   )
 }
