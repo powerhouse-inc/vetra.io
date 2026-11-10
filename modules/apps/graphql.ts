@@ -271,6 +271,25 @@ export async function fetchApp(
   return hasRepository(data.app) && data.app.status !== 'DELETED' ? data.app : null
 }
 
+/**
+ * The apps record behind an app, with or without a repository (a Studio-made app published for
+ * licensing only has one; Vetra Studio itself has none). Null when there is none, or it is
+ * deleted. Its existence is what makes the app deletable.
+ */
+export async function fetchAppRecord(
+  id: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<{ id: string; status: string } | null> {
+  const data = await appsGql<{ app: { id: string; status: string } | null }>(
+    `query ($id: ID!) { app(id: $id) { id status } }`,
+    { id },
+    token,
+    fetchImpl,
+  )
+  return data.app && data.app.status !== 'DELETED' ? data.app : null
+}
+
 export async function fetchAppDeployments(
   appId: string,
   limit: number | null,
