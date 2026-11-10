@@ -95,6 +95,15 @@ describe('publisher query hooks', () => {
     expect(theirs.result.current.isPublisher).toBe(false)
   })
 
+  it('useAppPublisher treats a deleted app as gone', async () => {
+    fetchPublisherApps.mockResolvedValue([{ id: 'app-1', name: 'Vault', status: 'DELETED' }])
+    const { Wrapper } = wrapper()
+    const { result } = renderHook(() => useAppPublisher('app-1'), { wrapper: Wrapper })
+    await waitFor(() => expect(result.current.isPending).toBe(false))
+    expect(result.current.isPublisher).toBe(false)
+    expect(result.current.app).toBeUndefined()
+  })
+
   it('useAppPublisher reports "not the publisher" when myApps fails', async () => {
     // A coded refusal is not retried by retryPublisher, so the query settles at once.
     fetchPublisherApps.mockRejectedValue(new PublisherApiError('FORBIDDEN', 'no', 403))

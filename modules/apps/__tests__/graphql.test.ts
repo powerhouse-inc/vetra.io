@@ -332,6 +332,13 @@ describe('apps without a repository', () => {
     expect(await fetchApp('a2', null, fetchImpl)).toBeNull()
   })
 
+  it('fetchApp hides a deleted app, which the API still returns to admins', async () => {
+    const fetchImpl: FetchLike = vi.fn(() =>
+      Promise.resolve(jsonResponse({ data: { app: { ...repoApp, status: 'DELETED' } } })),
+    )
+    expect(await fetchApp('a1', null, fetchImpl)).toBeNull()
+  })
+
   it('fetchApp returns apps that have a repository', async () => {
     const fetchImpl: FetchLike = vi.fn(() =>
       Promise.resolve(jsonResponse({ data: { app: repoApp } })),

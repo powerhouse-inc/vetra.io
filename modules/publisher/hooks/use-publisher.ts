@@ -57,10 +57,13 @@ export function usePublisherApps(orgId: string | null = null) {
   )
 }
 
-/** Is the viewer this app's publisher? Uses the server's own ownership rule (myApps). */
+/**
+ * Is the viewer this app's publisher? Uses the server's own ownership rule (myApps). myApps
+ * still carries soft-deleted apps; a deleted app is gone, so it never counts.
+ */
 export function useAppPublisher(appId: string, orgId: string | null = null) {
   const apps = usePublisherApps(orgId)
-  const app = apps.data?.find((a) => a.id === appId)
+  const app = apps.data?.find((a) => a.id === appId && a.status !== 'DELETED')
   // A disabled query (signed out) is "pending" forever in React Query; it is not loading.
   const isPending = apps.isPending && apps.fetchStatus !== 'idle'
   // Only a failure with nothing to show counts; a failed background refetch keeps the tabs.
