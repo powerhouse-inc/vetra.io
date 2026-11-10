@@ -39,6 +39,7 @@ import {
   serviceInstanceKey,
   serviceInstanceLabel,
 } from '@/modules/cloud/lib/service-label'
+import { useAppName } from '@/modules/apps/hooks/use-app-profile'
 import { useMyApps, useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
 import {
   DOCLING_PREFIX,
@@ -163,7 +164,9 @@ function EnvironmentDetail({ documentId }: { documentId: string }) {
   const linkedAppId = environment?.app?.appId ?? state?.app?.appId ?? null
   const appId = linkedAppId && (!appIds || appIds.has(linkedAppId)) ? linkedAppId : null
   const { data: myApps } = useMyApps()
-  const appName = appId ? myApps?.find((a) => a.id === appId)?.name : undefined
+  const linkedApp = appId ? myApps?.find((a) => a.id === appId) : undefined
+  const linkedAppName = useAppName(linkedApp?.identityDid, linkedApp?.name ?? '')
+  const appName = linkedApp ? linkedAppName : undefined
   const tenantId = subdomain && environment ? getTenantId(subdomain, environment.id) : null
   const TRULY_INACTIVE = new Set(['DRAFT', 'DESTROYED', 'ARCHIVED', 'STOPPED'])
   const isInactive = TRULY_INACTIVE.has(state?.status ?? 'DRAFT')

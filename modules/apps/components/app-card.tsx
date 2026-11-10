@@ -3,6 +3,7 @@ import Link from 'next/link'
 
 import { appHeadlineStatus, displayHost, primaryUrl, refLabel, shortSha } from '../lib/status'
 import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
+import { useAppName } from '../hooks/use-app-profile'
 import type { App } from '../types'
 import { AppAvatar } from './app-avatar'
 import { StatusPill } from '@/modules/shared/components/status'
@@ -12,6 +13,7 @@ import { StatusPill } from '@/modules/shared/components/status'
  * URL is its own link layered above the card's stretched link.
  */
 export function AppCard({ app }: { app: App }) {
+  const name = useAppName(app.identityDid, app.name)
   const status = appHeadlineStatus(app)
   // With no deployments ("No deployments") the URL serves the platform-default Connect. The
   // card only knows the latest deployment, which may be a preview after a production deploy.
@@ -22,14 +24,14 @@ export function AppCard({ app }: { app: App }) {
   return (
     <article className="group bg-card border-border hover:border-primary/40 relative flex flex-col rounded-xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start gap-3">
-        <AppAvatar name={app.name} seed={app.id} />
+        <AppAvatar name={name} seed={app.id} />
         <div className="min-w-0 flex-1">
           <h3 className="truncate leading-tight font-semibold">
             <Link
               href={`/user/apps/${app.id}`}
               className="focus-visible:ring-ring rounded-sm after:absolute after:inset-0 after:rounded-xl focus-visible:ring-2 focus-visible:outline-none"
             >
-              {app.name}
+              {name}
             </Link>
           </h3>
           <p className="text-muted-foreground mt-1 flex items-center gap-1.5 truncate text-sm">

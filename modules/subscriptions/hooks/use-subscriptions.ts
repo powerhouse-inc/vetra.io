@@ -1,7 +1,8 @@
 'use client'
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { useCallback, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { useAppNameOf } from '@/modules/apps/hooks/use-app-names'
 import { useAuthedQuery } from '@/modules/cloud/query/use-authed-query'
 import { retryPublisher } from '@/modules/publisher/graphql'
 import { usePublisherToken } from '@/modules/publisher/hooks/use-publisher'
@@ -30,9 +31,11 @@ export function useInviteCodeCheck(code: string) {
   })
 }
 
+/** The caller's subscriptions, each app named by its Renown profile where it has one. */
 export function useMySubscriptions() {
   const { did, keyDid } = useViewerDid()
-  return useAuthedQuery<Subscription[]>(
+  const nameOf = useAppNameOf()
+  const query = useAuthedQuery<Subscription[]>(
     subscriptionsKeys.mine(keyDid),
     (token) => fetchMySubscriptions(token),
     {
@@ -48,6 +51,11 @@ export function useMySubscriptions() {
       refetchIntervalInBackground: false,
     },
   )
+  const data = useMemo(
+    () => query.data?.map((sub) => ({ ...sub, appName: nameOf(sub.appId, sub.appName) })),
+    [query.data, nameOf],
+  )
+  return { ...query, data }
 }
 
 const STUDIO_ACCESS_POLL_MS = 2_000

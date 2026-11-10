@@ -1,8 +1,12 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import React from 'react'
 import { LicensingOnlyAppCard } from '../components/licensing-only-app-card'
 import { licensingOnlyApps, licensingOnlyHref } from '../lib/licensing-only'
+
+vi.mock('@/modules/apps/hooks/use-app-profile', () => ({
+  useAppName: (_did: unknown, fallback: string) => fallback,
+}))
 
 describe('licensing-only apps', () => {
   it('lists published apps the apps API does not know, by name', () => {
