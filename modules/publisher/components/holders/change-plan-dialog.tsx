@@ -25,6 +25,7 @@ import { shortDid, termName } from '../../lib/format'
 import { changePlanTargets } from '../../lib/holders'
 import { runWithToast } from '../../lib/run'
 import type { PublisherLicense, PublisherTerm, TemplateMode } from '../../types'
+import { usePersonName } from '@/modules/shared/hooks/use-person-name'
 
 /** Upgrade or downgrade in place: the new licence inherits the environment. */
 export function ChangePlanDialog({
@@ -48,6 +49,7 @@ export function ChangePlanDialog({
   // Keep the last licence so the copy does not flip while the dialog fades out; the choice is
   // cleared when it opens again, not mid-fade.
   const shown = useLastPresent(license)
+  const { name: holderName } = usePersonName(shown?.user)
   const [wasOpen, setWasOpen] = useState(!!license)
   if (!!license !== wasOpen) {
     setWasOpen(!!license)
@@ -61,8 +63,8 @@ export function ChangePlanDialog({
   const description = !shown
     ? ''
     : keepsEnvironment
-      ? `${shortDid(shown.user)} keeps their environment. It is rebuilt from the new plan’s template.`
-      : `Move ${shortDid(shown.user)} to another plan. Their access follows the new plan.`
+      ? `${holderName ?? shortDid(shown.user)} keeps their environment. It is rebuilt from the new plan’s template.`
+      : `Move ${holderName ?? shortDid(shown.user)} to another plan. Their access follows the new plan.`
 
   const close = onClose
   const submit = async () => {

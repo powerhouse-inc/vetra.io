@@ -3,6 +3,14 @@ import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 import type { PublisherLicense, PublisherTerm, TemplateMode } from '../types'
 
+vi.mock('@/modules/shared/hooks/use-person-name', async () => {
+  const { addressOf } = await vi.importActual<typeof import('@/modules/shared/lib/renown-person')>(
+    '@/modules/shared/lib/renown-person',
+  )
+  return {
+    usePersonName: (v: string | null | undefined) => ({ name: null, address: addressOf(v) }),
+  }
+})
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock('../hooks/use-publisher-mutations', () => ({
   useReplaceGrant: () => ({ mutateAsync: vi.fn(), isPending: false }),

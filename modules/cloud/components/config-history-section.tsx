@@ -28,6 +28,7 @@ import {
 } from '@/modules/shared/components/ui/alert-dialog'
 import { Button } from '@/modules/shared/components/ui/button'
 import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
+import { PersonName } from '@/modules/shared/components/person-name'
 
 const PAGE = 8
 const SUMMARY_LINES = 3
@@ -40,10 +41,6 @@ type Props = {
   actions: RestoreActions
   canEdit: boolean
   viewerAddress?: string | null
-}
-
-function shortAddress(addr: string) {
-  return addr.length > 12 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr
 }
 
 /**
@@ -111,7 +108,7 @@ export function ConfigHistorySection({
                   </span>
                   {v.signer && (
                     <span className="text-muted-foreground font-mono text-xs">
-                      {v.signer === viewer ? 'you' : shortAddress(v.signer)}
+                      {v.signer === viewer ? 'you' : <PersonName value={v.signer} />}
                     </span>
                   )}
                   {isCurrent && (

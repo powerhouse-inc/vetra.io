@@ -5,6 +5,14 @@ const { toastError, toastSuccess } = vi.hoisted(() => ({
   toastError: vi.fn<(m: string) => void>(),
   toastSuccess: vi.fn<(m: string) => void>(),
 }))
+vi.mock('@/modules/shared/hooks/use-person-name', async () => {
+  const { addressOf } = await vi.importActual<typeof import('@/modules/shared/lib/renown-person')>(
+    '@/modules/shared/lib/renown-person',
+  )
+  return {
+    usePersonName: (v: string | null | undefined) => ({ name: null, address: addressOf(v) }),
+  }
+})
 vi.mock('sonner', () => ({ toast: { success: toastSuccess, error: toastError } }))
 
 import { ConfigHistorySection } from '@/modules/cloud/components/config-history-section'
