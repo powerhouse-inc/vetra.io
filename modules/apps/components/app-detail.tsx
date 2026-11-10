@@ -40,6 +40,7 @@ import {
   useAppDeployments,
   useConfirmAppIdentity,
   useGithubDeployAppInfo,
+  useAppRecord,
 } from '../hooks/use-apps'
 import {
   appHeadlineStatus,
@@ -56,7 +57,7 @@ import { AppAvatar } from './app-avatar'
 import { AppDeployments } from './app-deployments'
 import { AppOverview } from './app-overview'
 import { useAppName } from '../hooks/use-app-profile'
-import { AppSettings } from './app-settings'
+import { AppSettings, DeleteAppCard } from './app-settings'
 import { AppProfileTab } from './profile/profile-tab'
 import { GithubFlowLink } from './github-flow-link'
 import { Banner } from './banner'
@@ -137,9 +138,14 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
+  // A Studio-made app has an apps record and can be deleted; Vetra Studio has none.
+  const { data: record } = useAppRecord(app.id)
+  const tabs: (LicensingOnlyTab | 'settings')[] = record
+    ? [...LICENSING_ONLY_TABS, 'settings']
+    : [...LICENSING_ONLY_TABS]
   const tabParam = params.get('tab') ?? ''
-  const tab: LicensingOnlyTab = (LICENSING_ONLY_TABS as readonly string[]).includes(tabParam)
-    ? (tabParam as LicensingOnlyTab)
+  const tab = (tabs as readonly string[]).includes(tabParam)
+    ? (tabParam as LicensingOnlyTab | 'settings')
     : LICENSING_ONLY_DEFAULT
   const setTab = (value: string) => {
     const next = new URLSearchParams(params.toString())
@@ -175,7 +181,7 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
 
       <Tabs value={tab} onValueChange={setTab} className="gap-8">
         <TabsList className={TAB_LIST_CLASS}>
-          {LICENSING_ONLY_TABS.map((t) => (
+          {tabs.map((t) => (
             <TabsTrigger key={t} value={t} className={TAB_TRIGGER_CLASS}>
               {APP_TAB_LABEL[t]}
             </TabsTrigger>
@@ -196,6 +202,14 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
         <TabsContent value="invite-codes">
           <InviteCodesTab appId={app.id} />
         </TabsContent>
+        {record && (
+          <TabsContent value="settings">
+            <DeleteAppCard
+              app={{ id: app.id, name: app.name, identityDid: app.identityDid ?? '' }}
+              hasRepository={false}
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   )
