@@ -4,6 +4,8 @@ import { Avatar, AvatarFallback } from '@/modules/shared/components/ui/avatar'
 import { Button } from '@/modules/shared/components/ui/button'
 import { useEnsResolver } from '@/modules/profile/lib/use-ens-resolver'
 import { isValidEthAddress } from '@/modules/profile/lib/validations'
+import { usePersonName } from '@/modules/shared/hooks/use-person-name'
+import { looksLikeAddress } from '@/modules/shared/lib/renown-person'
 
 export type MemberRow = { address: string }
 export type StepMembersProps = {
@@ -13,6 +15,11 @@ export type StepMembersProps = {
 }
 
 export function StepMembers({ creator, members, onChange }: StepMembersProps) {
+  const { name: renownName } = usePersonName(creator.address)
+  // The SDK's displayName is the Renown username, which may only be the short address.
+  const creatorName =
+    renownName ??
+    (creator.displayName && !looksLikeAddress(creator.displayName) ? creator.displayName : null)
   const addRow = () => onChange([...members, { address: '' }])
   const updateRow = (i: number, address: string) => {
     const next = members.slice()
@@ -34,7 +41,7 @@ export function StepMembers({ creator, members, onChange }: StepMembersProps) {
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">
-          <div className="text-sm font-medium">{creator.displayName ?? 'You'}</div>
+          <div className="text-sm font-medium">{creatorName ?? 'You'}</div>
           <div className="text-muted-foreground font-mono text-xs">
             {creator.displayAddress ?? creator.address}
           </div>

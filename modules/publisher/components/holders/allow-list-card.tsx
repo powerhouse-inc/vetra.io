@@ -18,11 +18,11 @@ import { useLastPresent } from '@/modules/shared/hooks/use-last-present'
 import { formatDate } from '@/modules/shared/lib/time'
 import { describePublisherError } from '../../graphql'
 import { useAddToAllowList, useRemoveFromAllowList } from '../../hooks/use-publisher-mutations'
-import { shortDid } from '../../lib/format'
 import { USER_PATTERN } from '../../lib/holders'
 import { runWithToast } from '../../lib/run'
 import type { PublisherAllowListEntry } from '../../types'
 import { SectionCard } from '../primitives'
+import { PersonName } from '@/modules/shared/components/person-name'
 
 export function AllowListCard({
   appId,
@@ -104,7 +104,7 @@ export function AllowListCard({
         <ul className="divide-border divide-y text-sm">
           {entries.map((e) => (
             <li key={e.user} className="flex items-center gap-3 py-2">
-              <span className="min-w-0 flex-1 font-mono text-xs break-all">{shortDid(e.user)}</span>
+              <PersonName value={e.user} className="min-w-0 flex-1 font-mono text-xs break-all" />
               <span className="text-muted-foreground hidden text-xs sm:inline">
                 Added {formatDate(e.addedAt)}
               </span>
@@ -129,7 +129,7 @@ export function AllowListCard({
           <AlertDialogHeader>
             <AlertDialogTitle>Remove from the allow list?</AlertDialogTitle>
             <AlertDialogDescription>
-              <span className="font-mono">{shownRemoving ? shortDid(shownRemoving) : ''}</span> can
+              {shownRemoving ? <PersonName value={shownRemoving} className="font-mono" /> : ''} can
               no longer be granted a licence until you add them again.
             </AlertDialogDescription>
           </AlertDialogHeader>

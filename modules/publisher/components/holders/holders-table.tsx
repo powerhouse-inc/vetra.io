@@ -13,10 +13,11 @@ import {
   TableHeader,
   TableRow,
 } from '@/modules/shared/components/ui/table'
-import { dateRange, shortDid, termName } from '../../lib/format'
+import { dateRange, termName } from '../../lib/format'
 import { canChangePlan, type HolderRow } from '../../lib/holders'
 import { licenseStatusMeta } from '../../lib/status'
 import type { PublisherTerm, TemplateMode } from '../../types'
+import { PersonName } from '@/modules/shared/components/person-name'
 
 function EnvironmentCell({
   row,
@@ -98,7 +99,7 @@ export function HoldersTable({
               <TableRow key={r.id} data-testid={`holder-${r.id}`}>
                 <TableCell className="pl-4">
                   <span className="inline-flex items-center gap-1 font-mono text-xs break-all">
-                    {shortDid(r.user)}
+                    <PersonName value={r.user} />
                     <CopyButton value={r.user} label="Copy holder DID" />
                   </span>
                 </TableCell>

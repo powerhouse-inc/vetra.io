@@ -1,7 +1,6 @@
 'use client'
 
 import { AlertTriangle, ExternalLink, Package, Server, Trash2 } from 'lucide-react'
-import { shortAddress } from '@/modules/shared/lib/wallet-switch'
 import Link from 'next/link'
 import { useState } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
@@ -25,6 +24,7 @@ import { EnvironmentLicenceBadge } from '@/modules/subscriptions/components/envi
 import { Card, CardContent, CardHeader, CardTitle } from '@/modules/shared/components/ui/card'
 
 import type { CloudEnvironment } from './types'
+import { PersonName } from '@/modules/shared/components/person-name'
 
 export function CloudEnvironmentCard({
   env,
@@ -116,7 +116,7 @@ export function CloudEnvironmentCard({
           env.state.owner &&
           env.state.owner !== viewerAddress?.toLowerCase() && (
             <p className="text-warning font-mono text-xs" title={env.state.owner}>
-              Owned by {shortAddress(env.state.owner)}
+              Owned by <PersonName value={env.state.owner} />
             </p>
           )}
         <div className="flex items-center gap-4 text-sm">
