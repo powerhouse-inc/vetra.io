@@ -117,8 +117,8 @@ describe('AppDetail tabs', () => {
     }
   })
 
-  it('computes the tab list from ownership and read-only state', () => {
-    expect(visibleAppTabs({ readOnly: false, isPublisher: true })).toEqual([
+  it('computes the tab list from ownership', () => {
+    expect(visibleAppTabs({ isPublisher: true })).toEqual([
       'overview',
       'deployments',
       'profile',
@@ -129,15 +129,11 @@ describe('AppDetail tabs', () => {
       'invite-codes',
       'settings',
     ])
-    expect(visibleAppTabs({ readOnly: false, isPublisher: false })).toEqual([
+    expect(visibleAppTabs({ isPublisher: false })).toEqual([
       'overview',
       'deployments',
       'profile',
       'settings',
-    ])
-    expect(visibleAppTabs({ readOnly: true, isPublisher: true })).toEqual([
-      'overview',
-      'deployments',
     ])
   })
 
