@@ -15,9 +15,9 @@ import {
 import { Input } from '@/modules/shared/components/ui/input'
 import { useLastPresent } from '@/modules/shared/hooks/use-last-present'
 import { useRevokeLicense } from '../../hooks/use-publisher-mutations'
-import { shortDid } from '../../lib/format'
 import { runWithToast } from '../../lib/run'
 import type { PublisherLicense, TemplateMode } from '../../types'
+import { PersonName } from '@/modules/shared/components/person-name'
 
 export function RevokeDialog({
   appId,
@@ -55,7 +55,7 @@ export function RevokeDialog({
       <AlertDialogContent>
         <AlertDialogHeader>
           <AlertDialogTitle>
-            Revoke {shown ? shortDid(shown.license.user) : ''}’s licence?
+            Revoke {shown ? <PersonName value={shown.license.user} /> : ''}’s licence?
           </AlertDialogTitle>
           <AlertDialogDescription>
             {shown?.mode === 'SHARED'

@@ -33,6 +33,7 @@ import {
   DropdownMenuTrigger,
 } from '../../ui/dropdown-menu'
 import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar'
+import { usePersonName } from '@/modules/shared/hooks/use-person-name'
 import { cn } from '@/modules/shared/lib/utils'
 
 const btnSecondary =
@@ -71,6 +72,9 @@ function RenownButton() {
   const auth = useRenownAuthAsync()
   const avatarUrl = useRenownAvatarUrl()
   const openLogin = useOpenLogin()
+  // The Renown profile's display name: the SDK's displayName is the username, which Renown
+  // fills with the short address when none was chosen.
+  const { name } = usePersonName(auth.address)
   if (auth.state === 'resolving') {
     return (
       <span className={btnSecondary}>
@@ -85,14 +89,12 @@ function RenownButton() {
         <DropdownMenuTrigger asChild>
           <button type="button" className={cn(btnSecondary, 'max-w-full min-w-0')}>
             <Avatar className="h-5 w-5 shrink-0">
-              <AvatarImage src={avatarUrl} alt={auth.displayName ?? 'Account'} />
+              <AvatarImage src={avatarUrl} alt={name ?? 'Account'} />
               <AvatarFallback className="bg-transparent p-0">
                 <User className="h-4 w-4" />
               </AvatarFallback>
             </Avatar>
-            <span className="min-w-0 truncate">
-              {auth.displayName ?? auth.displayAddress ?? 'Account'}
-            </span>
+            <span className="min-w-0 truncate">{name ?? auth.displayAddress ?? 'Account'}</span>
             <ActiveOrgLabel />
           </button>
         </DropdownMenuTrigger>
@@ -103,15 +105,13 @@ function RenownButton() {
           <DropdownMenuLabel className="px-3 py-2">
             <div className="flex items-center gap-2.5">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={avatarUrl} alt={auth.displayName ?? 'Account'} />
+                <AvatarImage src={avatarUrl} alt={name ?? 'Account'} />
                 <AvatarFallback>
                   <User className="h-4 w-4" />
                 </AvatarFallback>
               </Avatar>
               <div>
-                <div className="text-sm leading-tight font-semibold">
-                  {auth.displayName ?? 'Account'}
-                </div>
+                <div className="text-sm leading-tight font-semibold">{name ?? 'Account'}</div>
                 <div className="flex items-center">
                   <span className="text-muted-foreground font-mono text-xs">
                     {shorten(auth.address ?? auth.displayAddress)}
