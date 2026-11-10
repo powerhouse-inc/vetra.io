@@ -317,7 +317,17 @@ function IdentityCard({ app, onAuthorize }: { app: App; onAuthorize: () => void 
   )
 }
 
-function DangerZone({ app }: { app: App }) {
+/**
+ * Deleting the app, behind a typed confirmation. An app with no repository (licensing only) has
+ * no deploys or workflow to mention.
+ */
+export function DeleteAppCard({
+  app,
+  hasRepository = true,
+}: {
+  app: Pick<App, 'id' | 'name' | 'identityDid'>
+  hasRepository?: boolean
+}) {
   const router = useRouter()
   const del = useDeleteApp()
   const [open, setOpen] = useState(false)
@@ -344,7 +354,11 @@ function DangerZone({ app }: { app: App }) {
     <SettingsCard
       danger
       title="Delete app"
-      description="Stops deploys from GitHub and removes the app from your account."
+      description={
+        hasRepository
+          ? 'Stops deploys from GitHub and removes the app from your account.'
+          : 'Removes the app, its plans and invite codes from your account.'
+      }
       footer={
         <Button variant="destructive" onClick={() => setOpen(true)}>
           <Trash2 className="h-4 w-4" />
@@ -352,11 +366,13 @@ function DangerZone({ app }: { app: App }) {
         </Button>
       }
     >
-      <p className="text-muted-foreground text-sm">
-        Its images in the Vetra registry are kept. The repository and its workflow file are not
-        touched; remove <code className="font-mono text-xs">.github/workflows/vetra.yml</code>{' '}
-        yourself if you no longer need it.
-      </p>
+      {hasRepository && (
+        <p className="text-muted-foreground text-sm">
+          Its images in the Vetra registry are kept. The repository and its workflow file are not
+          touched; remove <code className="font-mono text-xs">.github/workflows/vetra.yml</code>{' '}
+          yourself if you no longer need it.
+        </p>
+      )}
       <AlertDialog
         open={open}
         onOpenChange={(o) => {
@@ -495,7 +511,7 @@ export function AppSettings({ app, onAuthorize }: { app: App; onAuthorize: () =>
       </SettingsCard>
       <IdentityCard app={app} onAuthorize={onAuthorize} />
       <OrganisationCard app={app} />
-      <DangerZone app={app} />
+      <DeleteAppCard app={app} />
     </div>
   )
 }

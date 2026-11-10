@@ -13,6 +13,7 @@ import {
   createStudioApp,
   deleteApp,
   fetchApp,
+  fetchAppRecord,
   fetchAppDeployments,
   fetchGithubDeployAppInfo,
   fetchGithubDeployRepositories,
@@ -104,6 +105,16 @@ export function useApp(id: string) {
     retry: retryUnlessFinal,
     refetchInterval: (query) => appPollInterval(query.state.data),
   })
+}
+
+/** The apps record behind a licensing-only app (null for Vetra Studio): it can be deleted. */
+export function useAppRecord(id: string) {
+  const did = useDid()
+  return useAuthedQuery<{ id: string; status: string } | null>(
+    appsKeys.record(id, did),
+    (token) => fetchAppRecord(id, token),
+    { retry: retryUnlessFinal },
+  )
 }
 
 /** Deployment history; polls every few seconds while any row is PENDING/DEPLOYING. */
@@ -233,6 +244,9 @@ export function useDeleteApp() {
         old?.filter((a) => a.id !== vars.appId),
       )
       qc.removeQueries({ queryKey: appsKeys.detail(vars.appId, did) })
+      qc.removeQueries({ queryKey: appsKeys.record(vars.appId, did) })
+      // A licensing-only app is listed from the publisher's apps; it is DELETED there now.
+      void qc.invalidateQueries({ queryKey: ['publisher', 'apps'] })
       void qc.invalidateQueries({ queryKey: ['environments'] })
     },
   })

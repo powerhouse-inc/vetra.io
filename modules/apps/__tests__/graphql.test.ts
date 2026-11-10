@@ -8,6 +8,7 @@ import {
   createStudioApp,
   describeCreateAppError,
   fetchApp,
+  fetchAppRecord,
   fetchMyApps,
   resetOptionalAppFields,
   isAppsError,
@@ -344,6 +345,17 @@ describe('apps without a repository', () => {
       Promise.resolve(jsonResponse({ data: { app: repoApp } })),
     )
     expect((await fetchApp('a1', null, fetchImpl))?.id).toBe('a1')
+  })
+
+  it('fetchAppRecord finds the apps record of an app with no repository, never a deleted one', async () => {
+    const answer = (app: unknown): FetchLike =>
+      vi.fn(() => Promise.resolve(jsonResponse({ data: { app } })))
+    expect(await fetchAppRecord('a2', null, answer({ id: 'a2', status: 'ACTIVE' }))).toStrictEqual({
+      id: 'a2',
+      status: 'ACTIVE',
+    })
+    expect(await fetchAppRecord('a2', null, answer({ id: 'a2', status: 'DELETED' }))).toBeNull()
+    expect(await fetchAppRecord('a2', null, answer(null))).toBeNull()
   })
 
   it('fetchMyApps leaves out apps with no repository', async () => {

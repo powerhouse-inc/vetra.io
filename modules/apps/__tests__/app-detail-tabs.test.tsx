@@ -19,6 +19,8 @@ let publisher: PublisherState = {
 }
 let app: App
 let appError: Error | null = null
+/** The apps record behind a licensing-only app: null for Vetra Studio, which has none. */
+let appRecord: { id: string; status: string } | null = null
 
 vi.mock('@/modules/apps/hooks/use-app-profile', () => ({
   useAppName: (_did: unknown, fallback: string) => fallback,
@@ -39,6 +41,7 @@ vi.mock('../hooks/use-apps', () => ({
   useAppDeployments: () => ({ data: [], isPending: false, error: null }),
   useGithubDeployAppInfo: () => ({ data: undefined }),
   useConfirmAppIdentity: () => ({ mutate: vi.fn(), isPending: false }),
+  useAppRecord: () => ({ data: appRecord }),
 }))
 vi.mock('@/modules/publisher/hooks/use-publisher', () => ({
   useAppPublisher: () => publisher,
@@ -51,7 +54,10 @@ vi.mock('../components/app-overview', () => ({ AppOverview: () => <div>overview-
 vi.mock('../components/app-deployments', () => ({
   AppDeployments: () => <div>deployments-content</div>,
 }))
-vi.mock('../components/app-settings', () => ({ AppSettings: () => <div>settings-content</div> }))
+vi.mock('../components/app-settings', () => ({
+  AppSettings: () => <div>settings-content</div>,
+  DeleteAppCard: ({ app }: { app: { id: string } }) => <div>delete-content {app.id}</div>,
+}))
 vi.mock('../components/profile/profile-tab', () => ({
   AppProfileTab: ({ appDid }: { appDid: string | null }) => (
     <div>profile-content {appDid ?? 'none'}</div>
@@ -113,6 +119,7 @@ describe('AppDetail tabs', () => {
     searchParams = new URLSearchParams()
     app = makeApp()
     appError = null
+    appRecord = null
     publisher = {
       isPublisher: true,
       app: { id: 'app-1', name: 'Vault', status: 'ACTIVE' },
@@ -177,6 +184,33 @@ describe('AppDetail tabs', () => {
     searchParams = new URLSearchParams('tab=profile')
     render(<AppDetail appId="studio-1" />)
     expect(screen.getByText('profile-content none')).toBeTruthy()
+  })
+
+  it('lets the publisher delete a licensing-only app that has an apps record', () => {
+    appError = new AppsApiError('NOT_FOUND', 'no such app', 404)
+    appRecord = { id: 'dao', status: 'ACTIVE' }
+    publisher = {
+      isPublisher: true,
+      app: { id: 'dao', name: 'DAO Treasury', status: 'ACTIVE' },
+      isPending: false,
+    }
+    searchParams = new URLSearchParams('tab=settings')
+    render(<AppDetail appId="dao" />)
+    expect(tabNames()).toContain('Settings')
+    expect(screen.getByText('delete-content dao')).toBeTruthy()
+  })
+
+  it('offers no Settings on Vetra Studio, which has no apps record', () => {
+    appError = new AppsApiError('NOT_FOUND', 'no such app', 404)
+    publisher = {
+      isPublisher: true,
+      app: { id: 'studio-1', name: 'Vetra Studio', status: 'ACTIVE' },
+      isPending: false,
+    }
+    searchParams = new URLSearchParams('tab=settings')
+    render(<AppDetail appId="studio-1" />)
+    expect(tabNames()).not.toContain('Settings')
+    expect(screen.queryByText(/delete-content/)).toBeNull()
   })
 
   it('hides licensing tabs from anyone else and ignores a deep link to them', () => {

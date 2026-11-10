@@ -7,6 +7,7 @@ export const appsKeys = {
   list: (did: string | undefined, orgId: string | null = null) =>
     ['apps', 'list', did ?? null, orgId] as const,
   detail: (id: string, did: string | undefined) => ['apps', 'detail', id, did ?? null] as const,
+  record: (id: string, did: string | undefined) => ['apps', 'record', id, did ?? null] as const,
   deployments: (id: string, did: string | undefined) =>
     ['apps', 'deployments', id, did ?? null] as const,
   githubInfo: () => ['apps', 'github-info'] as const,
