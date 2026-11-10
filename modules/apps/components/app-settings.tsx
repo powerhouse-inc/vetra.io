@@ -33,6 +33,7 @@ import { describeAppsError } from '../graphql'
 import { useDeleteApp, useUpdateApp } from '../hooks/use-apps'
 import { appStatusMeta, identityState } from '../lib/status'
 import { formatDate } from '@/modules/shared/lib/time'
+import { useAppName } from '../hooks/use-app-profile'
 import type { App, UpdateAppInput } from '../types'
 import { CopyButton } from './copy-button'
 import { SetupDeploys } from './setup-deploys'
@@ -322,14 +323,15 @@ function DangerZone({ app }: { app: App }) {
   const [open, setOpen] = useState(false)
   const [confirmText, setConfirmText] = useState('')
   const [deleteEnvironments, setDeleteEnvironments] = useState(false)
-  const confirmed = confirmText.trim() === app.name
+  const name = useAppName(app.identityDid, app.name)
+  const confirmed = confirmText.trim() === name
 
   const onDelete = () => {
     del.mutate(
       { appId: app.id, deleteEnvironments },
       {
         onSuccess: () => {
-          toast.success(`${app.name} deleted`)
+          toast.success(`${name} deleted`)
           setOpen(false)
           router.push('/user')
         },
@@ -367,10 +369,10 @@ function DangerZone({ app }: { app: App }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {app.name}?</AlertDialogTitle>
+            <AlertDialogTitle>Delete {name}?</AlertDialogTitle>
             <AlertDialogDescription>
               This cannot be undone. Type{' '}
-              <span className="text-foreground font-semibold">{app.name}</span> to confirm.
+              <span className="text-foreground font-semibold">{name}</span> to confirm.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <Input

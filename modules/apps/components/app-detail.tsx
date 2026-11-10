@@ -55,6 +55,7 @@ import type { App } from '../types'
 import { AppAvatar } from './app-avatar'
 import { AppDeployments } from './app-deployments'
 import { AppOverview } from './app-overview'
+import { useAppName } from '../hooks/use-app-profile'
 import { AppSettings } from './app-settings'
 import { AppProfileTab } from './profile/profile-tab'
 import { GithubFlowLink } from './github-flow-link'
@@ -132,6 +133,7 @@ const TAB_TRIGGER_CLASS =
 
 /** `/user/apps/[id]` for an app that exists only for licensing: its plans, holders and codes. */
 function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
+  const name = useAppName(app.identityDid, app.name)
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
@@ -157,9 +159,9 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
           Apps
         </Link>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-          <AppAvatar name={app.name} seed={app.id} size="lg" />
+          <AppAvatar name={name} seed={app.id} size="lg" />
           <div className="min-w-0 flex-1 space-y-2">
-            <h1 className="truncate text-3xl font-bold tracking-[-0.03em]">{app.name}</h1>
+            <h1 className="truncate text-3xl font-bold tracking-[-0.03em]">{name}</h1>
             <p className="text-muted-foreground text-sm">
               Managed here for licensing only: its plans, who holds them and its invite codes.
             </p>
@@ -180,7 +182,7 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
           ))}
         </TabsList>
         <TabsContent value="profile">
-          <AppProfileTab appId={app.id} appName={app.name} appDid={app.identityDid ?? null} />
+          <AppProfileTab appId={app.id} appName={name} appDid={app.identityDid ?? null} />
         </TabsContent>
         <TabsContent value="templates">
           <TemplatesTab appId={app.id} />
@@ -205,16 +207,17 @@ export function visibleAppTabs({ isPublisher }: { isPublisher: boolean }): AppTa
 }
 
 function Header({ app, deployed }: { app: App; deployed: boolean }) {
+  const name = useAppName(app.identityDid, app.name)
   const identity = identityState(app)
   // Before the first production deploy the URL serves the platform-default Connect.
   const url = deployed ? primaryUrl(app.productionUrls) : null
   const latest = app.latestDeployment
   return (
     <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-      <AppAvatar name={app.name} seed={app.id} size="lg" />
+      <AppAvatar name={name} seed={app.id} size="lg" />
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap items-center gap-3">
-          <h1 className="truncate text-3xl font-bold tracking-[-0.03em]">{app.name}</h1>
+          <h1 className="truncate text-3xl font-bold tracking-[-0.03em]">{name}</h1>
           <StatusPill meta={appHeadlineStatus(app)} />
           <OrgBadge orgId={app.ownerOrgId} />
         </div>
@@ -277,7 +280,11 @@ export function AppDetail({ appId }: { appId: string }) {
   const confirm = useConfirmAppIdentity()
   const app = appQuery.data
   const publisher = useAppPublisher(appId, app?.ownerOrgId ?? null)
-  useDocumentTitle(app?.name ?? publisher.app?.name ?? null)
+  const name = useAppName(
+    app?.identityDid ?? publisher.app?.identityDid,
+    app?.name ?? publisher.app?.name ?? '',
+  )
+  useDocumentTitle(name || null)
 
   const tabParam = params.get('tab')
   const identity = app ? identityState(app) : ({ kind: 'unknown' } as const)
@@ -566,7 +573,7 @@ export function AppDetail({ appId }: { appId: string }) {
           />
         </TabsContent>
         <TabsContent value="profile">
-          <AppProfileTab appId={appId} appName={app.name} appDid={app.identityDid} />
+          <AppProfileTab appId={appId} appName={name} appDid={app.identityDid} />
         </TabsContent>
         {showLicensing && (
           <TabsContent value="artifacts">

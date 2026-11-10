@@ -20,6 +20,9 @@ let publisher: PublisherState = {
 let app: App
 let appError: Error | null = null
 
+vi.mock('@/modules/apps/hooks/use-app-profile', () => ({
+  useAppName: (_did: unknown, fallback: string) => fallback,
+}))
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn() }),
   usePathname: () => '/user/apps/app-1',

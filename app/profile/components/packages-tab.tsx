@@ -1,6 +1,7 @@
 'use client'
 import { Package } from 'lucide-react'
 import Link from 'next/link'
+import { useAppName } from '@/modules/apps/hooks/use-app-profile'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { usePublisherAppArtifacts, usePublisherApps } from '@/modules/publisher/hooks/use-publisher'
 import type { PublisherApp, PublisherAppArtifact } from '@/modules/publisher/types'
@@ -11,6 +12,7 @@ const latest = (a: PublisherAppArtifact) => a.versions[a.versions.length - 1]?.v
 
 /** One app's published packages; renders nothing while it has none. */
 function AppPackages({ app }: { app: PublisherApp }) {
+  const name = useAppName(app.identityDid, app.name)
   const { data } = usePublisherAppArtifacts(app.id)
   const packages = (data ?? []).filter((a) => a.kind === 'PACKAGE')
   if (packages.length === 0) return null
@@ -33,7 +35,7 @@ function AppPackages({ app }: { app: PublisherApp }) {
                   {c.channel.toLowerCase()}: {c.version}
                 </span>
               ))}
-              <span>by {app.name}</span>
+              <span>by {name}</span>
             </span>
           </Link>
         </li>
