@@ -1,10 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import {
-  CONSOLE_HEADER_NAV_ITEMS,
-  NAVBAR_CONFIGS,
-  PRIVATE_NAV_ITEMS,
-  PUBLIC_NAV_ITEMS,
-} from '../navbar-config'
+import { NAVBAR_CONFIGS, PRIVATE_NAV_ITEMS, PUBLIC_NAV_ITEMS } from '../navbar-config'
 
 describe('navigation', () => {
   it('no longer links the retired Licensing page anywhere', () => {
@@ -24,24 +19,14 @@ describe('navigation', () => {
     ).toBe(true)
   })
 
-  it('shows Studio, Cloud, Packages and Docs to visitors', () => {
-    expect(PUBLIC_NAV_ITEMS.map((i) => i.label)).toEqual(['Studio', 'Cloud', 'Packages', 'Docs'])
+  it('shows Studio, Cloud and Docs to visitors', () => {
+    expect(PUBLIC_NAV_ITEMS.map((i) => i.label)).toEqual(['Studio', 'Cloud', 'Docs'])
     expect(PUBLIC_NAV_ITEMS.find((i) => i.label === 'Studio')?.href).toBe('/studio')
-    expect(PUBLIC_NAV_ITEMS.find((i) => i.label === 'Packages')?.href).toBe('/packages')
   })
 
-  it('links the package directory in the middle of the console header', () => {
-    expect(CONSOLE_HEADER_NAV_ITEMS.map((i) => [i.label, i.href])).toEqual([
-      ['Packages', '/packages'],
-    ])
-    const item = CONSOLE_HEADER_NAV_ITEMS[0]
-    const isActive = (p: string) => (item && 'isActive' in item ? item.isActive(p) : false)
-    expect(isActive('/packages')).toBe(true)
-    expect(isActive('/user/packages')).toBe(false)
-  })
-
-  it('no longer links the retired Builders page publicly', () => {
+  it('no longer links the retired Packages and Builders pages in the header', () => {
     for (const list of [PUBLIC_NAV_ITEMS, NAVBAR_CONFIGS['/vetra'].navItems]) {
+      expect(list.find((i) => i.href === '/packages')).toBeUndefined()
       expect(list.find((i) => i.href === '/builders')).toBeUndefined()
     }
   })
