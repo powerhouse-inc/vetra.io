@@ -26,6 +26,10 @@ vi.mock('@/modules/publisher/hooks/use-publisher', () => ({
   usePublisherToken: () => async () => 'tok',
 }))
 vi.mock('@powerhousedao/reactor-browser', () => ({ useDid: () => did }))
+vi.mock('@/modules/apps/hooks/use-app-names', () => ({
+  useAppNameOf: () => (appId: string, fallback: string) =>
+    appId === 'kv' ? 'Knowledge Vault' : fallback,
+}))
 
 import {
   useMySubscriptions,
@@ -56,6 +60,18 @@ describe('subscription hooks', () => {
     renderHook(() => useStudioAccess(), { wrapper: Wrapper })
     expect(fetchMySubscriptions).not.toHaveBeenCalled()
     expect(fetchStudioAccess).not.toHaveBeenCalled()
+  })
+
+  it("names each subscription's app by its Renown profile", async () => {
+    fetchMySubscriptions.mockResolvedValue([
+      { licenseId: 'l1', appId: 'kv', appName: 'bai-knowledge-note', status: 'ACTIVE' },
+      { licenseId: 'l2', appId: 'shop', appName: 'shop', status: 'ACTIVE' },
+    ])
+    const { Wrapper } = setup()
+    const { result } = renderHook(() => useMySubscriptions(), { wrapper: Wrapper })
+    await waitFor(() =>
+      expect(result.current.data?.map((s) => s.appName)).toStrictEqual(['Knowledge Vault', 'shop']),
+    )
   })
 
   it('finds the subscription behind an environment, preferring a live one', async () => {

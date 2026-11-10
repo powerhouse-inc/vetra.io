@@ -2,6 +2,7 @@ import { BadgeCheck, Ticket } from 'lucide-react'
 import Link from 'next/link'
 
 import type { PublisherApp } from '@/modules/publisher/types'
+import { useAppName } from '../hooks/use-app-profile'
 import { licensingOnlyHref } from '../lib/licensing-only'
 import { AppAvatar } from './app-avatar'
 
@@ -10,20 +11,21 @@ import { AppAvatar } from './app-avatar'
  * AppCard; it opens straight on the app's plans.
  */
 export function LicensingOnlyAppCard({ app }: { app: PublisherApp }) {
+  const name = useAppName(app.identityDid, app.name)
   return (
     <article
       data-testid={`licensing-only-app-${app.id}`}
       className="group bg-card border-border hover:border-primary/40 relative flex flex-col rounded-xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="flex items-start gap-3">
-        <AppAvatar name={app.name} seed={app.id} />
+        <AppAvatar name={name} seed={app.id} />
         <div className="min-w-0 flex-1">
           <h3 className="truncate leading-tight font-semibold">
             <Link
               href={licensingOnlyHref(app.id)}
               className="focus-visible:ring-ring rounded-sm after:absolute after:inset-0 after:rounded-xl focus-visible:ring-2 focus-visible:outline-none"
             >
-              {app.name}
+              {name}
             </Link>
           </h3>
           <p className="text-muted-foreground mt-1 truncate text-sm">No repository to deploy</p>

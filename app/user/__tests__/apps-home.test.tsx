@@ -7,6 +7,9 @@ let apps: Pick<App, 'id' | 'name'>[] = []
 let activeOrg: { id: string; name: string; role: string } | null = null
 let published: { id: string; name: string; status: string }[] = []
 
+vi.mock('@/modules/apps/hooks/use-app-profile', () => ({
+  useAppName: (_did: unknown, fallback: string) => fallback,
+}))
 vi.mock('@/modules/apps/hooks/use-apps', () => ({
   useMyApps: () => ({
     data: apps,
