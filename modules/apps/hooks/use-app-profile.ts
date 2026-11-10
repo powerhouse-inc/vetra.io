@@ -20,6 +20,15 @@ export function useAppProfile(appDid: string | null | undefined) {
   })
 }
 
+/**
+ * The name to show for an app: its Renown profile's name, the app record's `fallback` only when
+ * it has no identity, no profile or a blank name. Never a repository name where a profile exists.
+ */
+export function useAppName(appDid: string | null | undefined, fallback: string): string {
+  const { data } = useAppProfile(appDid)
+  return data?.name?.trim() || fallback
+}
+
 /** Saves a profile patch through Vetra's relay, then refreshes the profile. No retries. */
 export function useUpdateAppProfile(appId: string, appDid: string | null | undefined) {
   const qc = useQueryClient()
