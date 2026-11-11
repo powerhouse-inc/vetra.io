@@ -55,6 +55,26 @@ export type AppDeployment = {
   urls: AppUrls
 }
 
+export type AppInstanceStatus = 'pending' | 'updating' | 'ready' | 'failed' | 'stopped'
+
+/** A running environment of an app (`appInstances`). */
+export type AppInstance = {
+  id: string
+  kind: string
+  name: string
+  branch: string | null
+  pr: number | null
+  url: string | null
+  status: AppInstanceStatus
+  reason: string | null
+  targetVersion: string | null
+  targetDigest: string | null
+  runningVersion: string | null
+  runningDigest: string | null
+  environmentId: string | null
+  updatedAt: string
+}
+
 /** What vetra-publish recorded: a tagged release, or a build from a release branch or PR. */
 export type AppReleaseKind = 'release' | 'build'
 
@@ -96,6 +116,8 @@ export type App = {
   productionBranch: string
   /** Extra branches (exact names or `*` patterns) allowed to publish releases; absent on older backends. */
   releaseBranches?: string[]
+  /** Whether Vetra runs an instance per release branch; absent on older backends. */
+  instancesEnabled?: boolean
   productionEnvironmentId: string
   previewsEnabled: boolean
   previewLimit: number
@@ -149,6 +171,7 @@ export type UpdateAppInput = {
   productionBranch?: string | null
   /** Replaces the whole list; `[]` clears it. */
   releaseBranches?: string[]
+  instancesEnabled?: boolean
   previewsEnabled?: boolean | null
   previewLimit?: number | null
   previewTtlDays?: number | null
