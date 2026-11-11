@@ -4,9 +4,11 @@ import type { App } from '../types'
 
 // The Renown profile names, by identity: apps show these, never their record's name.
 const PROFILE_NAMES: Record<string, string> = { 'did:key:kv': 'Knowledge Vault' }
+const PROFILE_LOGOS: Record<string, string> = { 'did:key:kv': 'https://renown.test/media/kv/logo' }
 vi.mock('../hooks/use-app-profile', () => ({
   useAppName: (did: string | null | undefined, fallback: string) =>
     (did && PROFILE_NAMES[did]) || fallback,
+  useAppLogo: (did: string | null | undefined) => (did && PROFILE_LOGOS[did]) || null,
 }))
 
 import { AppCard } from '../components/app-card'
@@ -45,5 +47,18 @@ describe('app names come from Renown', () => {
       />,
     )
     expect(screen.getByRole('link', { name: 'Knowledge Vault' })).toBeTruthy()
+  })
+
+  it("cards show the app's Renown logo, and the monogram without one", () => {
+    render(<AppCard app={app({})} />)
+    expect(screen.getByRole('img', { name: 'Knowledge Vault logo' }).getAttribute('src')).toBe(
+      'https://renown.test/media/kv/logo',
+    )
+    render(
+      <LicensingOnlyAppCard
+        app={{ id: 'dao', name: 'dao-treasury', status: 'ACTIVE', identityDid: 'did:key:none' }}
+      />,
+    )
+    expect(screen.queryByRole('img', { name: 'dao-treasury logo' })).toBeNull()
   })
 })

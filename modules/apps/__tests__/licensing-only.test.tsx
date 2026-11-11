@@ -6,6 +6,7 @@ import { licensingOnlyApps, licensingOnlyHref } from '../lib/licensing-only'
 
 vi.mock('@/modules/apps/hooks/use-app-profile', () => ({
   useAppName: (_did: unknown, fallback: string) => fallback,
+  useAppLogo: () => null,
 }))
 
 describe('licensing-only apps', () => {

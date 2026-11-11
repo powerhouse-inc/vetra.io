@@ -104,7 +104,7 @@ export function AllowListCard({
         <ul className="divide-border divide-y text-sm">
           {entries.map((e) => (
             <li key={e.user} className="flex items-center gap-3 py-2">
-              <PersonName value={e.user} className="min-w-0 flex-1 font-mono text-xs break-all" />
+              <PersonName value={e.user} avatar className="min-w-0 flex-1 text-xs" />
               <span className="text-muted-foreground hidden text-xs sm:inline">
                 Added {formatDate(e.addedAt)}
               </span>

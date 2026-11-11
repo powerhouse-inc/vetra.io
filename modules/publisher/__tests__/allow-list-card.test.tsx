@@ -9,7 +9,11 @@ vi.mock('@/modules/shared/hooks/use-person-name', async () => {
     '@/modules/shared/lib/renown-person',
   )
   return {
-    usePersonName: (v: string | null | undefined) => ({ name: null, address: addressOf(v) }),
+    usePersonName: (v: string | null | undefined) => ({
+      name: null,
+      avatarUrl: null,
+      address: addressOf(v),
+    }),
   }
 })
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))

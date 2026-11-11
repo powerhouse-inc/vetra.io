@@ -108,7 +108,7 @@ export function ConfigHistorySection({
                   </span>
                   {v.signer && (
                     <span className="text-muted-foreground font-mono text-xs">
-                      {v.signer === viewer ? 'you' : <PersonName value={v.signer} />}
+                      {v.signer === viewer ? 'you' : <PersonName value={v.signer} avatar />}
                     </span>
                   )}
                   {isCurrent && (
