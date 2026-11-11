@@ -49,6 +49,7 @@ type FormState = {
   name: string
   productionBranch: string
   releaseBranches: string[]
+  instancesEnabled: boolean
   previewsEnabled: boolean
   previewLimit: string
   previewTtlDays: string
@@ -59,6 +60,7 @@ function toForm(app: App): FormState {
     name: app.name,
     productionBranch: app.productionBranch,
     releaseBranches: app.releaseBranches ?? [],
+    instancesEnabled: app.instancesEnabled ?? false,
     previewsEnabled: app.previewsEnabled,
     previewLimit: String(app.previewLimit),
     previewTtlDays: String(app.previewTtlDays),
@@ -99,6 +101,8 @@ export function diffSettings(app: App, form: FormState): UpdateAppInput | null {
     form.releaseBranches.some((b, i) => b !== current[i])
   )
     patch.releaseBranches = form.releaseBranches
+  if (app.instancesEnabled !== undefined && form.instancesEnabled !== app.instancesEnabled)
+    patch.instancesEnabled = form.instancesEnabled
   if (form.previewsEnabled !== app.previewsEnabled) patch.previewsEnabled = form.previewsEnabled
   if (limit !== app.previewLimit) patch.previewLimit = limit
   if (ttl !== app.previewTtlDays) patch.previewTtlDays = ttl
@@ -155,17 +159,20 @@ function GeneralAndPreviews({ app, canEdit }: { app: App; canEdit: boolean }) {
   const patch = diffSettings(app, form)
   const dirty = !!patch && Object.keys(patch).length > 0
   const [releaseError, setReleaseError] = useState<string | null>(null)
+  const [instancesError, setInstancesError] = useState<string | null>(null)
   const set = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }))
 
   const save = (e: React.FormEvent) => {
     e.preventDefault()
     if (!patch || !dirty) return
     setReleaseError(null)
+    setInstancesError(null)
     update.mutate(patch, {
       onSuccess: () => toast.success('Settings saved'),
       onError: (err) => {
         const message = describeAppsError(err)
         if (patch.releaseBranches) setReleaseError(message)
+        if (patch.instancesEnabled !== undefined) setInstancesError(message)
         toast.error(message)
       },
     })
@@ -232,6 +239,33 @@ function GeneralAndPreviews({ app, canEdit }: { app: App; canEdit: boolean }) {
             set({ releaseBranches })
           }}
         />
+        {app.instancesEnabled !== undefined && (
+          <div className="border-border space-y-2 border-t pt-5">
+            <div className="flex items-center justify-between gap-4 rounded-lg border p-4">
+              <div className="space-y-0.5">
+                <Label htmlFor="settings-instances">Branch instances</Label>
+                <p className="text-muted-foreground text-xs">
+                  Run every release branch at its newest build, at its own URL. Feature branches and
+                  PRs come later.
+                </p>
+              </div>
+              <Switch
+                id="settings-instances"
+                checked={form.instancesEnabled}
+                disabled={!canEdit}
+                onCheckedChange={(checked) => {
+                  setInstancesError(null)
+                  set({ instancesEnabled: checked })
+                }}
+              />
+            </div>
+            {instancesError && (
+              <p role="alert" className="text-destructive text-xs">
+                {instancesError}
+              </p>
+            )}
+          </div>
+        )}
         <div className="border-border space-y-1 border-t pt-5">
           <h4 className="text-sm font-semibold">Preview environments</h4>
           <p className="text-muted-foreground text-sm">
