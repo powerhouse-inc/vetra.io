@@ -67,6 +67,8 @@ export type App = {
   status: AppStatus
   repository: AppRepository
   productionBranch: string
+  /** Extra branches (exact names or `*` patterns) allowed to publish releases; absent on older backends. */
+  releaseBranches?: string[]
   productionEnvironmentId: string
   previewsEnabled: boolean
   previewLimit: number
@@ -118,6 +120,8 @@ export type CreateAppInput = {
 export type UpdateAppInput = {
   name?: string | null
   productionBranch?: string | null
+  /** Replaces the whole list; `[]` clears it. */
+  releaseBranches?: string[]
   previewsEnabled?: boolean | null
   previewLimit?: number | null
   previewTtlDays?: number | null
