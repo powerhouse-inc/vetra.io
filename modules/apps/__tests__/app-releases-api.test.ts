@@ -94,7 +94,11 @@ describe('release helpers', () => {
     expect(releaseBadge({ ...base, version: '1.1.0-beta.0' })).toBe('Prerelease')
     expect(releaseBadge({ ...base, version: '0.0.0-alpha.1' })).toBe('Prerelease')
     expect(releaseBadge({ ...base, version: '2.0.0-rc.3' })).toBe('Prerelease')
-    expect(releaseBadge({ ...base, version: '1.0.0-hotfix.1' })).toBe('Release')
+    // The server's rule: alpha|beta|rc followed by a number, nothing after, lower case.
+    expect(releaseBadge({ ...base, version: '2.0.0-beta' })).toBe('Release')
+    expect(releaseBadge({ ...base, version: '2.0.0-Beta.1' })).toBe('Release')
+    expect(releaseBadge({ ...base, version: '1.1.0-beta.0-vetra-next.71' })).toBe('Release')
+    expect(releaseBadge({ ...base, kind: 'build', version: '2.0.0-beta' })).toBe('Build')
     expect(releaseBadge({ ...base, kind: 'build', version: '1.1.0-beta.0-vetra-next.71' })).toBe(
       'Build',
     )
@@ -108,6 +112,16 @@ describe('release helpers', () => {
   it('links packages to the registry only for releases', () => {
     expect(releasePackageUrl(base, '@sektar/app')).toBe('https://registry.vetra.io/@sektar/app')
     expect(releasePackageUrl({ ...base, kind: 'build' }, '@sektar/app')).toBeNull()
+  })
+
+  it('links only well-formed package names', () => {
+    expect(releasePackageUrl(base, 'plain-pkg')).toBe('https://registry.vetra.io/plain-pkg')
+    expect(releasePackageUrl(base, '@sektar/app.core')).toBe(
+      'https://registry.vetra.io/@sektar/app.core',
+    )
+    expect(releasePackageUrl(base, '@a/b?x=1#y')).toBeNull()
+    expect(releasePackageUrl(base, '../../evil')).toBeNull()
+    expect(releasePackageUrl(base, 'a/b')).toBeNull()
   })
 
   it('raises the limit from 50 to 200 on "Show more"', () => {

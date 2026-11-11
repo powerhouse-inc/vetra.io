@@ -6,7 +6,8 @@ export const RELEASES_MORE_LIMIT = 200
 
 export type ReleaseBadge = 'Release' | 'Prerelease' | 'Build'
 
-const PRERELEASE = /^\d+\.\d+\.\d+-(alpha|beta|rc)(\.|$)/i
+/** The server's rule: `x.y.z-alpha.N`, `-beta.N` or `-rc.N`, nothing more. */
+const PRERELEASE = /^\d+\.\d+\.\d+-(alpha|beta|rc)\.\d+$/
 
 /** "Build", or "Release" / "Prerelease" by the version's prerelease part (alpha, beta, rc). */
 export function releaseBadge(r: Pick<AppRelease, 'kind' | 'version'>): ReleaseBadge {
@@ -21,7 +22,11 @@ export function shortDigest(digest: string): string {
   return `${m[1]}:${m[2].slice(0, 8)}…`
 }
 
-/** A released package's page on the Vetra registry; builds are not linked. */
+const PACKAGE_NAME = /^(@[\w.-]+\/)?[\w.-]+$/
+
+/** A released package's page on the Vetra registry; builds and odd names are not linked. */
 export function releasePackageUrl(r: Pick<AppRelease, 'kind'>, name: string): string | null {
-  return r.kind === 'release' ? `https://registry.vetra.io/${name}` : null
+  return r.kind === 'release' && PACKAGE_NAME.test(name)
+    ? `https://registry.vetra.io/${name}`
+    : null
 }
