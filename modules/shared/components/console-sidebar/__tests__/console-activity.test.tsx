@@ -14,9 +14,6 @@ vi.mock('next/navigation', () => ({
   usePathname: () => '/user',
   useRouter: () => ({ push: vi.fn() }),
 }))
-vi.mock('@/modules/shared/components/command-palette/command-palette', () => ({
-  useCommandPalette: () => null,
-}))
 vi.mock('@/modules/shared/state/use-prefetch-on-intent', () => ({
   usePrefetchOnIntent: () => ({}),
 }))
@@ -61,6 +58,12 @@ describe('console sidebar activity', () => {
     expect(link.getAttribute('href')).toBe('/user/environments/acme-prod')
     expect(link.textContent).toContain('Deploying')
     expect(screen.queryByRole('link', { name: /acme-dev/ })).toBeNull()
+  })
+
+  it('no longer carries a Search button (search lives in the top bar)', () => {
+    environments = []
+    render(<ConsoleSidebar />)
+    expect(screen.queryByRole('button', { name: /search/i })).toBeNull()
   })
 
   it('shows no Activity block when nothing is moving', () => {

@@ -1,20 +1,15 @@
 'use client'
 
-import { ExternalLink, Search } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { useSyncExternalStore } from 'react'
 import { useEnvironmentsInMotion } from '@/modules/cloud/hooks/use-environment-activity'
-import { useCommandPalette } from '@/modules/shared/components/command-palette/command-palette'
 import { StatusDot } from '@/modules/shared/components/status'
 import { cn } from '@/modules/shared/lib/utils'
 import { usePrefetchOnIntent } from '@/modules/shared/state/use-prefetch-on-intent'
 import { CONSOLE_NAV_SECTIONS, type ConsoleNavItem } from './console-nav'
 
 const DOCS_URL = 'https://academy.vetra.io/'
-
-const noopSubscribe = () => () => {}
-const isMac = () => /mac|iphone|ipad/i.test(navigator.platform || navigator.userAgent)
 
 function SidebarLink({ item, active }: { item: ConsoleNavItem; active: boolean }) {
   const intent = usePrefetchOnIntent(item.href)
@@ -66,13 +61,6 @@ function SidebarActivity() {
  */
 export function ConsoleSidebar() {
   const pathname = usePathname()
-  const palette = useCommandPalette()
-  // Server render assumes a Mac; the client corrects it after hydration.
-  const shortcut = useSyncExternalStore(
-    noopSubscribe,
-    () => (isMac() ? '⌘K' : 'Ctrl K'),
-    () => '⌘K',
-  )
 
   return (
     <aside
@@ -94,19 +82,6 @@ export function ConsoleSidebar() {
       <div className="mt-auto space-y-4">
         <SidebarActivity />
         <div className="space-y-1">
-          {palette && (
-            <button
-              type="button"
-              onClick={palette.open}
-              className="text-muted-foreground hover:bg-secondary/60 hover:text-foreground flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors"
-            >
-              <Search className="h-4 w-4 shrink-0" aria-hidden />
-              Search
-              <kbd className="border-border ml-auto rounded border px-1.5 font-mono text-[11px]">
-                {shortcut}
-              </kbd>
-            </button>
-          )}
           <a
             href={DOCS_URL}
             target="_blank"
