@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 
-import { formatDate, formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
+import {
+  formatDate,
+  formatTimestamp,
+  isFuture,
+  timeAgo,
+  timeFromNow,
+} from '@/modules/shared/lib/time'
 
 const now = new Date('2026-10-28T12:00:00Z')
 
@@ -31,5 +37,28 @@ describe('absolute formats', () => {
   it('format valid dates', () => {
     expect(formatTimestamp('2026-10-28T12:00:00Z')).not.toBe('')
     expect(formatDate('2026-10-28T12:00:00Z')).toMatch(/2026/)
+  })
+})
+
+describe('timeFromNow', () => {
+  it('reads forward for future times and backward for past ones', () => {
+    expect(timeFromNow('2026-10-28T14:00:00Z', now)).toBe('in 2 hours')
+    expect(timeFromNow('2026-10-31T12:00:00Z', now)).toBe('in 3 days')
+    expect(timeFromNow('2026-10-28T11:57:00Z', now)).toBe('3 minutes ago')
+  })
+
+  it('says "now" for the next few seconds, and is empty for bad input', () => {
+    expect(timeFromNow('2026-10-28T12:00:20Z', now)).toBe('now')
+    expect(timeFromNow(null, now)).toBe('')
+    expect(timeFromNow('nope', now)).toBe('')
+  })
+})
+
+describe('isFuture', () => {
+  it('is true only for a valid time still ahead', () => {
+    expect(isFuture('2026-10-28T12:00:01Z', now)).toBe(true)
+    expect(isFuture('2026-10-28T12:00:00Z', now)).toBe(false)
+    expect(isFuture(null, now)).toBe(false)
+    expect(isFuture('nope', now)).toBe(false)
   })
 })
