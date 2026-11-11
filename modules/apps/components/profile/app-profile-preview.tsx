@@ -65,7 +65,13 @@ export function AppProfilePreview({
         )}
       </div>
       <div className="space-y-3 px-5 pb-5">
-        <AppLogo name={name} seed={appDid} src={logoSrc} className="ring-card -mt-8 ring-4" />
+        <AppLogo
+          name={name}
+          seed={appDid}
+          src={logoSrc}
+          appDid={appDid}
+          className="ring-card -mt-8 ring-4"
+        />
         <div className="space-y-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="text-lg leading-tight font-semibold [overflow-wrap:anywhere] break-words">

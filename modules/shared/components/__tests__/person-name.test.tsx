@@ -58,7 +58,7 @@ describe('PersonName', () => {
     expect(screen.getByText('did:key:z6Mkabc')).toBeTruthy()
   })
 
-  it('shows the Renown avatar beside the name when asked, else a plain person icon', async () => {
+  it("shows the Renown avatar beside the name when asked, else renown.id's generated one", async () => {
     renderWithQuery(
       <>
         <PersonName value={FRANK} avatar />
@@ -67,9 +67,8 @@ describe('PersonName', () => {
     )
     const img = await screen.findByRole('img', { name: 'Frank' })
     expect(img.getAttribute('src')).toMatch(/\/media\/doc-frank\/avatar\?v=bbbbbbbbbbbb$/)
-    // The address-only person gets the icon, not an image (and not the "0" of 0x…).
-    expect(screen.getAllByRole('img')).toHaveLength(1)
-    expect(screen.queryByText('0')).toBeNull()
+    // Without a picture: the avatar renown.id generates from the address, as on their profile.
+    expect(screen.getByRole('img', { name: 'Generated avatar' })).toBeTruthy()
   })
 
   it('shows no picture unless asked (names inside sentences)', async () => {

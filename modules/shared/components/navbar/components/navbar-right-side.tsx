@@ -35,6 +35,7 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from '../../ui/avatar'
 import { usePersonName } from '@/modules/shared/hooks/use-person-name'
 import { cn } from '@/modules/shared/lib/utils'
+import { GeneratedAvatar } from '@/modules/shared/components/generated-avatar'
 
 const btnSecondary =
   'bg-accent text-foreground hover:bg-muted inline-flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-semibold transition-all cursor-pointer'
@@ -91,7 +92,11 @@ function RenownButton() {
             <Avatar className="h-5 w-5 shrink-0">
               <AvatarImage src={avatarUrl} alt={name ?? 'Account'} />
               <AvatarFallback className="bg-transparent p-0">
-                <User className="h-4 w-4" />
+                {auth.address ? (
+                  <GeneratedAvatar seed={auth.address} className="h-full w-full rounded-full" />
+                ) : (
+                  <User className="h-4 w-4" />
+                )}
               </AvatarFallback>
             </Avatar>
             <span className="min-w-0 truncate">{name ?? auth.displayAddress ?? 'Account'}</span>
@@ -106,8 +111,12 @@ function RenownButton() {
             <div className="flex items-center gap-2.5">
               <Avatar className="h-8 w-8">
                 <AvatarImage src={avatarUrl} alt={name ?? 'Account'} />
-                <AvatarFallback>
-                  <User className="h-4 w-4" />
+                <AvatarFallback className="bg-transparent p-0">
+                  {auth.address ? (
+                    <GeneratedAvatar seed={auth.address} className="h-full w-full rounded-full" />
+                  ) : (
+                    <User className="h-4 w-4" />
+                  )}
                 </AvatarFallback>
               </Avatar>
               <div>

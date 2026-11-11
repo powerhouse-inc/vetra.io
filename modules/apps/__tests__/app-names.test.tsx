@@ -60,5 +60,16 @@ describe('app names come from Renown', () => {
       />,
     )
     expect(screen.queryByRole('img', { name: 'dao-treasury logo' })).toBeNull()
+    // No logo, but a Renown identity: renown.id's avatar generated from the app's DID.
+    expect(screen.getByRole('img', { name: 'Generated avatar' })).toBeTruthy()
+  })
+
+  it('keeps the monogram for an app with no Renown identity at all', () => {
+    render(
+      <LicensingOnlyAppCard
+        app={{ id: 'new', name: 'new-app', status: 'ACTIVE', identityDid: null }}
+      />,
+    )
+    expect(screen.queryByRole('img', { name: 'Generated avatar' })).toBeNull()
   })
 })

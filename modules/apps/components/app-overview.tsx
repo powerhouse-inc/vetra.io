@@ -153,7 +153,7 @@ function BrowserFrame({ app, url, live }: { app: App; url: string | null; live: 
           )}
         />
         <div className="relative flex flex-col items-center gap-3 text-center">
-          <AppLogo name={name} seed={app.id} src={logo} size="lg" />
+          <AppLogo name={name} seed={app.id} src={logo} appDid={app.identityDid} size="lg" />
           <span className="text-sm font-medium">{name}</span>
         </div>
       </div>

@@ -9,6 +9,8 @@ export const APPS_REVALIDATE = 600
 /** One app on /apps: Vetra's ranking (holders) with its Renown profile when it has one. */
 export type DirectoryApp = {
   appId: string
+  /** The app's Renown identity; seeds its generated avatar when it has no logo. */
+  appDid: string | null
   name: string
   holders: number
   plans: number
@@ -57,6 +59,7 @@ export async function loadAppsDirectory(
         : null
       return {
         appId: app.appId,
+        appDid: app.appDid,
         name: profile?.name?.trim() || app.name,
         holders: app.holders,
         plans: app.plans,

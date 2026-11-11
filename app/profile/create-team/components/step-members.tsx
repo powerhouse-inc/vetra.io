@@ -1,11 +1,12 @@
 'use client'
-import { Plus, ShieldCheck, X } from 'lucide-react'
+import { Plus, X } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/modules/shared/components/ui/avatar'
 import { Button } from '@/modules/shared/components/ui/button'
 import { useEnsResolver } from '@/modules/profile/lib/use-ens-resolver'
 import { isValidEthAddress } from '@/modules/profile/lib/validations'
 import { usePersonName } from '@/modules/shared/hooks/use-person-name'
 import { looksLikeAddress } from '@/modules/shared/lib/renown-person'
+import { GeneratedAvatar } from '@/modules/shared/components/generated-avatar'
 
 export type MemberRow = { address: string }
 export type StepMembersProps = {
@@ -44,8 +45,8 @@ export function StepMembers({ creator, members, onChange }: StepMembersProps) {
               className="h-full w-full object-cover"
             />
           )}
-          <AvatarFallback className="bg-primary/15 text-primary">
-            <ShieldCheck className="size-4" />
+          <AvatarFallback className="bg-transparent p-0">
+            <GeneratedAvatar seed={creator.address} className="h-full w-full rounded-full" />
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">

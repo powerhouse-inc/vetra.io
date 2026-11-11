@@ -13,7 +13,13 @@ export function AppsList({ apps }: { apps: DirectoryApp[] }) {
     <ul className="divide-border border-border bg-card mt-8 divide-y rounded-xl border">
       {apps.map((app) => (
         <li key={app.appId} className="flex items-start gap-4 p-4">
-          <AppLogo name={app.name} seed={app.appId} src={app.logoUrl} size="md" />
+          <AppLogo
+            name={app.name}
+            seed={app.appId}
+            src={app.logoUrl}
+            appDid={app.appDid}
+            size="md"
+          />
           <div className="min-w-0 flex-1 space-y-1">
             <div className="flex flex-wrap items-center gap-2">
               {app.pageUrl ? (
