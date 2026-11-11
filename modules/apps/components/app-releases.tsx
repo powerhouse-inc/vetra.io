@@ -32,6 +32,7 @@ import {
 } from '../lib/releases'
 import { githubCommitUrl, githubPullUrl, shortSha } from '../lib/status'
 import type { AppRelease, AppReleaseKind } from '../types'
+import { AppInstances } from './app-instances'
 import { CopyButton } from './copy-button'
 import { MarkdownLite } from './profile/markdown-lite'
 
@@ -286,10 +287,13 @@ function ReleaseRow({ release, repository }: { release: AppRelease; repository: 
 export function AppReleases({
   appId,
   repository,
+  instancesEnabled = false,
 }: {
   appId: string
   /** `owner/name` on GitHub, for PR and commit links. Null (no repository): nothing to show. */
   repository: string | null
+  /** Show the branch instances panel above the list. */
+  instancesEnabled?: boolean
 }) {
   const [kind, setKind] = useState<AppReleaseKind | null>(null)
   const [limit, setLimit] = useState(RELEASES_LIMIT)
@@ -312,6 +316,7 @@ export function AppReleases({
         description="Versions your workflow published with vetra-publish: releases, and builds from release branches and pull requests."
         action={<KindFilter value={kind} onChange={changeKind} />}
       />
+      {instancesEnabled && <AppInstances appId={appId} />}
       {releases.isPending ? (
         <TabSkeleton label="Loading releases" />
       ) : releases.error ? (

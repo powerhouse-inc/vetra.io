@@ -624,7 +624,11 @@ export function AppDetail({ appId }: { appId: string }) {
           <AppProfileTab appId={appId} appName={name} appDid={app.identityDid} />
         </TabsContent>
         <TabsContent value="releases">
-          <AppReleases appId={appId} repository={repository} />
+          <AppReleases
+            appId={appId}
+            repository={repository}
+            instancesEnabled={app.instancesEnabled === true}
+          />
         </TabsContent>
         {showLicensing && (
           <TabsContent value="artifacts">

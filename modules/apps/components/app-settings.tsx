@@ -49,7 +49,7 @@ type FormState = {
   name: string
   productionBranch: string
   releaseBranches: string[]
-  instancesEnabled: boolean
+  instancesEnabled?: boolean
   previewsEnabled: boolean
   previewLimit: string
   previewTtlDays: string
@@ -101,7 +101,11 @@ export function diffSettings(app: App, form: FormState): UpdateAppInput | null {
     form.releaseBranches.some((b, i) => b !== current[i])
   )
     patch.releaseBranches = form.releaseBranches
-  if (app.instancesEnabled !== undefined && form.instancesEnabled !== app.instancesEnabled)
+  if (
+    app.instancesEnabled !== undefined &&
+    form.instancesEnabled !== undefined &&
+    form.instancesEnabled !== app.instancesEnabled
+  )
     patch.instancesEnabled = form.instancesEnabled
   if (form.previewsEnabled !== app.previewsEnabled) patch.previewsEnabled = form.previewsEnabled
   if (limit !== app.previewLimit) patch.previewLimit = limit
@@ -251,7 +255,7 @@ function GeneralAndPreviews({ app, canEdit }: { app: App; canEdit: boolean }) {
               </div>
               <Switch
                 id="settings-instances"
-                checked={form.instancesEnabled}
+                checked={form.instancesEnabled ?? false}
                 disabled={!canEdit}
                 onCheckedChange={(checked) => {
                   setInstancesError(null)
