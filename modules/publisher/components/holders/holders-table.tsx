@@ -64,22 +64,28 @@ const FAILED_UPDATE = new Set(['FAILED', 'REVERTED', 'RESTORED'])
 /** What the environment runs, and the release it is waiting for or failed to take. */
 function VersionCell({ row }: { row: HolderRow }) {
   const env = row.environment
-  if (!env?.runningVersion) return <span className="text-muted-foreground">—</span>
-  const update = env.update
+  const update = env?.update ?? null
+  const open = !!update && OPEN_UPDATE.has(update.status)
+  const failed = !!update && FAILED_UPDATE.has(update.status)
+  if (!env || (!env.runningVersion && !open && !failed)) {
+    return <span className="text-muted-foreground">—</span>
+  }
   return (
     <div className="space-y-1">
-      <p className="inline-flex flex-wrap items-center gap-1.5">
-        <span className="font-mono text-xs break-all">{env.runningVersion}</span>
-        {env.isCanary && (
-          <span
-            className="bg-info/15 text-info rounded-full px-1.5 py-px text-[10px] font-medium tracking-wide uppercase"
-            title="Follows STAGING and takes releases first"
-          >
-            canary
-          </span>
-        )}
-      </p>
-      {update && OPEN_UPDATE.has(update.status) && (
+      {env.runningVersion && (
+        <p className="inline-flex flex-wrap items-center gap-1.5">
+          <span className="font-mono text-xs break-all">{env.runningVersion}</span>
+          {env.isCanary && (
+            <span
+              className="bg-info/15 text-info rounded-full px-1.5 py-px text-[10px] font-medium tracking-wide uppercase"
+              title="Follows STAGING and takes releases first"
+            >
+              canary
+            </span>
+          )}
+        </p>
+      )}
+      {update && open && (
         <div className="text-muted-foreground space-y-0.5 text-xs">
           <p className="font-mono break-all">→ {update.toVersion}</p>
           <p className="inline-flex flex-wrap items-center gap-x-2">
@@ -88,9 +94,11 @@ function VersionCell({ row }: { row: HolderRow }) {
               <span title={formatTimestamp(update.dueAt)}>due {timeFromNow(update.dueAt)}</span>
             )}
           </p>
+          {/* While open, the error says why the update is waiting; it is not a failure yet. */}
+          {update.error && <p className="text-muted-foreground break-words">{update.error}</p>}
         </div>
       )}
-      {update && FAILED_UPDATE.has(update.status) && (
+      {update && failed && (
         <p className="text-destructive/80 text-xs break-words">
           {updateStatusMeta(update.status).label}: update to{' '}
           <span className="font-mono">{update.toVersion}</span>

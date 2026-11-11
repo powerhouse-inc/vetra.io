@@ -225,6 +225,43 @@ describe('HoldersTab', () => {
       expect(within(versionCell()).queryByText(/→/)).toBeNull()
     })
 
+    it('shows an update even before the environment reports a running version', () => {
+      licenses = [lic({})]
+      environments = [
+        env({
+          runningVersion: null,
+          update: {
+            status: 'PENDING',
+            toVersion: 'sha-0123456789ab',
+            dueAt: new Date(Date.now() + 3600_000).toISOString(),
+            error: null,
+          },
+        }),
+      ]
+      render(<HoldersTab appId="app-1" />)
+      const cell = versionCell()
+      expect(within(cell).getByText('→ sha-0123456789ab')).toBeTruthy()
+      expect(within(cell).queryByText('—')).toBeNull()
+    })
+
+    it('shows why an open update needs attention, muted', () => {
+      licenses = [lic({})]
+      environments = [
+        env({
+          update: {
+            status: 'PENDING',
+            toVersion: 'sha-0123456789ab',
+            dueAt: new Date(Date.now() + 3600_000).toISOString(),
+            error: 'waiting: environment is not READY',
+          },
+        }),
+      ]
+      render(<HoldersTab appId="app-1" />)
+      const err = within(versionCell()).getByText(/environment is not READY/)
+      expect(err.className).toMatch(/text-muted-foreground/)
+      expect(err.className).not.toMatch(/text-destructive/)
+    })
+
     it('shows a dash without a running version or without an environment', () => {
       licenses = [lic({ id: 'l1' }), lic({ id: 'l2', environmentId: 'env-x', kind: 'free' })]
       environments = [env({ runningVersion: null })]
@@ -283,6 +320,24 @@ describe('HoldersTab', () => {
       fireEvent.click(within(panel).getByText(/previous rollouts/i))
       expect(within(panel).getByText('sha-old')).toBeTruthy()
       expect(within(panel).getByText('Superseded')).toBeTruthy()
+    })
+
+    it('does not promise a start time while paused', () => {
+      licenses = [lic({})]
+      rolloutsQuery = { data: [rollout({ status: 'PAUSED' })], isPending: false, error: null }
+      render(<HoldersTab appId="app-1" />)
+      const panel = screen.getByTestId('rollout-panel')
+      expect(panel.textContent).not.toMatch(/updates start/i)
+      expect(within(panel).getByText(/in 2 hours/)).toBeTruthy()
+    })
+
+    it('shows no progress bar while no environment is part of the rollout', () => {
+      licenses = [lic({})]
+      rolloutsQuery = { data: [rollout({ counts: [] })], isPending: false, error: null }
+      render(<HoldersTab appId="app-1" />)
+      const panel = screen.getByTestId('rollout-panel')
+      expect(within(panel).queryByRole('progressbar')).toBeNull()
+      expect(within(panel).getByText('0 of 0 updated · 0 pending · 0 failed')).toBeTruthy()
     })
 
     it('is absent without an active or paused rollout', () => {
