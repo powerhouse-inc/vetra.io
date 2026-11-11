@@ -1,6 +1,7 @@
 import { getCloudEndpoint } from '@/modules/cloud/graphql'
 import type {
   AddTemplateInput,
+  AppRollout,
   AddTemplatePackageInput,
   AddTemplateServiceInput,
   AddTermInput,
@@ -226,7 +227,10 @@ const WARM_POOL_FIELDS = `size warming available claimedThisMonth warmHoursThisM
 const TERM_FIELDS = `id kind label templateId validityDays issuers status activeLicenses`
 const ARTIFACT_FIELDS = `kind name versions { version reference } channels { channel version }`
 const LICENSE_FIELDS = `id user kind issuer status start end environmentId replacedBy`
-const ENVIRONMENT_FIELDS = `environmentId user licenseId rootLicenseId label templateHash stoppedAt deleteAfter`
+const ENVIRONMENT_FIELDS = `environmentId user licenseId rootLicenseId label templateHash stoppedAt deleteAfter
+  runningVersion isCanary update { status toVersion dueAt error }`
+const ROLLOUT_FIELDS = `id artifactName version status applyAfter promotedBy promotedAt pausedAt pausedReason
+  counts { status count }`
 export const INVITE_CODE_FIELDS = `code kind label active expiresAt maxUses redemptions llmBudgetUsd createdAt`
 const ALLOW_LIST_FIELDS = `user addedAt`
 
@@ -367,6 +371,21 @@ export const fetchEnvironments = (appId: string, token: string | null, fetchImpl
     token,
     fetchImpl,
   )
+
+/** The app's release rollouts (vetraReleases root, same endpoint). Owner-only, read-only here. */
+export async function fetchRollouts(
+  appId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppRollout[]> {
+  const data = await publisherGql<{ vetraReleases: { rollouts: AppRollout[] } }>(
+    `query ($appId: String!) { vetraReleases { rollouts(appId: $appId) { ${ROLLOUT_FIELDS} } } }`,
+    { appId },
+    token,
+    fetchImpl,
+  )
+  return data.vetraReleases.rollouts
+}
 
 export const fetchInviteCodes = (appId: string, token: string | null, fetchImpl?: FetchLike) =>
   read<PublisherInviteCode[]>(

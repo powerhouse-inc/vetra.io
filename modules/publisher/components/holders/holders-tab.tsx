@@ -15,6 +15,7 @@ import {
   usePublisherAllowList,
   usePublisherEnvironments,
   usePublisherLicenses,
+  usePublisherRollouts,
   usePublisherTemplates,
   usePublisherTerms,
 } from '../../hooks/use-publisher'
@@ -34,6 +35,7 @@ import { ChangePlanDialog } from './change-plan-dialog'
 import { GrantDialog } from './grant-dialog'
 import { HoldersTable } from './holders-table'
 import { RevokeDialog } from './revoke-dialog'
+import { RolloutPanel } from './rollout-panel'
 
 const ALL_PLANS = 'ALL'
 
@@ -43,6 +45,7 @@ export function HoldersTab({ appId }: { appId: string }) {
   const terms = usePublisherTerms(appId)
   const templates = usePublisherTemplates(appId)
   const allowList = usePublisherAllowList(appId)
+  const rollouts = usePublisherRollouts(appId)
 
   const [status, setStatus] = useState<LicenseFilter>('ALL')
   const [kind, setKind] = useState<string>(ALL_PLANS)
@@ -85,6 +88,11 @@ export function HoldersTab({ appId }: { appId: string }) {
         title="Holders"
         description="Everyone who holds a licence for this app, and the environment each one runs on."
         action={rows.length > 0 && grantButton}
+      />
+      <RolloutPanel
+        rollouts={rollouts.data}
+        error={rollouts.error}
+        onRetry={() => void rollouts.refetch()}
       />
       {licenses.isPending ? (
         <TabSkeleton rows={4} label="Loading holders" />
