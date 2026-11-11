@@ -38,6 +38,7 @@ const CALLS: Record<string, (f: publisher.FetchLike) => Promise<unknown>> = {
   fetchLicenses: (f) => publisher.fetchLicenses(A, null, 't', f),
   fetchLicensesByStatus: (f) => publisher.fetchLicenses(A, 'ACTIVE', 't', f),
   fetchEnvironments: (f) => publisher.fetchEnvironments(A, 't', f),
+  fetchRollouts: (f) => publisher.fetchRollouts(A, 't', f),
   fetchInviteCodes: (f) => publisher.fetchInviteCodes(A, 't', f),
   fetchAllowList: (f) => publisher.fetchAllowList(A, 't', f),
   addTemplate: (f) => publisher.addTemplate({ appId: A, name: 'Pro', mode: 'DEDICATED' }, 't', f),

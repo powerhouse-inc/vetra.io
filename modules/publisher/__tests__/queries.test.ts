@@ -126,6 +126,9 @@ const READS: Read[] = [
       'templateHash',
       'stoppedAt',
       'deleteAfter',
+      'runningVersion',
+      'isCanary',
+      'update',
     ],
   },
   {
@@ -186,7 +189,37 @@ describe('fetchWarmPool', () => {
   })
 })
 
+describe('fetchRollouts', () => {
+  it('reads vetraReleases.rollouts for the app with every rollout field and its counts', async () => {
+    const rollout = { id: 'r1', counts: [{ status: 'PENDING', count: 2 }] }
+    const { calls, fetchImpl } = capture({ vetraReleases: { rollouts: [rollout] } })
+    await expect(api.fetchRollouts('app-1', 't', fetchImpl)).resolves.toEqual([rollout])
+    expect(calls[0].query).toMatch(/^query\b/)
+    expect(calls[0].query).toMatch(/vetraReleases\s*\{/)
+    expect(calls[0].variables).toEqual({ appId: 'app-1' })
+    expect(fieldsOf(calls[0].query, 'rollouts')).toEqual([
+      'id',
+      'artifactName',
+      'version',
+      'status',
+      'applyAfter',
+      'promotedBy',
+      'promotedAt',
+      'pausedAt',
+      'pausedReason',
+      'counts',
+    ])
+    expect(fieldsOf(calls[0].query, 'counts')).toEqual(['status', 'count'])
+  })
+})
+
 describe('nested selections', () => {
+  it('environments select the newest update’s status, target, due time and error', async () => {
+    const { calls, fetchImpl } = capture({ vetraPublisher: { environments: [] } })
+    await api.fetchEnvironments('app-1', 't', fetchImpl)
+    expect(fieldsOf(calls[0].query, 'update')).toEqual(['status', 'toVersion', 'dueAt', 'error'])
+  })
+
   it('templates select every service and package field', async () => {
     const { calls, fetchImpl } = capture({ vetraPublisher: { templates: [] } })
     await api.fetchTemplates('app-1', 't', fetchImpl)

@@ -117,6 +117,9 @@ describe('HoldersTab', () => {
         templateHash: 'h',
         stoppedAt: '2026-10-20T00:00:00Z',
         deleteAfter: '2027-01-10T00:00:00Z',
+        runningVersion: null,
+        isCanary: false,
+        update: null,
       },
     ]
     render(<HoldersTab appId="app-1" />)
@@ -140,6 +143,9 @@ describe('HoldersTab', () => {
         templateHash: 'h',
         stoppedAt: null,
         deleteAfter: null,
+        runningVersion: null,
+        isCanary: false,
+        update: null,
       },
     ]
     render(<HoldersTab appId="app-1" />)

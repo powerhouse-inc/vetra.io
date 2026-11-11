@@ -96,6 +96,40 @@ export type PublisherEnvironment = {
   templateHash: string
   stoppedAt: string | null
   deleteAfter: string | null
+  /** The FUSION version it runs (e.g. `sha-cac9276bc10b`); null before it has one. */
+  runningVersion: string | null
+  /** Follows STAGING and takes releases first. */
+  isCanary: boolean
+  /** The newest update that was not superseded; null when there never was one. */
+  update: PublisherEnvironmentUpdate | null
+}
+
+/** PENDING | APPLYING | SUCCEEDED | REVERTED | RESTORED | FAILED | SUPERSEDED */
+export type EnvironmentUpdateStatus = string
+
+export type PublisherEnvironmentUpdate = {
+  status: EnvironmentUpdateStatus
+  toVersion: string
+  dueAt: string
+  error: string | null
+}
+
+export type AppRolloutStatus = 'ACTIVE' | 'PAUSED' | 'SUPERSEDED' | 'COMPLETE'
+
+export type AppRollout = {
+  id: string
+  artifactName: string
+  version: string
+  status: AppRolloutStatus
+  applyAfter: string
+  /** The promoter's DID (lower-cased). */
+  promotedBy: string
+  promotedAt: string
+  pausedAt: string | null
+  /** Names the environment whose update failed, and why. */
+  pausedReason: string | null
+  /** Environment updates of this rollout, per update status. */
+  counts: Array<{ status: EnvironmentUpdateStatus; count: number }>
 }
 
 export type PublisherInviteCode = {
