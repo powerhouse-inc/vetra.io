@@ -1,6 +1,6 @@
 'use client'
 
-import { BookOpen, Box, Container, PackageOpen } from 'lucide-react'
+import { BookOpen, Box, Container, Info, PackageOpen } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 import { CopyButton } from '@/modules/apps/components/copy-button'
@@ -81,6 +81,11 @@ export function ArtifactsTab({ appId }: { appId: string }) {
         title="Artifacts"
         description="Packages and app images your deploy workflow has published. Templates use them to decide what every owner runs."
       />
+      <p className="text-muted-foreground bg-muted/50 flex items-center gap-2 rounded-lg px-3 py-2 text-xs">
+        <Info className="h-3.5 w-3.5 shrink-0" aria-hidden />
+        Packages and images published with the old deploy action. Releases from vetra-publish are
+        under Releases.
+      </p>
       {artifacts.isPending ? (
         <TabSkeleton label="Loading artifacts" />
       ) : artifacts.error ? (
