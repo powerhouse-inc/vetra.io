@@ -2,14 +2,17 @@
 
 import { useQuery } from '@tanstack/react-query'
 import { useEnsName } from '@/modules/cloud/hooks/use-ens-name'
+import { resolveAvatarUrl } from '@/modules/shared/lib/renown-avatar'
 import { addressOf, fetchRenownPerson, personName } from '@/modules/shared/lib/renown-person'
 
 /**
  * What to call the person behind an address or did:pkh: their Renown profile name, else their
- * ENS name; null when neither is known (yet). `address` is the parsed address, if any.
+ * ENS name; null when neither is known (yet). `avatarUrl` is their Renown picture (uploaded
+ * avatar, else a safe userImage). `address` is the parsed address, if any.
  */
 export function usePersonName(value: string | null | undefined): {
   name: string | null
+  avatarUrl: string | null
   address: string | null
 } {
   const address = addressOf(value)
@@ -21,5 +24,5 @@ export function usePersonName(value: string | null | undefined): {
     retry: 1,
   })
   const ens = useEnsName(address)
-  return { name: personName(data) ?? ens, address }
+  return { name: personName(data) ?? ens, avatarUrl: resolveAvatarUrl({ profile: data }), address }
 }

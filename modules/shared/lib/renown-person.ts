@@ -6,6 +6,10 @@ export type RenownPerson = {
   displayName: string | null
   handle: string | null
   username: string | null
+  /** The avatar fields, for resolveAvatarUrl. */
+  documentId?: string | null
+  avatar?: string | null
+  userImage?: string | null
 }
 
 const ADDRESS = /^0x[0-9a-f]{40}$/i
@@ -42,7 +46,7 @@ export async function fetchRenownPerson(
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
       query:
-        'query ($input: RenownUsersInput!) { renownUsers(input: $input) { ethAddress displayName handle username } }',
+        'query ($input: RenownUsersInput!) { renownUsers(input: $input) { ethAddress displayName handle username documentId avatar userImage } }',
       variables: { input: { ethAddresses: [address.toLowerCase()] } },
     }),
   })

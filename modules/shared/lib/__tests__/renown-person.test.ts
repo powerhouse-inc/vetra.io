@@ -54,6 +54,7 @@ describe('fetchRenownPerson', () => {
       variables: { input: { ethAddresses: string[] } }
     }
     expect(body.variables.input.ethAddresses).toStrictEqual([FRANK])
+    expect((body as unknown as { query: string }).query).toMatch(/documentId avatar userImage/)
   })
 
   it('is null for an address without a profile', async () => {

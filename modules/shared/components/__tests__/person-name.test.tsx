@@ -11,7 +11,15 @@ vi.mock('@/modules/shared/lib/renown-person', async (importOriginal) => ({
   fetchRenownPerson: (address: string) =>
     Promise.resolve(
       address === FRANK
-        ? { ethAddress: FRANK, displayName: 'Frank', handle: 'frank', username: '0x2BbE...3aC6' }
+        ? {
+            ethAddress: FRANK,
+            displayName: 'Frank',
+            handle: 'frank',
+            username: '0x2BbE...3aC6',
+            documentId: 'doc-frank',
+            avatar: `attachment://v1:${'b'.repeat(64)}`,
+            userImage: null,
+          }
         : null,
     ),
 }))
@@ -48,5 +56,25 @@ describe('PersonName', () => {
   it('renders anything that is not an address as given', () => {
     renderWithQuery(<PersonName value="did:key:z6Mkabc" />)
     expect(screen.getByText('did:key:z6Mkabc')).toBeTruthy()
+  })
+
+  it('shows the Renown avatar beside the name when asked, else a plain person icon', async () => {
+    renderWithQuery(
+      <>
+        <PersonName value={FRANK} avatar />
+        <PersonName value={NOBODY} avatar />
+      </>,
+    )
+    const img = await screen.findByRole('img', { name: 'Frank' })
+    expect(img.getAttribute('src')).toMatch(/\/media\/doc-frank\/avatar\?v=bbbbbbbbbbbb$/)
+    // The address-only person gets the icon, not an image (and not the "0" of 0x…).
+    expect(screen.getAllByRole('img')).toHaveLength(1)
+    expect(screen.queryByText('0')).toBeNull()
+  })
+
+  it('shows no picture unless asked (names inside sentences)', async () => {
+    renderWithQuery(<PersonName value={FRANK} />)
+    await screen.findByText('Frank')
+    expect(screen.queryByRole('img')).toBeNull()
   })
 })

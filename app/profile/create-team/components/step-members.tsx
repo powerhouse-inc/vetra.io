@@ -15,7 +15,7 @@ export type StepMembersProps = {
 }
 
 export function StepMembers({ creator, members, onChange }: StepMembersProps) {
-  const { name: renownName } = usePersonName(creator.address)
+  const { name: renownName, avatarUrl } = usePersonName(creator.address)
   // The SDK's displayName is the Renown username, which may only be the short address.
   const creatorName =
     renownName ??
@@ -36,6 +36,14 @@ export function StepMembers({ creator, members, onChange }: StepMembersProps) {
     <div className="space-y-4">
       <div className="bg-muted/40 flex items-center gap-3 rounded-md border p-3">
         <Avatar className="size-9">
+          {avatarUrl && (
+            // eslint-disable-next-line @next/next/no-img-element -- Renown /media 302s to short-lived storage URLs
+            <img
+              src={avatarUrl}
+              alt={creatorName ?? 'You'}
+              className="h-full w-full object-cover"
+            />
+          )}
           <AvatarFallback className="bg-primary/15 text-primary">
             <ShieldCheck className="size-4" />
           </AvatarFallback>
