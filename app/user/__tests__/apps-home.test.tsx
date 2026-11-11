@@ -9,6 +9,7 @@ let published: { id: string; name: string; status: string }[] = []
 
 vi.mock('@/modules/apps/hooks/use-app-profile', () => ({
   useAppName: (_did: unknown, fallback: string) => fallback,
+  useAppLogo: () => null,
 }))
 vi.mock('@/modules/apps/hooks/use-apps', () => ({
   useMyApps: () => ({

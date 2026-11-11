@@ -24,6 +24,7 @@ let appRecord: { id: string; status: string } | null = null
 
 vi.mock('@/modules/apps/hooks/use-app-profile', () => ({
   useAppName: (_did: unknown, fallback: string) => fallback,
+  useAppLogo: () => null,
 }))
 vi.mock('next/navigation', () => ({
   useRouter: () => ({ replace: vi.fn() }),

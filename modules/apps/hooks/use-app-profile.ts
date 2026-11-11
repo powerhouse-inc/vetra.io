@@ -6,6 +6,7 @@ import { updateAppProfile } from '@/modules/publisher/graphql'
 import { usePublisherToken } from '@/modules/publisher/hooks/use-publisher'
 import { fetchAppProfile, type RenownAppProfile } from '../lib/app-profile/api'
 import type { AppProfileChanges } from '../lib/app-profile/form'
+import { profileLogoUrl } from '../lib/app-profile/logo'
 
 export const appProfileKey = (appDid: string) => ['renown-app-profile', appDid] as const
 
@@ -27,6 +28,12 @@ export function useAppProfile(appDid: string | null | undefined) {
 export function useAppName(appDid: string | null | undefined, fallback: string): string {
   const { data } = useAppProfile(appDid)
   return data?.name?.trim() || fallback
+}
+
+/** The app's Renown logo, or null (show the monogram) without an identity, profile or logo. */
+export function useAppLogo(appDid: string | null | undefined): string | null {
+  const { data } = useAppProfile(appDid)
+  return data ? profileLogoUrl(data) : null
 }
 
 /** Saves a profile patch through Vetra's relay, then refreshes the profile. No retries. */

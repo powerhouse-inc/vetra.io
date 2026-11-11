@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react'
 
 vi.mock('@/modules/apps/hooks/use-app-profile', () => ({
   useAppName: (_did: unknown, fallback: string) => fallback,
+  useAppLogo: () => null,
 }))
 vi.mock('@/modules/orgs/hooks/use-orgs', () => ({ useActiveOrg: () => ({ orgId: null }) }))
 vi.mock('@/modules/publisher/hooks/use-publisher', () => ({
