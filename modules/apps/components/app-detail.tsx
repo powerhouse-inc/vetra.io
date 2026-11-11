@@ -166,7 +166,7 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
           Apps
         </Link>
         <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-          <AppLogo name={name} seed={app.id} src={logo} size="lg" />
+          <AppLogo name={name} seed={app.id} src={logo} appDid={app.identityDid} size="lg" />
           <div className="min-w-0 flex-1 space-y-2">
             <h1 className="truncate text-3xl font-bold tracking-[-0.03em]">{name}</h1>
             <p className="text-muted-foreground text-sm">
@@ -230,7 +230,7 @@ function Header({ app, deployed }: { app: App; deployed: boolean }) {
   const latest = app.latestDeployment
   return (
     <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
-      <AppLogo name={name} seed={app.id} src={logo} size="lg" />
+      <AppLogo name={name} seed={app.id} src={logo} appDid={app.identityDid} size="lg" />
       <div className="min-w-0 flex-1 space-y-2">
         <div className="flex flex-wrap items-center gap-3">
           <h1 className="truncate text-3xl font-bold tracking-[-0.03em]">{name}</h1>

@@ -5,6 +5,7 @@ import type { DirectoryApp } from '../../lib/directory'
 
 const entry = (over: Partial<DirectoryApp>): DirectoryApp => ({
   appId: 'a',
+  appDid: null,
   name: 'App',
   holders: 0,
   plans: 1,
