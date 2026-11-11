@@ -2,6 +2,8 @@ import { getCloudEndpoint } from '@/modules/cloud/graphql'
 import type {
   App,
   AppDeployment,
+  AppRelease,
+  AppReleaseKind,
   AppsErrorCode,
   AppRegistryCredentials,
   CreateAppInput,
@@ -184,6 +186,8 @@ const URLS = `app connect switchboard`
 const DEPLOYMENT_FIELDS = `id appId environmentId kind prNumber gitRef sha
   packages { name version } imageTag status actorDid actorGithub runUrl error
   createdAt updatedAt urls { ${URLS} }`
+const RELEASE_FIELDS = `version kind branch pr commit notes customerNotes imageRef imageDigest
+  host packages { name version } migrates powerhouseVersion createdAt`
 const APP_FIELDS = `id slug name ownerAddress status
   repository { installationId repositoryId fullName }
   productionBranch productionEnvironmentId previewsEnabled previewLimit previewTtlDays
@@ -306,6 +310,23 @@ export async function fetchAppDeployments(
     token,
   )
   return data.appDeployments
+}
+
+/** What vetra-publish recorded for the app, newest first; `kind` null for releases and builds. */
+export async function fetchAppReleases(
+  appId: string,
+  kind: AppReleaseKind | null,
+  limit: number,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppRelease[]> {
+  const data = await appsGql<{ appReleases: AppRelease[] }>(
+    `query ($appId: ID!, $kind: String, $limit: Int) { appReleases(appId: $appId, kind: $kind, limit: $limit) { ${RELEASE_FIELDS} } }`,
+    { appId, kind, limit },
+    token,
+    fetchImpl,
+  )
+  return data.appReleases
 }
 
 export async function fetchAppDeployment(

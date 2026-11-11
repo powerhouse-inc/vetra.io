@@ -15,6 +15,7 @@ import {
   fetchApp,
   fetchAppRecord,
   fetchAppDeployments,
+  fetchAppReleases,
   fetchGithubDeployAppInfo,
   fetchGithubDeployRepositories,
   fetchMyApps,
@@ -31,6 +32,8 @@ import { appPollInterval, appsPollInterval, deploymentsPollInterval } from '../l
 import type {
   App,
   AppDeployment,
+  AppRelease,
+  AppReleaseKind,
   CreateAppInput,
   CreateStudioAppInput,
   GithubDeployAppInfo,
@@ -126,6 +129,20 @@ export function useAppDeployments(appId: string, limit = 50) {
     {
       retry: retryUnlessFinal,
       refetchInterval: (query) => deploymentsPollInterval(query.state.data),
+    },
+  )
+}
+
+/** Releases and builds vetra-publish recorded, newest first; `kind` null for both. */
+export function useAppReleases(appId: string, kind: AppReleaseKind | null, limit: number) {
+  const did = useDid()
+  return useAuthedQuery<AppRelease[]>(
+    appsKeys.releases(appId, kind, limit, did),
+    (token) => fetchAppReleases(appId, kind, limit, token),
+    {
+      retry: retryUnlessFinal,
+      // "Show more" keeps the rows on screen while the longer page loads; a new filter does not.
+      placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[3] === kind ? prev : undefined),
     },
   )
 }

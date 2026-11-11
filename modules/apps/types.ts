@@ -55,6 +55,33 @@ export type AppDeployment = {
   urls: AppUrls
 }
 
+/** What vetra-publish recorded: a tagged release, or a build from a release branch or PR. */
+export type AppReleaseKind = 'release' | 'build'
+
+export type AppReleasePackage = {
+  name: string
+  version: string
+}
+
+/** One version vetra-publish recorded for an app (`appReleases`). */
+export type AppRelease = {
+  version: string
+  kind: AppReleaseKind
+  branch: string | null
+  pr: number | null
+  commit: string
+  notes: string | null
+  customerNotes: string | null
+  imageRef: string
+  imageDigest: string
+  host: string
+  packages: AppReleasePackage[]
+  migrates: boolean
+  /** The project's Powerhouse version the image was built with. */
+  powerhouseVersion: string
+  createdAt: string
+}
+
 export type App = {
   id: string
   /** Renown organisation owning the app; absent on older backends, null when personal. */
