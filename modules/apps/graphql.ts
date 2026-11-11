@@ -2,6 +2,7 @@ import { getCloudEndpoint } from '@/modules/cloud/graphql'
 import type {
   App,
   AppDeployment,
+  AppInstance,
   AppRelease,
   AppReleaseKind,
   AppsErrorCode,
@@ -203,6 +204,7 @@ const OPTIONAL_APP_FIELDS = [
   'ownerOrgId',
   'studioEnvironmentId',
   'releaseBranches',
+  'instancesEnabled',
 ] as const
 const unsupportedAppFields = new Set<string>()
 
@@ -327,6 +329,21 @@ export async function fetchAppReleases(
     fetchImpl,
   )
   return data.appReleases
+}
+
+/** The app's running instances (one per release branch); needs a backend with `appInstances`. */
+export async function fetchAppInstances(
+  appId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppInstance[]> {
+  const data = await appsGql<{ appInstances: AppInstance[] }>(
+    `query ($appId: ID!) { appInstances(appId: $appId) { id kind name branch pr url status reason targetVersion targetDigest runningVersion runningDigest environmentId updatedAt } }`,
+    { appId },
+    token,
+    fetchImpl,
+  )
+  return data.appInstances
 }
 
 export async function fetchAppDeployment(

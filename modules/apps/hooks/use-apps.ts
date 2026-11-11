@@ -15,6 +15,7 @@ import {
   fetchApp,
   fetchAppRecord,
   fetchAppDeployments,
+  fetchAppInstances,
   fetchAppReleases,
   fetchGithubDeployAppInfo,
   fetchGithubDeployRepositories,
@@ -32,6 +33,7 @@ import { appPollInterval, appsPollInterval, deploymentsPollInterval } from '../l
 import type {
   App,
   AppDeployment,
+  AppInstance,
   AppRelease,
   AppReleaseKind,
   CreateAppInput,
@@ -149,6 +151,25 @@ export function useAppReleases(
       retry: retryUnlessFinal,
       // "Show more" keeps the rows on screen while the longer page loads; a new filter does not.
       placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[3] === kind ? prev : undefined),
+    },
+  )
+}
+
+/** Poll interval for instances: every 10 s while any is pending/updating, else off. */
+export function instancesPollInterval(data: AppInstance[] | undefined): number | false {
+  return data?.some((i) => i.status === 'pending' || i.status === 'updating') ? 10_000 : false
+}
+
+/** The app's branch instances; polls while any is rolling out. */
+export function useAppInstances(appId: string, enabled = true) {
+  const did = useDid()
+  return useAuthedQuery<AppInstance[]>(
+    appsKeys.instances(appId, did),
+    (token) => fetchAppInstances(appId, token),
+    {
+      enabled,
+      retry: retryUnlessFinal,
+      refetchInterval: (query) => instancesPollInterval(query.state.data),
     },
   )
 }
