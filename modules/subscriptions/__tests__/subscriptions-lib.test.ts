@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import {
+  isSettling,
   environmentHref,
   groupByApp,
   subscriptionName,
@@ -78,5 +79,33 @@ describe('subscriptions lib', () => {
     expect(warningTone('DELETE_IMMINENT')).toBe('danger')
     expect(environmentHref(sub({}))).toBe('/user/environments/env-1')
     expect(environmentHref(sub({ environmentId: null }))).toBeNull()
+  })
+})
+
+describe('isSettling', () => {
+  const sub = (over: Partial<Subscription>): Subscription =>
+    ({
+      status: 'ACTIVE',
+      mode: 'DEDICATED',
+      environmentId: 'env',
+      warnings: [],
+      ...over,
+    }) as Subscription
+
+  it('waits for a fresh licence and for a live dedicated one without its environment yet', () => {
+    expect(isSettling([sub({ status: 'ISSUED' })])).toBe(true)
+    expect(isSettling([sub({ environmentId: null })])).toBe(true)
+    expect(isSettling([sub({})])).toBe(false)
+  })
+
+  it('does not wait on an environment the holder deleted: none is coming until they ask', () => {
+    expect(
+      isSettling([
+        sub({
+          environmentId: null,
+          warnings: [{ kind: 'ENVIRONMENT_DELETED', at: '2026-11-11T00:00:00Z', message: '' }],
+        }),
+      ]),
+    ).toBe(false)
   })
 })
