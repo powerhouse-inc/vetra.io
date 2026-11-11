@@ -103,8 +103,7 @@ function SearchBox({ inputRef }: { inputRef: React.RefObject<HTMLInputElement | 
             onKeyDown={(event) => {
               if (event.key === 'Escape') {
                 event.preventDefault()
-                setOpen(false)
-                inputRef.current?.blur()
+                done()
               } else if (!open && (event.key === 'ArrowDown' || event.key === 'ArrowUp')) {
                 setOpen(true)
               }

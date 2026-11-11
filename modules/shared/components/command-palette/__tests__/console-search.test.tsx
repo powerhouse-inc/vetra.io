@@ -79,14 +79,15 @@ describe('ConsoleSearch (desktop)', () => {
     expect(input.value).toBe('')
   })
 
-  it('closes and blurs on Escape', () => {
+  it('closes, clears and blurs on Escape', () => {
     render(<ConsoleSearch />)
-    const input = searchBox()
+    const input = searchBox() as HTMLInputElement
     input.focus()
-    fireEvent.focus(input)
+    fireEvent.change(input, { target: { value: 'sektar' } })
     expect(screen.getByRole('listbox')).toBeTruthy()
     fireEvent.keyDown(input, { key: 'Escape' })
     expect(screen.queryByRole('listbox')).toBeNull()
+    expect(input.value).toBe('')
     expect(document.activeElement).not.toBe(input)
   })
 
@@ -128,6 +129,19 @@ describe('ConsoleSearch (mobile)', () => {
     expect(within(sheet).getByText('Sektar')).toBeTruthy()
     fireEvent.click(within(sheet).getByRole('button', { name: 'Close search' }))
     expect(screen.queryByRole('dialog')).toBeNull()
+  })
+
+  it('closes the sheet on Escape and starts empty next time', () => {
+    render(<ConsoleSearch />)
+    const trigger = screen.getByRole('button', { name: 'Search the console' })
+    fireEvent.click(trigger)
+    const input = within(screen.getByRole('dialog')).getByRole('combobox')
+    fireEvent.change(input, { target: { value: 'achra' } })
+    fireEvent.keyDown(input, { key: 'Escape' })
+    expect(screen.queryByRole('dialog')).toBeNull()
+    fireEvent.click(trigger)
+    const reopened = within(screen.getByRole('dialog')).getByRole<HTMLInputElement>('combobox')
+    expect(reopened.value).toBe('')
   })
 
   it('opens the sheet on ⌘K on a small screen', () => {
