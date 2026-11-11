@@ -56,6 +56,7 @@ import type { App } from '../types'
 import { AppLogo } from './profile/app-logo'
 import { AppDeployments } from './app-deployments'
 import { AppOverview } from './app-overview'
+import { AppReleases } from './app-releases'
 import { useAppLogo, useAppName } from '../hooks/use-app-profile'
 import { AppSettings, DeleteAppCard } from './app-settings'
 import { AppProfileTab } from './profile/profile-tab'
@@ -72,13 +73,21 @@ export const LICENSING_TABS = [
   'holders',
   'invite-codes',
 ] as const
-const ALL_TABS = ['overview', 'deployments', 'profile', ...LICENSING_TABS, 'settings'] as const
+const ALL_TABS = [
+  'overview',
+  'deployments',
+  'profile',
+  'releases',
+  ...LICENSING_TABS,
+  'settings',
+] as const
 export type AppTab = (typeof ALL_TABS)[number]
 
 export const APP_TAB_LABEL: Record<AppTab, string> = {
   overview: 'Overview',
   deployments: 'Deployments',
   profile: 'Profile',
+  releases: 'Releases',
   artifacts: 'Artifacts',
   templates: 'Templates',
   plans: 'Plans',
@@ -216,9 +225,16 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
   )
 }
 
-/** Licensing tabs only for the app's publisher. */
+/** Licensing tabs only for the app's publisher; Releases for anyone who can view the app. */
 export function visibleAppTabs({ isPublisher }: { isPublisher: boolean }): AppTab[] {
-  return ['overview', 'deployments', 'profile', ...(isPublisher ? LICENSING_TABS : []), 'settings']
+  return [
+    'overview',
+    'deployments',
+    'profile',
+    'releases',
+    ...(isPublisher ? LICENSING_TABS : []),
+    'settings',
+  ]
 }
 
 function Header({ app, deployed }: { app: App; deployed: boolean }) {
@@ -590,6 +606,9 @@ export function AppDetail({ appId }: { appId: string }) {
         </TabsContent>
         <TabsContent value="profile">
           <AppProfileTab appId={appId} appName={name} appDid={app.identityDid} />
+        </TabsContent>
+        <TabsContent value="releases">
+          <AppReleases appId={appId} repository={app.repository.fullName} />
         </TabsContent>
         {showLicensing && (
           <TabsContent value="artifacts">

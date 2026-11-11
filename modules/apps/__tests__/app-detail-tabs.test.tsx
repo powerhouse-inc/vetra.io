@@ -64,6 +64,13 @@ vi.mock('../components/profile/profile-tab', () => ({
     <div>profile-content {appDid ?? 'none'}</div>
   ),
 }))
+vi.mock('../components/app-releases', () => ({
+  AppReleases: ({ appId, repository }: { appId: string; repository: string | null }) => (
+    <div>
+      releases-content {appId} {repository}
+    </div>
+  ),
+}))
 vi.mock('../components/github-flow-link', () => ({ GithubFlowLink: () => null }))
 vi.mock('@/modules/publisher/components/plans/plans-tab', () => ({
   PlansTab: () => <div>plans-content</div>,
@@ -133,6 +140,7 @@ describe('AppDetail tabs', () => {
       'overview',
       'deployments',
       'profile',
+      'releases',
       'artifacts',
       'templates',
       'plans',
@@ -144,6 +152,7 @@ describe('AppDetail tabs', () => {
       'overview',
       'deployments',
       'profile',
+      'releases',
       'settings',
     ])
   })
@@ -154,6 +163,7 @@ describe('AppDetail tabs', () => {
       'Overview',
       'Deployments',
       'Profile',
+      'Releases',
       'Artifacts',
       'Templates',
       'Plans',
@@ -167,6 +177,13 @@ describe('AppDetail tabs', () => {
     searchParams = new URLSearchParams('tab=artifacts')
     render(<AppDetail appId="app-1" />)
     expect(screen.getByText('artifacts-content')).toBeTruthy()
+  })
+
+  it('opens the Releases tab from the URL, for anyone who can view the app', () => {
+    publisher = { isPublisher: false, app: undefined, isPending: false }
+    searchParams = new URLSearchParams('tab=releases')
+    render(<AppDetail appId="app-1" />)
+    expect(screen.getByText('releases-content app-1 acme/vault')).toBeTruthy()
   })
 
   it('opens the Profile tab with the app identity', () => {
@@ -218,7 +235,7 @@ describe('AppDetail tabs', () => {
     publisher = { isPublisher: false, app: undefined, isPending: false }
     searchParams = new URLSearchParams('tab=artifacts')
     render(<AppDetail appId="app-1" />)
-    expect(tabNames()).toEqual(['Overview', 'Deployments', 'Profile', 'Settings'])
+    expect(tabNames()).toEqual(['Overview', 'Deployments', 'Profile', 'Releases', 'Settings'])
     expect(screen.queryByText('artifacts-content')).toBeNull()
     expect(screen.getByText('overview-content')).toBeTruthy()
   })
