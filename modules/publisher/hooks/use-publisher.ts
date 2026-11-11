@@ -31,6 +31,7 @@ import type {
   PublisherTerm,
   WarmPool,
 } from '../types'
+import { rolloutsPollInterval } from '../lib/rollouts'
 import { publisherKeys, type PublisherResource } from './keys'
 import { useViewerDid } from './use-viewer-did'
 
@@ -118,11 +119,10 @@ export const usePublisherEnvironments = (appId: string | null) =>
     refetchIntervalInBackground: false,
   })
 
-/** The app's release rollouts. Updates apply as the keeper ticks, so it polls while one is ACTIVE. */
+/** The app's release rollouts. Polls while one is ACTIVE or PAUSED (see rolloutsPollInterval). */
 export const usePublisherRollouts = (appId: string | null) =>
   useAppList<AppRollout>('rollouts', appId, fetchRollouts, {
-    refetchInterval: (query) =>
-      query.state.data?.some((r) => r.status === 'ACTIVE') ? ENVIRONMENTS_POLL_MS : false,
+    refetchInterval: (query) => rolloutsPollInterval(query.state.data),
     refetchIntervalInBackground: false,
   })
 

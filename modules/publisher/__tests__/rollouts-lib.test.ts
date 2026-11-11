@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { rolloutProgress, splitRollouts } from '../lib/rollouts'
+import { rolloutProgress, rolloutsPollInterval, splitRollouts } from '../lib/rollouts'
 import type { AppRollout } from '../types'
 
 const rollout = (over: Partial<AppRollout>): AppRollout => ({
@@ -50,9 +50,30 @@ describe('splitRollouts', () => {
     expect(previous.map((r) => r.id)).toEqual(['e', 'd', 'c', 'b', 'a'])
   })
 
+  it('orders by the promotion instant, not the string', () => {
+    const { current } = splitRollouts([
+      rollout({ id: 'earlier', promotedAt: '2026-11-10T00:00:00Z' }),
+      // 04:00 UTC on the 10th: later, though it sorts first as a string.
+      rollout({ id: 'later', promotedAt: '2026-11-09T23:00:00-05:00' }),
+    ])
+    expect(current?.id).toBe('later')
+  })
+
   it('has no current rollout when every one is done', () => {
     const { current, previous } = splitRollouts([rollout({ status: 'COMPLETE' })])
     expect(current).toBeNull()
     expect(previous).toHaveLength(1)
+  })
+})
+
+describe('rolloutsPollInterval', () => {
+  it('polls fast while ACTIVE, slower while PAUSED, and not at all otherwise', () => {
+    expect(rolloutsPollInterval([rollout({ status: 'ACTIVE' })])).toBe(10_000)
+    expect(rolloutsPollInterval([rollout({ status: 'PAUSED' })])).toBe(30_000)
+    expect(
+      rolloutsPollInterval([rollout({ status: 'PAUSED' }), rollout({ status: 'ACTIVE' })]),
+    ).toBe(10_000)
+    expect(rolloutsPollInterval([rollout({ status: 'COMPLETE' })])).toBe(false)
+    expect(rolloutsPollInterval(undefined)).toBe(false)
   })
 })

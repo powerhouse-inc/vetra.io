@@ -26,19 +26,21 @@ function Progress({ rollout }: { rollout: AppRollout }) {
       <p className="text-sm tabular-nums">
         {`${p.updated} of ${p.total} updated · ${p.pending} pending · ${p.failed} failed`}
       </p>
-      <div
-        role="progressbar"
-        aria-label="Environments updated"
-        aria-valuemin={0}
-        aria-valuemax={p.total}
-        aria-valuenow={p.updated}
-        className="bg-muted h-1.5 w-full overflow-hidden rounded-full"
-      >
+      {p.total > 0 && (
         <div
-          className={rollout.status === 'PAUSED' ? 'bg-warning h-full' : 'bg-info h-full'}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+          role="progressbar"
+          aria-label="Environments updated"
+          aria-valuemin={0}
+          aria-valuemax={p.total}
+          aria-valuenow={p.updated}
+          className="bg-muted h-1.5 w-full overflow-hidden rounded-full"
+        >
+          <div
+            className={rollout.status === 'PAUSED' ? 'bg-warning h-full' : 'bg-info h-full'}
+            style={{ width: `${pct}%` }}
+          />
+        </div>
+      )}
     </div>
   )
 }
@@ -96,9 +98,14 @@ export function RolloutPanel({
       </div>
 
       <p className="text-muted-foreground text-sm">
-        {due ? (
+        {due && current.status === 'ACTIVE' ? (
           <>
             Applies after the notice period: updates start <When iso={current.applyAfter} />.
+          </>
+        ) : due ? (
+          <>
+            The notice period ends <When iso={current.applyAfter} />, but updates wait while the
+            rollout is paused.
           </>
         ) : (
           <>

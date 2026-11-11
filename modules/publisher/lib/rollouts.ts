@@ -26,10 +26,21 @@ export function splitRollouts(rollouts: AppRollout[]): {
   current: AppRollout | null
   previous: AppRollout[]
 } {
-  const sorted = [...rollouts].sort((a, b) => b.promotedAt.localeCompare(a.promotedAt))
+  const at = (r: AppRollout) => Date.parse(r.promotedAt) || 0
+  const sorted = [...rollouts].sort((a, b) => at(b) - at(a))
   const current = sorted.find((r) => r.status === 'ACTIVE' || r.status === 'PAUSED') ?? null
   return {
     current,
     previous: sorted.filter((r) => r !== current).slice(0, PREVIOUS_SHOWN),
   }
+}
+
+const ACTIVE_POLL_MS = 10_000
+const PAUSED_POLL_MS = 30_000
+
+/** Updates move every keeper tick while ACTIVE; a PAUSED rollout only changes when someone acts. */
+export function rolloutsPollInterval(rollouts: AppRollout[] | undefined): number | false {
+  if (rollouts?.some((r) => r.status === 'ACTIVE')) return ACTIVE_POLL_MS
+  if (rollouts?.some((r) => r.status === 'PAUSED')) return PAUSED_POLL_MS
+  return false
 }
