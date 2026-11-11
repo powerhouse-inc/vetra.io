@@ -164,6 +164,27 @@ describe('AppReleases', () => {
     expect(pkg.getAttribute('href')).toBe('https://registry.vetra.io/@sektar/app')
   })
 
+  it('shows notes for owners only when they differ from the release notes', () => {
+    const notes = '## 1.1.0-beta.0\n\n- same text'
+    state = {
+      data: [
+        release({ notes, customerNotes: notes }),
+        release({ version: '1.2.0', notes, customerNotes: '## For you\n\n- edited' }),
+      ],
+      isPending: false,
+      error: null,
+    }
+    render(<AppReleases appId="app-1" repository="powerhouse-inc/sektar" />)
+    fireEvent.click(within(row('1.1.0-beta.0')).getByRole('button', { name: /1\.1\.0-beta\.0/ }))
+    fireEvent.click(within(row('1.2.0')).getByRole('button', { name: /1\.2\.0/ }))
+    expect(
+      within(screen.getByTestId('release-details-1.1.0-beta.0')).queryByText('Notes for owners'),
+    ).toBeNull()
+    expect(
+      within(screen.getByTestId('release-details-1.2.0')).getByText('Notes for owners'),
+    ).toBeTruthy()
+  })
+
   it('does not link the packages of a build', () => {
     render(<AppReleases appId="app-1" repository="powerhouse-inc/sektar" />)
     fireEvent.click(
