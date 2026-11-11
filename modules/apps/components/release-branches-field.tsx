@@ -12,6 +12,7 @@ export const RELEASE_BRANCH_MAX_LENGTH = 255
 /** Why `name` can't be added to `existing`, or `null` when it can. */
 export function validateReleaseBranch(name: string, existing: string[]): string | null {
   if (!name) return 'Enter a branch name.'
+  if (name === '*') return 'A bare * would make every top-level branch a release branch.'
   if (/\s/.test(name)) return 'Branch names cannot contain spaces.'
   if (name.includes('**')) return 'Use a single * per segment; ** is not supported.'
   if (name.length > RELEASE_BRANCH_MAX_LENGTH)

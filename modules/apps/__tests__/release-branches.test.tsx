@@ -56,6 +56,7 @@ describe('validateReleaseBranch', () => {
     expect(validateReleaseBranch('next', [])).toBeNull()
     expect(validateReleaseBranch('release/*', [])).toBeNull()
     expect(validateReleaseBranch('a/**', [])).toMatch(/\*\*/)
+    expect(validateReleaseBranch('*', [])).toMatch(/every top-level branch a release branch/)
     expect(validateReleaseBranch('a b', [])).toMatch(/spaces/)
     expect(validateReleaseBranch('x'.repeat(256), [])).toMatch(/255/)
     expect(validateReleaseBranch('next', ['next'])).toMatch(/already/)
