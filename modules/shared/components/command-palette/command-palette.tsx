@@ -10,27 +10,12 @@ import {
   Ticket,
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import {
-  createContext,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-  useSyncExternalStore,
-  type ReactNode,
-} from 'react'
+import { useSyncExternalStore, type ReactNode } from 'react'
 import { useMyApps, useStandaloneEnvFilter } from '@/modules/apps/hooks/use-apps'
 import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environment'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { CONSOLE_NAV_SECTIONS } from '@/modules/shared/components/console-sidebar/console-nav'
-import {
-  CommandDialog,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from '@/modules/shared/components/ui/command'
+import { CommandEmpty, CommandGroup, CommandItem } from '@/modules/shared/components/ui/command'
 import { cn } from '@/modules/shared/lib/utils'
 
 const DOCS_URL = 'https://academy.vetra.io/'
@@ -43,51 +28,6 @@ export function paletteFilter(value: string, search: string, keywords?: string[]
   const haystack = [value, ...(keywords ?? [])].join(' ').toLowerCase()
   const words = search.toLowerCase().split(/\s+/).filter(Boolean)
   return words.every((w) => haystack.includes(w)) ? 1 : 0
-}
-
-const CommandPaletteContext = createContext<{ open: () => void } | null>(null)
-
-/** Opens the console's ⌘K palette; null outside the console layout. */
-export function useCommandPalette() {
-  return useContext(CommandPaletteContext)
-}
-
-/** Mounts the palette for the console and binds ⌘K / Ctrl+K to toggle it. */
-export function CommandPaletteProvider({ children }: { children: ReactNode }) {
-  const [open, setOpen] = useState(false)
-
-  useEffect(() => {
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key.toLowerCase() === 'k' && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault()
-        setOpen((current) => !current)
-      }
-    }
-    window.addEventListener('keydown', onKeyDown)
-    return () => window.removeEventListener('keydown', onKeyDown)
-  }, [])
-
-  const value = useMemo(() => ({ open: () => setOpen(true) }), [])
-
-  return (
-    <CommandPaletteContext.Provider value={value}>
-      {children}
-      <CommandDialog
-        open={open}
-        onOpenChange={setOpen}
-        title="Search the console"
-        description="Jump to a page, environment or app, or start something new"
-        filter={paletteFilter}
-      >
-        <CommandInput placeholder="Search pages, environments, apps…" />
-        <CommandList>
-          <CommandEmpty>Nothing matches that.</CommandEmpty>
-          {/* Mounted only while open, so the lists load on first use. */}
-          {open && <PaletteResults onDone={() => setOpen(false)} />}
-        </CommandList>
-      </CommandDialog>
-    </CommandPaletteContext.Provider>
-  )
 }
 
 const noopSubscribe = () => () => {}
