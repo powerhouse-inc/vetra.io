@@ -171,7 +171,10 @@ function ReleaseDetails({ release }: { release: AppRelease }) {
             <p className="text-muted-foreground text-sm">No release notes.</p>
           </Field>
         )}
-        {release.customerNotes && <Notes label="Notes for owners" text={release.customerNotes} />}
+        {/* Vetra starts customer notes as a copy of the release notes; show them once edited. */}
+        {release.customerNotes && release.customerNotes !== release.notes && (
+          <Notes label="Notes for owners" text={release.customerNotes} />
+        )}
       </div>
       <div className="min-w-0 space-y-4">
         <Field label="Image">
