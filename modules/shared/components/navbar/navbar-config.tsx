@@ -25,9 +25,6 @@ export const PUBLIC_NAV_ITEMS: NavItem[] = [
   { label: 'Docs', href: 'https://academy.vetra.io/', isExternal: true },
 ]
 
-/** The middle of the console header (the sidebar carries the console's own navigation). */
-export const CONSOLE_HEADER_NAV_ITEMS: NavItem[] = [APPS_NAV_ITEM]
-
 /** The console sections, flattened for the mobile menu (the sidebar shows them grouped). */
 export const PRIVATE_NAV_ITEMS: NavItem[] = CONSOLE_NAV_SECTIONS.flatMap((section) =>
   section.items.map(({ label, href, isActive }) => ({ label, href, isActive })),
