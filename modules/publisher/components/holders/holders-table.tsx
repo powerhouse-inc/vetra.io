@@ -2,8 +2,8 @@
 
 import { Loader2 } from 'lucide-react'
 import { CopyButton } from '@/modules/apps/components/copy-button'
-import { StatusPill } from '@/modules/shared/components/status'
-import { formatDate } from '@/modules/shared/lib/time'
+import { StatusInline, StatusPill } from '@/modules/shared/components/status'
+import { formatDate, formatTimestamp, timeFromNow } from '@/modules/shared/lib/time'
 import { Button } from '@/modules/shared/components/ui/button'
 import {
   Table,
@@ -15,7 +15,7 @@ import {
 } from '@/modules/shared/components/ui/table'
 import { dateRange, termName } from '../../lib/format'
 import { canChangePlan, type HolderRow } from '../../lib/holders'
-import { licenseStatusMeta } from '../../lib/status'
+import { licenseStatusMeta, updateStatusMeta } from '../../lib/status'
 import type { PublisherTerm, TemplateMode } from '../../types'
 import { PersonName } from '@/modules/shared/components/person-name'
 
@@ -58,6 +58,49 @@ function EnvironmentCell({
   return <span className="text-muted-foreground">—</span>
 }
 
+const OPEN_UPDATE = new Set(['PENDING', 'APPLYING'])
+const FAILED_UPDATE = new Set(['FAILED', 'REVERTED', 'RESTORED'])
+
+/** What the environment runs, and the release it is waiting for or failed to take. */
+function VersionCell({ row }: { row: HolderRow }) {
+  const env = row.environment
+  if (!env?.runningVersion) return <span className="text-muted-foreground">—</span>
+  const update = env.update
+  return (
+    <div className="space-y-1">
+      <p className="inline-flex flex-wrap items-center gap-1.5">
+        <span className="font-mono text-xs break-all">{env.runningVersion}</span>
+        {env.isCanary && (
+          <span
+            className="bg-info/15 text-info rounded-full px-1.5 py-px text-[10px] font-medium tracking-wide uppercase"
+            title="Follows STAGING and takes releases first"
+          >
+            canary
+          </span>
+        )}
+      </p>
+      {update && OPEN_UPDATE.has(update.status) && (
+        <div className="text-muted-foreground space-y-0.5 text-xs">
+          <p className="font-mono break-all">→ {update.toVersion}</p>
+          <p className="inline-flex flex-wrap items-center gap-x-2">
+            <StatusInline meta={updateStatusMeta(update.status)} className="text-xs" />
+            {update.status === 'PENDING' && (
+              <span title={formatTimestamp(update.dueAt)}>due {timeFromNow(update.dueAt)}</span>
+            )}
+          </p>
+        </div>
+      )}
+      {update && FAILED_UPDATE.has(update.status) && (
+        <p className="text-destructive/80 text-xs break-words">
+          {updateStatusMeta(update.status).label}: update to{' '}
+          <span className="font-mono">{update.toVersion}</span>
+          {update.error && ` — ${update.error}`}
+        </p>
+      )}
+    </div>
+  )
+}
+
 export function HoldersTable({
   rows,
   terms,
@@ -87,6 +130,7 @@ export function HoldersTable({
             <TableHead>Status</TableHead>
             <TableHead>Valid</TableHead>
             <TableHead>Environment</TableHead>
+            <TableHead>Version</TableHead>
             <TableHead className="pr-4 text-right">
               <span className="sr-only">Actions</span>
             </TableHead>
@@ -116,6 +160,9 @@ export function HoldersTable({
                     mode={modeOf(r.kind)}
                     unavailable={environmentsUnavailable}
                   />
+                </TableCell>
+                <TableCell className="text-sm" data-testid="environment-version">
+                  <VersionCell row={r} />
                 </TableCell>
                 <TableCell className="pr-4 text-right whitespace-nowrap">
                   {(live || canChangePlan(r)) && (

@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { act, cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import React from 'react'
 import type {
+  AppRollout,
   PublisherEnvironment,
   PublisherLicense,
   PublisherTemplate,
@@ -10,6 +11,11 @@ import type {
 
 let licenses: PublisherLicense[] = []
 let environments: PublisherEnvironment[] = []
+let rolloutsQuery: { data: AppRollout[] | undefined; isPending: boolean; error: Error | null } = {
+  data: [],
+  isPending: false,
+  error: null,
+}
 const replaceGrant = vi.fn()
 const revoke = vi.fn()
 
@@ -64,6 +70,7 @@ vi.mock('../hooks/use-publisher', () => ({
     error: null,
   }),
   usePublisherAllowList: () => ({ data: [], isPending: false, error: null }),
+  usePublisherRollouts: () => ({ ...rolloutsQuery, refetch: vi.fn() }),
 }))
 vi.mock('../hooks/use-publisher-mutations', () => ({
   useIssueGrant: () => ({ mutateAsync: vi.fn(), isPending: false }),
@@ -92,11 +99,208 @@ const lic = (over: Partial<PublisherLicense>): PublisherLicense => ({
   ...over,
 })
 
+const env = (over: Partial<PublisherEnvironment>): PublisherEnvironment => ({
+  environmentId: 'env-1',
+  user: 'u',
+  licenseId: 'l1',
+  rootLicenseId: 'l1',
+  label: 'Acme vault',
+  templateHash: 'h',
+  stoppedAt: null,
+  deleteAfter: null,
+  runningVersion: 'sha-cac9276bc10b',
+  isCanary: false,
+  update: null,
+  ...over,
+})
+
+const rollout = (over: Partial<AppRollout>): AppRollout => ({
+  id: 'r1',
+  artifactName: 'vault-fusion',
+  version: 'sha-0123456789ab',
+  status: 'ACTIVE',
+  applyAfter: new Date(Date.now() + 2 * 3600_000 + 60_000).toISOString(),
+  promotedBy: 'did:pkh:eip155:1:0xabcdef0123456789abcdef0123456789abcdef01',
+  promotedAt: '2026-11-10T00:00:00Z',
+  pausedAt: null,
+  pausedReason: null,
+  counts: [
+    { status: 'SUCCEEDED', count: 3 },
+    { status: 'PENDING', count: 8 },
+  ],
+  ...over,
+})
+
+const versionCell = (id = 'l1') =>
+  within(screen.getByTestId(`holder-${id}`)).getByTestId('environment-version')
+
 describe('HoldersTab', () => {
   beforeEach(() => {
     cleanup()
     vi.clearAllMocks()
     environments = []
+    rolloutsQuery = { data: [], isPending: false, error: null }
+  })
+
+  describe('Version column', () => {
+    it('shows the running version as is', () => {
+      licenses = [lic({})]
+      environments = [env({})]
+      render(<HoldersTab appId="app-1" />)
+      expect(screen.getByRole('columnheader', { name: 'Version' })).toBeTruthy()
+      const cell = versionCell()
+      expect(within(cell).getByText('sha-cac9276bc10b').className).toMatch(/font-mono/)
+      expect(within(cell).queryByText(/canary/i)).toBeNull()
+      expect(within(cell).queryByText(/→/)).toBeNull()
+    })
+
+    it('marks a canary', () => {
+      licenses = [lic({})]
+      environments = [env({ isCanary: true })]
+      render(<HoldersTab appId="app-1" />)
+      expect(within(versionCell()).getByText('canary')).toBeTruthy()
+    })
+
+    it('shows a pending update’s target, due time (exact on hover) and status', () => {
+      const dueAt = new Date(Date.now() + 2 * 3600_000 + 60_000).toISOString()
+      licenses = [lic({})]
+      environments = [
+        env({ update: { status: 'PENDING', toVersion: 'sha-0123456789ab', dueAt, error: null } }),
+      ]
+      render(<HoldersTab appId="app-1" />)
+      const cell = versionCell()
+      expect(within(cell).getByText('→ sha-0123456789ab')).toBeTruthy()
+      const due = within(cell).getByText(/in 2 hours/)
+      expect(due.getAttribute('title')).toBeTruthy()
+      expect(within(cell).getByText('Pending')).toBeTruthy()
+    })
+
+    it('shows an applying update as applying', () => {
+      licenses = [lic({})]
+      environments = [
+        env({
+          update: {
+            status: 'APPLYING',
+            toVersion: 'sha-0123456789ab',
+            dueAt: new Date(Date.now() - 60_000).toISOString(),
+            error: null,
+          },
+        }),
+      ]
+      render(<HoldersTab appId="app-1" />)
+      expect(within(versionCell()).getByText('Applying')).toBeTruthy()
+      expect(within(versionCell()).getByText('→ sha-0123456789ab')).toBeTruthy()
+    })
+
+    it('shows a failed update’s error in muted red', () => {
+      licenses = [lic({})]
+      environments = [
+        env({
+          update: {
+            status: 'FAILED',
+            toVersion: 'sha-0123456789ab',
+            dueAt: '2026-11-10T00:00:00Z',
+            error: 'deployment failed: image pull backoff',
+          },
+        }),
+      ]
+      render(<HoldersTab appId="app-1" />)
+      const err = within(versionCell()).getByText(/image pull backoff/)
+      expect(err.className).toMatch(/text-destructive/)
+    })
+
+    it('says nothing about a finished update', () => {
+      licenses = [lic({})]
+      environments = [
+        env({
+          update: {
+            status: 'SUCCEEDED',
+            toVersion: 'sha-cac9276bc10b',
+            dueAt: '2026-11-10T00:00:00Z',
+            error: null,
+          },
+        }),
+      ]
+      render(<HoldersTab appId="app-1" />)
+      expect(within(versionCell()).queryByText(/→/)).toBeNull()
+    })
+
+    it('shows a dash without a running version or without an environment', () => {
+      licenses = [lic({ id: 'l1' }), lic({ id: 'l2', environmentId: 'env-x', kind: 'free' })]
+      environments = [env({ runningVersion: null })]
+      render(<HoldersTab appId="app-1" />)
+      expect(versionCell('l1').textContent).toBe('—')
+      expect(versionCell('l2').textContent).toBe('—')
+    })
+  })
+
+  describe('rollout panel', () => {
+    it('shows the active rollout with its notice, progress and how it applies', () => {
+      licenses = [lic({})]
+      rolloutsQuery = { data: [rollout({})], isPending: false, error: null }
+      render(<HoldersTab appId="app-1" />)
+      const panel = screen.getByTestId('rollout-panel')
+      expect(within(panel).getByText('vault-fusion')).toBeTruthy()
+      expect(within(panel).getByText('sha-0123456789ab')).toBeTruthy()
+      expect(within(panel).getByText('Active')).toBeTruthy()
+      expect(
+        within(panel)
+          .getByText(/in 2 hours/)
+          .getAttribute('title'),
+      ).toBeTruthy()
+      expect(within(panel).getByText('3 of 11 updated · 8 pending · 0 failed')).toBeTruthy()
+      expect(within(panel).getByRole('progressbar').getAttribute('aria-valuenow')).toBe('3')
+      expect(within(panel).getByText(/one at a time/i)).toBeTruthy()
+      expect(within(panel).getByText(/failure pauses the rollout/i)).toBeTruthy()
+      expect(panel.textContent).not.toMatch(/0xabcdef0123456789abcdef0123456789abcdef01/)
+    })
+
+    it('shows why a paused rollout stopped', () => {
+      licenses = [lic({})]
+      rolloutsQuery = {
+        data: [rollout({ status: 'PAUSED', pausedReason: 'env-7 failed: image pull backoff' })],
+        isPending: false,
+        error: null,
+      }
+      render(<HoldersTab appId="app-1" />)
+      const panel = screen.getByTestId('rollout-panel')
+      expect(within(panel).getByText('Paused')).toBeTruthy()
+      expect(within(panel).getByText(/env-7 failed: image pull backoff/)).toBeTruthy()
+    })
+
+    it('lists earlier rollouts with their status under a disclosure', () => {
+      licenses = [lic({})]
+      rolloutsQuery = {
+        data: [
+          rollout({}),
+          rollout({ id: 'r0', version: 'sha-old', status: 'SUPERSEDED', promotedAt: '2026-11-01' }),
+        ],
+        isPending: false,
+        error: null,
+      }
+      render(<HoldersTab appId="app-1" />)
+      const panel = screen.getByTestId('rollout-panel')
+      fireEvent.click(within(panel).getByText(/previous rollouts/i))
+      expect(within(panel).getByText('sha-old')).toBeTruthy()
+      expect(within(panel).getByText('Superseded')).toBeTruthy()
+    })
+
+    it('is absent without an active or paused rollout', () => {
+      licenses = [lic({})]
+      rolloutsQuery = { data: [rollout({ status: 'COMPLETE' })], isPending: false, error: null }
+      render(<HoldersTab appId="app-1" />)
+      expect(screen.queryByTestId('rollout-panel')).toBeNull()
+    })
+
+    it('leaves the holders table in place when rollouts fail to load', () => {
+      licenses = [lic({})]
+      environments = [env({})]
+      rolloutsQuery = { data: undefined, isPending: false, error: new Error('boom') }
+      render(<HoldersTab appId="app-1" />)
+      expect(screen.getByTestId('holder-l1')).toBeTruthy()
+      expect(screen.queryByTestId('rollout-panel')).toBeNull()
+      expect(screen.getByText(/rollout did not load/i)).toBeTruthy()
+    })
   })
 
   it('invites a first grant when nobody holds a licence', () => {

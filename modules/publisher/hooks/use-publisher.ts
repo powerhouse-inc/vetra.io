@@ -13,12 +13,14 @@ import {
   fetchInviteCodes,
   fetchLicenses,
   fetchPublisherApps,
+  fetchRollouts,
   fetchTemplates,
   fetchTerms,
   fetchWarmPool,
   retryPublisher,
 } from '../graphql'
 import type {
+  AppRollout,
   PublisherAllowListEntry,
   PublisherApp,
   PublisherAppArtifact,
@@ -113,6 +115,14 @@ export const usePublisherLicenses = (appId: string | null) =>
 export const usePublisherEnvironments = (appId: string | null) =>
   useAppList<PublisherEnvironment>('environments', appId, fetchEnvironments, {
     refetchInterval: ENVIRONMENTS_POLL_MS,
+    refetchIntervalInBackground: false,
+  })
+
+/** The app's release rollouts. Updates apply as the keeper ticks, so it polls while one is ACTIVE. */
+export const usePublisherRollouts = (appId: string | null) =>
+  useAppList<AppRollout>('rollouts', appId, fetchRollouts, {
+    refetchInterval: (query) =>
+      query.state.data?.some((r) => r.status === 'ACTIVE') ? ENVIRONMENTS_POLL_MS : false,
     refetchIntervalInBackground: false,
   })
 
