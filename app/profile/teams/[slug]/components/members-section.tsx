@@ -1,6 +1,5 @@
 'use client'
 import { Loader2, Plus, ShieldCheck, Trash2 } from 'lucide-react'
-import Image from 'next/image'
 import { useState } from 'react'
 import { usePHToast } from '@powerhousedao/reactor-browser'
 import { Avatar, AvatarFallback } from '@/modules/shared/components/ui/avatar'
@@ -11,6 +10,7 @@ import { useTeamMembers } from '@/modules/profile/lib/use-team-members'
 import { isValidEthAddress } from '@/modules/profile/lib/validations'
 import type { FullTeam, FullTeamMember } from '@/modules/profile/lib/create-team-queries'
 import { ConfirmDialog } from './confirm-dialog'
+import { usePersonName } from '@/modules/shared/hooks/use-person-name'
 
 function shortAddr(addr: string): string {
   return addr.length > 12 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr
@@ -137,19 +137,17 @@ function MemberRow({
   onRemove: () => void
 }) {
   const ens = useEnsResolver(member.ethAddress)
-  const displayName = member.name || ens || shortAddr(member.ethAddress)
+  // Renown's profile first (name and picture), then what the team stored, then ENS.
+  const { name: renownName, avatarUrl } = usePersonName(member.ethAddress)
+  const displayName = renownName || member.name || ens || shortAddr(member.ethAddress)
+  const image = avatarUrl ?? member.profileImage
   return (
     <Card>
       <CardContent className="flex items-center gap-3 p-4">
         <Avatar className="size-10">
-          {member.profileImage && (
-            <Image
-              src={member.profileImage}
-              alt={displayName}
-              width={40}
-              height={40}
-              className="object-cover"
-            />
+          {image && (
+            // eslint-disable-next-line @next/next/no-img-element -- Renown /media 302s to short-lived storage URLs
+            <img src={image} alt={displayName} className="h-full w-full object-cover" />
           )}
           <AvatarFallback className="bg-primary/15 text-primary text-xs font-semibold">
             {isSelf ? <ShieldCheck className="size-4" /> : (ens?.[0] ?? '?').toUpperCase()}

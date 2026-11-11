@@ -1,6 +1,6 @@
-import { fetchAppProfile, type RenownAppProfile } from '@/modules/apps/lib/app-profile/api'
-import { safeLegacyLogo } from '@/modules/apps/lib/app-profile/logo'
-import { appPageUrl, renownMediaUrl } from '@/modules/apps/lib/app-profile/renown'
+import { fetchAppProfile } from '@/modules/apps/lib/app-profile/api'
+import { profileLogoUrl } from '@/modules/apps/lib/app-profile/logo'
+import { appPageUrl } from '@/modules/apps/lib/app-profile/renown'
 import { getCloudEndpoint } from '@/modules/cloud/graphql'
 
 /** How long the page reuses what it read (seconds). */
@@ -42,11 +42,6 @@ async function fetchRanking(fetchImpl: typeof fetch): Promise<Ranked[]> {
   return list
 }
 
-function logoOf(profile: RenownAppProfile): string | null {
-  if (profile.logoRef) return renownMediaUrl(profile.documentId, 'logo', profile.logoRef)
-  return safeLegacyLogo(profile.logo)
-}
-
 /**
  * The apps anyone can get, most held first (the server's order). Renown adds name, tagline,
  * category and logo; an app whose profile cannot be read is still listed, plainly.
@@ -67,7 +62,7 @@ export async function loadAppsDirectory(
         plans: app.plans,
         tagline: profile?.tagline ?? null,
         category: profile?.category ?? null,
-        logoUrl: profile ? logoOf(profile) : null,
+        logoUrl: profile ? profileLogoUrl(profile) : null,
         pageUrl: profile && app.appDid ? appPageUrl(app.appDid) : null,
       }
     }),

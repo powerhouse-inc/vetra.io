@@ -3,9 +3,9 @@ import Link from 'next/link'
 
 import { appHeadlineStatus, displayHost, primaryUrl, refLabel, shortSha } from '../lib/status'
 import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
-import { useAppName } from '../hooks/use-app-profile'
+import { useAppLogo, useAppName } from '../hooks/use-app-profile'
 import type { App } from '../types'
-import { AppAvatar } from './app-avatar'
+import { AppLogo } from './profile/app-logo'
 import { StatusPill } from '@/modules/shared/components/status'
 
 /**
@@ -14,6 +14,7 @@ import { StatusPill } from '@/modules/shared/components/status'
  */
 export function AppCard({ app }: { app: App }) {
   const name = useAppName(app.identityDid, app.name)
+  const logo = useAppLogo(app.identityDid)
   const status = appHeadlineStatus(app)
   // With no deployments ("No deployments") the URL serves the platform-default Connect. The
   // card only knows the latest deployment, which may be a preview after a production deploy.
@@ -24,7 +25,7 @@ export function AppCard({ app }: { app: App }) {
   return (
     <article className="group bg-card border-border hover:border-primary/40 relative flex flex-col rounded-xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md">
       <div className="flex items-start gap-3">
-        <AppAvatar name={name} seed={app.id} />
+        <AppLogo name={name} seed={app.id} src={logo} size="md" />
         <div className="min-w-0 flex-1">
           <h3 className="truncate leading-tight font-semibold">
             <Link

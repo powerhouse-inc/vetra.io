@@ -26,9 +26,9 @@ import {
   shortSha,
 } from '../lib/status'
 import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
-import { useAppName } from '../hooks/use-app-profile'
+import { useAppLogo, useAppName } from '../hooks/use-app-profile'
 import type { App, AppDeployment, AppPreview } from '../types'
-import { AppAvatar } from './app-avatar'
+import { AppLogo } from './profile/app-logo'
 import { AppProfileCard } from './profile/app-profile-card'
 import { AppStatsCard } from './stats/app-stats-card'
 import { SetupDeploys } from './setup-deploys'
@@ -129,6 +129,7 @@ export function GettingStarted({
 /** Decorative browser frame around the production host — the App's "screenshot". */
 function BrowserFrame({ app, url, live }: { app: App; url: string | null; live: boolean }) {
   const name = useAppName(app.identityDid, app.name)
+  const logo = useAppLogo(app.identityDid)
   return (
     <div className="bg-muted/40 border-border flex flex-col overflow-hidden rounded-xl border">
       <div className="bg-background/80 border-border flex items-center gap-2 border-b px-3 py-2">
@@ -152,7 +153,7 @@ function BrowserFrame({ app, url, live }: { app: App; url: string | null; live: 
           )}
         />
         <div className="relative flex flex-col items-center gap-3 text-center">
-          <AppAvatar name={name} seed={app.id} size="lg" />
+          <AppLogo name={name} seed={app.id} src={logo} size="lg" />
           <span className="text-sm font-medium">{name}</span>
         </div>
       </div>

@@ -99,7 +99,7 @@ export function HoldersTable({
               <TableRow key={r.id} data-testid={`holder-${r.id}`}>
                 <TableCell className="pl-4">
                   <span className="inline-flex items-center gap-1 font-mono text-xs break-all">
-                    <PersonName value={r.user} />
+                    <PersonName value={r.user} avatar />
                     <CopyButton value={r.user} label="Copy holder DID" />
                   </span>
                 </TableCell>
