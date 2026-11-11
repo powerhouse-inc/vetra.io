@@ -134,12 +134,18 @@ export function useAppDeployments(appId: string, limit = 50) {
 }
 
 /** Releases and builds vetra-publish recorded, newest first; `kind` null for both. */
-export function useAppReleases(appId: string, kind: AppReleaseKind | null, limit: number) {
+export function useAppReleases(
+  appId: string,
+  kind: AppReleaseKind | null,
+  limit: number,
+  enabled = true,
+) {
   const did = useDid()
   return useAuthedQuery<AppRelease[]>(
     appsKeys.releases(appId, kind, limit, did),
     (token) => fetchAppReleases(appId, kind, limit, token),
     {
+      enabled,
       retry: retryUnlessFinal,
       // "Show more" keeps the rows on screen while the longer page loads; a new filter does not.
       placeholderData: (prev, prevQuery) => (prevQuery?.queryKey[3] === kind ? prev : undefined),

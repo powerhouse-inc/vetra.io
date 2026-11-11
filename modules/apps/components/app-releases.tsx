@@ -49,6 +49,22 @@ const BADGE_CLASS: Record<ReleaseBadge, string> = {
   Build: 'bg-muted text-muted-foreground',
 }
 
+/** The empty state, worded for the filter in use. */
+const EMPTY: Record<AppReleaseKind | 'all', { title: string; body: string }> = {
+  all: {
+    title: 'Nothing published yet',
+    body: "No releases yet. Releases and builds appear here once the app's workflow runs powerhouse-inc/vetra-publish.",
+  },
+  release: {
+    title: 'No releases yet',
+    body: "Releases appear here once the app's workflow publishes one with powerhouse-inc/vetra-publish.",
+  },
+  build: {
+    title: 'No builds yet',
+    body: "Builds from release branches and pull requests appear here once the app's workflow runs powerhouse-inc/vetra-publish.",
+  },
+}
+
 const LINK_CLASS = 'hover:text-primary underline-offset-2 hover:underline'
 
 function KindFilter({
@@ -84,24 +100,19 @@ function KindFilter({
   )
 }
 
-function Source({ release, repository }: { release: AppRelease; repository: string | null }) {
+function Source({ release, repository }: { release: AppRelease; repository: string }) {
   if (release.pr !== null) {
-    const label = `PR #${release.pr}`
     return (
       <span className="inline-flex items-center gap-1">
         <GitPullRequest className="h-3.5 w-3.5 shrink-0" aria-hidden />
-        {repository ? (
-          <a
-            href={githubPullUrl(repository, release.pr)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={LINK_CLASS}
-          >
-            {label}
-          </a>
-        ) : (
-          label
-        )}
+        <a
+          href={githubPullUrl(repository, release.pr)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={LINK_CLASS}
+        >
+          PR #{release.pr}
+        </a>
       </span>
     )
   }
@@ -114,8 +125,7 @@ function Source({ release, repository }: { release: AppRelease; repository: stri
   )
 }
 
-function Commit({ sha, repository }: { sha: string; repository: string | null }) {
-  if (!repository) return <span className="font-mono">{shortSha(sha)}</span>
+function Commit({ sha, repository }: { sha: string; repository: string }) {
   return (
     <a
       href={githubCommitUrl(repository, sha)}
@@ -214,7 +224,7 @@ function ReleaseDetails({ release }: { release: AppRelease }) {
   )
 }
 
-function ReleaseRow({ release, repository }: { release: AppRelease; repository: string | null }) {
+function ReleaseRow({ release, repository }: { release: AppRelease; repository: string }) {
   const [open, setOpen] = useState(false)
   const badge = releaseBadge(release)
   return (
@@ -275,19 +285,22 @@ export function AppReleases({
   repository,
 }: {
   appId: string
-  /** `owner/name` on GitHub, for PR and commit links; null leaves them as text. */
+  /** `owner/name` on GitHub, for PR and commit links. Null (no repository): nothing to show. */
   repository: string | null
 }) {
   const [kind, setKind] = useState<AppReleaseKind | null>(null)
   const [limit, setLimit] = useState(RELEASES_LIMIT)
-  const releases = useAppReleases(appId, kind, limit)
+  const releases = useAppReleases(appId, kind, limit, repository !== null)
   const list = releases.data ?? []
   const canShowMore = limit < RELEASES_MORE_LIMIT && list.length >= limit
+  const empty = EMPTY[kind ?? 'all']
 
   const changeKind = (next: AppReleaseKind | null) => {
     setKind(next)
     setLimit(RELEASES_LIMIT)
   }
+
+  if (repository === null) return null
 
   return (
     <div className="space-y-6">
@@ -308,7 +321,7 @@ export function AppReleases({
       ) : list.length === 0 ? (
         <EmptyState
           icon={Tag}
-          title="Nothing published yet"
+          title={empty.title}
           action={
             <Button asChild variant="outline" size="sm">
               <a href={PUBLISH_README} target="_blank" rel="noopener noreferrer">
@@ -318,8 +331,7 @@ export function AppReleases({
             </Button>
           }
         >
-          No releases yet. Releases and builds appear here once the app&apos;s workflow runs
-          powerhouse-inc/vetra-publish.
+          {empty.body}
         </EmptyState>
       ) : (
         <>

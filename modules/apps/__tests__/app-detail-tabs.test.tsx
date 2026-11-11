@@ -186,6 +186,16 @@ describe('AppDetail tabs', () => {
     expect(screen.getByText('releases-content app-1 acme/vault')).toBeTruthy()
   })
 
+  it('hides Releases for an app without a repository and ignores a deep link to it', () => {
+    expect(visibleAppTabs({ isPublisher: false, hasRepository: false })).not.toContain('releases')
+    app = makeApp({ repository: null as unknown as App['repository'] })
+    searchParams = new URLSearchParams('tab=releases')
+    render(<AppDetail appId="app-1" />)
+    expect(tabNames()).not.toContain('Releases')
+    expect(screen.queryByText(/releases-content/)).toBeNull()
+    expect(screen.getByText('overview-content')).toBeTruthy()
+  })
+
   it('opens the Profile tab with the app identity', () => {
     searchParams = new URLSearchParams('tab=profile')
     render(<AppDetail appId="app-1" />)

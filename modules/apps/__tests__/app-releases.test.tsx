@@ -12,12 +12,12 @@ type QueryState = {
 let state: QueryState
 const refetch = vi.fn()
 const useAppReleases = vi.fn<
-  (appId: string, kind: AppReleaseKind | null, limit: number) => unknown
+  (appId: string, kind: AppReleaseKind | null, limit: number, enabled?: boolean) => unknown
 >(() => ({ ...state, refetch, isRefetching: false }))
 
 vi.mock('../hooks/use-apps', () => ({
-  useAppReleases: (appId: string, kind: AppReleaseKind | null, limit: number) =>
-    useAppReleases(appId, kind, limit),
+  useAppReleases: (appId: string, kind: AppReleaseKind | null, limit: number, enabled?: boolean) =>
+    useAppReleases(appId, kind, limit, enabled),
 }))
 
 import { AppReleases } from '../components/app-releases'
@@ -77,7 +77,7 @@ describe('AppReleases', () => {
 
   it('starts with releases and builds, 50 at a time', () => {
     render(<AppReleases appId="app-1" repository="powerhouse-inc/sektar" />)
-    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', null, 50)
+    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', null, 50, true)
   })
 
   it('shows one row per version with its kind badge', () => {
@@ -110,24 +110,22 @@ describe('AppReleases', () => {
     expect(within(row('1.1.0-beta.0')).queryByText('Migrates')).toBeNull()
   })
 
-  it('shows PR and commit as text when the app has no repository', () => {
-    render(<AppReleases appId="app-1" repository={null} />)
-    const r = row('1.0.10-vetra-publish-test.70')
-    expect(within(r).getByText('PR #70')).toBeTruthy()
-    expect(within(r).getByText('0123456')).toBeTruthy()
-    expect(within(r).queryAllByRole('link')).toHaveLength(0)
+  it('does not query, and shows nothing, for an app without a repository', () => {
+    const { container } = render(<AppReleases appId="app-1" repository={null} />)
+    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', null, 50, false)
+    expect(container.textContent).toBe('')
   })
 
   it('switches the filter and asks for the matching kind', () => {
     render(<AppReleases appId="app-1" repository="powerhouse-inc/sektar" />)
     expect(screen.getByRole('button', { name: 'All' }).getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(screen.getByRole('button', { name: 'Builds' }))
-    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', 'build', 50)
+    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', 'build', 50, true)
     expect(screen.getByRole('button', { name: 'Builds' }).getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(screen.getByRole('button', { name: 'Releases' }))
-    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', 'release', 50)
+    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', 'release', 50, true)
     fireEvent.click(screen.getByRole('button', { name: 'All' }))
-    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', null, 50)
+    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', null, 50, true)
   })
 
   it('offers "Show more" when the page is full, raising the limit to 200', () => {
@@ -138,7 +136,7 @@ describe('AppReleases', () => {
     }
     render(<AppReleases appId="app-1" repository="powerhouse-inc/sektar" />)
     fireEvent.click(screen.getByRole('button', { name: 'Show more' }))
-    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', null, 200)
+    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', null, 200, true)
   })
 
   it('hides "Show more" when everything is shown', () => {
@@ -193,6 +191,17 @@ describe('AppReleases', () => {
     expect(writeText).toHaveBeenLastCalledWith('cr.vetra.io/sektar/sektar:1.1.0-beta.0')
     await click('Copy digest')
     expect(writeText).toHaveBeenLastCalledWith(DIGEST)
+  })
+
+  it('words the empty state after the filter', () => {
+    state = { data: [], isPending: false, error: null }
+    render(<AppReleases appId="app-1" repository="powerhouse-inc/sektar" />)
+    expect(screen.getByText('Nothing published yet')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Releases' }))
+    expect(screen.getByText('No releases yet')).toBeTruthy()
+    fireEvent.click(screen.getByRole('button', { name: 'Builds' }))
+    expect(screen.getByText('No builds yet')).toBeTruthy()
+    expect(screen.getByRole('link', { name: /vetra-publish/i })).toBeTruthy()
   })
 
   it('shows the empty state with a link to vetra-publish', () => {
