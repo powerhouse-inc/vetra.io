@@ -194,7 +194,12 @@ const APP_FIELDS = `id slug name ownerAddress status
   createdAt updatedAt`
 
 /** App fields newer backends add; each is dropped (once per page load) when the schema rejects it by name. */
-const OPTIONAL_APP_FIELDS = ['identityExpiresAt', 'ownerOrgId', 'studioEnvironmentId'] as const
+const OPTIONAL_APP_FIELDS = [
+  'identityExpiresAt',
+  'ownerOrgId',
+  'studioEnvironmentId',
+  'releaseBranches',
+] as const
 const unsupportedAppFields = new Set<string>()
 
 /** Test hook: forget what the backend supports. */
