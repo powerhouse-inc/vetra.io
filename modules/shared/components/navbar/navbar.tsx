@@ -10,12 +10,7 @@ import NavbarRightSide from './components/navbar-right-side'
 import { ConsoleSearch } from '@/modules/shared/components/command-palette/console-search'
 import { isAppRoute } from '@/modules/landing/lib/routes'
 import { cn } from '@/shared/lib/utils'
-import {
-  CONSOLE_HEADER_NAV_ITEMS,
-  getNavbarConfig,
-  PRIVATE_NAV_ITEMS,
-  PUBLIC_NAV_ITEMS,
-} from './navbar-config'
+import { getNavbarConfig, PRIVATE_NAV_ITEMS, PUBLIC_NAV_ITEMS } from './navbar-config'
 
 function AuthAwareNavItems({ pathname }: { pathname: string }) {
   const auth = useRenownAuth()
@@ -23,11 +18,8 @@ function AuthAwareNavItems({ pathname }: { pathname: string }) {
   const navItems = inConsole ? PRIVATE_NAV_ITEMS : PUBLIC_NAV_ITEMS
   return (
     <>
-      {/* In the console the sidebar carries the desktop navigation; the header keeps the directory. */}
-      <NavbarItemsDesk
-        navItems={inConsole ? CONSOLE_HEADER_NAV_ITEMS : navItems}
-        pathname={pathname}
-      />
+      {/* In the console the sidebar carries the desktop navigation; the header centre is search. */}
+      {!inConsole && <NavbarItemsDesk navItems={navItems} pathname={pathname} />}
       <NavbarItemMobile navItems={navItems} pathname={pathname} />
       {/* Signed-in console only: an input on desktop, an icon opening a sheet on phones. */}
       {inConsole && <ConsoleSearch />}

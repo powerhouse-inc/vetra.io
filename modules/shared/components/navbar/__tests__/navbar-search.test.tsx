@@ -32,6 +32,13 @@ describe('navbar console search', () => {
     expect(screen.getByTestId('console-search')).toBeTruthy()
   })
 
+  it('leaves the search alone in the console header (no Apps directory link)', () => {
+    pathname = '/user/environments'
+    user = { address: '0xabc' }
+    render(<Navbar />)
+    expect(document.querySelector('a[href="/apps"]')).toBeNull()
+  })
+
   it('is not rendered on public routes', () => {
     pathname = '/studio'
     user = { address: '0xabc' }
