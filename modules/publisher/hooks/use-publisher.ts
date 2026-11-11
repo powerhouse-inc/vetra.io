@@ -13,12 +13,14 @@ import {
   fetchInviteCodes,
   fetchLicenses,
   fetchPublisherApps,
+  fetchRollouts,
   fetchTemplates,
   fetchTerms,
   fetchWarmPool,
   retryPublisher,
 } from '../graphql'
 import type {
+  AppRollout,
   PublisherAllowListEntry,
   PublisherApp,
   PublisherAppArtifact,
@@ -29,6 +31,7 @@ import type {
   PublisherTerm,
   WarmPool,
 } from '../types'
+import { rolloutsPollInterval } from '../lib/rollouts'
 import { publisherKeys, type PublisherResource } from './keys'
 import { useViewerDid } from './use-viewer-did'
 
@@ -113,6 +116,13 @@ export const usePublisherLicenses = (appId: string | null) =>
 export const usePublisherEnvironments = (appId: string | null) =>
   useAppList<PublisherEnvironment>('environments', appId, fetchEnvironments, {
     refetchInterval: ENVIRONMENTS_POLL_MS,
+    refetchIntervalInBackground: false,
+  })
+
+/** The app's release rollouts. Polls while one is ACTIVE or PAUSED (see rolloutsPollInterval). */
+export const usePublisherRollouts = (appId: string | null) =>
+  useAppList<AppRollout>('rollouts', appId, fetchRollouts, {
+    refetchInterval: (query) => rolloutsPollInterval(query.state.data),
     refetchIntervalInBackground: false,
   })
 

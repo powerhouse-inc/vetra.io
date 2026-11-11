@@ -10,6 +10,10 @@ export const appsKeys = {
   record: (id: string, did: string | undefined) => ['apps', 'record', id, did ?? null] as const,
   deployments: (id: string, did: string | undefined) =>
     ['apps', 'deployments', id, did ?? null] as const,
+  releases: (id: string, kind: string | null, limit: number, did: string | undefined) =>
+    ['apps', 'releases', id, kind, limit, did ?? null] as const,
+  instances: (id: string, did: string | undefined) =>
+    ['apps', 'instances', id, did ?? null] as const,
   githubInfo: () => ['apps', 'github-info'] as const,
   installations: (did: string | undefined) => ['apps', 'installations', did ?? null] as const,
   repositories: (installationId: string, did: string | undefined) =>

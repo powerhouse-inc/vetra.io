@@ -1,6 +1,7 @@
 import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import {
+  fetchAppInstances,
   AppsApiError,
   appsGql,
   describeAppsError,
@@ -231,6 +232,58 @@ describe('optional App fields', () => {
     const fetchImpl = vi.fn<FetchLike>(() => Promise.resolve(jsonResponse({ data: { app: null } })))
     await fetchApp('a1', null, fetchImpl)
     expect(fetchImpl.mock.calls[0][1].body as string).toContain('identityExpiresAt')
+  })
+
+  it('requests releaseBranches, and drops it alone on a backend without it', async () => {
+    resetOptionalAppFields()
+    const bodies: string[] = []
+    const fetchImpl = vi.fn<FetchLike>((_u, init) => {
+      const body = init.body as string
+      bodies.push(body)
+      return Promise.resolve(
+        body.includes('releaseBranches')
+          ? jsonResponse({
+              errors: [{ message: 'Cannot query field "releaseBranches" on type "App".' }],
+            })
+          : jsonResponse({ data: { app: null } }),
+      )
+    })
+    await fetchApp('a1', null, fetchImpl)
+    expect(bodies).toHaveLength(2)
+    expect(bodies[1]).not.toContain('releaseBranches')
+    expect(bodies[1]).toContain('identityExpiresAt')
+    resetOptionalAppFields()
+  })
+})
+
+describe('instances', () => {
+  it('drops instancesEnabled alone on a backend without it', async () => {
+    resetOptionalAppFields()
+    const bodies: string[] = []
+    const fetchImpl = vi.fn<FetchLike>((_u, init) => {
+      const body = init.body as string
+      bodies.push(body)
+      return Promise.resolve(
+        body.includes('instancesEnabled')
+          ? jsonResponse({
+              errors: [{ message: 'Cannot query field "instancesEnabled" on type "App".' }],
+            })
+          : jsonResponse({ data: { app: null } }),
+      )
+    })
+    await fetchApp('a1', null, fetchImpl)
+    expect(bodies[0]).toContain('instancesEnabled')
+    expect(bodies[1]).not.toContain('instancesEnabled')
+    expect(bodies[1]).toContain('releaseBranches')
+    resetOptionalAppFields()
+  })
+
+  it('fetches appInstances', async () => {
+    const fetchImpl = vi.fn<FetchLike>(() =>
+      Promise.resolve(jsonResponse({ data: { appInstances: [{ id: 'i1' }] } })),
+    )
+    expect(await fetchAppInstances('a1', null, fetchImpl)).toEqual([{ id: 'i1' }])
+    expect(fetchImpl.mock.calls[0][1].body as string).toContain('appInstances')
   })
 })
 

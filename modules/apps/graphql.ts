@@ -2,6 +2,9 @@ import { getCloudEndpoint } from '@/modules/cloud/graphql'
 import type {
   App,
   AppDeployment,
+  AppInstance,
+  AppRelease,
+  AppReleaseKind,
   AppsErrorCode,
   AppRegistryCredentials,
   CreateAppInput,
@@ -184,6 +187,8 @@ const URLS = `app connect switchboard`
 const DEPLOYMENT_FIELDS = `id appId environmentId kind prNumber gitRef sha
   packages { name version } imageTag status actorDid actorGithub runUrl error
   createdAt updatedAt urls { ${URLS} }`
+const RELEASE_FIELDS = `version kind branch pr commit notes customerNotes imageRef imageDigest
+  host packages { name version } migrates powerhouseVersion createdAt`
 const APP_FIELDS = `id slug name ownerAddress status
   repository { installationId repositoryId fullName }
   productionBranch productionEnvironmentId previewsEnabled previewLimit previewTtlDays
@@ -194,7 +199,13 @@ const APP_FIELDS = `id slug name ownerAddress status
   createdAt updatedAt`
 
 /** App fields newer backends add; each is dropped (once per page load) when the schema rejects it by name. */
-const OPTIONAL_APP_FIELDS = ['identityExpiresAt', 'ownerOrgId', 'studioEnvironmentId'] as const
+const OPTIONAL_APP_FIELDS = [
+  'identityExpiresAt',
+  'ownerOrgId',
+  'studioEnvironmentId',
+  'releaseBranches',
+  'instancesEnabled',
+] as const
 const unsupportedAppFields = new Set<string>()
 
 /** Test hook: forget what the backend supports. */
@@ -301,6 +312,38 @@ export async function fetchAppDeployments(
     token,
   )
   return data.appDeployments
+}
+
+/** What vetra-publish recorded for the app, newest first; `kind` null for releases and builds. */
+export async function fetchAppReleases(
+  appId: string,
+  kind: AppReleaseKind | null,
+  limit: number,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppRelease[]> {
+  const data = await appsGql<{ appReleases: AppRelease[] }>(
+    `query ($appId: ID!, $kind: String, $limit: Int) { appReleases(appId: $appId, kind: $kind, limit: $limit) { ${RELEASE_FIELDS} } }`,
+    { appId, kind, limit },
+    token,
+    fetchImpl,
+  )
+  return data.appReleases
+}
+
+/** The app's running instances (one per release branch); needs a backend with `appInstances`. */
+export async function fetchAppInstances(
+  appId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppInstance[]> {
+  const data = await appsGql<{ appInstances: AppInstance[] }>(
+    `query ($appId: ID!) { appInstances(appId: $appId) { id kind name branch pr url status reason targetVersion targetDigest runningVersion runningDigest environmentId updatedAt } }`,
+    { appId },
+    token,
+    fetchImpl,
+  )
+  return data.appInstances
 }
 
 export async function fetchAppDeployment(

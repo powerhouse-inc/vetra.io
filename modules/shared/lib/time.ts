@@ -9,6 +9,24 @@ export function timeAgo(iso: string | null | undefined, now: Date = new Date()):
   return `${formatDistanceStrict(date, now)} ago`
 }
 
+/** True when the time is still ahead; false for past, missing or invalid input. */
+export function isFuture(iso: string | null | undefined, now: Date = new Date()): boolean {
+  if (!iso) return false
+  const t = new Date(iso).getTime()
+  return !Number.isNaN(t) && t > now.getTime()
+}
+
+/** "in 2 hours" for a future time, "3 minutes ago" for a past one; empty for missing/invalid input. */
+export function timeFromNow(iso: string | null | undefined, now: Date = new Date()): string {
+  if (!iso) return ''
+  const date = new Date(iso)
+  if (Number.isNaN(date.getTime())) return ''
+  const ahead = date.getTime() - now.getTime()
+  if (ahead <= 0) return timeAgo(iso, now)
+  if (ahead < 45_000) return 'now'
+  return `in ${formatDistanceStrict(date, now)}`
+}
+
 /**
  * The console copy is English, so dates are too: the browser locale gave "2. Okt. 2026"
  * next to English sentences.

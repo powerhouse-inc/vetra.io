@@ -12,6 +12,7 @@ export type PublisherResource =
   | 'inviteCodes'
   | 'allowList'
   | 'warmPool'
+  | 'rollouts'
 
 export const publisherKeys = {
   all: ['publisher'] as const,

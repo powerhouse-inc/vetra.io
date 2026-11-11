@@ -39,6 +39,9 @@ const env = (over: Partial<PublisherEnvironment>): PublisherEnvironment => ({
   templateHash: 'h',
   stoppedAt: null,
   deleteAfter: null,
+  runningVersion: null,
+  isCanary: false,
+  update: null,
   ...over,
 })
 

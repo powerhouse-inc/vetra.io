@@ -29,6 +29,16 @@ describe('ArtifactsTab', () => {
     expect(screen.getByRole('status', { name: /loading artifacts/i })).toBeTruthy()
   })
 
+  it('points to the Releases tab for what vetra-publish published', () => {
+    state = { isPending: false, error: null, data: [] }
+    render(<ArtifactsTab appId="app-1" />)
+    expect(
+      screen.getByText(
+        'Packages and images published with the old deploy action. Releases from vetra-publish are under Releases.',
+      ),
+    ).toBeTruthy()
+  })
+
   it('explains what to do when nothing is published', () => {
     state = { isPending: false, error: null, data: [] }
     render(<ArtifactsTab appId="app-1" />)

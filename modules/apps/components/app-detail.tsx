@@ -56,6 +56,7 @@ import type { App } from '../types'
 import { AppLogo } from './profile/app-logo'
 import { AppDeployments } from './app-deployments'
 import { AppOverview } from './app-overview'
+import { AppReleases } from './app-releases'
 import { useAppLogo, useAppName } from '../hooks/use-app-profile'
 import { AppSettings, DeleteAppCard } from './app-settings'
 import { AppProfileTab } from './profile/profile-tab'
@@ -72,13 +73,21 @@ export const LICENSING_TABS = [
   'holders',
   'invite-codes',
 ] as const
-const ALL_TABS = ['overview', 'deployments', 'profile', ...LICENSING_TABS, 'settings'] as const
+const ALL_TABS = [
+  'overview',
+  'deployments',
+  'profile',
+  'releases',
+  ...LICENSING_TABS,
+  'settings',
+] as const
 export type AppTab = (typeof ALL_TABS)[number]
 
 export const APP_TAB_LABEL: Record<AppTab, string> = {
   overview: 'Overview',
   deployments: 'Deployments',
   profile: 'Profile',
+  releases: 'Releases',
   artifacts: 'Artifacts',
   templates: 'Templates',
   plans: 'Plans',
@@ -216,9 +225,25 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
   )
 }
 
-/** Licensing tabs only for the app's publisher. */
-export function visibleAppTabs({ isPublisher }: { isPublisher: boolean }): AppTab[] {
-  return ['overview', 'deployments', 'profile', ...(isPublisher ? LICENSING_TABS : []), 'settings']
+/**
+ * Licensing tabs only for the app's publisher; Releases for anyone who can view an app with a
+ * repository (a Studio product without GitHub has nothing vetra-publish could record).
+ */
+export function visibleAppTabs({
+  isPublisher,
+  hasRepository = true,
+}: {
+  isPublisher: boolean
+  hasRepository?: boolean
+}): AppTab[] {
+  return [
+    'overview',
+    'deployments',
+    'profile',
+    ...(hasRepository ? (['releases'] as const) : []),
+    ...(isPublisher ? LICENSING_TABS : []),
+    'settings',
+  ]
 }
 
 function Header({ app, deployed }: { app: App; deployed: boolean }) {
@@ -228,6 +253,7 @@ function Header({ app, deployed }: { app: App; deployed: boolean }) {
   // Before the first production deploy the URL serves the platform-default Connect.
   const url = deployed ? primaryUrl(app.productionUrls) : null
   const latest = app.latestDeployment
+  const repository = app.repository?.fullName ?? null
   return (
     <div className="flex flex-col gap-5 sm:flex-row sm:items-center">
       <AppLogo name={name} seed={app.id} src={logo} appDid={app.identityDid} size="lg" />
@@ -238,15 +264,17 @@ function Header({ app, deployed }: { app: App; deployed: boolean }) {
           <OrgBadge orgId={app.ownerOrgId} />
         </div>
         <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-          <a
-            href={githubRepoUrl(app.repository.fullName)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="hover:text-foreground inline-flex items-center gap-1.5"
-          >
-            <Github className="h-4 w-4" aria-hidden />
-            {app.repository.fullName}
-          </a>
+          {repository && (
+            <a
+              href={githubRepoUrl(repository)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="hover:text-foreground inline-flex items-center gap-1.5"
+            >
+              <Github className="h-4 w-4" aria-hidden />
+              {repository}
+            </a>
+          )}
           <span className="inline-flex items-center gap-1.5">
             <GitBranch className="h-4 w-4" aria-hidden />
             <span className="font-mono">{app.productionBranch}</span>
@@ -304,7 +332,11 @@ export function AppDetail({ appId }: { appId: string }) {
 
   const tabParam = params.get('tab')
   const identity = app ? identityState(app) : ({ kind: 'unknown' } as const)
-  const visibleTabs = visibleAppTabs({ isPublisher: publisher.isPublisher })
+  const repository = app?.repository?.fullName ?? null
+  const visibleTabs = visibleAppTabs({
+    isPublisher: publisher.isPublisher,
+    hasRepository: repository !== null,
+  })
   // While ownership is still being checked, a deep link to a licensing tab waits on a skeleton
   // instead of flashing Overview.
   const checkingLicensing = publisher.isPending
@@ -505,8 +537,8 @@ export function AppDetail({ appId }: { appId: string }) {
               ) : undefined
             }
           >
-            Vetra Deploy lost access to {app.repository.fullName}. Deploys are paused and previews
-            were removed. Reinstall the GitHub App to resume.
+            Vetra Deploy lost access to {repository ?? 'the repository'}. Deploys are paused and
+            previews were removed. Reinstall the GitHub App to resume.
           </Banner>
         )}
       </div>
@@ -590,6 +622,13 @@ export function AppDetail({ appId }: { appId: string }) {
         </TabsContent>
         <TabsContent value="profile">
           <AppProfileTab appId={appId} appName={name} appDid={app.identityDid} />
+        </TabsContent>
+        <TabsContent value="releases">
+          <AppReleases
+            appId={appId}
+            repository={repository}
+            instancesEnabled={app.instancesEnabled === true}
+          />
         </TabsContent>
         {showLicensing && (
           <TabsContent value="artifacts">
