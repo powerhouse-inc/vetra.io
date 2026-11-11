@@ -77,3 +77,18 @@ export async function cancelSubscription(
   )
   return data.vetraSubscriptions.cancelSubscription
 }
+
+/** A new environment for the caller's ACTIVE licence whose environment they deleted. */
+export async function recreateEnvironment(
+  licenseId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<Subscription> {
+  const data = await publisherGql<Ns<{ recreateEnvironment: Subscription }>>(
+    `mutation ($licenseId: String!) { vetraSubscriptions { recreateEnvironment(licenseId: $licenseId) { ${SUBSCRIPTION_FIELDS} } } }`,
+    { licenseId },
+    token,
+    fetchImpl,
+  )
+  return data.vetraSubscriptions.recreateEnvironment
+}

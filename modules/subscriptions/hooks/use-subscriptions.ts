@@ -12,9 +12,10 @@ import {
   fetchInviteCodeCheck,
   fetchMySubscriptions,
   fetchStudioAccess,
+  recreateEnvironment,
   redeemInviteCode,
 } from '../graphql'
-import { isLive } from '../lib/subscriptions'
+import { isLive, isSettling } from '../lib/subscriptions'
 import type { RedeemInviteCodeInput, StudioAccess, Subscription } from '../types'
 import { subscriptionsKeys } from './keys'
 
@@ -42,12 +43,7 @@ export function useMySubscriptions() {
       enabled: !!did,
       retry: retryPublisher,
       // A fresh licence is ISSUED and its environment appears a little later: poll until settled.
-      refetchInterval: (query) =>
-        query.state.data?.some(
-          (s) => s.status === 'ISSUED' || (s.mode === 'DEDICATED' && isLive(s) && !s.environmentId),
-        )
-          ? SETTLING_POLL_MS
-          : false,
+      refetchInterval: (query) => (isSettling(query.state.data ?? []) ? SETTLING_POLL_MS : false),
       refetchIntervalInBackground: false,
     },
   )
@@ -114,6 +110,11 @@ export const useRedeemInviteCode = () =>
 export const useCancelSubscription = () =>
   useSubscriptionsMutation<{ licenseId: string }, boolean>(({ licenseId }, t) =>
     cancelSubscription(licenseId, t),
+  )
+
+export const useRecreateEnvironment = () =>
+  useSubscriptionsMutation<{ licenseId: string }, Subscription>(({ licenseId }, t) =>
+    recreateEnvironment(licenseId, t),
   )
 
 export function useSubscriptionForEnvironment(environmentId: string) {

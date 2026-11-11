@@ -2,6 +2,12 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { cleanup, fireEvent, render, screen } from '@testing-library/react'
 import React from 'react'
 import type { Subscription } from '../types'
+
+const recreate = vi.fn()
+vi.mock('../hooks/use-subscriptions', () => ({
+  useRecreateEnvironment: () => ({ mutate: recreate, isPending: false }),
+}))
+
 import { SubscriptionCard } from '../components/subscription-card'
 
 const sub = (over: Partial<Subscription> = {}): Subscription => ({
@@ -141,5 +147,31 @@ describe('SubscriptionCard', () => {
     )
     expect(screen.getByText('Licence ended')).toBeTruthy()
     expect(screen.getAllByText(/Nov 16, 2026/)).toHaveLength(1)
+  })
+
+  it('offers a new environment when the holder deleted theirs, instead of "being set up"', () => {
+    render(
+      <SubscriptionCard
+        subscription={sub({
+          environmentId: null,
+          openUrl: null,
+          warnings: [
+            {
+              kind: 'ENVIRONMENT_DELETED',
+              at: '2026-11-11T00:00:00Z',
+              message:
+                'You deleted this environment. Your licence still covers one: create a new one.',
+            },
+          ],
+        })}
+        highlighted={false}
+        onCancel={() => {}}
+      />,
+    )
+    expect(screen.getByText('Environment deleted')).toBeTruthy()
+    expect(screen.queryByText(/being set up/)).toBeNull()
+    expect(screen.queryByRole('link', { name: /Renew with a code/ })).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: /Create new environment/ }))
+    expect(recreate).toHaveBeenCalledWith({ licenseId: 'l1' }, expect.anything())
   })
 })
