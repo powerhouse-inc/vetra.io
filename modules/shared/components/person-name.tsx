@@ -1,14 +1,22 @@
 'use client'
 
-import { User } from 'lucide-react'
 import { useState } from 'react'
+import { GeneratedAvatar } from '@/modules/shared/components/generated-avatar'
 import { usePersonName } from '@/modules/shared/hooks/use-person-name'
 import { cn } from '@/modules/shared/lib/utils'
 
 export const shortAddress = (address: string) => `${address.slice(0, 6)}…${address.slice(-4)}`
 
-/** A person's Renown picture, or a plain person icon without one (or when it fails to load). */
-function PersonAvatar({ src, name }: { src: string | null; name: string }) {
+/** A person's Renown picture, else renown.id's avatar generated from their address. */
+function PersonAvatar({
+  src,
+  name,
+  address,
+}: {
+  src: string | null
+  name: string
+  address: string
+}) {
   const [failed, setFailed] = useState<string | null>(null)
   if (src && failed !== src) {
     return (
@@ -21,19 +29,12 @@ function PersonAvatar({ src, name }: { src: string | null; name: string }) {
       />
     )
   }
-  return (
-    <span
-      aria-hidden
-      className="bg-muted text-muted-foreground inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full"
-    >
-      <User className="h-2.5 w-2.5" />
-    </span>
-  )
+  return <GeneratedAvatar seed={address} className="h-4 w-4 rounded-full" />
 }
 
 /**
  * A person, by Renown profile name (else ENS name, else the short address), with the full
- * address as a tooltip. `avatar` puts their Renown picture in front, for lists; leave it off
+ * address as a tooltip. `avatar` puts their Renown picture (or generated avatar) in front, for lists; leave it off
  * inside sentences. Anything that is not an address or did:pkh is shown as given.
  */
 export function PersonName({
@@ -57,7 +58,7 @@ export function PersonName({
   }
   return (
     <span title={address} className={cn('inline-flex min-w-0 items-center gap-1.5', className)}>
-      <PersonAvatar src={avatarUrl} name={label} />
+      <PersonAvatar src={avatarUrl} name={label} address={address} />
       <span className="truncate">{label}</span>
     </span>
   )

@@ -1,5 +1,5 @@
 'use client'
-import { Loader2, Plus, ShieldCheck, Trash2 } from 'lucide-react'
+import { Loader2, Plus, Trash2 } from 'lucide-react'
 import { useState } from 'react'
 import { usePHToast } from '@powerhousedao/reactor-browser'
 import { Avatar, AvatarFallback } from '@/modules/shared/components/ui/avatar'
@@ -11,6 +11,7 @@ import { isValidEthAddress } from '@/modules/profile/lib/validations'
 import type { FullTeam, FullTeamMember } from '@/modules/profile/lib/create-team-queries'
 import { ConfirmDialog } from './confirm-dialog'
 import { usePersonName } from '@/modules/shared/hooks/use-person-name'
+import { GeneratedAvatar } from '@/modules/shared/components/generated-avatar'
 
 function shortAddr(addr: string): string {
   return addr.length > 12 ? `${addr.slice(0, 6)}…${addr.slice(-4)}` : addr
@@ -149,8 +150,8 @@ function MemberRow({
             // eslint-disable-next-line @next/next/no-img-element -- Renown /media 302s to short-lived storage URLs
             <img src={image} alt={displayName} className="h-full w-full object-cover" />
           )}
-          <AvatarFallback className="bg-primary/15 text-primary text-xs font-semibold">
-            {isSelf ? <ShieldCheck className="size-4" /> : (ens?.[0] ?? '?').toUpperCase()}
+          <AvatarFallback className="bg-transparent p-0">
+            <GeneratedAvatar seed={member.ethAddress} className="h-full w-full rounded-full" />
           </AvatarFallback>
         </Avatar>
         <div className="min-w-0 flex-1">

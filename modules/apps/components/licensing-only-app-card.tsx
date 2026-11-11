@@ -19,7 +19,7 @@ export function LicensingOnlyAppCard({ app }: { app: PublisherApp }) {
       className="group bg-card border-border hover:border-primary/40 relative flex flex-col rounded-xl border p-5 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
     >
       <div className="flex items-start gap-3">
-        <AppLogo name={name} seed={app.id} src={logo} size="md" />
+        <AppLogo name={name} seed={app.id} src={logo} appDid={app.identityDid} size="md" />
         <div className="min-w-0 flex-1">
           <h3 className="truncate leading-tight font-semibold">
             <Link
