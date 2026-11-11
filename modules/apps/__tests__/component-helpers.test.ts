@@ -23,6 +23,7 @@ const app = {
 const form = {
   name: 'Achra',
   productionBranch: 'main',
+  releaseBranches: [] as string[],
   previewsEnabled: true,
   previewLimit: '5',
   previewTtlDays: '7',

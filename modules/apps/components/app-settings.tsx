@@ -36,6 +36,7 @@ import { formatDate } from '@/modules/shared/lib/time'
 import { useAppName } from '../hooks/use-app-profile'
 import type { App, UpdateAppInput } from '../types'
 import { CopyButton } from './copy-button'
+import { ReleaseBranchesField, RELEASE_BRANCHES_MAX } from './release-branches-field'
 import { SetupDeploys } from './setup-deploys'
 import { StatusPill } from '@/modules/shared/components/status'
 
@@ -47,6 +48,7 @@ export const APP_NAME_MAX = 100
 type FormState = {
   name: string
   productionBranch: string
+  releaseBranches: string[]
   previewsEnabled: boolean
   previewLimit: string
   previewTtlDays: string
@@ -56,6 +58,7 @@ function toForm(app: App): FormState {
   return {
     name: app.name,
     productionBranch: app.productionBranch,
+    releaseBranches: app.releaseBranches ?? [],
     previewsEnabled: app.previewsEnabled,
     previewLimit: String(app.previewLimit),
     previewTtlDays: String(app.previewTtlDays),
@@ -80,6 +83,7 @@ export function diffSettings(app: App, form: FormState): UpdateAppInput | null {
     !name ||
     name.length > APP_NAME_MAX ||
     !form.productionBranch.trim() ||
+    form.releaseBranches.length > RELEASE_BRANCHES_MAX ||
     limit === null ||
     ttl === null
   ) {
@@ -89,6 +93,12 @@ export function diffSettings(app: App, form: FormState): UpdateAppInput | null {
   if (form.name.trim() !== app.name) patch.name = form.name.trim()
   if (form.productionBranch.trim() !== app.productionBranch)
     patch.productionBranch = form.productionBranch.trim()
+  const current = app.releaseBranches ?? []
+  if (
+    form.releaseBranches.length !== current.length ||
+    form.releaseBranches.some((b, i) => b !== current[i])
+  )
+    patch.releaseBranches = form.releaseBranches
   if (form.previewsEnabled !== app.previewsEnabled) patch.previewsEnabled = form.previewsEnabled
   if (limit !== app.previewLimit) patch.previewLimit = limit
   if (ttl !== app.previewTtlDays) patch.previewTtlDays = ttl
@@ -138,20 +148,26 @@ function SettingsCard({
   )
 }
 
-function GeneralAndPreviews({ app }: { app: App }) {
+function GeneralAndPreviews({ app, canEdit }: { app: App; canEdit: boolean }) {
   // Re-seed the form when the server copy changes (keyed by updatedAt below).
   const [form, setForm] = useState<FormState>(() => toForm(app))
   const update = useUpdateApp(app.id)
   const patch = diffSettings(app, form)
   const dirty = !!patch && Object.keys(patch).length > 0
+  const [releaseError, setReleaseError] = useState<string | null>(null)
   const set = (p: Partial<FormState>) => setForm((f) => ({ ...f, ...p }))
 
   const save = (e: React.FormEvent) => {
     e.preventDefault()
     if (!patch || !dirty) return
+    setReleaseError(null)
     update.mutate(patch, {
       onSuccess: () => toast.success('Settings saved'),
-      onError: (err) => toast.error(describeAppsError(err)),
+      onError: (err) => {
+        const message = describeAppsError(err)
+        if (patch.releaseBranches) setReleaseError(message)
+        toast.error(message)
+      },
     })
   }
 
@@ -207,6 +223,15 @@ function GeneralAndPreviews({ app }: { app: App }) {
             </p>
           </div>
         </div>
+        <ReleaseBranchesField
+          value={form.releaseBranches}
+          readOnly={!canEdit}
+          serverError={releaseError}
+          onChange={(releaseBranches) => {
+            setReleaseError(null)
+            set({ releaseBranches })
+          }}
+        />
         <div className="border-border space-y-1 border-t pt-5">
           <h4 className="text-sm font-semibold">Preview environments</h4>
           <p className="text-muted-foreground text-sm">
@@ -499,10 +524,19 @@ export function OrganisationCard({ app }: { app: App }) {
 }
 
 /** Settings tab: general + previews form, workflow, identity, danger zone. */
-export function AppSettings({ app, onAuthorize }: { app: App; onAuthorize: () => void }) {
+export function AppSettings({
+  app,
+  onAuthorize,
+  canEdit = true,
+}: {
+  app: App
+  onAuthorize: () => void
+  /** Owners edit; others see the release branches read-only. */
+  canEdit?: boolean
+}) {
   return (
     <div className="space-y-6">
-      <GeneralAndPreviews key={app.updatedAt} app={app} />
+      <GeneralAndPreviews key={app.updatedAt} app={app} canEdit={canEdit} />
       <SettingsCard
         title="Deploy workflow"
         description="The GitHub Actions workflow that builds, publishes and deploys on every push."
