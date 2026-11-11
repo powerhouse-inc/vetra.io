@@ -5,6 +5,23 @@ import type { Subscription, SubscriptionWarningKind } from '../types'
 const LIVE = new Set(['ISSUED', 'ACTIVE'])
 export const isLive = (s: Pick<Subscription, 'status'>): boolean => LIVE.has(s.status)
 
+/** The holder deleted the environment this live licence covers (they may ask for a new one). */
+export const environmentDeleted = (s: Pick<Subscription, 'warnings'>): boolean =>
+  s.warnings.some((w) => w.kind === 'ENVIRONMENT_DELETED')
+
+/**
+ * Still being set up, so worth polling: a fresh (ISSUED) licence, or a live dedicated one whose
+ * environment has not appeared yet. Not one whose environment the holder deleted: none is coming
+ * until they ask.
+ */
+export function isSettling(subs: Subscription[]): boolean {
+  return subs.some(
+    (s) =>
+      s.status === 'ISSUED' ||
+      (s.mode === 'DEDICATED' && isLive(s) && !s.environmentId && !environmentDeleted(s)),
+  )
+}
+
 export type AppGroup = {
   appId: string
   appName: string

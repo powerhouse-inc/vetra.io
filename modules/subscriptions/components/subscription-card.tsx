@@ -6,6 +6,7 @@ import { StatusPill } from '@/modules/shared/components/status'
 import { Button } from '@/modules/shared/components/ui/button'
 import { cn } from '@/shared/lib/utils'
 import {
+  environmentDeleted,
   environmentHint,
   environmentHref,
   isLive,
@@ -26,6 +27,8 @@ function EnvironmentLine({ s }: { s: Subscription }) {
       </span>
     )
   }
+  // The banner explains it and offers a new one; nothing is being set up.
+  if (environmentDeleted(s)) return null
   const href = environmentHref(s)
   const hint = environmentHint(s)
   if (href) {
@@ -107,7 +110,7 @@ export function SubscriptionCard({
       {s.warnings.length > 0 && (
         <div className="space-y-2">
           {s.warnings.map((w) => (
-            <WarningBanner key={`${w.kind}-${w.at}`} warning={w} />
+            <WarningBanner key={`${w.kind}-${w.at}`} warning={w} licenseId={s.licenseId} />
           ))}
         </div>
       )}

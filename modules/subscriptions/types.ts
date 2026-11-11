@@ -12,7 +12,12 @@ export type InviteCodeCheck = {
 }
 
 export type SubscriptionWarningKind =
-  'EXPIRING' | 'ENDED_STOP_PENDING' | 'STOPPED_DELETE_PENDING' | 'DELETE_IMMINENT'
+  | 'EXPIRING'
+  | 'ENDED_STOP_PENDING'
+  | 'STOPPED_DELETE_PENDING'
+  | 'DELETE_IMMINENT'
+  /** A live licence whose environment the holder deleted: they may ask for a new one. */
+  | 'ENVIRONMENT_DELETED'
 
 export type SubscriptionWarning = { kind: SubscriptionWarningKind; at: string; message: string }
 

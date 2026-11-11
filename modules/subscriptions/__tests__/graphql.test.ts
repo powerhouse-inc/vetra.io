@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest'
 import type { FetchLike } from '@/modules/publisher/graphql'
 import {
   cancelSubscription,
+  recreateEnvironment,
   fetchInviteCodeCheck,
   fetchMySubscriptions,
   fetchStudioAccess,
@@ -64,6 +65,15 @@ describe('vetraSubscriptions client', () => {
     expect(calls[0].query).toContain('mutation ($input: RedeemInviteCodeInput!)')
     expect(calls[0].query).toContain('redeemInviteCode(input: $input) {')
     expect(calls[0].variables).toEqual({ input: { code: 'C', upgrades: 'old' } })
+  })
+
+  it('asks for a new environment for a licence and returns its subscription', async () => {
+    const a = capture({ vetraSubscriptions: { recreateEnvironment: { licenseId: 'l1' } } })
+    await expect(recreateEnvironment('l1', 'tok', a.fetchImpl)).resolves.toEqual({
+      licenseId: 'l1',
+    })
+    expect(a.calls[0].query).toContain('recreateEnvironment(licenseId: $licenseId) {')
+    expect(a.calls[0].variables).toEqual({ licenseId: 'l1' })
   })
 
   it('cancels with bare arguments', async () => {
