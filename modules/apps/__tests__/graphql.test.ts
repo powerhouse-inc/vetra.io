@@ -12,6 +12,7 @@ import {
   fetchAppRecord,
   fetchMyApps,
   resetOptionalAppFields,
+  resetOptionalInstanceFields,
   isAppsError,
   toAppsError,
   type FetchLike,
@@ -416,5 +417,23 @@ describe('apps without a repository', () => {
       Promise.resolve(jsonResponse({ data: { myApps: [repoApp, bareApp] } })),
     )
     expect((await fetchMyApps(null, fetchImpl)).map((a) => a.id)).toEqual(['a1'])
+  })
+})
+
+describe('fetchAppInstances optional health fields', () => {
+  it('drops a rejected health field and retries', async () => {
+    resetOptionalInstanceFields()
+    const fetchImpl = vi
+      .fn<FetchLike>()
+      .mockResolvedValueOnce(
+        jsonResponse({
+          errors: [{ message: 'Cannot query field "healthReason" on type "AppInstance".' }],
+        }),
+      )
+      .mockResolvedValueOnce(jsonResponse({ data: { appInstances: [] } }))
+    expect(await fetchAppInstances('a1', null, fetchImpl)).toEqual([])
+    expect(fetchImpl.mock.calls[0][1].body as string).toContain('healthReason')
+    expect(fetchImpl.mock.calls[1][1].body as string).not.toContain('healthReason')
+    resetOptionalInstanceFields()
   })
 })
