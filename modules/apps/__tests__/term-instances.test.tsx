@@ -93,7 +93,7 @@ describe('TermInstances', () => {
     expect(within(dialog).getByText('One instance everyone with this plan uses.')).toBeTruthy()
     expect(within(dialog).getByText('Every holder gets their own instance.')).toBeTruthy()
     // Releases only: the build is not offered.
-    const target = within(dialog).getByLabelText('Target release') as HTMLSelectElement
+    const target = within(dialog).getByLabelText<HTMLSelectElement>('Target release')
     expect([...target.options].map((o) => o.value)).toEqual(['', '1.3.0'])
     expect(releasesCalls.every((c) => c.kind === 'release')).toBe(true)
     fireEvent.click(within(dialog).getByRole('radio', { name: /Own/ }))
@@ -125,9 +125,9 @@ describe('TermInstances', () => {
 
   it('does not offer instances for a term that already has holders', () => {
     render(<TermInstances appId="a1" term={{ ...TERM, activeLicenses: 3 }} />)
-    expect(
-      (screen.getByRole('button', { name: 'Run instances' }) as HTMLButtonElement).disabled,
-    ).toBe(true)
+    expect(screen.getByRole('button', { name: 'Run instances' }).hasAttribute('disabled')).toBe(
+      true,
+    )
   })
 
   it('summarises an adopted plan with its instance count', () => {
