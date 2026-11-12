@@ -55,6 +55,7 @@ import { timeAgo } from '@/modules/shared/lib/time'
 import type { App } from '../types'
 import { AppLogo } from './profile/app-logo'
 import { AppDeployments } from './app-deployments'
+import { AppEnvironment } from './app-environment'
 import { AppOverview } from './app-overview'
 import { AppReleases } from './app-releases'
 import { useAppLogo, useAppName } from '../hooks/use-app-profile'
@@ -79,6 +80,7 @@ const ALL_TABS = [
   'profile',
   'releases',
   ...LICENSING_TABS,
+  'environment',
   'settings',
 ] as const
 export type AppTab = (typeof ALL_TABS)[number]
@@ -93,6 +95,7 @@ export const APP_TAB_LABEL: Record<AppTab, string> = {
   plans: 'Plans',
   holders: 'Holders',
   'invite-codes': 'Invite codes',
+  environment: 'Environment',
   settings: 'Settings',
 }
 
@@ -227,7 +230,9 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
 
 /**
  * Licensing tabs only for the app's publisher; Releases for anyone who can view an app with a
- * repository (a Studio product without GitHub has nothing vetra-publish could record).
+ * repository (a Studio product without GitHub has nothing vetra-publish could record), and
+ * Environment too, since only its branch and preview instances get those settings (the API
+ * lets owners and operators in; the tab says so to anyone else).
  */
 export function visibleAppTabs({
   isPublisher,
@@ -242,6 +247,7 @@ export function visibleAppTabs({
     'profile',
     ...(hasRepository ? (['releases'] as const) : []),
     ...(isPublisher ? LICENSING_TABS : []),
+    ...(hasRepository ? (['environment'] as const) : []),
     'settings',
   ]
 }
@@ -582,7 +588,7 @@ export function AppDetail({ appId }: { appId: string }) {
           {visibleTabs.map((t) => (
             <Fragment key={t}>
               {/* Placeholders where the licensing tabs appear, while ownership is checked. */}
-              {t === 'settings' &&
+              {t === (repository ? 'environment' : 'settings') &&
                 checkingLicensing &&
                 LICENSING_TABS.map((l) => (
                   <Skeleton key={l} aria-hidden className="h-4 w-16 shrink-0 self-center" />
@@ -653,6 +659,11 @@ export function AppDetail({ appId }: { appId: string }) {
         {showLicensing && (
           <TabsContent value="invite-codes">
             <InviteCodesTab appId={appId} />
+          </TabsContent>
+        )}
+        {repository && (
+          <TabsContent value="environment">
+            <AppEnvironment appId={appId} instancesEnabled={app.instancesEnabled === true} />
           </TabsContent>
         )}
         <TabsContent value="settings">
