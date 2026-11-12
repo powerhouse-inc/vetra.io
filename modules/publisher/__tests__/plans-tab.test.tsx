@@ -64,6 +64,13 @@ describe('PlansTab', () => {
     expect(within(row).getByText('12 active licences')).toBeTruthy()
   })
 
+  it('renders the extra area on each plan card', () => {
+    terms = [term({ status: 'ACTIVE' })]
+    render(<PlansTab appId="app-1" termExtra={(t) => <p>Instances of {t.kind}</p>} />)
+    const row = screen.getByTestId('plan-term-1')
+    expect(within(row).getByText('Instances of 2026-pro')).toBeTruthy()
+  })
+
   it('explains why a draft cannot be published yet', () => {
     terms = [term({ templateId: null })]
     render(<PlansTab appId="app-1" />)

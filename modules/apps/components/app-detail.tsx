@@ -58,6 +58,8 @@ import { AppDeployments } from './app-deployments'
 import { AppEnvironment } from './app-environment'
 import { AppOverview } from './app-overview'
 import { AppReleases } from './app-releases'
+import { TermInstances } from './term-instances'
+import { termName } from '@/modules/publisher/lib/format'
 import { useAppLogo, useAppName } from '../hooks/use-app-profile'
 import { AppSettings, DeleteAppCard } from './app-settings'
 import { AppProfileTab } from './profile/profile-tab'
@@ -648,7 +650,19 @@ export function AppDetail({ appId }: { appId: string }) {
         )}
         {showLicensing && (
           <TabsContent value="plans">
-            <PlansTab appId={appId} />
+            <PlansTab
+              appId={appId}
+              termExtra={
+                repository
+                  ? (t) => (
+                      <TermInstances
+                        appId={appId}
+                        term={{ kind: t.kind, name: termName(t), activeLicenses: t.activeLicenses }}
+                      />
+                    )
+                  : undefined
+              }
+            />
           </TabsContent>
         )}
         {showLicensing && (
