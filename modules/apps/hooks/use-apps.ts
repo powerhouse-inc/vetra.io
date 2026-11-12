@@ -1,7 +1,7 @@
 'use client'
 
 import { useDid, useRenown } from '@powerhousedao/reactor-browser'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import { useInfiniteQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { useCallback, useMemo, useRef } from 'react'
 
 import { getAuthToken } from '@/modules/cloud/graphql'
@@ -15,11 +15,14 @@ import {
   deleteApp,
   deleteAppSetting,
   fetchApp,
+  fetchAppAccess,
+  fetchAppAudit,
   fetchAppRecord,
   fetchAppDeployments,
   fetchAppInstances,
   fetchAppPlans,
   fetchAppReleases,
+  fetchAppRoles,
   fetchAppSettings,
   fetchGithubDeployAppInfo,
   fetchGithubDeployRepositories,
@@ -27,9 +30,11 @@ import {
   fetchMyGithubDeployInstallations,
   fetchMyInstances,
   openAppSetupPullRequest,
+  removeAppRole,
   retireAppPlan,
   rollbackApp,
   setAppPlanTarget,
+  setAppRole,
   setAppSetting,
   updateApp,
   updateAppPlan,
@@ -42,11 +47,14 @@ import type { CloudEnvironment } from '@/modules/cloud/types'
 import { appPollInterval, appsPollInterval, deploymentsPollInterval } from '../lib/status'
 import type {
   App,
+  AppAccess,
+  AppAuditPage,
   AppDeployment,
   AppInstance,
   AppPlan,
   AppRelease,
   AppReleaseKind,
+  AppRole,
   AppSettingScope,
   AppSettings,
   CreateAppInput,
@@ -240,6 +248,50 @@ export function useAppSettings(appId: string, enabled = true) {
   )
 }
 
+/** Rows per audit page ("Load more" fetches the next, older one). */
+export const AUDIT_PAGE_SIZE = 50
+
+/** The App's audit log, newest first, one page at a time (`fetchNextPage` loads older rows). */
+export function useAppAudit(appId: string, enabled = true) {
+  const did = useDid()
+  const renown = useRenown()
+  const renownRef = useRef(renown)
+  // eslint-disable-next-line react-hooks/refs
+  renownRef.current = renown
+  return useInfiniteQuery({
+    queryKey: appsKeys.audit(appId, did),
+    queryFn: async ({ pageParam }: { pageParam: string | null }): Promise<AppAuditPage> =>
+      fetchAppAudit(appId, AUDIT_PAGE_SIZE, pageParam, await getAuthToken(renownRef.current)),
+    initialPageParam: null as string | null,
+    getNextPageParam: (last: AppAuditPage) => last.nextBefore ?? undefined,
+    enabled,
+    retry: retryUnlessFinal,
+  })
+}
+
+/** The App's release managers. */
+export function useAppRoles(appId: string, enabled = true) {
+  const did = useDid()
+  return useAuthedQuery<AppRole[]>(
+    appsKeys.roles(appId, did),
+    (token) => fetchAppRoles(appId, token),
+    {
+      enabled,
+      retry: retryUnlessFinal,
+    },
+  )
+}
+
+/** What the caller may do with the App (operate, release, administer). */
+export function useAppAccess(appId: string, enabled = true) {
+  const did = useDid()
+  return useAuthedQuery<AppAccess>(
+    appsKeys.access(appId, did),
+    (token) => fetchAppAccess(appId, token),
+    { enabled, retry: retryUnlessFinal, staleTime: 60_000 },
+  )
+}
+
 export function useGithubDeployAppInfo() {
   return useAuthedQuery<GithubDeployAppInfo>(
     appsKeys.githubInfo(),
@@ -383,6 +435,7 @@ export function useSetAppSetting(appId: string) {
       )
       void qc.invalidateQueries({ queryKey: appsKeys.settings(appId, did) })
       void qc.invalidateQueries({ queryKey: appsKeys.instances(appId, did) })
+      void qc.invalidateQueries({ queryKey: appsKeys.audit(appId, did) })
     },
   })
 }
@@ -400,6 +453,7 @@ export function useDeleteAppSetting(appId: string) {
       )
       void qc.invalidateQueries({ queryKey: appsKeys.settings(appId, did) })
       void qc.invalidateQueries({ queryKey: appsKeys.instances(appId, did) })
+      void qc.invalidateQueries({ queryKey: appsKeys.audit(appId, did) })
     },
   })
 }
@@ -431,6 +485,7 @@ function useCachePlan(appId: string) {
       )
       void qc.invalidateQueries({ queryKey: appsKeys.plans(appId, did) })
       void qc.invalidateQueries({ queryKey: appsKeys.instances(appId, did) })
+      void qc.invalidateQueries({ queryKey: appsKeys.audit(appId, did) })
     },
     [qc, did, appId],
   )
@@ -472,5 +527,38 @@ export function useRetireAppPlan(appId: string) {
   return useMutation({
     mutationFn: async (planId: string) => retireAppPlan(planId, await token()),
     onSuccess: cachePlan,
+  })
+}
+
+/** Names a release manager; refreshes the list and the audit log. */
+export function useSetAppRole(appId: string) {
+  const qc = useQueryClient()
+  const did = useDid()
+  const token = useTokenResolver()
+  return useMutation({
+    mutationFn: async (address: string) => setAppRole(appId, address, await token()),
+    onSuccess: (role) => {
+      qc.setQueryData<AppRole[]>(appsKeys.roles(appId, did), (old) =>
+        old ? [...old.filter((r) => r.address !== role.address), role] : [role],
+      )
+      void qc.invalidateQueries({ queryKey: appsKeys.roles(appId, did) })
+      void qc.invalidateQueries({ queryKey: appsKeys.audit(appId, did) })
+    },
+  })
+}
+
+export function useRemoveAppRole(appId: string) {
+  const qc = useQueryClient()
+  const did = useDid()
+  const token = useTokenResolver()
+  return useMutation({
+    mutationFn: async (address: string) => removeAppRole(appId, address, await token()),
+    onSuccess: (_removed, address) => {
+      qc.setQueryData<AppRole[]>(appsKeys.roles(appId, did), (old) =>
+        old?.filter((r) => r.address !== address),
+      )
+      void qc.invalidateQueries({ queryKey: appsKeys.roles(appId, did) })
+      void qc.invalidateQueries({ queryKey: appsKeys.audit(appId, did) })
+    },
   })
 }

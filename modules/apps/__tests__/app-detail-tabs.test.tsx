@@ -21,6 +21,16 @@ let app: App
 let appError: Error | null = null
 /** The apps record behind a licensing-only app: null for Vetra Studio, which has none. */
 let appRecord: { id: string; status: string } | null = null
+type Access = { operate: boolean; release: boolean; administer: boolean; releaseManager: boolean }
+const OWNER: Access = { operate: true, release: true, administer: true, releaseManager: false }
+const RELEASE_MANAGER: Access = {
+  operate: false,
+  release: true,
+  administer: false,
+  releaseManager: true,
+}
+/** appAccess: data, or an error. */
+let access: { data?: Access; error?: Error } = { data: OWNER }
 
 vi.mock('@/modules/apps/hooks/use-app-profile', () => ({
   useAppName: (_did: unknown, fallback: string) => fallback,
@@ -43,6 +53,11 @@ vi.mock('../hooks/use-apps', () => ({
   useGithubDeployAppInfo: () => ({ data: undefined }),
   useConfirmAppIdentity: () => ({ mutate: vi.fn(), isPending: false }),
   useAppRecord: () => ({ data: appRecord }),
+  useAppAccess: () => ({
+    data: access.data,
+    error: access.error ?? null,
+    isPending: !access.data && !access.error,
+  }),
 }))
 vi.mock('@/modules/publisher/hooks/use-publisher', () => ({
   useAppPublisher: () => publisher,
@@ -58,8 +73,16 @@ vi.mock('../components/app-deployments', () => ({
 vi.mock('../components/app-environment', () => ({
   AppEnvironment: ({ appId }: { appId: string }) => <div>environment-content {appId}</div>,
 }))
+vi.mock('../components/app-audit', () => ({
+  AppAudit: ({ appId }: { appId: string }) => <div>audit-content {appId}</div>,
+}))
+vi.mock('../components/app-plans', () => ({
+  AppPlans: ({ appId }: { appId: string }) => <div>release-plans-content {appId}</div>,
+}))
 vi.mock('../components/app-settings', () => ({
-  AppSettings: () => <div>settings-content</div>,
+  AppSettings: ({ canAdminister }: { canAdminister?: boolean }) => (
+    <div>settings-content{canAdminister ? ' with access' : ''}</div>
+  ),
   DeleteAppCard: ({ app }: { app: { id: string } }) => <div>delete-content {app.id}</div>,
 }))
 vi.mock('../components/profile/profile-tab', () => ({
@@ -131,6 +154,7 @@ describe('AppDetail tabs', () => {
     app = makeApp()
     appError = null
     appRecord = null
+    access = { data: OWNER }
     publisher = {
       isPublisher: true,
       app: { id: 'app-1', name: 'Vault', status: 'ACTIVE' },
@@ -152,6 +176,9 @@ describe('AppDetail tabs', () => {
       'environment',
       'settings',
     ])
+    expect(visibleAppTabs({ isPublisher: true, access: OWNER, releaseManagers: true })).toContain(
+      'audit',
+    )
     expect(visibleAppTabs({ isPublisher: false })).toEqual([
       'overview',
       'deployments',
@@ -175,6 +202,7 @@ describe('AppDetail tabs', () => {
       'Holders',
       'Invite codes',
       'Environment',
+      'Audit log',
       'Settings',
     ])
   })
@@ -268,7 +296,9 @@ describe('AppDetail tabs', () => {
       'Deployments',
       'Profile',
       'Releases',
+      'Plans',
       'Environment',
+      'Audit log',
       'Settings',
     ])
     expect(screen.queryByText('artifacts-content')).toBeNull()
@@ -319,7 +349,8 @@ describe('AppDetail tabs', () => {
     searchParams = new URLSearchParams('tab=plans')
     render(<AppDetail appId="app-1" />)
     expect(screen.getByText('Your plans and invite codes did not load')).toBeTruthy()
-    expect(screen.getByText('overview-content')).toBeTruthy()
+    // Without the licensing tabs, an operator still gets the plans Vetra runs.
+    expect(screen.getByText('release-plans-content app-1')).toBeTruthy()
     fireEvent.click(screen.getByRole('button', { name: 'Try again' }))
     expect(retry).toHaveBeenCalledTimes(1)
   })
@@ -332,6 +363,81 @@ describe('AppDetail tabs', () => {
     }
     render(<AppDetail appId="app-1" />)
     expect(screen.queryByText('Licensing is paused for this app')).toBeNull()
+  })
+
+  describe('access', () => {
+    beforeEach(() => {
+      publisher = { isPublisher: false, app: undefined, isPending: false }
+    })
+
+    it('shows a release manager Plans, Environment, Audit log and Releases, but no Settings', () => {
+      access = { data: RELEASE_MANAGER }
+      render(<AppDetail appId="app-1" />)
+      expect(tabNames()).toEqual([
+        'Overview',
+        'Deployments',
+        'Releases',
+        'Plans',
+        'Environment',
+        'Audit log',
+      ])
+      cleanup()
+      searchParams = new URLSearchParams('tab=plans')
+      render(<AppDetail appId="app-1" />)
+      expect(screen.getByText('release-plans-content app-1')).toBeTruthy()
+      cleanup()
+      searchParams = new URLSearchParams('tab=settings')
+      render(<AppDetail appId="app-1" />)
+      expect(screen.queryByText(/settings-content/)).toBeNull()
+      expect(screen.getByText('overview-content')).toBeTruthy()
+    })
+
+    it('hides the identity banner from someone who cannot act on it', () => {
+      access = { data: RELEASE_MANAGER }
+      app = makeApp({ status: 'PENDING_IDENTITY' })
+      render(<AppDetail appId="app-1" />)
+      expect(screen.queryByText('Authorize the deploy identity')).toBeNull()
+    })
+
+    it('opens the Audit log from the URL, and gives admins the Access card', () => {
+      searchParams = new URLSearchParams('tab=audit')
+      render(<AppDetail appId="app-1" />)
+      expect(screen.getByText('audit-content app-1')).toBeTruthy()
+      cleanup()
+      searchParams = new URLSearchParams('tab=settings')
+      render(<AppDetail appId="app-1" />)
+      expect(screen.getByText('settings-content with access')).toBeTruthy()
+    })
+
+    it('holds a deep link to the Audit log while access loads', () => {
+      access = {}
+      searchParams = new URLSearchParams('tab=audit')
+      render(<AppDetail appId="app-1" />)
+      expect(screen.getByRole('status', { name: 'Loading Audit log' })).toBeTruthy()
+    })
+
+    it('treats a refused access check as no access', () => {
+      access = { error: new AppsApiError('FORBIDDEN', 'no') }
+      render(<AppDetail appId="app-1" />)
+      expect(tabNames()).toEqual(['Overview', 'Deployments', 'Releases', 'Audit log'])
+    })
+
+    it('keeps the page as it was on a backend without appAccess', () => {
+      access = { error: new AppsApiError('APPS_UNAVAILABLE', 'Cannot query field "appAccess"') }
+      render(<AppDetail appId="app-1" />)
+      expect(tabNames()).toEqual([
+        'Overview',
+        'Deployments',
+        'Profile',
+        'Releases',
+        'Environment',
+        'Settings',
+      ])
+      cleanup()
+      searchParams = new URLSearchParams('tab=settings')
+      render(<AppDetail appId="app-1" />)
+      expect(screen.getByText('settings-content')).toBeTruthy()
+    })
   })
 
   describe('an app that exists only for licensing', () => {

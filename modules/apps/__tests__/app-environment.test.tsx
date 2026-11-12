@@ -208,7 +208,7 @@ describe('AppEnvironment', () => {
       error: new AppsApiError('FORBIDDEN', 'Not allowed to manage this App'),
     }
     renderTab()
-    expect(screen.getByText(/Only the app.s owners and operators/)).toBeTruthy()
+    expect(screen.getByText(/Only the app.s owners, operators and release managers/)).toBeTruthy()
     expect(screen.queryByRole('button', { name: /Try again/ })).toBeNull()
   })
 

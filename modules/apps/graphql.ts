@@ -1,11 +1,14 @@
 import { getCloudEndpoint } from '@/modules/cloud/graphql'
 import type {
   App,
+  AppAccess,
+  AppAuditPage,
   AppDeployment,
   AppInstance,
   AppPlan,
   AppRelease,
   AppReleaseKind,
+  AppRole,
   AppsErrorCode,
   AppRegistryCredentials,
   AppSetting,
@@ -536,6 +539,89 @@ export async function deleteAppSetting(
     fetchImpl,
   )
   return data.deleteAppSetting
+}
+
+const AUDIT_FIELDS = 'id appId at actor source action subject detail'
+
+/** One page of the App's audit log, newest first; pass `nextBefore` back as `before` for more. */
+export async function fetchAppAudit(
+  appId: string,
+  limit: number,
+  before: string | null,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppAuditPage> {
+  const data = await appsGql<{ appAudit: AppAuditPage }>(
+    `query ($appId: ID!, $limit: Int, $before: String) { appAudit(appId: $appId, limit: $limit, before: $before) { entries { ${AUDIT_FIELDS} } nextBefore } }`,
+    { appId, limit, before },
+    token,
+    fetchImpl,
+  )
+  return data.appAudit
+}
+
+const ROLE_FIELDS = 'appId address role grantedBy grantedAt'
+
+/** The App's release managers (anyone who may view the App). */
+export async function fetchAppRoles(
+  appId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppRole[]> {
+  const data = await appsGql<{ appRoles: AppRole[] }>(
+    `query ($appId: ID!) { appRoles(appId: $appId) { ${ROLE_FIELDS} } }`,
+    { appId },
+    token,
+    fetchImpl,
+  )
+  return data.appRoles
+}
+
+/** What the caller may do with the App. */
+export async function fetchAppAccess(
+  appId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppAccess> {
+  const data = await appsGql<{ appAccess: AppAccess }>(
+    `query ($appId: ID!) { appAccess(appId: $appId) { operate release administer releaseManager } }`,
+    { appId },
+    token,
+    fetchImpl,
+  )
+  return data.appAccess
+}
+
+/** Names a release manager (owner, org OWNER/ADMIN); idempotent. */
+export async function setAppRole(
+  appId: string,
+  address: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppRole> {
+  const data = await appsGql<{ setAppRole: AppRole }>(
+    `mutation ($appId: ID!, $address: String!) { setAppRole(appId: $appId, address: $address) { ${ROLE_FIELDS} } }`,
+    { appId, address },
+    token,
+    fetchImpl,
+  )
+  return data.setAppRole
+}
+
+/** Takes the release manager role away; resolves false when there was none. */
+export async function removeAppRole(
+  appId: string,
+  address: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<boolean> {
+  const data = await appsGql<{ removeAppRole: boolean }>(
+    `mutation ($appId: ID!, $address: String!) { removeAppRole(appId: $appId, address: $address) }`,
+    { appId, address },
+    token,
+    fetchImpl,
+  )
+  return data.removeAppRole
 }
 
 export async function fetchAppDeployment(

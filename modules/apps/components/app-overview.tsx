@@ -363,6 +363,7 @@ export function AppOverview({
   deploymentsLoaded,
   onAuthorize,
   onEditProfile,
+  canOperate = true,
 }: {
   app: App
   deployments: AppDeployment[]
@@ -370,6 +371,8 @@ export function AppOverview({
   onAuthorize: () => void
   /** Opens the Profile tab. */
   onEditProfile?: () => void
+  /** The setup checklist is for those who can act on it (owners and operators). */
+  canOperate?: boolean
 }) {
   const name = useAppName(app.identityDid, app.name)
   const production =
@@ -377,6 +380,7 @@ export function AppOverview({
     (app.latestDeployment?.kind === 'PRODUCTION' ? app.latestDeployment : null)
   const hasDeployments = deployments.length > 0 || !!app.latestDeployment
   const showChecklist =
+    canOperate &&
     app.status !== 'DISCONNECTED' &&
     // Expired identities get the page banner; the checklist is for first-time setup.
     (identityState(app).kind === 'pending' || (deploymentsLoaded && !hasDeployments))
