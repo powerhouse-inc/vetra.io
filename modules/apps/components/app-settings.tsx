@@ -113,7 +113,7 @@ export function diffSettings(app: App, form: FormState): UpdateAppInput | null {
   return patch
 }
 
-function SettingsCard({
+export function SettingsCard({
   title,
   description,
   children,
