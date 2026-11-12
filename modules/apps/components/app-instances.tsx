@@ -8,14 +8,56 @@ import { cn } from '@/shared/lib/utils'
 
 import { describeAppsError } from '../graphql'
 import { useAppInstances } from '../hooks/use-apps'
+import { shortSha } from '../lib/status'
 import type { AppInstance, AppInstanceStatus } from '../types'
 
 const STATUS_CLASS: Record<AppInstanceStatus, string> = {
   pending: 'bg-muted text-muted-foreground',
   updating: 'bg-info/15 text-info',
   ready: 'bg-success/15 text-success',
+  degraded: 'bg-warning/15 text-warning',
   failed: 'bg-destructive/15 text-destructive',
   stopped: 'bg-muted text-muted-foreground',
+}
+
+const HEALTH_DOT: Record<string, string> = {
+  healthy: 'bg-success',
+  unhealthy: 'bg-destructive',
+  unknown: 'bg-muted-foreground',
+}
+
+/** Compact health line; renders nothing when the backend sent no health data. */
+function HealthLine({ instance }: { instance: AppInstance }) {
+  const { health, healthCheck, healthReason, healthCheckedAt, observedDigest } = instance
+  const mismatch =
+    !!observedDigest && !!instance.targetDigest && observedDigest !== instance.targetDigest
+  const reverted = instance.status === 'failed' && health === 'healthy'
+  if (!health && !mismatch) return null
+  return (
+    <div className="text-muted-foreground flex basis-full flex-wrap items-center gap-x-3 gap-y-0.5 text-xs">
+      {health && (
+        <span className="inline-flex items-center gap-1.5">
+          <span
+            aria-hidden
+            className={cn('h-1.5 w-1.5 rounded-full', HEALTH_DOT[health] ?? HEALTH_DOT.unknown)}
+          />
+          <span>{health}</span>
+          {healthCheck && <span className="font-mono">{healthCheck}</span>}
+          {health !== 'healthy' && healthReason && <span>{healthReason}</span>}
+        </span>
+      )}
+      {healthCheckedAt && (
+        <span title={formatTimestamp(healthCheckedAt)}>checked {timeAgo(healthCheckedAt)}</span>
+      )}
+      {mismatch && (
+        <span className="font-mono">
+          running {shortSha(observedDigest.replace(/^sha256:/, ''))}
+          {instance.observedDigestSource ? ` (${instance.observedDigestSource})` : ''}
+        </span>
+      )}
+      {reverted && <span>reverted to the last healthy build</span>}
+    </div>
+  )
 }
 
 /** Only https URLs become links; anything else is shown as plain text. */
@@ -72,6 +114,7 @@ function InstanceRow({ instance }: { instance: AppInstance }) {
       >
         {timeAgo(instance.updatedAt)}
       </span>
+      <HealthLine instance={instance} />
     </li>
   )
 }
