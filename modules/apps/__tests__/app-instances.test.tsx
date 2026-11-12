@@ -88,6 +88,33 @@ describe('AppInstances', () => {
     expect(screen.queryAllByRole('link')).toHaveLength(0)
   })
 
+  it('shows "settings pending" while the instance has not run the latest settings', () => {
+    state.data = [
+      instance({ settingsRevision: 'bbbb', runningSettingsRevision: 'aaaa' }),
+      instance({ id: 'i2', settingsRevision: 'aaaa', runningSettingsRevision: 'aaaa' }),
+    ]
+    render(<AppInstances appId="a1" />)
+    expect(within(screen.getByTestId('instance-i1')).getByText('settings pending')).toBeTruthy()
+    expect(within(screen.getByTestId('instance-i2')).queryByText('settings pending')).toBeNull()
+  })
+
+  it('shows a failure after a settings change as such, without "settings pending"', () => {
+    state.data = [
+      instance({
+        status: 'failed',
+        reason: 'after a settings change: crash loop (3 restarts)',
+        settingsRevision: 'bbbb',
+        runningSettingsRevision: 'aaaa',
+      }),
+    ]
+    render(<AppInstances appId="a1" />)
+    const row = screen.getByTestId('instance-i1')
+    expect(within(row).getByText('After a settings change:')).toBeTruthy()
+    expect(row.textContent).toContain('crash loop (3 restarts)')
+    expect(row.textContent).not.toContain('after a settings change: crash')
+    expect(within(row).queryByText('settings pending')).toBeNull()
+  })
+
   it('shows the empty state', () => {
     state.data = []
     render(<AppInstances appId="a1" />)

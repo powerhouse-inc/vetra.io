@@ -16,6 +16,8 @@ const entry = (over: Partial<DirectoryEntry> = {}): DirectoryEntry => ({
   description: null,
   category: null,
   publisher: null,
+  publisherUrl: null,
+  publisherVerified: false,
   version: '1.0.0',
   releasedAt: '2026-10-01T00:00:00Z',
   createdAt: '2026-01-01T00:00:00Z',
@@ -100,6 +102,46 @@ describe('directoryView', () => {
 })
 
 describe('toDirectoryEntry', () => {
+  const withPublisher = (publisher: { name: string; url: string }) =>
+    ({
+      name: 'X',
+      path: '/-/cdn/x',
+      documentTypes: [],
+      manifest: { name: 'X', publisher } as never,
+    }) as Parameters<typeof toDirectoryEntry>[0]
+
+  it('links the publisher, verified only on a domain a Renown organisation proved', () => {
+    const verified = ['web3.berlin']
+    expect(
+      toDirectoryEntry(
+        withPublisher({ name: 'web3.berlin', url: 'https://web3.berlin' }),
+        null,
+        null,
+        verified,
+      ),
+    ).toMatchObject({
+      publisher: 'web3.berlin',
+      publisherUrl: 'https://web3.berlin',
+      publisherVerified: true,
+    })
+    expect(
+      toDirectoryEntry(
+        withPublisher({ name: 'DT BAU', url: 'https://dtbau.cloud' }),
+        null,
+        null,
+        verified,
+      ),
+    ).toMatchObject({ publisherUrl: 'https://dtbau.cloud', publisherVerified: false })
+    expect(
+      toDirectoryEntry(
+        withPublisher({ name: 'Sneaky', url: 'javascript:alert(1)' }),
+        null,
+        null,
+        verified,
+      ),
+    ).toMatchObject({ publisherUrl: null, publisherVerified: false })
+  })
+
   it('reads dates, modules and platform from the registry data', () => {
     const e = toDirectoryEntry(
       {

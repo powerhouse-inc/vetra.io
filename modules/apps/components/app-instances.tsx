@@ -8,6 +8,7 @@ import { cn } from '@/shared/lib/utils'
 
 import { describeAppsError } from '../graphql'
 import { useAppInstances } from '../hooks/use-apps'
+import { settingsPending, splitSettingsReason } from '../lib/settings'
 import { shortSha } from '../lib/status'
 import type { AppInstance, AppInstanceStatus } from '../types'
 
@@ -72,6 +73,9 @@ function isHttps(url: string): boolean {
 function InstanceRow({ instance }: { instance: AppInstance }) {
   const { url, reason, runningVersion, targetVersion } = instance
   const differs = !!targetVersion && runningVersion !== targetVersion
+  const { afterSettingsChange, cause } = splitSettingsReason(reason)
+  // Failed on a new revision: the reason says so; "pending" would only repeat it.
+  const pending = settingsPending(instance) && !afterSettingsChange
   return (
     <li
       data-testid={`instance-${instance.id}`}
@@ -102,7 +106,23 @@ function InstanceRow({ instance }: { instance: AppInstance }) {
       >
         {instance.status}
       </span>
-      {reason && <span className="text-muted-foreground text-xs">{reason}</span>}
+      {afterSettingsChange && (
+        <span className="text-destructive text-xs">
+          <span className="font-medium">After a settings change:</span>
+          {cause ? ` ${cause}` : ''}
+        </span>
+      )}
+      {!afterSettingsChange && cause && (
+        <span className="text-muted-foreground text-xs">{cause}</span>
+      )}
+      {pending && (
+        <span
+          className="bg-warning/15 text-warning shrink-0 rounded-full px-1.5 py-px text-[10px] font-medium"
+          title="This instance has not yet run the app's latest environment settings."
+        >
+          settings pending
+        </span>
+      )}
       {differs && (
         <span className="text-muted-foreground font-mono text-xs">
           {runningVersion ? `${runningVersion} → ${targetVersion}` : `→ ${targetVersion}`}

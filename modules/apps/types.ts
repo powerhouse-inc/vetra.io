@@ -80,6 +80,46 @@ export type AppInstance = {
   healthCheckedAt?: string | null
   observedDigest?: string | null
   observedDigestSource?: string | null
+  /** The App settings revision the instance should run; absent on older backends. */
+  settingsRevision?: string | null
+  /** The settings revision it last ran healthy. */
+  runningSettingsRevision?: string | null
+}
+
+/** Where a publisher setting applies: every instance, or only branch or preview instances. */
+export type AppSettingScope = 'ALL' | 'BRANCH' | 'PREVIEW'
+
+/** A publisher setting. Secrets are write-only: `value` is always null for them. */
+export type AppSetting = {
+  name: string
+  scope: AppSettingScope
+  secret: boolean
+  value: string | null
+  updatedAt: string
+  /** Address of whoever set it last. */
+  updatedBy: string
+}
+
+/** A setting Vetra sets on every instance; read-only. `value` describes per-instance values. */
+export type VetraInstanceSetting = {
+  name: string
+  secret: boolean
+  value: string
+}
+
+export type AppSettings = {
+  settings: AppSetting[]
+  vetra: VetraInstanceSetting[]
+  reservedNames: string[]
+  reservedPrefixes: string[]
+}
+
+export type SetAppSettingInput = {
+  appId: string
+  name: string
+  value: string
+  secret: boolean
+  scope: AppSettingScope
 }
 
 /** What vetra-publish recorded: a tagged release, or a build from a release branch or PR. */
@@ -194,6 +234,8 @@ export type AppsErrorCode =
   | 'APP_NOT_ACTIVE'
   | 'GITHUB_NOT_CONNECTED'
   | 'SERVICE_NOT_CONFIGURED'
+  /** A dependency is down, e.g. "Secret storage unavailable". */
+  | 'SERVICE_UNAVAILABLE'
   /** The switchboard does not serve the vetra-apps subgraph (yet). */
   | 'APPS_UNAVAILABLE'
   /** Transport failure (network down, 5xx, non-JSON body). */

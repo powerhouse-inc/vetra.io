@@ -55,6 +55,9 @@ vi.mock('../components/app-overview', () => ({ AppOverview: () => <div>overview-
 vi.mock('../components/app-deployments', () => ({
   AppDeployments: () => <div>deployments-content</div>,
 }))
+vi.mock('../components/app-environment', () => ({
+  AppEnvironment: ({ appId }: { appId: string }) => <div>environment-content {appId}</div>,
+}))
 vi.mock('../components/app-settings', () => ({
   AppSettings: () => <div>settings-content</div>,
   DeleteAppCard: ({ app }: { app: { id: string } }) => <div>delete-content {app.id}</div>,
@@ -146,6 +149,7 @@ describe('AppDetail tabs', () => {
       'plans',
       'holders',
       'invite-codes',
+      'environment',
       'settings',
     ])
     expect(visibleAppTabs({ isPublisher: false })).toEqual([
@@ -153,6 +157,7 @@ describe('AppDetail tabs', () => {
       'deployments',
       'profile',
       'releases',
+      'environment',
       'settings',
     ])
   })
@@ -169,6 +174,7 @@ describe('AppDetail tabs', () => {
       'Plans',
       'Holders',
       'Invite codes',
+      'Environment',
       'Settings',
     ])
   })
@@ -194,6 +200,18 @@ describe('AppDetail tabs', () => {
     expect(tabNames()).not.toContain('Releases')
     expect(screen.queryByText(/releases-content/)).toBeNull()
     expect(screen.getByText('overview-content')).toBeTruthy()
+  })
+
+  it('opens the Environment tab from the URL, and hides it without a repository', () => {
+    searchParams = new URLSearchParams('tab=environment')
+    render(<AppDetail appId="app-1" />)
+    expect(screen.getByText('environment-content app-1')).toBeTruthy()
+    cleanup()
+    expect(visibleAppTabs({ isPublisher: true, hasRepository: false })).not.toContain('environment')
+    app = makeApp({ repository: null as unknown as App['repository'] })
+    render(<AppDetail appId="app-1" />)
+    expect(tabNames()).not.toContain('Environment')
+    expect(screen.queryByText(/environment-content/)).toBeNull()
   })
 
   it('opens the Profile tab with the app identity', () => {
@@ -245,7 +263,14 @@ describe('AppDetail tabs', () => {
     publisher = { isPublisher: false, app: undefined, isPending: false }
     searchParams = new URLSearchParams('tab=artifacts')
     render(<AppDetail appId="app-1" />)
-    expect(tabNames()).toEqual(['Overview', 'Deployments', 'Profile', 'Releases', 'Settings'])
+    expect(tabNames()).toEqual([
+      'Overview',
+      'Deployments',
+      'Profile',
+      'Releases',
+      'Environment',
+      'Settings',
+    ])
     expect(screen.queryByText('artifacts-content')).toBeNull()
     expect(screen.getByText('overview-content')).toBeTruthy()
   })
