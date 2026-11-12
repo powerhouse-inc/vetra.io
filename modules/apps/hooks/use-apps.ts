@@ -12,21 +12,25 @@ import {
   createApp,
   createStudioApp,
   deleteApp,
+  deleteAppSetting,
   fetchApp,
   fetchAppRecord,
   fetchAppDeployments,
   fetchAppInstances,
   fetchAppReleases,
+  fetchAppSettings,
   fetchGithubDeployAppInfo,
   fetchGithubDeployRepositories,
   fetchMyApps,
   fetchMyGithubDeployInstallations,
   openAppSetupPullRequest,
   rollbackApp,
+  setAppSetting,
   updateApp,
   AppsApiError,
   isAppsError,
 } from '../graphql'
+import { mergeAppSetting, settingsPending, withoutAppSetting } from '../lib/settings'
 import { activeAppIds, isAppEnvironment } from '../lib/split'
 import type { CloudEnvironment } from '@/modules/cloud/types'
 import { appPollInterval, appsPollInterval, deploymentsPollInterval } from '../lib/status'
@@ -36,11 +40,14 @@ import type {
   AppInstance,
   AppRelease,
   AppReleaseKind,
+  AppSettingScope,
+  AppSettings,
   CreateAppInput,
   CreateStudioAppInput,
   GithubDeployAppInfo,
   GithubDeployInstallation,
   GithubRepo,
+  SetAppSettingInput,
   UpdateAppInput,
 } from '../types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
@@ -155,9 +162,19 @@ export function useAppReleases(
   )
 }
 
-/** Poll interval for instances: every 10 s while any is pending/updating, else off. */
+/**
+ * Poll interval for instances: every 10 s while any is pending/updating, or still has to pick up
+ * a settings change (until the reconciler starts rolling it), else off.
+ */
 export function instancesPollInterval(data: AppInstance[] | undefined): number | false {
-  return data?.some((i) => i.status === 'pending' || i.status === 'updating') ? 10_000 : false
+  return data?.some(
+    (i) =>
+      i.status === 'pending' ||
+      i.status === 'updating' ||
+      (settingsPending(i) && i.status !== 'failed' && i.status !== 'stopped'),
+  )
+    ? 10_000
+    : false
 }
 
 /** The app's branch instances; polls while any is rolling out. */
@@ -171,6 +188,16 @@ export function useAppInstances(appId: string, enabled = true) {
       retry: retryUnlessFinal,
       refetchInterval: (query) => instancesPollInterval(query.state.data),
     },
+  )
+}
+
+/** The App's publisher settings and Vetra's own (owners and operators; FORBIDDEN otherwise). */
+export function useAppSettings(appId: string, enabled = true) {
+  const did = useDid()
+  return useAuthedQuery<AppSettings>(
+    appsKeys.settings(appId, did),
+    (token) => fetchAppSettings(appId, token),
+    { enabled, retry: retryUnlessFinal },
   )
 }
 
@@ -300,6 +327,41 @@ export function useOpenSetupPullRequest(appId: string) {
   const token = useTokenResolver()
   return useMutation({
     mutationFn: async () => openAppSetupPullRequest(appId, await token()),
+  })
+}
+
+/** Sets or replaces a setting; the instances pick up a new settings revision. */
+export function useSetAppSetting(appId: string) {
+  const qc = useQueryClient()
+  const did = useDid()
+  const token = useTokenResolver()
+  return useMutation({
+    mutationFn: async (input: Omit<SetAppSettingInput, 'appId'>) =>
+      setAppSetting({ ...input, appId }, await token()),
+    onSuccess: (setting) => {
+      qc.setQueryData<AppSettings>(appsKeys.settings(appId, did), (old) =>
+        mergeAppSetting(old, setting),
+      )
+      void qc.invalidateQueries({ queryKey: appsKeys.settings(appId, did) })
+      void qc.invalidateQueries({ queryKey: appsKeys.instances(appId, did) })
+    },
+  })
+}
+
+export function useDeleteAppSetting(appId: string) {
+  const qc = useQueryClient()
+  const did = useDid()
+  const token = useTokenResolver()
+  return useMutation({
+    mutationFn: async (vars: { name: string; scope: AppSettingScope }) =>
+      deleteAppSetting(appId, vars.name, vars.scope, await token()),
+    onSuccess: (_deleted, vars) => {
+      qc.setQueryData<AppSettings>(appsKeys.settings(appId, did), (old) =>
+        withoutAppSetting(old, vars.name, vars.scope),
+      )
+      void qc.invalidateQueries({ queryKey: appsKeys.settings(appId, did) })
+      void qc.invalidateQueries({ queryKey: appsKeys.instances(appId, did) })
+    },
   })
 }
 

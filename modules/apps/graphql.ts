@@ -7,12 +7,16 @@ import type {
   AppReleaseKind,
   AppsErrorCode,
   AppRegistryCredentials,
+  AppSetting,
+  AppSettingScope,
+  AppSettings,
   CreateAppInput,
   CreateStudioAppInput,
   DeployAppInput,
   GithubDeployAppInfo,
   GithubDeployInstallation,
   GithubRepo,
+  SetAppSettingInput,
   UpdateAppInput,
 } from './types'
 
@@ -29,6 +33,7 @@ const KNOWN_CODES = new Set<AppsErrorCode>([
   'APP_NOT_ACTIVE',
   'GITHUB_NOT_CONNECTED',
   'SERVICE_NOT_CONFIGURED',
+  'SERVICE_UNAVAILABLE',
 ])
 
 /** Error thrown by every vetra-apps call; `code` drives the UI's reaction. */
@@ -95,6 +100,8 @@ export function describeAppsError(err: unknown): string {
       return 'Preview environments are turned off for this app.'
     case 'SERVICE_NOT_CONFIGURED':
       return 'Vetra Apps is not fully configured on this server yet.'
+    case 'SERVICE_UNAVAILABLE':
+      return err.message.trim() || 'A Vetra service is unavailable. Try again in a moment.'
     case 'APPS_UNAVAILABLE':
       return 'Vetra Apps is not available on this server yet.'
     case 'NETWORK':
@@ -341,6 +348,8 @@ const OPTIONAL_INSTANCE_FIELDS = [
   'healthCheckedAt',
   'observedDigest',
   'observedDigestSource',
+  'settingsRevision',
+  'runningSettingsRevision',
 ] as const
 const unsupportedInstanceFields = new Set<string>()
 
@@ -374,6 +383,55 @@ export async function fetchAppInstances(
       for (const f of rejected) unsupportedInstanceFields.add(f)
     }
   }
+}
+
+const SETTING_FIELDS = 'name scope secret value updatedAt updatedBy'
+
+/** The App's publisher settings and the ones Vetra sets (owners and operators only). */
+export async function fetchAppSettings(
+  appId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppSettings> {
+  const data = await appsGql<{ appSettings: AppSettings }>(
+    `query ($appId: ID!) { appSettings(appId: $appId) { settings { ${SETTING_FIELDS} } vetra { name secret value } reservedNames reservedPrefixes } }`,
+    { appId },
+    token,
+    fetchImpl,
+  )
+  return data.appSettings
+}
+
+/** Sets or replaces one setting; the App's instances roll on the reconciler's next pass. */
+export async function setAppSetting(
+  input: SetAppSettingInput,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppSetting> {
+  const data = await appsGql<{ setAppSetting: AppSetting }>(
+    `mutation ($input: SetAppSettingInput!) { setAppSetting(input: $input) { ${SETTING_FIELDS} } }`,
+    { input },
+    token,
+    fetchImpl,
+  )
+  return data.setAppSetting
+}
+
+/** Deletes one setting; resolves false when there was none to delete. */
+export async function deleteAppSetting(
+  appId: string,
+  name: string,
+  scope: AppSettingScope,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<boolean> {
+  const data = await appsGql<{ deleteAppSetting: boolean }>(
+    `mutation ($appId: ID!, $name: String!, $scope: AppSettingScope) { deleteAppSetting(appId: $appId, name: $name, scope: $scope) }`,
+    { appId, name, scope },
+    token,
+    fetchImpl,
+  )
+  return data.deleteAppSetting
 }
 
 export async function fetchAppDeployment(
