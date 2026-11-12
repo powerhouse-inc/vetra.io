@@ -1,4 +1,12 @@
-import { CreditCard, LayoutGrid, type LucideIcon, Server, Settings, Sparkles } from 'lucide-react'
+import {
+  Container,
+  CreditCard,
+  LayoutGrid,
+  type LucideIcon,
+  Server,
+  Settings,
+  Sparkles,
+} from 'lucide-react'
 import type { RouteWithDynamicPages } from '@/modules/shared/types/routes'
 
 export type ConsoleNavItem = {
@@ -40,6 +48,12 @@ export const CONSOLE_NAV_SECTIONS: ConsoleNavSection[] = [
         href: '/user/environments',
         icon: Server,
         isActive: (p) => p.startsWith('/user/environments'),
+      },
+      {
+        label: 'My instances',
+        href: '/user/instances',
+        icon: Container,
+        isActive: (p) => p.startsWith('/user/instances'),
       },
     ],
   },

@@ -16,6 +16,7 @@ describe('console navigation', () => {
       '/user/studio',
       '/user/products',
       '/user/environments/env-1',
+      '/user/instances',
       '/user/subscriptions',
       '/user/settings',
     ]

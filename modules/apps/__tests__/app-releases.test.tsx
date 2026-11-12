@@ -18,6 +18,9 @@ const useAppReleases = vi.fn<
 vi.mock('../hooks/use-apps', () => ({
   useAppReleases: (appId: string, kind: AppReleaseKind | null, limit: number, enabled?: boolean) =>
     useAppReleases(appId, kind, limit, enabled),
+  // No instances: the instances panel stays out of the way.
+  useAppInstances: () => ({ data: [], isPending: false, error: null }),
+  useAppPlans: () => ({ data: [], isPending: false, error: null }),
 }))
 
 import { AppReleases } from '../components/app-releases'

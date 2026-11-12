@@ -60,7 +60,12 @@ export type AppInstanceStatus = 'pending' | 'updating' | 'ready' | 'degraded' | 
 /** A running environment of an app (`appInstances`). */
 export type AppInstance = {
   id: string
+  /** branch | preview | shared | own */
   kind: string
+  /** shared/own: the plan it serves; absent on older backends. */
+  planId?: string | null
+  /** own: the holder's address; absent on older backends. */
+  holder?: string | null
   name: string
   branch: string | null
   pr: number | null
@@ -84,6 +89,69 @@ export type AppInstance = {
   settingsRevision?: string | null
   /** The settings revision it last ran healthy. */
   runningSettingsRevision?: string | null
+}
+
+/** Who a plan's instances serve: one shared by every holder, or one per holder. */
+export type AppPlanAccess = 'shared' | 'own'
+
+/** Instance sizes a plan can run at, smallest first. */
+export const APP_PLAN_SIZES = [
+  'VETRA_AGENT_S',
+  'VETRA_AGENT_M',
+  'VETRA_AGENT_L',
+  'VETRA_AGENT_XL',
+  'VETRA_AGENT_XXL',
+] as const
+export type AppPlanSize = (typeof APP_PLAN_SIZES)[number]
+
+/** What holders of one licensing term get (`appPlans`); the plan adopted the term by its kind. */
+export type AppPlan = {
+  id: string
+  appId: string
+  slug: string
+  name: string
+  /** The licensing term's kind (its plan ID). */
+  kind: string
+  access: AppPlanAccess
+  size: AppPlanSize
+  /** A release (never a build) of the App; null until one is picked. */
+  targetVersion: string | null
+  /** manual (rollouts arrive later) */
+  policy: string
+  noticeHours: number
+  status: 'active' | 'retired'
+  createdAt: string
+  updatedAt: string
+}
+
+export type CreateAppPlanInput = {
+  appId: string
+  /** The licensing term's kind; it must have no holders yet. */
+  kind: string
+  access: AppPlanAccess
+  size?: AppPlanSize | null
+  targetVersion?: string | null
+  slug?: string | null
+  name?: string | null
+}
+
+export type UpdateAppPlanInput = {
+  planId: string
+  name?: string | null
+  size?: AppPlanSize | null
+}
+
+/** An instance the caller holds a licence for (`myInstances`). */
+export type HolderInstance = {
+  instanceId: string
+  appId: string
+  appName: string
+  planName: string
+  access: AppPlanAccess
+  url: string | null
+  status: AppInstanceStatus
+  reason: string | null
+  runningVersion: string | null
 }
 
 /** Where a publisher setting applies: every instance, or only branch or preview instances. */

@@ -2,7 +2,7 @@
 
 import { Plus, Tags } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, type ReactNode } from 'react'
 import { Button } from '@/modules/shared/components/ui/button'
 import { usePublisherTemplates, usePublisherTerms } from '../../hooks/use-publisher'
 import type { PublisherTerm } from '../../types'
@@ -11,7 +11,14 @@ import { PlanDialog } from './plan-dialog'
 import { PlanRow } from './plan-row'
 import { PlanStatusDialog, type PlanStatusAction } from './plan-status-dialog'
 
-export function PlansTab({ appId }: { appId: string }) {
+export function PlansTab({
+  appId,
+  termExtra,
+}: {
+  appId: string
+  /** Rendered on each plan's card, e.g. the instances Vetra runs for it. */
+  termExtra?: (term: PublisherTerm) => ReactNode
+}) {
   const terms = usePublisherTerms(appId)
   const templates = usePublisherTemplates(appId)
   const [editing, setEditing] = useState<{ term: PublisherTerm | null } | null>(null)
@@ -81,7 +88,9 @@ export function PlansTab({ appId }: { appId: string }) {
                 onEdit={() => setEditing({ term: t })}
                 onPublish={() => setStatus({ action: 'publish', term: t })}
                 onRetire={() => setStatus({ action: 'retire', term: t })}
-              />
+              >
+                {termExtra?.(t)}
+              </PlanRow>
             ))}
           </ul>
         </>

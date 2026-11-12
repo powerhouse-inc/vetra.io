@@ -1,4 +1,5 @@
 import type {
+  AppEnvironmentRole,
   ArgoHealthStatus,
   ArgoSyncStatus,
   AutoUpdateChannel,
@@ -290,7 +291,7 @@ export type EnvironmentSummary = {
    * Absent on backends that predate Vetra Apps — treat missing as standalone.
    */
   appId?: string | null
-  appRole?: 'PRODUCTION' | 'PREVIEW' | null
+  appRole?: AppEnvironmentRole | null
   prNumber?: number | null
   /** Renown organisation owning the env; null/absent when personal. */
   ownerOrgId?: string | null

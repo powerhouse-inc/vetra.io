@@ -14,6 +14,8 @@ export const appsKeys = {
     ['apps', 'releases', id, kind, limit, did ?? null] as const,
   instances: (id: string, did: string | undefined) =>
     ['apps', 'instances', id, did ?? null] as const,
+  plans: (id: string, did: string | undefined) => ['apps', 'plans', id, did ?? null] as const,
+  myInstances: (did: string | undefined) => ['apps', 'my-instances', did ?? null] as const,
   settings: (id: string, did: string | undefined) => ['apps', 'settings', id, did ?? null] as const,
   githubInfo: () => ['apps', 'github-info'] as const,
   installations: (did: string | undefined) => ['apps', 'installations', did ?? null] as const,
