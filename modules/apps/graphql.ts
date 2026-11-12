@@ -3,6 +3,7 @@ import type {
   App,
   AppDeployment,
   AppInstance,
+  AppPlan,
   AppRelease,
   AppReleaseKind,
   AppsErrorCode,
@@ -11,13 +12,16 @@ import type {
   AppSettingScope,
   AppSettings,
   CreateAppInput,
+  CreateAppPlanInput,
   CreateStudioAppInput,
   DeployAppInput,
   GithubDeployAppInfo,
   GithubDeployInstallation,
   GithubRepo,
+  HolderInstance,
   SetAppSettingInput,
   UpdateAppInput,
+  UpdateAppPlanInput,
 } from './types'
 
 // ---------------------------------------------------------------------------
@@ -350,6 +354,8 @@ const OPTIONAL_INSTANCE_FIELDS = [
   'observedDigestSource',
   'settingsRevision',
   'runningSettingsRevision',
+  'planId',
+  'holder',
 ] as const
 const unsupportedInstanceFields = new Set<string>()
 
@@ -383,6 +389,104 @@ export async function fetchAppInstances(
       for (const f of rejected) unsupportedInstanceFields.add(f)
     }
   }
+}
+
+const PLAN_FIELDS =
+  'id appId slug name kind access size targetVersion policy noticeHours status createdAt updatedAt'
+
+/** The App's plans: the licensing terms it runs instances for (owners and viewers). */
+export async function fetchAppPlans(
+  appId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppPlan[]> {
+  const data = await appsGql<{ appPlans: AppPlan[] }>(
+    `query ($appId: ID!) { appPlans(appId: $appId) { ${PLAN_FIELDS} } }`,
+    { appId },
+    token,
+    fetchImpl,
+  )
+  return data.appPlans
+}
+
+const HOLDER_INSTANCE_FIELDS =
+  'instanceId appId appName planName access url status reason runningVersion'
+
+/** The instances of the plans the caller holds licences of. */
+export async function fetchMyInstances(
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<HolderInstance[]> {
+  const data = await appsGql<{ myInstances: HolderInstance[] }>(
+    `query { myInstances { ${HOLDER_INSTANCE_FIELDS} } }`,
+    {},
+    token,
+    fetchImpl,
+  )
+  return data.myInstances
+}
+
+/**
+ * Adopts a licensing term as a plan. Refused (BAD_USER_INPUT, worded by the server) when plans
+ * are off, the App has licensed environments, or the term was ever issued.
+ */
+export async function createAppPlan(
+  input: CreateAppPlanInput,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppPlan> {
+  const data = await appsGql<{ createPlan: AppPlan }>(
+    `mutation ($input: CreatePlanInput!) { createPlan(input: $input) { ${PLAN_FIELDS} } }`,
+    { input },
+    token,
+    fetchImpl,
+  )
+  return data.createPlan
+}
+
+export async function updateAppPlan(
+  input: UpdateAppPlanInput,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppPlan> {
+  const data = await appsGql<{ updatePlan: AppPlan }>(
+    `mutation ($input: UpdatePlanInput!) { updatePlan(input: $input) { ${PLAN_FIELDS} } }`,
+    { input },
+    token,
+    fetchImpl,
+  )
+  return data.updatePlan
+}
+
+/** Moves the plan's instances to a release at once (no notice). */
+export async function setAppPlanTarget(
+  planId: string,
+  version: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppPlan> {
+  const data = await appsGql<{ setPlanTarget: AppPlan }>(
+    `mutation ($planId: ID!, $version: String!) { setPlanTarget(planId: $planId, version: $version) { ${PLAN_FIELDS} } }`,
+    { planId, version },
+    token,
+    fetchImpl,
+  )
+  return data.setPlanTarget
+}
+
+/** No new instances; existing holders keep theirs. */
+export async function retireAppPlan(
+  planId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppPlan> {
+  const data = await appsGql<{ retirePlan: AppPlan }>(
+    `mutation ($planId: ID!) { retirePlan(planId: $planId) { ${PLAN_FIELDS} } }`,
+    { planId },
+    token,
+    fetchImpl,
+  )
+  return data.retirePlan
 }
 
 const SETTING_FIELDS = 'name scope secret value updatedAt updatedBy'

@@ -10,6 +10,7 @@ import {
   confirmAppIdentity,
   connectGithubDeploy,
   createApp,
+  createAppPlan,
   createStudioApp,
   deleteApp,
   deleteAppSetting,
@@ -17,16 +18,21 @@ import {
   fetchAppRecord,
   fetchAppDeployments,
   fetchAppInstances,
+  fetchAppPlans,
   fetchAppReleases,
   fetchAppSettings,
   fetchGithubDeployAppInfo,
   fetchGithubDeployRepositories,
   fetchMyApps,
   fetchMyGithubDeployInstallations,
+  fetchMyInstances,
   openAppSetupPullRequest,
+  retireAppPlan,
   rollbackApp,
+  setAppPlanTarget,
   setAppSetting,
   updateApp,
+  updateAppPlan,
   AppsApiError,
   isAppsError,
 } from '../graphql'
@@ -38,17 +44,21 @@ import type {
   App,
   AppDeployment,
   AppInstance,
+  AppPlan,
   AppRelease,
   AppReleaseKind,
   AppSettingScope,
   AppSettings,
   CreateAppInput,
+  CreateAppPlanInput,
   CreateStudioAppInput,
   GithubDeployAppInfo,
   GithubDeployInstallation,
   GithubRepo,
+  HolderInstance,
   SetAppSettingInput,
   UpdateAppInput,
+  UpdateAppPlanInput,
 } from '../types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { waitForToken } from '../lib/token'
@@ -187,6 +197,35 @@ export function useAppInstances(appId: string, enabled = true) {
       enabled,
       retry: retryUnlessFinal,
       refetchInterval: (query) => instancesPollInterval(query.state.data),
+    },
+  )
+}
+
+/** The App's plans (licensing terms it runs instances for). */
+export function useAppPlans(appId: string, enabled = true) {
+  const did = useDid()
+  return useAuthedQuery<AppPlan[]>(
+    appsKeys.plans(appId, did),
+    (token) => fetchAppPlans(appId, token),
+    { enabled, retry: retryUnlessFinal },
+  )
+}
+
+/** Poll every 10 s while any of the caller's instances is starting or rolling. */
+export function myInstancesPollInterval(data: HolderInstance[] | undefined): number | false {
+  return data?.some((i) => i.status === 'pending' || i.status === 'updating') ? 10_000 : false
+}
+
+/** The instances of the plans the caller holds licences of. */
+export function useMyInstances() {
+  const did = useDid()
+  return useAuthedQuery<HolderInstance[]>(
+    appsKeys.myInstances(did),
+    (token) => fetchMyInstances(token),
+    {
+      enabled: !!did,
+      retry: retryUnlessFinal,
+      refetchInterval: (query) => myInstancesPollInterval(query.state.data),
     },
   )
 }
@@ -378,5 +417,60 @@ export function useRollbackApp(appId: string) {
       void qc.invalidateQueries({ queryKey: appsKeys.detail(appId, did) })
       void qc.invalidateQueries({ queryKey: ['apps', 'list'] })
     },
+  })
+}
+
+/** Writes a fresh plan into the App's plan list, then refreshes plans and instances. */
+function useCachePlan(appId: string) {
+  const qc = useQueryClient()
+  const did = useDid()
+  return useCallback(
+    (plan: AppPlan) => {
+      qc.setQueryData<AppPlan[]>(appsKeys.plans(appId, did), (old) =>
+        old ? [...old.filter((p) => p.id !== plan.id), plan] : [plan],
+      )
+      void qc.invalidateQueries({ queryKey: appsKeys.plans(appId, did) })
+      void qc.invalidateQueries({ queryKey: appsKeys.instances(appId, did) })
+    },
+    [qc, did, appId],
+  )
+}
+
+/** Adopts a licensing term as a plan; the server words its refusals. */
+export function useCreateAppPlan(appId: string) {
+  const token = useTokenResolver()
+  const cachePlan = useCachePlan(appId)
+  return useMutation({
+    mutationFn: async (input: Omit<CreateAppPlanInput, 'appId'>) =>
+      createAppPlan({ ...input, appId }, await token()),
+    onSuccess: cachePlan,
+  })
+}
+
+export function useUpdateAppPlan(appId: string) {
+  const token = useTokenResolver()
+  const cachePlan = useCachePlan(appId)
+  return useMutation({
+    mutationFn: async (input: UpdateAppPlanInput) => updateAppPlan(input, await token()),
+    onSuccess: cachePlan,
+  })
+}
+
+export function useSetAppPlanTarget(appId: string) {
+  const token = useTokenResolver()
+  const cachePlan = useCachePlan(appId)
+  return useMutation({
+    mutationFn: async (vars: { planId: string; version: string }) =>
+      setAppPlanTarget(vars.planId, vars.version, await token()),
+    onSuccess: cachePlan,
+  })
+}
+
+export function useRetireAppPlan(appId: string) {
+  const token = useTokenResolver()
+  const cachePlan = useCachePlan(appId)
+  return useMutation({
+    mutationFn: async (planId: string) => retireAppPlan(planId, await token()),
+    onSuccess: cachePlan,
   })
 }
