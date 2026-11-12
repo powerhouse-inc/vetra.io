@@ -179,7 +179,22 @@ function PackageRow({ entry, now }: { entry: DirectoryEntry; now: number }) {
           <p className="text-muted-foreground line-clamp-2 text-sm">{entry.description}</p>
         )}
         <p className="text-muted-foreground flex flex-wrap gap-x-3 gap-y-1 text-xs">
-          {entry.publisher && <span>{entry.publisher}</span>}
+          {entry.publisher &&
+            (entry.publisherUrl ? (
+              <a
+                href={entry.publisherUrl}
+                target="_blank"
+                // Followed only when a Renown organisation verified the domain.
+                rel={
+                  entry.publisherVerified ? 'noopener noreferrer' : 'nofollow noopener noreferrer'
+                }
+                className="hover:text-foreground underline-offset-2 hover:underline"
+              >
+                {entry.publisher}
+              </a>
+            ) : (
+              <span>{entry.publisher}</span>
+            ))}
           {entry.category && <span>{entry.category}</span>}
           {modules.map(([type, count]) => (
             <span key={type}>

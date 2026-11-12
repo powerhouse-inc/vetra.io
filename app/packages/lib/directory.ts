@@ -4,6 +4,7 @@ import { packageModuleTypes } from './constants'
 import { isRecommended } from './recommended'
 import { getPackageRegistryData, listPackages, npmName, type RegistryPackageData } from './registry'
 import { type PackageModuleType } from './types'
+import { isVerifiedPublisherUrl, loadVerifiedDomains, publisherHref } from './verified-publishers'
 
 /** Major version of the Powerhouse platform the cloud runs. Older packages don't load on it. */
 export const PLATFORM_MAJOR = 6
@@ -18,6 +19,10 @@ export type DirectoryEntry = {
   description: string | null
   category: string | null
   publisher: string | null
+  /** Publisher website from the manifest; http(s) only. */
+  publisherUrl: string | null
+  /** The website is on a domain a Renown organisation verified, so the link is followed. */
+  publisherVerified: boolean
   version: string | null
   /** When the latest version was published. */
   releasedAt: string | null
@@ -74,6 +79,7 @@ export function toDirectoryEntry(
   pkg: PackageInfo,
   data: RegistryPackageData | null,
   installs: number | null = null,
+  verifiedDomains: readonly string[] = [],
 ): DirectoryEntry {
   const name = npmName(pkg)
   const latest = data?.['dist-tags'].latest ?? pkg.version ?? null
@@ -86,6 +92,7 @@ export function toDirectoryEntry(
   }
   const platformRange =
     latestData?.peerDependencies?.['document-model'] ?? latestData?.dependencies?.['document-model']
+  const publisherUrl = publisherHref(manifest?.publisher?.url)
 
   return {
     name,
@@ -93,6 +100,9 @@ export function toDirectoryEntry(
     description: plainDescription(manifest?.description || latestData?.description),
     category: manifest?.category || null,
     publisher: manifest?.publisher?.name || null,
+    publisherUrl,
+    publisherVerified:
+      publisherUrl !== null && isVerifiedPublisherUrl(publisherUrl, verifiedDomains),
     version: latest,
     releasedAt: (latest && data?.time?.[latest]) || data?.time?.modified || null,
     createdAt: data?.time?.created ?? null,
@@ -167,15 +177,16 @@ export async function loadDirectory(): Promise<{
   entries: DirectoryEntry[]
   hasInstallCounts: boolean
 }> {
-  const [page, counts] = await Promise.all([
+  const [page, counts, verifiedDomains] = await Promise.all([
     listPackages({ limit: 500 }, { detail: 'full', init: { next: { revalidate: 600 } } }),
     loadInstallCounts(),
+    loadVerifiedDomains(),
   ])
   const entries = await Promise.all(
     page.items.map(async (pkg) => {
       const name = npmName(pkg)
       const installs = counts ? (counts.get(name) ?? 0) : null
-      return toDirectoryEntry(pkg, await getPackageRegistryData(name), installs)
+      return toDirectoryEntry(pkg, await getPackageRegistryData(name), installs, verifiedDomains)
     }),
   )
   return { entries, hasInstallCounts: counts !== null }
