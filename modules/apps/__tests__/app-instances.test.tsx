@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { AppInstance, AppRelease } from '../types'
+import type { AppInstance, AppPlan, AppRelease } from '../types'
 
 type QueryState = { data: AppInstance[] | undefined; isPending: boolean; error: Error | null }
 let state: QueryState
@@ -11,9 +11,18 @@ const useAppInstances = vi.fn((appId: string, enabled?: boolean) => {
   return { ...state, refetch: vi.fn(), isRefetching: false }
 })
 const releases: AppRelease[] = []
+let plans: AppPlan[] = []
+
+vi.mock('@/modules/shared/hooks/use-person-name', () => ({
+  usePersonName: (v: string) =>
+    v === '0x1234567890abcdef1234567890abcdef12345678'
+      ? { name: 'Frank', avatarUrl: null, address: v }
+      : { name: null, avatarUrl: null, address: null },
+}))
 
 vi.mock('../hooks/use-apps', () => ({
   useAppInstances: (appId: string, enabled?: boolean) => useAppInstances(appId, enabled),
+  useAppPlans: () => ({ data: plans, isPending: false, error: null }),
   useAppReleases: () => ({
     data: releases,
     isPending: false,
@@ -119,7 +128,9 @@ describe('AppInstances', () => {
     state.data = []
     render(<AppInstances appId="a1" />)
     expect(
-      screen.getByText('No instances yet — they appear when a release branch has a build.'),
+      screen.getByText(
+        'No instances yet — they appear when a release branch has a build, or a plan has holders.',
+      ),
     ).toBeTruthy()
   })
 })
@@ -140,15 +151,70 @@ describe('AppReleases instances panel', () => {
     useAppInstances.mockClear()
   })
 
-  it('shows the panel only when instances are enabled', () => {
+  it('shows branch instances only when instances are enabled', () => {
     const { rerender } = render(
       <AppReleases appId="a1" repository="o/r" instancesEnabled={false} />,
     )
     expect(screen.queryByText('Instances')).toBeNull()
-    expect(useAppInstances).not.toHaveBeenCalled()
     rerender(<AppReleases appId="a1" repository="o/r" instancesEnabled />)
     expect(screen.getByText('Instances')).toBeTruthy()
     expect(screen.getByTestId('instance-i1')).toBeTruthy()
+  })
+
+  it("shows plans' instances even without branch instances", () => {
+    state.data = [instance({ kind: 'shared', planId: 'p1', branch: null, name: 'pro' })]
+    render(<AppReleases appId="a1" repository="o/r" instancesEnabled={false} />)
+    expect(screen.getByTestId('instance-i1')).toBeTruthy()
+  })
+})
+
+describe('AppInstances of plans', () => {
+  beforeEach(() => {
+    cleanup()
+    plans = [{ id: 'p1', name: 'Pro' } as AppPlan]
+  })
+
+  it('names a shared instance by its plan', () => {
+    state = {
+      data: [instance({ kind: 'shared', planId: 'p1', branch: null, name: 'pro' })],
+      isPending: false,
+      error: null,
+    }
+    render(<AppInstances appId="a1" />)
+    const row = screen.getByTestId('instance-i1')
+    expect(within(row).getByText('Pro')).toBeTruthy()
+    expect(within(row).getByText('shared')).toBeTruthy()
+  })
+
+  it("shows an own instance's holder by Renown name, never the address", () => {
+    const holder = '0x1234567890abcdef1234567890abcdef12345678'
+    state = {
+      data: [instance({ kind: 'own', planId: 'p1', holder, branch: null, name: 'pro-x' })],
+      isPending: false,
+      error: null,
+    }
+    render(<AppInstances appId="a1" />)
+    const row = screen.getByTestId('instance-i1')
+    expect(within(row).getByText('Frank')).toBeTruthy()
+    expect(row.textContent).not.toContain(holder)
+  })
+
+  it('says why an instance is stopped', () => {
+    state = {
+      data: [
+        instance({
+          kind: 'own',
+          planId: 'p1',
+          status: 'stopped',
+          reason: 'licence ended',
+          branch: null,
+        }),
+      ],
+      isPending: false,
+      error: null,
+    }
+    render(<AppInstances appId="a1" />)
+    expect(screen.getByTestId('instance-i1').textContent).toContain('stopped: licence ended')
   })
 })
 

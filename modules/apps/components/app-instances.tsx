@@ -2,15 +2,16 @@
 
 import { ArrowUpRight } from 'lucide-react'
 
+import { PersonName } from '@/modules/shared/components/person-name'
 import { Skeleton } from '@/modules/shared/components/ui/skeleton'
 import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 import { cn } from '@/shared/lib/utils'
 
 import { describeAppsError } from '../graphql'
-import { useAppInstances } from '../hooks/use-apps'
+import { useAppInstances, useAppPlans } from '../hooks/use-apps'
 import { settingsPending, splitSettingsReason } from '../lib/settings'
 import { shortSha } from '../lib/status'
-import type { AppInstance, AppInstanceStatus } from '../types'
+import type { AppInstance, AppInstanceStatus, AppPlan } from '../types'
 
 const STATUS_CLASS: Record<AppInstanceStatus, string> = {
   pending: 'bg-muted text-muted-foreground',
@@ -70,7 +71,31 @@ function isHttps(url: string): boolean {
   }
 }
 
-function InstanceRow({ instance }: { instance: AppInstance }) {
+const isPlanInstance = (i: AppInstance) => i.kind === 'shared' || i.kind === 'own'
+
+/** What an instance serves: its branch, or (shared/own) its plan and, for own, the holder. */
+function InstanceLabel({ instance, plan }: { instance: AppInstance; plan: AppPlan | undefined }) {
+  if (!isPlanInstance(instance)) {
+    return (
+      <span className="font-mono text-sm break-all sm:w-48">
+        {instance.branch ?? instance.name}
+      </span>
+    )
+  }
+  return (
+    <span className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-0.5 text-sm sm:w-48">
+      <span className="font-medium">{plan?.name ?? 'Plan'}</span>
+      <span className="bg-muted text-muted-foreground rounded px-1 text-[10px] font-medium uppercase">
+        {instance.kind}
+      </span>
+      {instance.kind === 'own' && instance.holder && (
+        <PersonName value={instance.holder} avatar className="text-muted-foreground text-xs" />
+      )}
+    </span>
+  )
+}
+
+function InstanceRow({ instance, plan }: { instance: AppInstance; plan?: AppPlan }) {
   const { url, reason, runningVersion, targetVersion } = instance
   const differs = !!targetVersion && runningVersion !== targetVersion
   const { afterSettingsChange, cause } = splitSettingsReason(reason)
@@ -81,9 +106,7 @@ function InstanceRow({ instance }: { instance: AppInstance }) {
       data-testid={`instance-${instance.id}`}
       className="flex flex-wrap items-center gap-x-6 gap-y-1 px-4 py-3"
     >
-      <span className="font-mono text-sm break-all sm:w-48">
-        {instance.branch ?? instance.name}
-      </span>
+      <InstanceLabel instance={instance} plan={plan} />
       {url &&
         (isHttps(url) ? (
           <a
@@ -106,13 +129,18 @@ function InstanceRow({ instance }: { instance: AppInstance }) {
       >
         {instance.status}
       </span>
+      {instance.status === 'stopped' && cause && !afterSettingsChange ? (
+        <span className="text-muted-foreground text-xs">
+          <span className="font-medium">stopped:</span> {cause}
+        </span>
+      ) : null}
       {afterSettingsChange && (
         <span className="text-destructive text-xs">
           <span className="font-medium">After a settings change:</span>
           {cause ? ` ${cause}` : ''}
         </span>
       )}
-      {!afterSettingsChange && cause && (
+      {!afterSettingsChange && cause && instance.status !== 'stopped' && (
         <span className="text-muted-foreground text-xs">{cause}</span>
       )}
       {pending && (
@@ -139,10 +167,23 @@ function InstanceRow({ instance }: { instance: AppInstance }) {
   )
 }
 
-/** The app's branch instances, polled while any is rolling out. Shown when `instancesEnabled`. */
-export function AppInstances({ appId }: { appId: string }) {
+/**
+ * The app's instances: one per release branch (when `branchInstances`), and the shared and own
+ * instances of its plans. Polled while any is rolling out. Without branch instances the panel
+ * shows only when a plan has instances.
+ */
+export function AppInstances({
+  appId,
+  branchInstances = true,
+}: {
+  appId: string
+  branchInstances?: boolean
+}) {
   const instances = useAppInstances(appId)
+  const plans = useAppPlans(appId)
   const list = instances.data ?? []
+  const planOf = (i: AppInstance) => plans.data?.find((p) => p.id === i.planId)
+  if (!branchInstances && !list.some(isPlanInstance)) return null
   return (
     <section className="space-y-2" aria-label="Instances">
       <h3 className="text-sm font-semibold">Instances</h3>
@@ -154,12 +195,12 @@ export function AppInstances({ appId }: { appId: string }) {
         </p>
       ) : list.length === 0 ? (
         <p className="text-muted-foreground bg-card border-border rounded-xl border px-4 py-3 text-sm">
-          No instances yet — they appear when a release branch has a build.
+          No instances yet — they appear when a release branch has a build, or a plan has holders.
         </p>
       ) : (
         <ul className="bg-card border-border divide-border divide-y overflow-hidden rounded-xl border shadow-sm">
           {list.map((i) => (
-            <InstanceRow key={i.id} instance={i} />
+            <InstanceRow key={i.id} instance={i} plan={planOf(i)} />
           ))}
         </ul>
       )}
