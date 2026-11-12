@@ -37,6 +37,7 @@ import { useAppName } from '../hooks/use-app-profile'
 import type { App, UpdateAppInput } from '../types'
 import { CopyButton } from './copy-button'
 import { ReleaseBranchesField, RELEASE_BRANCHES_MAX } from './release-branches-field'
+import { RELEASE_MANAGERS_HINT, ReleaseManagers } from './release-managers'
 import { SetupDeploys } from './setup-deploys'
 import { StatusPill } from '@/modules/shared/components/status'
 
@@ -561,16 +562,19 @@ export function OrganisationCard({ app }: { app: App }) {
   )
 }
 
-/** Settings tab: general + previews form, workflow, identity, danger zone. */
+/** Settings tab: general + previews form, workflow, identity, access, danger zone. */
 export function AppSettings({
   app,
   onAuthorize,
   canEdit = true,
+  canAdminister = false,
 }: {
   app: App
   onAuthorize: () => void
   /** Owners edit; others see the release branches read-only. */
   canEdit?: boolean
+  /** Owners and org admins name release managers (the Access card). */
+  canAdminister?: boolean
 }) {
   return (
     <div className="space-y-6">
@@ -583,7 +587,12 @@ export function AppSettings({
       </SettingsCard>
       <IdentityCard app={app} onAuthorize={onAuthorize} />
       <OrganisationCard app={app} />
-      <DeleteAppCard app={app} />
+      {canAdminister && (
+        <SettingsCard title="Access" description={RELEASE_MANAGERS_HINT}>
+          <ReleaseManagers appId={app.id} />
+        </SettingsCard>
+      )}
+      {canEdit && <DeleteAppCard app={app} />}
     </div>
   )
 }
