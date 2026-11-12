@@ -339,3 +339,52 @@ export type CreateStudioAppInput = {
   /** Create the app for this organisation. */
   orgId?: string | null
 }
+
+/** Where an audit row came from (`AppAuditEntry.source`). */
+export type AppAuditSource = 'console' | 'api' | 'ci' | 'system' | 'policy'
+
+/**
+ * Who did what to an App, when and from where (`appAudit`). `actor` is a lowercased address, or
+ * `vetra` for Vetra itself; `detail` is a JSON object (never a setting value or secret).
+ */
+export type AppAuditEntry = {
+  id: string
+  appId: string
+  at: string
+  actor: string
+  /** console | api | ci | system | policy; kept a string so a new source still renders. */
+  source: string
+  /** plan.created | plan.updated | plan.target_set | plan.retired | setting.set | … */
+  action: string
+  /** plan:<id> | setting:<SCOPE>/<NAME> | role:<address> | instance:<id> | release:<version> */
+  subject: string
+  detail: string
+}
+
+export type AppAuditPage = {
+  /** Newest first. */
+  entries: AppAuditEntry[]
+  /** Pass as `before` for the next (older) page; null on the last page. */
+  nextBefore: string | null
+}
+
+/** A per-App role Vetra keeps (`appRoles`): release managers. */
+export type AppRole = {
+  appId: string
+  address: string
+  /** release_manager */
+  role: string
+  grantedBy: string
+  grantedAt: string
+}
+
+/** What the signed-in caller may do with an App (`appAccess`). */
+export type AppAccess = {
+  /** Edit, deploy, roll back, delete (owner, org OWNER/ADMIN, publishers in scope). */
+  operate: boolean
+  /** Plans, environment settings, rollouts (operators and release managers). */
+  release: boolean
+  /** Name release managers (owner, org OWNER/ADMIN). */
+  administer: boolean
+  releaseManager: boolean
+}
