@@ -33,7 +33,9 @@ const ANNA = '0x' + 'a'.repeat(40)
 
 import { AppAudit } from '../components/app-audit'
 
-function entry(over: Partial<AppAuditEntry> & { detail?: unknown } = {}): AppAuditEntry {
+function entry(
+  over: Omit<Partial<AppAuditEntry>, 'detail'> & { detail?: unknown } = {},
+): AppAuditEntry {
   const { detail, ...rest } = over
   return {
     id: 'e1',
