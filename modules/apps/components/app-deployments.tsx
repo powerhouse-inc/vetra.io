@@ -170,6 +170,7 @@ export function AppDeployments({
   error,
   onRetry,
   retrying = false,
+  canOperate = true,
 }: {
   app: App
   deployments: AppDeployment[]
@@ -178,6 +179,8 @@ export function AppDeployments({
   /** Re-runs the deployments query after a failed load. */
   onRetry: () => void
   retrying?: boolean
+  /** Owners and operators roll back; anyone else sees the history only. */
+  canOperate?: boolean
 }) {
   const [rollbackTarget, setRollbackTarget] = useState<AppDeployment | null>(null)
   // The newest READY production deployment is what's live; rolling back to it is a no-op.
@@ -223,7 +226,7 @@ export function AppDeployments({
           </TableHeader>
           <TableBody>
             {deployments.map((d) => {
-              const rollbackable = canRollback(d) && d.id !== liveProductionId
+              const rollbackable = canOperate && canRollback(d) && d.id !== liveProductionId
               const rowStatus = deploymentRowStatus(d, liveProductionId)
               return (
                 <TableRow key={d.id} className="border-border">
