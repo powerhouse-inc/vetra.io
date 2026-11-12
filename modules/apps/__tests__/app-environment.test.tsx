@@ -153,8 +153,8 @@ describe('AppEnvironment', () => {
     renderTab()
     const row = screen.getByTestId('setting-API_KEY-BRANCH')
     fireEvent.click(within(row).getByRole('button', { name: /Replace/ }))
-    expect((screen.getByLabelText('Name') as HTMLInputElement).disabled).toBe(true)
-    const value = screen.getByLabelText('Secret value') as HTMLInputElement
+    expect(screen.getByLabelText('Name').disabled).toBe(true)
+    const value = screen.getByLabelText('Secret value')
     expect(value.type).toBe('password')
     expect(value.value).toBe('')
     fireEvent.click(screen.getByRole('button', { name: 'Replace' }))
@@ -173,9 +173,7 @@ describe('AppEnvironment', () => {
     fireEvent.click(
       within(screen.getByTestId('setting-API_URL-ALL')).getByRole('button', { name: /Replace/ }),
     )
-    expect((screen.getByLabelText('Value') as HTMLTextAreaElement).value).toBe(
-      'https://api.example.com',
-    )
+    expect(screen.getByLabelText('Value').value).toBe('https://api.example.com')
   })
 
   it('shows the server error in the dialog', () => {
