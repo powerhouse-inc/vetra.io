@@ -55,7 +55,7 @@ export type AppDeployment = {
   urls: AppUrls
 }
 
-export type AppInstanceStatus = 'pending' | 'updating' | 'ready' | 'failed' | 'stopped'
+export type AppInstanceStatus = 'pending' | 'updating' | 'ready' | 'degraded' | 'failed' | 'stopped'
 
 /** A running environment of an app (`appInstances`). */
 export type AppInstance = {
@@ -73,6 +73,13 @@ export type AppInstance = {
   runningDigest: string | null
   environmentId: string | null
   updatedAt: string
+  /** Health fields: absent on older backends, null until first checked. */
+  health?: 'healthy' | 'unhealthy' | 'unknown' | null
+  healthCheck?: string | null
+  healthReason?: string | null
+  healthCheckedAt?: string | null
+  observedDigest?: string | null
+  observedDigestSource?: string | null
 }
 
 /** What vetra-publish recorded: a tagged release, or a build from a release branch or PR. */

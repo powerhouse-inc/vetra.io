@@ -331,19 +331,49 @@ export async function fetchAppReleases(
   return data.appReleases
 }
 
+const INSTANCE_FIELDS =
+  'id kind name branch pr url status reason targetVersion targetDigest runningVersion runningDigest environmentId updatedAt'
+/** Health fields newer backends add; each is dropped (once per page load) when the schema rejects it by name. */
+const OPTIONAL_INSTANCE_FIELDS = [
+  'health',
+  'healthCheck',
+  'healthReason',
+  'healthCheckedAt',
+  'observedDigest',
+  'observedDigestSource',
+] as const
+const unsupportedInstanceFields = new Set<string>()
+
+/** Test hook: forget what the backend supports for instances. */
+export function resetOptionalInstanceFields(): void {
+  unsupportedInstanceFields.clear()
+}
+
 /** The app's running instances (one per release branch); needs a backend with `appInstances`. */
 export async function fetchAppInstances(
   appId: string,
   token: string | null,
   fetchImpl?: FetchLike,
 ): Promise<AppInstance[]> {
-  const data = await appsGql<{ appInstances: AppInstance[] }>(
-    `query ($appId: ID!) { appInstances(appId: $appId) { id kind name branch pr url status reason targetVersion targetDigest runningVersion runningDigest environmentId updatedAt } }`,
-    { appId },
-    token,
-    fetchImpl,
-  )
-  return data.appInstances
+  for (;;) {
+    const selected = OPTIONAL_INSTANCE_FIELDS.filter((f) => !unsupportedInstanceFields.has(f))
+    try {
+      const data = await appsGql<{ appInstances: AppInstance[] }>(
+        `query ($appId: ID!) { appInstances(appId: $appId) { ${INSTANCE_FIELDS} ${selected.join(' ')} } }`,
+        { appId },
+        token,
+        fetchImpl,
+      )
+      return data.appInstances
+    } catch (err) {
+      const rejected =
+        err instanceof AppsApiError && err.code === 'APPS_UNAVAILABLE'
+          ? selected.filter((f) => err.message.includes(`"${f}"`))
+          : []
+      if (rejected.length === 0) throw err
+      for (const f of rejected) unsupportedInstanceFields.add(f)
+    }
+  }
 }
 
 export async function fetchAppDeployment(
