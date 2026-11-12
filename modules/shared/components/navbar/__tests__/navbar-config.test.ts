@@ -9,9 +9,11 @@ describe('navigation', () => {
     }
   })
 
-  it('links Subscriptions for logged-in users, right after Environments', () => {
+  it('links My instances and Subscriptions for logged-in users, after Environments', () => {
     const labels = PRIVATE_NAV_ITEMS.map((i) => i.label)
-    expect(labels.indexOf('Subscriptions')).toBe(labels.indexOf('Environments') + 1)
+    expect(labels.indexOf('My instances')).toBe(labels.indexOf('Environments') + 1)
+    expect(labels.indexOf('Subscriptions')).toBe(labels.indexOf('My instances') + 1)
+    expect(PRIVATE_NAV_ITEMS.find((i) => i.label === 'My instances')?.href).toBe('/user/instances')
     const item = PRIVATE_NAV_ITEMS.find((i) => i.label === 'Subscriptions')
     expect(item?.href).toBe('/user/subscriptions')
     expect(
