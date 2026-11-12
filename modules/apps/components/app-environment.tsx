@@ -384,7 +384,7 @@ function DeleteSettingDialog({
 
 /**
  * Environment tab: the publisher's settings and secrets for the app's branch and preview
- * instances, and what Vetra sets on every instance. Owners and operators only; the API refuses
+ * instances, and what Vetra sets on every instance. Owners, operators and release managers; the API refuses
  * anyone else, which is shown as such.
  */
 export function AppEnvironment({
@@ -415,7 +415,7 @@ export function AppEnvironment({
         <ShieldAlert className="text-muted-foreground h-6 w-6" aria-hidden />
         <p className="font-semibold">
           {forbidden
-            ? 'Only the app’s owners and operators manage its environment'
+            ? 'Only the app’s owners, operators and release managers manage its environment'
             : 'Environment settings did not load'}
         </p>
         <p className="text-muted-foreground max-w-md text-sm">

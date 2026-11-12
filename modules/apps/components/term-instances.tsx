@@ -430,7 +430,16 @@ type OpenDialog = 'run' | 'target' | 'size' | 'retire' | null
  * plan), or the adopted plan's access, size, target release and instance count with its actions.
  * Renders nothing on a Vetra without plans.
  */
-export function TermInstances({ appId, term }: { appId: string; term: InstancesTerm }) {
+export function TermInstances({
+  appId,
+  term,
+  canRelease = true,
+}: {
+  appId: string
+  term: InstancesTerm
+  /** Operators and release managers change plans; anyone else only sees them. */
+  canRelease?: boolean
+}) {
   const plans = useAppPlans(appId)
   const instances = useAppInstances(appId)
   const [dialog, setDialog] = useState<OpenDialog>(null)
@@ -474,14 +483,16 @@ export function TermInstances({ appId, term }: { appId: string; term: InstancesT
               ? 'This plan already has holders, so it cannot start running instances.'
               : 'Vetra can run this app for everyone with this plan.'}
           </p>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setDialog('run')}
-            disabled={term.activeLicenses > 0}
-          >
-            Run instances
-          </Button>
+          {canRelease && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setDialog('run')}
+              disabled={term.activeLicenses > 0}
+            >
+              Run instances
+            </Button>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -507,7 +518,7 @@ export function TermInstances({ appId, term }: { appId: string; term: InstancesT
               </dd>
             </div>
           </dl>
-          {plan.status === 'active' && (
+          {plan.status === 'active' && canRelease && (
             <div className="flex shrink-0 flex-wrap gap-2">
               <Button size="sm" variant="outline" onClick={() => setDialog('target')}>
                 Change target

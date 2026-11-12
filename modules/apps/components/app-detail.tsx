@@ -37,6 +37,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/modules/shared/compo
 import { describeAppsError, isAppsError } from '../graphql'
 import {
   useApp,
+  useAppAccess,
   useAppDeployments,
   useConfirmAppIdentity,
   useGithubDeployAppInfo,
@@ -52,11 +53,14 @@ import {
 } from '../lib/status'
 import { formatDate, formatTimestamp } from '@/modules/shared/lib/time'
 import { timeAgo } from '@/modules/shared/lib/time'
-import type { App } from '../types'
+import { LEGACY_ACCESS, resolveAccess } from '../lib/access'
+import type { App, AppAccess } from '../types'
 import { AppLogo } from './profile/app-logo'
+import { AppAudit } from './app-audit'
 import { AppDeployments } from './app-deployments'
 import { AppEnvironment } from './app-environment'
 import { AppOverview } from './app-overview'
+import { AppPlans } from './app-plans'
 import { AppReleases } from './app-releases'
 import { TermInstances } from './term-instances'
 import { termName } from '@/modules/publisher/lib/format'
@@ -83,6 +87,7 @@ const ALL_TABS = [
   'releases',
   ...LICENSING_TABS,
   'environment',
+  'audit',
   'settings',
 ] as const
 export type AppTab = (typeof ALL_TABS)[number]
@@ -98,6 +103,7 @@ export const APP_TAB_LABEL: Record<AppTab, string> = {
   holders: 'Holders',
   'invite-codes': 'Invite codes',
   environment: 'Environment',
+  audit: 'Audit log',
   settings: 'Settings',
 }
 
@@ -232,25 +238,38 @@ function LicensingOnlyAppDetail({ app }: { app: PublisherApp }) {
 
 /**
  * Licensing tabs only for the app's publisher; Releases for anyone who can view an app with a
- * repository (a Studio product without GitHub has nothing vetra-publish could record), and
- * Environment too, since only its branch and preview instances get those settings (the API
- * lets owners and operators in; the tab says so to anyone else).
+ * repository (a Studio product without GitHub has nothing vetra-publish could record).
+ * `access` (appAccess) decides the rest: Profile and Settings for operators (Settings also for
+ * whoever names release managers), Environment for operators and release managers. On a backend
+ * with release managers (`releaseManagers`), anyone who views the app gets the Audit log, and
+ * a release manager who does not publish its licensing gets a Plans tab of their own.
  */
 export function visibleAppTabs({
   isPublisher,
   hasRepository = true,
+  access = LEGACY_ACCESS,
+  releaseManagers = false,
+  licensingPending = false,
 }: {
   isPublisher: boolean
   hasRepository?: boolean
+  access?: AppAccess
+  /** The backend knows appAccess (audit log, release managers). */
+  releaseManagers?: boolean
+  /** The publisher check is still running: no Plans tab of its own yet. */
+  licensingPending?: boolean
 }): AppTab[] {
+  const releasePlans =
+    releaseManagers && !isPublisher && !licensingPending && hasRepository && access.release
   return [
     'overview',
     'deployments',
-    'profile',
+    ...(access.operate ? (['profile'] as const) : []),
     ...(hasRepository ? (['releases'] as const) : []),
-    ...(isPublisher ? LICENSING_TABS : []),
-    ...(hasRepository ? (['environment'] as const) : []),
-    'settings',
+    ...(isPublisher ? LICENSING_TABS : releasePlans ? (['plans'] as const) : []),
+    ...(hasRepository && access.release ? (['environment'] as const) : []),
+    ...(releaseManagers ? (['audit'] as const) : []),
+    ...(access.operate || access.administer ? (['settings'] as const) : []),
   ]
 }
 
@@ -332,6 +351,9 @@ export function AppDetail({ appId }: { appId: string }) {
   const confirm = useConfirmAppIdentity()
   const app = appQuery.data
   const publisher = useAppPublisher(appId, app?.ownerOrgId ?? null)
+  const accessQuery = useAppAccess(appId, !!app)
+  const resolved = resolveAccess(accessQuery)
+  const access = resolved.access ?? LEGACY_ACCESS
   const name = useAppName(
     app?.identityDid ?? publisher.app?.identityDid,
     app?.name ?? publisher.app?.name ?? '',
@@ -344,12 +366,19 @@ export function AppDetail({ appId }: { appId: string }) {
   const visibleTabs = visibleAppTabs({
     isPublisher: publisher.isPublisher,
     hasRepository: repository !== null,
+    access,
+    releaseManagers: resolved.access !== null && resolved.supported,
+    licensingPending: publisher.isPending,
   })
-  // While ownership is still being checked, a deep link to a licensing tab waits on a skeleton
-  // instead of flashing Overview.
+  // While ownership or access is still being checked, a deep link to a tab not shown yet waits
+  // on a skeleton instead of flashing Overview.
   const checkingLicensing = publisher.isPending
+  const checking = checkingLicensing || resolved.access === null
+  const requestedTab = (ALL_TABS as readonly string[]).includes(tabParam ?? '')
+    ? (tabParam as AppTab)
+    : null
   const awaitingTab =
-    checkingLicensing && isLicensingTab(tabParam as AppTab) ? (tabParam as AppTab) : null
+    checking && requestedTab && !visibleTabs.includes(requestedTab) ? requestedTab : null
   const tab: AppTab =
     awaitingTab ?? (visibleTabs.includes(tabParam as AppTab) ? (tabParam as AppTab) : 'overview')
   const showLicensing = publisher.isPublisher
@@ -493,7 +522,7 @@ export function AppDetail({ appId }: { appId: string }) {
         </Link>
         <Header app={app} deployed={hasProductionDeployment(app, deployments)} />
 
-        {identity.kind === 'pending' && (
+        {access.operate && identity.kind === 'pending' && (
           <Banner
             tone="warning"
             icon={Fingerprint}
@@ -504,7 +533,7 @@ export function AppDetail({ appId }: { appId: string }) {
           </Banner>
         )}
 
-        {identity.kind === 'expired' && (
+        {access.operate && identity.kind === 'expired' && (
           <Banner
             tone="danger"
             icon={Fingerprint}
@@ -517,7 +546,7 @@ export function AppDetail({ appId }: { appId: string }) {
           </Banner>
         )}
 
-        {identity.kind === 'expiring' && (
+        {access.operate && identity.kind === 'expiring' && (
           <Banner
             tone="warning"
             icon={Fingerprint}
@@ -535,7 +564,7 @@ export function AppDetail({ appId }: { appId: string }) {
             icon={Unplug}
             title="GitHub disconnected"
             actions={
-              githubInfo.data?.installUrl ? (
+              access.operate && githubInfo.data?.installUrl ? (
                 <Button size="sm" variant="outline" asChild>
                   <GithubFlowLink url={githubInfo.data.installUrl}>
                     <Github className="h-3.5 w-3.5" />
@@ -615,7 +644,8 @@ export function AppDetail({ appId }: { appId: string }) {
             deployments={deployments}
             deploymentsLoaded={!deploymentsQuery.isPending}
             onAuthorize={authorize}
-            onEditProfile={() => setTab('profile')}
+            onEditProfile={access.operate ? () => setTab('profile') : undefined}
+            canOperate={access.operate}
           />
         </TabsContent>
         <TabsContent value="deployments">
@@ -626,6 +656,7 @@ export function AppDetail({ appId }: { appId: string }) {
             error={deploymentsQuery.error}
             onRetry={() => void deploymentsQuery.refetch()}
             retrying={deploymentsQuery.isRefetching}
+            canOperate={access.operate}
           />
         </TabsContent>
         <TabsContent value="profile">
@@ -658,6 +689,7 @@ export function AppDetail({ appId }: { appId: string }) {
                       <TermInstances
                         appId={appId}
                         term={{ kind: t.kind, name: termName(t), activeLicenses: t.activeLicenses }}
+                        canRelease={access.release}
                       />
                     )
                   : undefined
@@ -675,14 +707,31 @@ export function AppDetail({ appId }: { appId: string }) {
             <InviteCodesTab appId={appId} />
           </TabsContent>
         )}
+        {!showLicensing && visibleTabs.includes('plans') && (
+          <TabsContent value="plans">
+            <AppPlans appId={appId} canRelease={access.release} />
+          </TabsContent>
+        )}
         {repository && (
           <TabsContent value="environment">
             <AppEnvironment appId={appId} instancesEnabled={app.instancesEnabled === true} />
           </TabsContent>
         )}
-        <TabsContent value="settings">
-          <AppSettings app={app} onAuthorize={authorize} />
-        </TabsContent>
+        {visibleTabs.includes('audit') && (
+          <TabsContent value="audit">
+            <AppAudit appId={appId} />
+          </TabsContent>
+        )}
+        {visibleTabs.includes('settings') && (
+          <TabsContent value="settings">
+            <AppSettings
+              app={app}
+              onAuthorize={authorize}
+              canEdit={access.operate}
+              canAdminister={access.administer && resolved.supported}
+            />
+          </TabsContent>
+        )}
       </Tabs>
     </div>
   )
