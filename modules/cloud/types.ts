@@ -193,8 +193,8 @@ export type ReleaseHistoryEntry = {
   releaseUrl: string | null
 }
 
-/** Role of an environment inside a Vetra App (read model `app_role`). */
-export type AppEnvironmentRole = 'PRODUCTION' | 'PREVIEW'
+/** Role of an environment inside a Vetra App (read model `app_role`); PLAN serves a plan's shared or own instance. */
+export type AppEnvironmentRole = 'PRODUCTION' | 'PREVIEW' | 'PLAN'
 
 /**
  * Link from an environment to the Vetra App that manages it. Present only when

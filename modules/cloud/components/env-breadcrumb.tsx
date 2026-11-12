@@ -22,10 +22,11 @@ type Props = {
   appName?: string
 }
 
-/** "Production", "PR #142", or nothing for a standalone environment. */
+/** "Production", "PR #142", "Plan", or nothing for a standalone environment. */
 function roleLabel(env: CloudEnvironment): string | null {
   if (env.app?.role === 'PREVIEW') return env.app.prNumber ? `PR #${env.app.prNumber}` : 'Preview'
   if (env.app?.role === 'PRODUCTION') return 'Production'
+  if (env.app?.role === 'PLAN') return 'Plan'
   return null
 }
 

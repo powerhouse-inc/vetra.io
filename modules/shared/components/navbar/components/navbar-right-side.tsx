@@ -6,6 +6,7 @@ import {
   Boxes,
   Check,
   Cloud,
+  Container,
   Copy,
   Layers,
   LogIn,
@@ -159,6 +160,15 @@ function RenownButton() {
             <Link href="/user/environments">
               <Cloud className="h-4 w-4" />
               Environments
+            </Link>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            asChild
+            className="cursor-pointer rounded-md px-3 py-2 text-sm font-medium"
+          >
+            <Link href="/user/instances">
+              <Container className="h-4 w-4" />
+              My instances
             </Link>
           </DropdownMenuItem>
           <DropdownMenuItem

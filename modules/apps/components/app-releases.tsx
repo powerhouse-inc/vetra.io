@@ -316,7 +316,7 @@ export function AppReleases({
         description="Versions your workflow published with vetra-publish: releases, and builds from release branches and pull requests."
         action={<KindFilter value={kind} onChange={changeKind} />}
       />
-      {instancesEnabled && <AppInstances appId={appId} />}
+      <AppInstances appId={appId} branchInstances={instancesEnabled} />
       {releases.isPending ? (
         <TabSkeleton label="Loading releases" />
       ) : releases.error ? (
