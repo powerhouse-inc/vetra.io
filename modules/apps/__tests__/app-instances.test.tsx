@@ -124,3 +124,63 @@ describe('AppReleases instances panel', () => {
     expect(screen.getByTestId('instance-i1')).toBeTruthy()
   })
 })
+
+describe('AppInstances health', () => {
+  beforeEach(() => cleanup())
+  const row = (over: Partial<AppInstance>) => {
+    state = { data: [instance(over)], isPending: false, error: null }
+    render(<AppInstances appId="a1" />)
+    return screen.getByTestId('instance-i1')
+  }
+
+  it('shows a degraded badge', () => {
+    expect(within(row({ status: 'degraded' })).getByText('degraded').className).toContain(
+      'text-warning',
+    )
+  })
+
+  it('shows unhealthy check, reason and checked time', () => {
+    const r = row({
+      health: 'unhealthy',
+      healthCheck: 'pod',
+      healthReason: 'the container does not start (CrashLoopBackOff)',
+      healthCheckedAt: '2026-11-10T12:00:00Z',
+    })
+    expect(within(r).getByText('pod')).toBeTruthy()
+    expect(within(r).getByText(/CrashLoopBackOff/)).toBeTruthy()
+    expect(
+      within(r)
+        .getByText(/^checked /)
+        .getAttribute('title'),
+    ).toBeTruthy()
+  })
+
+  it('shows unknown and healthy without a reason', () => {
+    expect(
+      within(row({ health: 'unknown', healthCheck: 'ready' })).getByText('unknown'),
+    ).toBeTruthy()
+    cleanup()
+    const r = row({ health: 'healthy', healthCheck: 'data', healthReason: 'hidden reason' })
+    expect(within(r).getByText('healthy')).toBeTruthy()
+    expect(within(r).queryByText('hidden reason')).toBeNull()
+  })
+
+  it('shows the observed digest when it differs from the target', () => {
+    const r = row({ observedDigest: 'sha256:bbccddeeff', observedDigestSource: 'pod' })
+    expect(within(r).getByText('running bbccdde (pod)')).toBeTruthy()
+  })
+
+  it('does not show it when the digest matches', () => {
+    expect(within(row({ observedDigest: 'sha256:aa' })).queryByText(/running /)).toBeNull()
+  })
+
+  it('notes a revert when failed but healthy', () => {
+    const r = row({ status: 'failed', health: 'healthy' })
+    expect(within(r).getByText('reverted to the last healthy build')).toBeTruthy()
+  })
+
+  it('renders nothing extra without health fields', () => {
+    const r = row({})
+    expect(within(r).queryByText(/checked |reverted|running /)).toBeNull()
+  })
+})
