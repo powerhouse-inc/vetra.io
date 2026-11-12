@@ -13,7 +13,7 @@ import { settingsPending, splitSettingsReason } from '../lib/settings'
 import { shortSha } from '../lib/status'
 import type { AppInstance, AppInstanceStatus, AppPlan } from '../types'
 
-const STATUS_CLASS: Record<AppInstanceStatus, string> = {
+export const STATUS_CLASS: Record<AppInstanceStatus, string> = {
   pending: 'bg-muted text-muted-foreground',
   updating: 'bg-info/15 text-info',
   ready: 'bg-success/15 text-success',
@@ -63,7 +63,7 @@ function HealthLine({ instance }: { instance: AppInstance }) {
 }
 
 /** Only https URLs become links; anything else is shown as plain text. */
-function isHttps(url: string): boolean {
+export function isHttps(url: string): boolean {
   try {
     return new URL(url).protocol === 'https:'
   } catch {
