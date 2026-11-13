@@ -1,7 +1,7 @@
 import { cleanup, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
-import type { AppInstance, AppPlan, AppRelease } from '../types'
+import type { AppInstance, AppPlan, AppRelease, InstanceBackup } from '../types'
 
 type QueryState = { data: AppInstance[] | undefined; isPending: boolean; error: Error | null }
 let state: QueryState
@@ -12,6 +12,8 @@ const useAppInstances = vi.fn((appId: string, enabled?: boolean) => {
 })
 const releases: AppRelease[] = []
 let plans: AppPlan[] = []
+let accessData: { release: boolean } | undefined
+let backups: InstanceBackup[] = []
 
 vi.mock('@/modules/shared/hooks/use-person-name', () => ({
   usePersonName: (v: string) =>
@@ -21,6 +23,18 @@ vi.mock('@/modules/shared/hooks/use-person-name', () => ({
 }))
 
 vi.mock('../hooks/use-apps', () => ({
+  useAppAccess: () => ({ data: accessData }),
+  useWithdrawRelease: () => ({ mutate: vi.fn(), reset: vi.fn(), isPending: false, error: null }),
+  usePinInstance: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+  useInstanceBackups: () => ({ data: backups, isPending: false, error: null }),
+  useInstanceRestores: () => ({ data: [], isPending: false, error: null }),
+  useBackUpInstance: () => ({ mutate: vi.fn(), isPending: false, error: null }),
+  useRestoreInstanceBackup: () => ({
+    mutate: vi.fn(),
+    isPending: false,
+    error: null,
+    reset: vi.fn(),
+  }),
   useAppInstances: (appId: string, enabled?: boolean) => useAppInstances(appId, enabled),
   useAppPlans: () => ({ data: plans, isPending: false, error: null }),
   useAppReleases: () => ({

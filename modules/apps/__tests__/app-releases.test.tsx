@@ -16,6 +16,9 @@ const useAppReleases = vi.fn<
 >(() => ({ ...state, refetch, isRefetching: false }))
 
 vi.mock('../hooks/use-apps', () => ({
+  useAppAccess: () => ({ data: undefined }),
+  useWithdrawRelease: () => ({ mutate: vi.fn(), reset: vi.fn(), isPending: false, error: null }),
+  usePinInstance: () => ({ mutate: vi.fn(), isPending: false, error: null }),
   useAppReleases: (appId: string, kind: AppReleaseKind | null, limit: number, enabled?: boolean) =>
     useAppReleases(appId, kind, limit, enabled),
   // No instances: the instances panel stays out of the way.
@@ -80,7 +83,7 @@ describe('AppReleases', () => {
 
   it('starts with releases and builds, 50 at a time', () => {
     render(<AppReleases appId="app-1" repository="powerhouse-inc/sektar" />)
-    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', null, 50, true)
+    expect(useAppReleases).toHaveBeenCalledWith('app-1', null, 50, true)
   })
 
   it('shows one row per version with its kind badge', () => {
@@ -115,7 +118,7 @@ describe('AppReleases', () => {
 
   it('does not query, and shows nothing, for an app without a repository', () => {
     const { container } = render(<AppReleases appId="app-1" repository={null} />)
-    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', null, 50, false)
+    expect(useAppReleases).toHaveBeenCalledWith('app-1', null, 50, false)
     expect(container.textContent).toBe('')
   })
 
@@ -123,12 +126,12 @@ describe('AppReleases', () => {
     render(<AppReleases appId="app-1" repository="powerhouse-inc/sektar" />)
     expect(screen.getByRole('button', { name: 'All' }).getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(screen.getByRole('button', { name: 'Builds' }))
-    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', 'build', 50, true)
+    expect(useAppReleases).toHaveBeenCalledWith('app-1', 'build', 50, true)
     expect(screen.getByRole('button', { name: 'Builds' }).getAttribute('aria-pressed')).toBe('true')
     fireEvent.click(screen.getByRole('button', { name: 'Releases' }))
-    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', 'release', 50, true)
+    expect(useAppReleases).toHaveBeenCalledWith('app-1', 'release', 50, true)
     fireEvent.click(screen.getByRole('button', { name: 'All' }))
-    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', null, 50, true)
+    expect(useAppReleases).toHaveBeenCalledWith('app-1', null, 50, true)
   })
 
   it('offers "Show more" when the page is full, raising the limit to 200', () => {
@@ -139,7 +142,7 @@ describe('AppReleases', () => {
     }
     render(<AppReleases appId="app-1" repository="powerhouse-inc/sektar" />)
     fireEvent.click(screen.getByRole('button', { name: 'Show more' }))
-    expect(useAppReleases).toHaveBeenLastCalledWith('app-1', null, 200, true)
+    expect(useAppReleases).toHaveBeenCalledWith('app-1', null, 200, true)
   })
 
   it('hides "Show more" when everything is shown', () => {

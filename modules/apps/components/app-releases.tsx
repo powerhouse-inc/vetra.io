@@ -16,12 +16,27 @@ import {
   TabHeader,
   TabSkeleton,
 } from '@/modules/publisher/components/primitives'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/modules/shared/components/ui/alert-dialog'
+import { PersonName } from '@/modules/shared/components/person-name'
 import { Button } from '@/modules/shared/components/ui/button'
+import { Input } from '@/modules/shared/components/ui/input'
+import { Label } from '@/modules/shared/components/ui/label'
 import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
 import { cn } from '@/shared/lib/utils'
 
+import { toast } from 'sonner'
+
 import { describeAppsError } from '../graphql'
-import { useAppReleases } from '../hooks/use-apps'
+import { useAppAccess, useAppReleases, useWithdrawRelease } from '../hooks/use-apps'
 import {
   RELEASES_LIMIT,
   RELEASES_MORE_LIMIT,
@@ -30,6 +45,7 @@ import {
   shortDigest,
   type ReleaseBadge,
 } from '../lib/releases'
+import { isWithdrawn } from '../lib/rollouts'
 import { githubCommitUrl, githubPullUrl, shortSha } from '../lib/status'
 import type { AppRelease, AppReleaseKind } from '../types'
 import { AppInstances } from './app-instances'
@@ -228,8 +244,80 @@ function ReleaseDetails({ release }: { release: AppRelease }) {
   )
 }
 
-function ReleaseRow({ release, repository }: { release: AppRelease; repository: string }) {
+function WithdrawDialog({
+  appId,
+  release,
+  onClose,
+}: {
+  appId: string
+  release: AppRelease
+  onClose: () => void
+}) {
+  const withdraw = useWithdrawRelease(appId)
+  const [reason, setReason] = useState('')
+  return (
+    <AlertDialog open onOpenChange={(o) => !o && onClose()}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Withdraw {release.version}?</AlertDialogTitle>
+          <AlertDialogDescription>
+            No plan can target it any more. Instances already running it keep running until they
+            move to another release.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="space-y-2">
+          <Label htmlFor="withdraw-reason">Reason (shown to your team)</Label>
+          <Input
+            id="withdraw-reason"
+            value={reason}
+            onChange={(e) => setReason(e.target.value)}
+            placeholder="e.g. migration corrupts notes"
+          />
+        </div>
+        {withdraw.error && (
+          <p role="alert" className="text-destructive text-sm">
+            {describeAppsError(withdraw.error)}
+          </p>
+        )}
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={withdraw.isPending}>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={withdraw.isPending}
+            onClick={(e) => {
+              e.preventDefault()
+              withdraw.mutate(
+                { version: release.version, reason: reason.trim() || null },
+                {
+                  onSuccess: () => {
+                    toast.success(`${release.version} withdrawn`)
+                    onClose()
+                  },
+                },
+              )
+            }}
+          >
+            Withdraw
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  )
+}
+
+function ReleaseRow({
+  appId,
+  release,
+  repository,
+  canWithdraw,
+}: {
+  appId: string
+  release: AppRelease
+  repository: string
+  canWithdraw: boolean
+}) {
   const [open, setOpen] = useState(false)
+  const [withdrawing, setWithdrawing] = useState(false)
+  const withdrawn = isWithdrawn(release)
   const badge = releaseBadge(release)
   return (
     <li data-testid={`release-${release.version}`}>
@@ -247,7 +335,9 @@ function ReleaseRow({ release, repository }: { release: AppRelease; repository: 
             )}
             aria-hidden
           />
-          <span className="font-mono text-sm break-all">{release.version}</span>
+          <span className={cn('font-mono text-sm break-all', withdrawn && 'line-through')}>
+            {release.version}
+          </span>
           <span
             className={cn(
               'shrink-0 rounded-full px-1.5 py-px text-[10px] font-medium tracking-wide uppercase',
@@ -267,6 +357,19 @@ function ReleaseRow({ release, repository }: { release: AppRelease; repository: 
             <span>Powerhouse</span>
             <span className="text-foreground font-mono">{release.powerhouseVersion}</span>
           </span>
+          {release.teamHealthyAt && (
+            <span
+              className="bg-success/15 text-success rounded-full px-1.5 py-px text-[10px] font-medium tracking-wide uppercase"
+              title={`Ran healthy on the Team instance ${formatTimestamp(release.teamHealthyAt)}`}
+            >
+              Ran on Team
+            </span>
+          )}
+          {withdrawn && (
+            <span className="bg-destructive/15 text-destructive rounded-full px-1.5 py-px text-[10px] font-medium tracking-wide uppercase">
+              Withdrawn
+            </span>
+          )}
           {release.migrates && (
             <span
               className="bg-warning/15 text-warning inline-flex items-center gap-1 rounded-full px-1.5 py-px text-[10px] font-medium tracking-wide uppercase"
@@ -278,7 +381,29 @@ function ReleaseRow({ release, repository }: { release: AppRelease; repository: 
           )}
         </div>
       </div>
+      {withdrawn && (
+        <p className="text-muted-foreground flex flex-wrap items-center gap-x-1 px-4 pb-3 pl-11 text-xs">
+          Withdrawn
+          {release.withdrawnBy && (
+            <>
+              {' by '}
+              <PersonName value={release.withdrawnBy} />
+            </>
+          )}
+          {release.withdrawnReason ? `: ${release.withdrawnReason}` : '.'}
+        </p>
+      )}
       {open && <ReleaseDetails release={release} />}
+      {open && canWithdraw && release.kind === 'release' && !withdrawn && (
+        <div className="bg-muted/30 px-4 pb-4 pl-11">
+          <Button size="sm" variant="outline" onClick={() => setWithdrawing(true)}>
+            Withdraw
+          </Button>
+        </div>
+      )}
+      {withdrawing && (
+        <WithdrawDialog appId={appId} release={release} onClose={() => setWithdrawing(false)} />
+      )}
     </li>
   )
 }
@@ -298,6 +423,7 @@ export function AppReleases({
   const [kind, setKind] = useState<AppReleaseKind | null>(null)
   const [limit, setLimit] = useState(RELEASES_LIMIT)
   const releases = useAppReleases(appId, kind, limit, repository !== null)
+  const access = useAppAccess(appId, repository !== null)
   const list = releases.data ?? []
   const canShowMore = limit < RELEASES_MORE_LIMIT && list.length >= limit
   const empty = EMPTY[kind ?? 'all']
@@ -345,7 +471,13 @@ export function AppReleases({
         <>
           <ul className="bg-card border-border divide-border divide-y overflow-hidden rounded-xl border shadow-sm">
             {list.map((r) => (
-              <ReleaseRow key={r.version} release={r} repository={repository} />
+              <ReleaseRow
+                key={r.version}
+                appId={appId}
+                release={r}
+                repository={repository}
+                canWithdraw={access.data?.release === true}
+              />
             ))}
           </ul>
           {canShowMore && (
