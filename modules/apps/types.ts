@@ -89,6 +89,31 @@ export type AppInstance = {
   settingsRevision?: string | null
   /** The settings revision it last ran healthy. */
   runningSettingsRevision?: string | null
+  /** own: the release the publisher pinned it to; rollouts skip it. */
+  pinnedVersion?: string | null
+  /** `restore:<id>` while a backup is restored into it; `held:<id>` after a failed restore. */
+  maintenance?: string | null
+  /** A warm-pool instance: no holder yet, closed to everyone. */
+  warm?: boolean
+  claimedAt?: string | null
+  /** own: how many settings its holder set (names stay the holder's). */
+  holderSettingsCount?: number
+  customDomain?: InstanceCustomDomain | null
+}
+
+export type CustomDomainStatus = 'DNS' | 'ISSUING' | 'ACTIVE' | 'FAILED'
+
+/** A DNS record the holder sets. */
+export type DnsRecordHint = { type: string; host: string; value: string }
+
+export type InstanceCustomDomain = {
+  domain: string
+  status: CustomDomainStatus
+  reason: string | null
+  since: string | null
+  records: DnsRecordHint[]
+  /** A CNAME instead of the A record (not at an apex domain). */
+  alternative: DnsRecordHint | null
 }
 
 /** Who a plan's instances serve: one shared by every holder, or one per holder. */
@@ -110,18 +135,39 @@ export type AppPlan = {
   appId: string
   slug: string
   name: string
-  /** The licensing term's kind (its plan ID). */
-  kind: string
+  /** The licensing term's kind (its plan ID); null for the Team plan. */
+  kind: string | null
+  /** The App's Team plan (organisation members; follows a branch). */
+  team?: boolean
   access: AppPlanAccess
   size: AppPlanSize
   /** A release (never a build) of the App; null until one is picked. */
   targetVersion: string | null
-  /** manual (rollouts arrive later) */
+  /** manual | patches | minor | follow:<branch> */
   policy: string
   noticeHours: number
+  /** When the plan's instances may be updated; null: any time after the notice. */
+  updateWindow?: PlanUpdateWindow | null
+  /** The last release the policy could not roll out, and why. */
+  policyNote?: string | null
+  /** Monthly AI budget in USD of every instance's own key; null: no AI key. */
+  aiBudgetUsd?: number | null
+  warmPoolSize?: number
+  warmPoolEffective?: number
+  /** Monthly cost of the warm instances, in euros (estimate). */
+  warmPoolEurPerMonth?: number
+  warmReady?: number
   status: 'active' | 'retired'
   createdAt: string
   updatedAt: string
+}
+
+/** Weekdays 1 (Monday) to 7 (Sunday) the window starts on; local HH:MM; end <= start runs past midnight. */
+export type PlanUpdateWindow = {
+  days: number[]
+  start: string
+  end: string
+  timeZone: string
 }
 
 export type CreateAppPlanInput = {
@@ -139,6 +185,14 @@ export type UpdateAppPlanInput = {
   planId: string
   name?: string | null
   size?: AppPlanSize | null
+  policy?: string | null
+  noticeHours?: number | null
+  updateWindow?: PlanUpdateWindow | null
+  clearUpdateWindow?: boolean
+  /** Null removes the budget. */
+  aiBudgetUsd?: number | null
+  /** Own plans only, 0 to 10; capped by Vetra. */
+  warmPoolSize?: number | null
 }
 
 /** An instance the caller holds a licence for (`myInstances`). */
@@ -152,6 +206,62 @@ export type HolderInstance = {
   status: AppInstanceStatus
   reason: string | null
   runningVersion: string | null
+  /** Fields newer backends add. */
+  customDomain?: InstanceCustomDomain | null
+  licenceEndsAt?: string | null
+  stopsAt?: string | null
+  deletesAt?: string | null
+  notices?: HolderNotice[]
+  /** A coming update of this instance; null when none. */
+  update?: HolderUpdate | null
+}
+
+export type HolderNoticeKind =
+  | 'EXPIRING'
+  | 'ENDED_STOP_PENDING'
+  | 'STOPPED'
+  | 'STOPPED_DELETE_PENDING'
+  | 'DELETE_IMMINENT'
+  | 'APP_DISCONTINUED'
+
+export type HolderNotice = { kind: HolderNoticeKind; at: string | null; message: string }
+
+/** A coming update a holder is told about. */
+export type HolderUpdate = {
+  rolloutId: string
+  version: string
+  /** Null: never as things stand (the plan's update window never opens). */
+  dueAt: string | null
+  notes: string | null
+  paused: boolean
+  canUpdateNow: boolean
+}
+
+export type HolderSettingKind = 'PLAIN' | 'SECRET' | 'FILE'
+
+export type HolderSetting = {
+  name: string
+  kind: HolderSettingKind
+  value: string | null
+  mountPath: string | null
+  updatedAt: string
+}
+
+export type HolderSettings = {
+  settings: HolderSetting[]
+  vetra: VetraInstanceSetting[]
+  /** Names the App's publisher sets on this instance; a holder setting of the same name replaces it. */
+  publisherNames: string[]
+  reservedNames: string[]
+  reservedPrefixes: string[]
+}
+
+export type SetHolderSettingInput = {
+  instanceId: string
+  name?: string | null
+  kind: HolderSettingKind
+  value: string
+  mountPath?: string | null
 }
 
 /** Where a publisher setting applies: every instance, or only branch or preview instances. */
@@ -215,6 +325,12 @@ export type AppRelease = {
   /** The project's Powerhouse version the image was built with. */
   powerhouseVersion: string
   createdAt: string
+  /** Withdrawn by the publisher: no plan may target it. Absent on older backends. */
+  withdrawnAt?: string | null
+  withdrawnBy?: string | null
+  withdrawnReason?: string | null
+  /** When this release ran healthy on the App's Team instance. */
+  teamHealthyAt?: string | null
 }
 
 export type App = {
@@ -387,4 +503,135 @@ export type AppAccess = {
   /** Name release managers (owner, org OWNER/ADMIN). */
   administer: boolean
   releaseManager: boolean
+}
+
+export type RolloutStatus = 'active' | 'paused' | 'complete' | 'cancelled' | 'rolled_back'
+
+export type AppRolloutPlan = { planId: string; fromVersion: string | null; noticeHours: number }
+
+export type RolloutStepStatus =
+  | 'pending'
+  | 'backing_up'
+  | 'applying'
+  | 'restoring'
+  | 'succeeded'
+  | 'failed'
+  | 'skipped'
+  | 'revert_pending'
+  | 'reverting'
+  | 'revert_failed'
+  | 'rolled_back'
+
+export type AppRolloutStep = {
+  id: string
+  instanceId: string
+  instanceName: string
+  /** shared | own */
+  instanceKind: string
+  planId: string
+  position: number
+  fromVersion: string | null
+  toVersion: string
+  status: RolloutStepStatus
+  dueAt: string
+  requestedAt: string | null
+  startedAt: string | null
+  finishedAt: string | null
+  attempts: number
+  error: string | null
+  note: string | null
+  backupId?: string | null
+  restoreId?: string | null
+}
+
+/** A move of one or more plans to a release, one instance at a time. */
+export type AppRollout = {
+  id: string
+  appId: string
+  version: string
+  status: RolloutStatus
+  /** forward | back */
+  direction: string
+  /** console | api | policy */
+  source: string
+  /** An address, or `vetra` (a policy). */
+  startedBy: string
+  startedAt: string
+  notes: string | null
+  pausedAt: string | null
+  pausedReason: string | null
+  finishedAt: string | null
+  rolledBackBy: string | null
+  rolledBackAt: string | null
+  plans: AppRolloutPlan[]
+  steps: AppRolloutStep[]
+}
+
+export type AppRolloutStepPreview = {
+  instanceId: string
+  instanceName: string
+  instanceKind: string
+  planId: string
+  fromVersion: string | null
+  /** pending | skipped */
+  status: string
+  note: string | null
+  dueAt: string
+}
+
+/** What `startRollout` would do. */
+export type AppRolloutCheck = {
+  version: string
+  ok: boolean
+  problems: string[]
+  steps: AppRolloutStepPreview[]
+}
+
+export type StartRolloutInput = {
+  appId: string
+  version: string
+  planIds: string[]
+  noticeHours?: number | null
+}
+
+export type InstanceBackup = {
+  id: string
+  instanceId: string
+  /** pre_update | daily | manual | pre_restore | pre_stop */
+  reason: string
+  /** pending | ready | failed */
+  status: string
+  version: string | null
+  sizeBytes: number | null
+  error: string | null
+  requestedBy: string
+  createdAt: string
+  finishedAt: string | null
+  expiresAt: string
+  rolloutStepId: string | null
+}
+
+export type InstanceRestoreStatus =
+  | 'safety_backup'
+  | 'stopping'
+  | 'restoring_db'
+  | 'restoring_data'
+  | 'starting'
+  | 'succeeded'
+  | 'failed'
+
+export type InstanceRestore = {
+  id: string
+  instanceId: string
+  backupId: string
+  /** rollback | failed_update | manual */
+  purpose: string
+  status: InstanceRestoreStatus
+  thenVersion: string | null
+  error: string | null
+  /** Failed with /data possibly half restored: the instance stays stopped. */
+  held: boolean
+  requestedBy: string
+  createdAt: string
+  finishedAt: string | null
 }

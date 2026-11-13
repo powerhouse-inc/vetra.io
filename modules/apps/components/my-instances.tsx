@@ -1,6 +1,8 @@
 'use client'
 
-import { ArrowUpRight, Container } from 'lucide-react'
+import { ArrowUpRight, Container, Loader2 } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 import Link from 'next/link'
 
 import { EmptyState, TabError, TabSkeleton } from '@/modules/publisher/components/primitives'
@@ -8,13 +10,87 @@ import { PageHeader } from '@/modules/shared/components/page-header'
 import { Button } from '@/modules/shared/components/ui/button'
 import { cn } from '@/shared/lib/utils'
 
+import { formatTimestamp } from '@/modules/shared/lib/time'
+
 import { describeAppsError, isAppsError } from '../graphql'
 import { useAppIdentityOf } from '../hooks/use-app-names'
-import { useMyInstances } from '../hooks/use-apps'
+import { useMyInstances, useUpdateInstanceNow } from '../hooks/use-apps'
+import { NOTICE_CLASS, NOTICE_TONE, sortedNotices } from '../lib/holder'
 import { ACCESS_LABEL } from '../lib/plans'
 import type { HolderInstance } from '../types'
 import { isHttps, STATUS_CLASS } from './app-instances'
+import { HolderInstancePanel } from './holder-instance-panel'
 import { AppLogo } from './profile/app-logo'
+import { MarkdownLite } from './profile/markdown-lite'
+
+/** A coming update: when, what is new, and "Update now" while the plan lets the holder. */
+function UpdateBanner({ instance }: { instance: HolderInstance }) {
+  const update = instance.update
+  const now = useUpdateInstanceNow()
+  if (!update) return null
+  return (
+    <div
+      data-testid={`update-${instance.instanceId}`}
+      className="border-info/40 bg-info/10 basis-full space-y-2 rounded-md border px-4 py-3 text-sm"
+    >
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <span className="font-medium">
+          {update.dueAt
+            ? `Version ${update.version} on ${formatTimestamp(update.dueAt)}`
+            : `Version ${update.version} is coming`}
+        </span>
+        {update.paused && <span className="text-warning text-xs">paused by the publisher</span>}
+        {!update.dueAt && !update.paused && (
+          <span className="text-muted-foreground text-xs">
+            Not yet scheduled: the update window of your plan is not open.
+          </span>
+        )}
+        {update.canUpdateNow && (
+          <Button
+            size="sm"
+            className="ml-auto"
+            disabled={now.isPending}
+            onClick={() =>
+              now.mutate(instance.instanceId, {
+                onSuccess: () => toast.success(`Updating to ${update.version}`),
+              })
+            }
+          >
+            {now.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+            Update now
+          </Button>
+        )}
+      </div>
+      {update.notes && <MarkdownLite text={update.notes} className="text-sm" />}
+      {now.error && (
+        <p role="alert" className="text-destructive text-sm">
+          {describeAppsError(now.error)}
+        </p>
+      )}
+    </div>
+  )
+}
+
+/** End-of-licence notices, most urgent first, in the server's words. */
+function Notices({ instance }: { instance: HolderInstance }) {
+  const notices = sortedNotices(instance.notices)
+  if (notices.length === 0) return null
+  return (
+    <ul className="basis-full space-y-2">
+      {notices.map((n) => (
+        <li
+          key={n.kind}
+          role="status"
+          data-testid={`notice-${n.kind}`}
+          className={cn('rounded-md border px-4 py-2 text-sm', NOTICE_CLASS[NOTICE_TONE[n.kind]])}
+        >
+          {n.message}
+          {n.at && <span className="ml-2 text-xs opacity-80">{formatTimestamp(n.at)}</span>}
+        </li>
+      ))}
+    </ul>
+  )
+}
 
 function MyInstanceCard({
   instance,
@@ -28,10 +104,11 @@ function MyInstanceCard({
   logo: string | null
 }) {
   const { url, status, reason } = instance
+  const [manage, setManage] = useState(false)
   return (
     <li
       data-testid={`my-instance-${instance.instanceId}`}
-      className="bg-card border-border flex flex-col gap-4 rounded-xl border p-5 shadow-sm sm:flex-row sm:items-center"
+      className="bg-card border-border flex flex-col gap-4 rounded-xl border p-5 shadow-sm sm:flex-row sm:flex-wrap sm:items-center"
     >
       <AppLogo name={appName} seed={instance.appId} src={logo} appDid={appDid} size="md" />
       <div className="min-w-0 flex-1 space-y-1">
@@ -75,6 +152,20 @@ function MyInstanceCard({
         ) : (
           <span className="text-muted-foreground text-sm">{url}</span>
         ))}
+      {instance.access === 'own' && (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="shrink-0"
+          aria-expanded={manage}
+          onClick={() => setManage((x) => !x)}
+        >
+          {manage ? 'Close' : 'Manage'}
+        </Button>
+      )}
+      <Notices instance={instance} />
+      <UpdateBanner instance={instance} />
+      {manage && instance.access === 'own' && <HolderInstancePanel instance={instance} />}
     </li>
   )
 }

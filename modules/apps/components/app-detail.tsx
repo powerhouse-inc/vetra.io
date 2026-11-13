@@ -61,6 +61,8 @@ import { AppDeployments } from './app-deployments'
 import { AppEnvironment } from './app-environment'
 import { AppOverview } from './app-overview'
 import { AppPlans } from './app-plans'
+import { TeamPlanCard } from './team-plan-card'
+import { AppRollouts } from './app-rollouts'
 import { AppReleases } from './app-releases'
 import { TermInstances } from './term-instances'
 import { termName } from '@/modules/publisher/lib/format'
@@ -85,6 +87,7 @@ const ALL_TABS = [
   'deployments',
   'profile',
   'releases',
+  'rollouts',
   ...LICENSING_TABS,
   'environment',
   'audit',
@@ -97,6 +100,7 @@ export const APP_TAB_LABEL: Record<AppTab, string> = {
   deployments: 'Deployments',
   profile: 'Profile',
   releases: 'Releases',
+  rollouts: 'Rollouts',
   artifacts: 'Artifacts',
   templates: 'Templates',
   plans: 'Plans',
@@ -266,6 +270,7 @@ export function visibleAppTabs({
     'deployments',
     ...(access.operate ? (['profile'] as const) : []),
     ...(hasRepository ? (['releases'] as const) : []),
+    ...(hasRepository && releaseManagers && access.release ? (['rollouts'] as const) : []),
     ...(isPublisher ? LICENSING_TABS : releasePlans ? (['plans'] as const) : []),
     ...(hasRepository && access.release ? (['environment'] as const) : []),
     ...(releaseManagers ? (['audit'] as const) : []),
@@ -669,6 +674,11 @@ export function AppDetail({ appId }: { appId: string }) {
             instancesEnabled={app.instancesEnabled === true}
           />
         </TabsContent>
+        {repository && visibleTabs.includes('rollouts') && (
+          <TabsContent value="rollouts">
+            <AppRollouts appId={appId} canRelease={access.release} />
+          </TabsContent>
+        )}
         {showLicensing && (
           <TabsContent value="artifacts">
             <ArtifactsTab appId={appId} />
@@ -680,7 +690,8 @@ export function AppDetail({ appId }: { appId: string }) {
           </TabsContent>
         )}
         {showLicensing && (
-          <TabsContent value="plans">
+          <TabsContent value="plans" className="space-y-6">
+            {repository && <TeamPlanCard app={app} canAdminister={access.administer} />}
             <PlansTab
               appId={appId}
               termExtra={
@@ -709,7 +720,12 @@ export function AppDetail({ appId }: { appId: string }) {
         )}
         {!showLicensing && visibleTabs.includes('plans') && (
           <TabsContent value="plans">
-            <AppPlans appId={appId} canRelease={access.release} />
+            <AppPlans
+              appId={appId}
+              canRelease={access.release}
+              app={repository ? app : undefined}
+              canAdminister={access.administer}
+            />
           </TabsContent>
         )}
         {repository && (

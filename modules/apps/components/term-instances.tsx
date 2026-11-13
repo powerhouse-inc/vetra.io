@@ -30,6 +30,7 @@ import { cn } from '@/shared/lib/utils'
 
 import { describeAppsError, isAppsError } from '../graphql'
 import {
+  useApp,
   useAppInstances,
   useAppPlans,
   useAppReleases,
@@ -45,10 +46,12 @@ import {
   isPlanSize,
   planForKind,
   planInstances,
-  releaseVersions,
   sizeLabel,
 } from '../lib/plans'
 import { RELEASES_MORE_LIMIT } from '../lib/releases'
+import { newerRelease, policyLabel, rollableReleases, windowText } from '../lib/rollouts'
+import { PlanSettingsDialog } from './plan-settings-dialog'
+import { RolloutDialog } from './rollout-dialog'
 import { APP_PLAN_SIZES, type AppPlan, type AppPlanAccess, type AppPlanSize } from '../types'
 
 /** The licensing term a plan adopts: its plan ID (kind) and how many hold it. */
@@ -106,7 +109,7 @@ function ReleaseSelect({
   open: boolean
 }) {
   const releases = useAppReleases(appId, 'release', RELEASES_MORE_LIMIT, open)
-  const versions = releaseVersions(releases.data)
+  const versions = rollableReleases(releases.data).map((r) => r.version)
   if (releases.isPending) return <Skeleton className="h-9 w-full" />
   if (releases.error) return <InlineError error={releases.error} />
   if (versions.length === 0)
@@ -423,7 +426,7 @@ function RetirePlanDialog({
   )
 }
 
-type OpenDialog = 'run' | 'target' | 'size' | 'retire' | null
+type OpenDialog = 'run' | 'target' | 'size' | 'retire' | 'rollout' | 'settings' | null
 
 /**
  * The "Instances" area of a licensing term's card: run instances for it (adopt the term as a
@@ -442,6 +445,8 @@ export function TermInstances({
 }) {
   const plans = useAppPlans(appId)
   const instances = useAppInstances(appId)
+  const app = useApp(appId)
+  const releases = useAppReleases(appId, 'release', RELEASES_MORE_LIMIT, plans.data !== undefined)
   const [dialog, setDialog] = useState<OpenDialog>(null)
   const close = (o: boolean) => !o && setDialog(null)
 
@@ -449,6 +454,10 @@ export function TermInstances({
 
   const plan = planForKind(plans.data, term.kind)
   const count = plan ? planInstances(instances.data, plan.id).length : 0
+  const available = plan && plan.status === 'active' ? newerRelease(plan, releases.data) : null
+  const branches = [
+    ...new Set([app.data?.productionBranch, ...(app.data?.releaseBranches ?? [])].filter(Boolean)),
+  ] as string[]
 
   return (
     <section
@@ -495,41 +504,67 @@ export function TermInstances({
           )}
         </div>
       ) : (
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
-          <dl className="text-muted-foreground grid flex-1 grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
-            <div>
-              <dt className="text-xs">Access</dt>
-              <dd className="text-foreground" title={ACCESS_HINT[plan.access]}>
-                {ACCESS_LABEL[plan.access] ?? plan.access}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-xs">Size</dt>
-              <dd className="text-foreground">{sizeLabel(plan.size)}</dd>
-            </div>
-            <div>
-              <dt className="text-xs">Target release</dt>
-              <dd className="text-foreground font-mono">{plan.targetVersion ?? 'None yet'}</dd>
-            </div>
-            <div>
-              <dt className="text-xs">Running</dt>
-              <dd className="text-foreground">
-                {instances.isPending ? '…' : instanceCountText(count)}
-              </dd>
-            </div>
-          </dl>
-          {plan.status === 'active' && canRelease && (
-            <div className="flex shrink-0 flex-wrap gap-2">
-              <Button size="sm" variant="outline" onClick={() => setDialog('target')}>
-                Change target
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setDialog('size')}>
-                Change size
-              </Button>
-              <Button size="sm" variant="outline" onClick={() => setDialog('retire')}>
-                Retire
-              </Button>
-            </div>
+        <div className="space-y-2">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
+            <dl className="text-muted-foreground grid flex-1 grid-cols-2 gap-x-6 gap-y-1 text-sm sm:grid-cols-4">
+              <div>
+                <dt className="text-xs">Access</dt>
+                <dd className="text-foreground" title={ACCESS_HINT[plan.access]}>
+                  {ACCESS_LABEL[plan.access] ?? plan.access}
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs">Size</dt>
+                <dd className="text-foreground">{sizeLabel(plan.size)}</dd>
+              </div>
+              <div>
+                <dt className="text-xs">Target release</dt>
+                <dd className="text-foreground font-mono">{plan.targetVersion ?? 'None yet'}</dd>
+              </div>
+              <div>
+                <dt className="text-xs">Running</dt>
+                <dd className="text-foreground">
+                  {instances.isPending ? '…' : instanceCountText(count)}
+                </dd>
+              </div>
+            </dl>
+            {plan.status === 'active' && canRelease && (
+              <div className="flex shrink-0 flex-wrap gap-2">
+                <Button size="sm" onClick={() => setDialog('rollout')}>
+                  Roll out
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setDialog('settings')}>
+                  Settings
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setDialog('target')}>
+                  Change target
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setDialog('size')}>
+                  Change size
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => setDialog('retire')}>
+                  Retire
+                </Button>
+              </div>
+            )}
+          </div>
+          <div className="text-muted-foreground flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+            <span>Policy: {policyLabel(plan.policy)}</span>
+            <span>Notice: {plan.noticeHours} h</span>
+            {plan.updateWindow && <span>Window: {windowText(plan.updateWindow)}</span>}
+            {plan.access === 'own' && (plan.warmPoolSize ?? 0) > 0 && (
+              <span>
+                Warm: {plan.warmReady ?? 0} of {plan.warmPoolEffective ?? plan.warmPoolSize} ready
+              </span>
+            )}
+            {available && canRelease && (
+              <span className="text-info font-medium">{available} available</span>
+            )}
+          </div>
+          {plan.policyNote && (
+            <p role="alert" className="bg-warning/10 text-warning rounded-md px-3 py-1.5 text-xs">
+              {plan.policyNote}
+            </p>
           )}
         </div>
       )}
@@ -555,6 +590,19 @@ export function TermInstances({
             appId={appId}
             plan={plan}
             open={dialog === 'size'}
+            onOpenChange={close}
+          />
+          <RolloutDialog
+            appId={appId}
+            initialPlanId={plan.id}
+            open={dialog === 'rollout'}
+            onOpenChange={close}
+          />
+          <PlanSettingsDialog
+            appId={appId}
+            plan={plan}
+            releaseBranches={branches}
+            open={dialog === 'settings'}
             onOpenChange={close}
           />
           <RetirePlanDialog

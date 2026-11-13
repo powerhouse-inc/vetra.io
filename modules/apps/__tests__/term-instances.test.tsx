@@ -26,6 +26,7 @@ const mutation = (mutate: ReturnType<typeof vi.fn>, error: () => Error | null = 
 
 vi.mock('sonner', () => ({ toast: { success: vi.fn(), error: vi.fn() } }))
 vi.mock('../hooks/use-apps', () => ({
+  useApp: () => ({ data: undefined }),
   useAppPlans: () => plans,
   useAppInstances: () => instances,
   useAppReleases: (_appId: string, kind: string | null, _limit: number, enabled?: boolean) => {
