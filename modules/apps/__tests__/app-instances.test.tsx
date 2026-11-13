@@ -1,4 +1,4 @@
-import { cleanup, render, screen, within } from '@testing-library/react'
+import { cleanup, fireEvent, render, screen, within } from '@testing-library/react'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 
 import type { AppInstance, AppPlan, AppRelease, InstanceBackup } from '../types'
@@ -289,5 +289,113 @@ describe('AppInstances health', () => {
   it('renders nothing extra without health fields', () => {
     const r = row({})
     expect(within(r).queryByText(/checked |reverted|running /)).toBeNull()
+  })
+})
+
+describe('AppInstances plan features', () => {
+  beforeEach(() => {
+    cleanup()
+    accessData = { release: true }
+    backups = []
+    releases.length = 0
+    plans = [{ id: 'p1', name: 'Pro' } as AppPlan]
+  })
+
+  const own = (over: Partial<AppInstance> = {}) =>
+    instance({
+      id: 'o1',
+      kind: 'own',
+      planId: 'p1',
+      holder: '0x1234567890abcdef1234567890abcdef12345678',
+      name: 'pro-frank',
+      runningVersion: '1.2.0',
+      targetVersion: '1.2.0',
+      ...over,
+    })
+
+  it('lets a release manager pin an own instance, and shows what it is pinned at', () => {
+    releases.push({ version: '1.2.0', kind: 'release' } as AppRelease)
+    state = { data: [own({ pinnedVersion: '1.1.0' })], isPending: false, error: null }
+    render(<AppInstances appId="a1" />)
+    const row = screen.getByTestId('instance-o1')
+    expect(row.textContent).toContain('pinned at 1.1.0')
+    expect(within(row).getByRole('button', { name: 'Change pin' })).toBeTruthy()
+    expect(within(row).getByRole('button', { name: 'Unpin' })).toBeTruthy()
+    expect(within(row).getByText('Frank')).toBeTruthy()
+  })
+
+  it('offers no pin or backups without the release permission', () => {
+    accessData = { release: false }
+    state = { data: [own()], isPending: false, error: null }
+    render(<AppInstances appId="a1" />)
+    const row = screen.getByTestId('instance-o1')
+    expect(within(row).queryByRole('button', { name: 'Pin' })).toBeNull()
+    expect(within(row).queryByRole('button', { name: 'Backups' })).toBeNull()
+  })
+
+  it('warns when an instance still runs a withdrawn release', () => {
+    releases.push({
+      version: '1.2.0',
+      kind: 'release',
+      withdrawnAt: '2026-11-12T00:00:00Z',
+      withdrawnReason: 'bad migration',
+    } as AppRelease)
+    state = { data: [own()], isPending: false, error: null }
+    render(<AppInstances appId="a1" />)
+    expect(screen.getByText('runs a withdrawn release')).toBeTruthy()
+  })
+
+  it('labels warm instances and claimed ones', () => {
+    state = {
+      data: [
+        own({ id: 'w1', holder: null, warm: true }),
+        own({ id: 'c1', claimedAt: '2026-11-13T08:00:00Z' }),
+      ],
+      isPending: false,
+      error: null,
+    }
+    render(<AppInstances appId="a1" />)
+    expect(screen.getByTestId('instance-w1').textContent).toContain('Warm (no holder yet)')
+    expect(
+      within(screen.getByTestId('instance-w1')).queryByRole('button', { name: 'Pin' }),
+    ).toBeNull()
+    expect(screen.getByTestId('instance-c1').textContent).toContain('from the warm pool')
+  })
+
+  it('says an instance is stopped after a failed restore and shows restore progress', () => {
+    state = {
+      data: [
+        own({ id: 'h1', maintenance: 'held:r1' }),
+        own({ id: 'r1', maintenance: 'restore:r2' }),
+      ],
+      isPending: false,
+      error: null,
+    }
+    render(<AppInstances appId="a1" />)
+    expect(screen.getByRole('alert').textContent).toContain('Stopped after a failed restore')
+    expect(screen.getByTestId('restore-progress-r1').textContent).toContain('Restoring a backup')
+  })
+
+  it('shows the backups of a plan instance on demand', () => {
+    backups = [
+      {
+        id: 'b1',
+        instanceId: 'o1',
+        reason: 'daily',
+        status: 'ready',
+        version: '1.2.0',
+        sizeBytes: 1024,
+        error: null,
+        requestedBy: 'vetra',
+        createdAt: '2026-11-13T00:00:00Z',
+        finishedAt: null,
+        expiresAt: '2026-12-13T00:00:00Z',
+        rolloutStepId: null,
+      },
+    ]
+    state = { data: [own()], isPending: false, error: null }
+    render(<AppInstances appId="a1" />)
+    fireEvent.click(screen.getByRole('button', { name: 'Backups' }))
+    expect(screen.getByTestId('backup-b1').textContent).toContain('Daily')
   })
 })
