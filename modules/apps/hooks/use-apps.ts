@@ -39,7 +39,28 @@ import {
   updateApp,
   updateAppPlan,
   AppsApiError,
+  backUpInstance,
+  checkRollout,
+  controlRollout,
+  controlRolloutStep,
+  deleteMyInstanceSetting,
+  disableTeamPlan,
+  enableTeamPlan,
+  fetchAppRollouts,
+  fetchInstanceBackups,
+  fetchInstanceRestores,
+  fetchMyInstanceSettings,
   isAppsError,
+  pinInstance,
+  removeMyInstanceCustomDomain,
+  restoreInstanceBackup,
+  setMyInstanceCustomDomain,
+  setMyInstanceSetting,
+  startRollout,
+  unpinInstance,
+  updateInstanceNow,
+  withdrawRelease,
+  type RolloutAction,
 } from '../graphql'
 import { mergeAppSetting, settingsPending, withoutAppSetting } from '../lib/settings'
 import { activeAppIds, isAppEnvironment } from '../lib/split'
@@ -54,6 +75,8 @@ import type {
   AppPlan,
   AppRelease,
   AppReleaseKind,
+  AppRollout,
+  AppRolloutCheck,
   AppRole,
   AppSettingScope,
   AppSettings,
@@ -64,7 +87,12 @@ import type {
   GithubDeployInstallation,
   GithubRepo,
   HolderInstance,
+  HolderSettings,
+  InstanceBackup,
+  InstanceRestore,
   SetAppSettingInput,
+  SetHolderSettingInput,
+  StartRolloutInput,
   UpdateAppInput,
   UpdateAppPlanInput,
 } from '../types'
@@ -561,4 +589,260 @@ export function useRemoveAppRole(appId: string) {
       void qc.invalidateQueries({ queryKey: appsKeys.audit(appId, did) })
     },
   })
+}
+
+// ---------------------------------------------------------------------------
+// Rollouts
+// ---------------------------------------------------------------------------
+
+/** Poll every 10 s while any rollout is still moving (active or paused). */
+export function rolloutsPollInterval(data: AppRollout[] | undefined): number | false {
+  return data?.some((r) => r.status === 'active' || r.status === 'paused') ? 10_000 : false
+}
+
+/** The App's rollouts, newest first (operators and release managers). */
+export function useAppRollouts(appId: string, enabled = true) {
+  const did = useDid()
+  return useAuthedQuery<AppRollout[]>(
+    appsKeys.rollouts(appId, did),
+    (token) => fetchAppRollouts(appId, 20, token),
+    {
+      enabled,
+      retry: retryUnlessFinal,
+      refetchInterval: (query) => rolloutsPollInterval(query.state.data),
+    },
+  )
+}
+
+/** What a rollout would move and why it cannot start; runs once a release and a plan are picked. */
+export function useCheckRollout(
+  appId: string,
+  version: string,
+  planIds: string[],
+  noticeHours: number | null,
+  enabled: boolean,
+) {
+  return useAuthedQuery<AppRolloutCheck>(
+    appsKeys.rolloutCheck(appId, version, planIds, noticeHours),
+    (token) => checkRollout(appId, version, planIds, noticeHours, token),
+    { enabled: enabled && !!version && planIds.length > 0, retry: false, staleTime: 0 },
+  )
+}
+
+/** Everything a rollout touches: itself, its plans' targets, the instances and the audit log. */
+function useRefreshRollouts(appId: string) {
+  const qc = useQueryClient()
+  const did = useDid()
+  return useCallback(() => {
+    for (const key of [
+      appsKeys.rollouts(appId, did),
+      appsKeys.plans(appId, did),
+      appsKeys.instances(appId, did),
+      appsKeys.audit(appId, did),
+    ]) {
+      void qc.invalidateQueries({ queryKey: key })
+    }
+  }, [qc, did, appId])
+}
+
+export function useStartRollout(appId: string) {
+  const token = useTokenResolver()
+  const refresh = useRefreshRollouts(appId)
+  return useMutation({
+    mutationFn: async (input: Omit<StartRolloutInput, 'appId'>) =>
+      startRollout({ ...input, appId }, await token()),
+    onSuccess: refresh,
+  })
+}
+
+export function useControlRollout(appId: string) {
+  const token = useTokenResolver()
+  const refresh = useRefreshRollouts(appId)
+  return useMutation({
+    mutationFn: async (vars: {
+      action: RolloutAction
+      rolloutId: string
+      reason?: string | null
+      acceptDataLoss?: boolean
+    }) =>
+      controlRollout(
+        vars.action,
+        vars.rolloutId,
+        { reason: vars.reason, acceptDataLoss: vars.acceptDataLoss },
+        await token(),
+      ),
+    onSuccess: refresh,
+  })
+}
+
+export function useControlRolloutStep(appId: string) {
+  const token = useTokenResolver()
+  const refresh = useRefreshRollouts(appId)
+  return useMutation({
+    mutationFn: async (vars: { action: 'retryRolloutStep' | 'skipRolloutStep'; stepId: string }) =>
+      controlRolloutStep(vars.action, vars.stepId, await token()),
+    onSuccess: refresh,
+  })
+}
+
+/** Pins an own instance to a release (applied at once), or unpins it (`version` null). */
+export function usePinInstance(appId: string) {
+  const token = useTokenResolver()
+  const refresh = useRefreshRollouts(appId)
+  return useMutation({
+    mutationFn: async (vars: { instanceId: string; version: string | null }) =>
+      vars.version
+        ? pinInstance(vars.instanceId, vars.version, await token())
+        : unpinInstance(vars.instanceId, await token()),
+    onSuccess: refresh,
+  })
+}
+
+export function useWithdrawRelease(appId: string) {
+  const qc = useQueryClient()
+  const token = useTokenResolver()
+  return useMutation({
+    mutationFn: async (vars: { version: string; reason: string | null }) =>
+      withdrawRelease(appId, vars.version, vars.reason, await token()),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ['apps', 'releases', appId] })
+      void qc.invalidateQueries({ queryKey: ['apps', 'audit', appId] })
+    },
+  })
+}
+
+/** A holder starts their waiting update now. */
+export function useUpdateInstanceNow() {
+  const qc = useQueryClient()
+  const did = useDid()
+  const token = useTokenResolver()
+  return useMutation({
+    mutationFn: async (instanceId: string) => updateInstanceNow(instanceId, await token()),
+    onSuccess: () => void qc.invalidateQueries({ queryKey: appsKeys.myInstances(did) }),
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Backups
+// ---------------------------------------------------------------------------
+
+/** Rows of an instance's backup list. */
+export const BACKUPS_LIMIT = 30
+
+export function useInstanceBackups(instanceId: string, enabled = true) {
+  const did = useDid()
+  return useAuthedQuery<InstanceBackup[]>(
+    appsKeys.backups(instanceId, did),
+    (token) => fetchInstanceBackups(instanceId, BACKUPS_LIMIT, token),
+    {
+      enabled,
+      retry: retryUnlessFinal,
+      refetchInterval: (query) =>
+        query.state.data?.some((b) => b.status === 'pending') ? 10_000 : false,
+    },
+  )
+}
+
+/** The instance's restores; polled every 10 s while one is running (`polling`). */
+export function useInstanceRestores(instanceId: string, polling: boolean, enabled = true) {
+  const did = useDid()
+  return useAuthedQuery<InstanceRestore[]>(
+    appsKeys.restores(instanceId, did),
+    (token) => fetchInstanceRestores(instanceId, token),
+    { enabled, retry: retryUnlessFinal, refetchInterval: polling ? 10_000 : false },
+  )
+}
+
+export function useBackUpInstance(appId: string, instanceId: string) {
+  const qc = useQueryClient()
+  const did = useDid()
+  const token = useTokenResolver()
+  return useMutation({
+    mutationFn: async () => backUpInstance(instanceId, await token()),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: appsKeys.backups(instanceId, did) })
+      void qc.invalidateQueries({ queryKey: appsKeys.audit(appId, did) })
+    },
+  })
+}
+
+export function useRestoreInstanceBackup(appId: string, instanceId: string) {
+  const qc = useQueryClient()
+  const did = useDid()
+  const token = useTokenResolver()
+  return useMutation({
+    // The confirmation dialog is where the data loss is accepted; only it calls this.
+    mutationFn: async (backupId: string) =>
+      restoreInstanceBackup(instanceId, backupId, true, await token()),
+    onSuccess: () => {
+      for (const key of [
+        appsKeys.backups(instanceId, did),
+        appsKeys.restores(instanceId, did),
+        appsKeys.instances(appId, did),
+        appsKeys.audit(appId, did),
+      ]) {
+        void qc.invalidateQueries({ queryKey: key })
+      }
+    },
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Team plan
+// ---------------------------------------------------------------------------
+
+/** Turns the Team plan on (following `followBranch`, default the production branch) or off. */
+export function useTeamPlan(appId: string) {
+  const token = useTokenResolver()
+  const cachePlan = useCachePlan(appId)
+  return useMutation({
+    mutationFn: async (vars: { enable: true; followBranch: string | null } | { enable: false }) =>
+      vars.enable
+        ? enableTeamPlan(appId, vars.followBranch, await token())
+        : disableTeamPlan(appId, await token()),
+    onSuccess: cachePlan,
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Holder: settings and custom domain
+// ---------------------------------------------------------------------------
+
+export function useMyInstanceSettings(instanceId: string, enabled = true) {
+  const did = useDid()
+  return useAuthedQuery<HolderSettings>(
+    appsKeys.holderSettings(instanceId, did),
+    (token) => fetchMyInstanceSettings(instanceId, token),
+    { enabled, retry: retryUnlessFinal },
+  )
+}
+
+export function useHolderInstanceMutations(instanceId: string) {
+  const qc = useQueryClient()
+  const did = useDid()
+  const token = useTokenResolver()
+  const refresh = () => {
+    void qc.invalidateQueries({ queryKey: appsKeys.holderSettings(instanceId, did) })
+    void qc.invalidateQueries({ queryKey: appsKeys.myInstances(did) })
+  }
+  return {
+    setSetting: useMutation({
+      mutationFn: async (input: Omit<SetHolderSettingInput, 'instanceId'>) =>
+        setMyInstanceSetting({ ...input, instanceId }, await token()),
+      onSuccess: refresh,
+    }),
+    deleteSetting: useMutation({
+      mutationFn: async (name: string) => deleteMyInstanceSetting(instanceId, name, await token()),
+      onSuccess: refresh,
+    }),
+    setDomain: useMutation({
+      mutationFn: async (domain: string) =>
+        setMyInstanceCustomDomain(instanceId, domain, await token()),
+      onSuccess: refresh,
+    }),
+    removeDomain: useMutation({
+      mutationFn: async () => removeMyInstanceCustomDomain(instanceId, await token()),
+      onSuccess: refresh,
+    }),
+  }
 }

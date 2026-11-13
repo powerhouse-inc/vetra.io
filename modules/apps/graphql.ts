@@ -8,6 +8,8 @@ import type {
   AppPlan,
   AppRelease,
   AppReleaseKind,
+  AppRollout,
+  AppRolloutCheck,
   AppRole,
   AppsErrorCode,
   AppRegistryCredentials,
@@ -22,6 +24,14 @@ import type {
   GithubDeployInstallation,
   GithubRepo,
   HolderInstance,
+  HolderSetting,
+  HolderSettings,
+  HolderUpdate,
+  InstanceBackup,
+  InstanceCustomDomain,
+  InstanceRestore,
+  SetHolderSettingInput,
+  StartRolloutInput,
   SetAppSettingInput,
   UpdateAppInput,
   UpdateAppPlanInput,
@@ -248,6 +258,41 @@ async function withAppFields<T>(run: (fields: string) => Promise<T>): Promise<T>
   }
 }
 
+const CUSTOM_DOMAIN_FIELDS = `domain status reason since records { type host value } alternative { type host value }`
+const HOLDER_UPDATE_FIELDS = `rolloutId version dueAt notes paused canUpdateNow`
+/** Optional fields that are objects: how each is selected. */
+const SUBSELECTION: Record<string, string> = {
+  customDomain: `customDomain { ${CUSTOM_DOMAIN_FIELDS} }`,
+  update: `update { ${HOLDER_UPDATE_FIELDS} }`,
+  notices: `notices { kind at message }`,
+  updateWindow: `updateWindow { days start end timeZone }`,
+}
+
+/**
+ * Run an operation selecting `optional` fields a newer backend adds, dropping (once per page
+ * load, tracked in `unsupported`) only those the schema rejects by name. Validation fails before
+ * execution, so retrying a mutation is safe.
+ */
+async function withOptionalFields<T>(
+  optional: readonly string[],
+  unsupported: Set<string>,
+  run: (selected: string) => Promise<T>,
+): Promise<T> {
+  for (;;) {
+    const selected = optional.filter((f) => !unsupported.has(f))
+    try {
+      return await run(selected.map((f) => SUBSELECTION[f] ?? f).join(' '))
+    } catch (err) {
+      const rejected =
+        err instanceof AppsApiError && err.code === 'APPS_UNAVAILABLE'
+          ? selected.filter((f) => err.message.includes(`"${f}"`))
+          : []
+      if (rejected.length === 0) throw err
+      for (const f of rejected) unsupported.add(f)
+    }
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Queries
 // ---------------------------------------------------------------------------
@@ -328,6 +373,19 @@ export async function fetchAppDeployments(
   return data.appDeployments
 }
 
+const OPTIONAL_RELEASE_FIELDS = [
+  'withdrawnAt',
+  'withdrawnBy',
+  'withdrawnReason',
+  'teamHealthyAt',
+] as const
+const unsupportedReleaseFields = new Set<string>()
+
+/** Test hook: forget what the backend supports for releases. */
+export function resetOptionalReleaseFields(): void {
+  unsupportedReleaseFields.clear()
+}
+
 /** What vetra-publish recorded for the app, newest first; `kind` null for releases and builds. */
 export async function fetchAppReleases(
   appId: string,
@@ -336,11 +394,16 @@ export async function fetchAppReleases(
   token: string | null,
   fetchImpl?: FetchLike,
 ): Promise<AppRelease[]> {
-  const data = await appsGql<{ appReleases: AppRelease[] }>(
-    `query ($appId: ID!, $kind: String, $limit: Int) { appReleases(appId: $appId, kind: $kind, limit: $limit) { ${RELEASE_FIELDS} } }`,
-    { appId, kind, limit },
-    token,
-    fetchImpl,
+  const data = await withOptionalFields(
+    OPTIONAL_RELEASE_FIELDS,
+    unsupportedReleaseFields,
+    (extra) =>
+      appsGql<{ appReleases: AppRelease[] }>(
+        `query ($appId: ID!, $kind: String, $limit: Int) { appReleases(appId: $appId, kind: $kind, limit: $limit) { ${RELEASE_FIELDS} ${extra} } }`,
+        { appId, kind, limit },
+        token,
+        fetchImpl,
+      ),
   )
   return data.appReleases
 }
@@ -359,6 +422,12 @@ const OPTIONAL_INSTANCE_FIELDS = [
   'runningSettingsRevision',
   'planId',
   'holder',
+  'pinnedVersion',
+  'maintenance',
+  'warm',
+  'claimedAt',
+  'holderSettingsCount',
+  'customDomain',
 ] as const
 const unsupportedInstanceFields = new Set<string>()
 
@@ -373,29 +442,45 @@ export async function fetchAppInstances(
   token: string | null,
   fetchImpl?: FetchLike,
 ): Promise<AppInstance[]> {
-  for (;;) {
-    const selected = OPTIONAL_INSTANCE_FIELDS.filter((f) => !unsupportedInstanceFields.has(f))
-    try {
-      const data = await appsGql<{ appInstances: AppInstance[] }>(
-        `query ($appId: ID!) { appInstances(appId: $appId) { ${INSTANCE_FIELDS} ${selected.join(' ')} } }`,
+  const data = await withOptionalFields(
+    OPTIONAL_INSTANCE_FIELDS,
+    unsupportedInstanceFields,
+    (extra) =>
+      appsGql<{ appInstances: AppInstance[] }>(
+        `query ($appId: ID!) { appInstances(appId: $appId) { ${INSTANCE_FIELDS} ${extra} } }`,
         { appId },
         token,
         fetchImpl,
-      )
-      return data.appInstances
-    } catch (err) {
-      const rejected =
-        err instanceof AppsApiError && err.code === 'APPS_UNAVAILABLE'
-          ? selected.filter((f) => err.message.includes(`"${f}"`))
-          : []
-      if (rejected.length === 0) throw err
-      for (const f of rejected) unsupportedInstanceFields.add(f)
-    }
-  }
+      ),
+  )
+  return data.appInstances
 }
 
 const PLAN_FIELDS =
   'id appId slug name kind access size targetVersion policy noticeHours status createdAt updatedAt'
+const OPTIONAL_PLAN_FIELDS = [
+  'team',
+  'updateWindow',
+  'policyNote',
+  'aiBudgetUsd',
+  'warmPoolSize',
+  'warmPoolEffective',
+  'warmPoolEurPerMonth',
+  'warmReady',
+] as const
+const unsupportedPlanFields = new Set<string>()
+
+/** Test hook: forget what the backend supports for plans. */
+export function resetOptionalPlanFields(): void {
+  unsupportedPlanFields.clear()
+}
+
+/** Run a plan-returning operation with the optional plan fields the backend serves. */
+function withPlanFields<T>(run: (fields: string) => Promise<T>): Promise<T> {
+  return withOptionalFields(OPTIONAL_PLAN_FIELDS, unsupportedPlanFields, (extra) =>
+    run(`${PLAN_FIELDS} ${extra}`),
+  )
+}
 
 /** The App's plans: the licensing terms it runs instances for (owners and viewers). */
 export async function fetchAppPlans(
@@ -403,11 +488,13 @@ export async function fetchAppPlans(
   token: string | null,
   fetchImpl?: FetchLike,
 ): Promise<AppPlan[]> {
-  const data = await appsGql<{ appPlans: AppPlan[] }>(
-    `query ($appId: ID!) { appPlans(appId: $appId) { ${PLAN_FIELDS} } }`,
-    { appId },
-    token,
-    fetchImpl,
+  const data = await withPlanFields((fields) =>
+    appsGql<{ appPlans: AppPlan[] }>(
+      `query ($appId: ID!) { appPlans(appId: $appId) { ${fields} } }`,
+      { appId },
+      token,
+      fetchImpl,
+    ),
   )
   return data.appPlans
 }
@@ -415,16 +502,33 @@ export async function fetchAppPlans(
 const HOLDER_INSTANCE_FIELDS =
   'instanceId appId appName planName access url status reason runningVersion'
 
+const OPTIONAL_HOLDER_FIELDS = [
+  'update',
+  'notices',
+  'licenceEndsAt',
+  'stopsAt',
+  'deletesAt',
+  'customDomain',
+] as const
+const unsupportedHolderFields = new Set<string>()
+
+/** Test hook: forget what the backend supports for holder instances. */
+export function resetOptionalHolderFields(): void {
+  unsupportedHolderFields.clear()
+}
+
 /** The instances of the plans the caller holds licences of. */
 export async function fetchMyInstances(
   token: string | null,
   fetchImpl?: FetchLike,
 ): Promise<HolderInstance[]> {
-  const data = await appsGql<{ myInstances: HolderInstance[] }>(
-    `query { myInstances { ${HOLDER_INSTANCE_FIELDS} } }`,
-    {},
-    token,
-    fetchImpl,
+  const data = await withOptionalFields(OPTIONAL_HOLDER_FIELDS, unsupportedHolderFields, (extra) =>
+    appsGql<{ myInstances: HolderInstance[] }>(
+      `query { myInstances { ${HOLDER_INSTANCE_FIELDS} ${extra} } }`,
+      {},
+      token,
+      fetchImpl,
+    ),
   )
   return data.myInstances
 }
@@ -438,11 +542,13 @@ export async function createAppPlan(
   token: string | null,
   fetchImpl?: FetchLike,
 ): Promise<AppPlan> {
-  const data = await appsGql<{ createPlan: AppPlan }>(
-    `mutation ($input: CreatePlanInput!) { createPlan(input: $input) { ${PLAN_FIELDS} } }`,
-    { input },
-    token,
-    fetchImpl,
+  const data = await withPlanFields((fields) =>
+    appsGql<{ createPlan: AppPlan }>(
+      `mutation ($input: CreatePlanInput!) { createPlan(input: $input) { ${fields} } }`,
+      { input },
+      token,
+      fetchImpl,
+    ),
   )
   return data.createPlan
 }
@@ -452,11 +558,13 @@ export async function updateAppPlan(
   token: string | null,
   fetchImpl?: FetchLike,
 ): Promise<AppPlan> {
-  const data = await appsGql<{ updatePlan: AppPlan }>(
-    `mutation ($input: UpdatePlanInput!) { updatePlan(input: $input) { ${PLAN_FIELDS} } }`,
-    { input },
-    token,
-    fetchImpl,
+  const data = await withPlanFields((fields) =>
+    appsGql<{ updatePlan: AppPlan }>(
+      `mutation ($input: UpdatePlanInput!) { updatePlan(input: $input) { ${fields} } }`,
+      { input },
+      token,
+      fetchImpl,
+    ),
   )
   return data.updatePlan
 }
@@ -468,11 +576,13 @@ export async function setAppPlanTarget(
   token: string | null,
   fetchImpl?: FetchLike,
 ): Promise<AppPlan> {
-  const data = await appsGql<{ setPlanTarget: AppPlan }>(
-    `mutation ($planId: ID!, $version: String!) { setPlanTarget(planId: $planId, version: $version) { ${PLAN_FIELDS} } }`,
-    { planId, version },
-    token,
-    fetchImpl,
+  const data = await withPlanFields((fields) =>
+    appsGql<{ setPlanTarget: AppPlan }>(
+      `mutation ($planId: ID!, $version: String!) { setPlanTarget(planId: $planId, version: $version) { ${fields} } }`,
+      { planId, version },
+      token,
+      fetchImpl,
+    ),
   )
   return data.setPlanTarget
 }
@@ -483,11 +593,13 @@ export async function retireAppPlan(
   token: string | null,
   fetchImpl?: FetchLike,
 ): Promise<AppPlan> {
-  const data = await appsGql<{ retirePlan: AppPlan }>(
-    `mutation ($planId: ID!) { retirePlan(planId: $planId) { ${PLAN_FIELDS} } }`,
-    { planId },
-    token,
-    fetchImpl,
+  const data = await withPlanFields((fields) =>
+    appsGql<{ retirePlan: AppPlan }>(
+      `mutation ($planId: ID!) { retirePlan(planId: $planId) { ${fields} } }`,
+      { planId },
+      token,
+      fetchImpl,
+    ),
   )
   return data.retirePlan
 }
@@ -809,4 +921,360 @@ export async function createStudioApp(
     ),
   )
   return data.createStudioApp
+}
+
+// ---------------------------------------------------------------------------
+// Rollouts, pins and withdrawals
+// ---------------------------------------------------------------------------
+
+const ROLLOUT_STEP_FIELDS = `id instanceId instanceName instanceKind planId position fromVersion
+  toVersion status dueAt requestedAt startedAt finishedAt attempts error note backupId restoreId`
+const ROLLOUT_FIELDS = `id appId version status direction source startedBy startedAt notes pausedAt
+  pausedReason finishedAt rolledBackBy rolledBackAt plans { planId fromVersion noticeHours }
+  steps { ${ROLLOUT_STEP_FIELDS} }`
+
+/** The App's rollouts, newest first. */
+export async function fetchAppRollouts(
+  appId: string,
+  limit: number,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppRollout[]> {
+  const data = await appsGql<{ appRollouts: AppRollout[] }>(
+    `query ($appId: ID!, $limit: Int) { appRollouts(appId: $appId, limit: $limit) { ${ROLLOUT_FIELDS} } }`,
+    { appId, limit },
+    token,
+    fetchImpl,
+  )
+  return data.appRollouts
+}
+
+/** What starting a rollout would move, and why it cannot start. */
+export async function checkRollout(
+  appId: string,
+  version: string,
+  planIds: string[],
+  noticeHours: number | null,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppRolloutCheck> {
+  const data = await appsGql<{ checkRollout: AppRolloutCheck }>(
+    `query ($appId: ID!, $version: String!, $planIds: [ID!]!, $noticeHours: Int) { checkRollout(appId: $appId, version: $version, planIds: $planIds, noticeHours: $noticeHours) { version ok problems steps { instanceId instanceName instanceKind planId fromVersion status note dueAt } } }`,
+    { appId, version, planIds, noticeHours },
+    token,
+    fetchImpl,
+  )
+  return data.checkRollout
+}
+
+export async function startRollout(
+  input: StartRolloutInput,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppRollout> {
+  const data = await appsGql<{ startRollout: AppRollout }>(
+    `mutation ($input: StartRolloutInput!) { startRollout(input: $input) { ${ROLLOUT_FIELDS} } }`,
+    { input },
+    token,
+    fetchImpl,
+  )
+  return data.startRollout
+}
+
+/** Rollout controls that take a rollout id; each resolves to the rollout as it now stands. */
+export type RolloutAction = 'pauseRollout' | 'resumeRollout' | 'cancelRollout' | 'rollBackRollout'
+
+export async function controlRollout(
+  action: RolloutAction,
+  rolloutId: string,
+  options: { reason?: string | null; acceptDataLoss?: boolean },
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppRollout> {
+  const extra =
+    action === 'pauseRollout'
+      ? {
+          decl: ', $reason: String',
+          use: ', reason: $reason',
+          vars: { reason: options.reason ?? null },
+        }
+      : action === 'rollBackRollout'
+        ? {
+            decl: ', $acceptDataLoss: Boolean',
+            use: ', acceptDataLoss: $acceptDataLoss',
+            vars: { acceptDataLoss: options.acceptDataLoss ?? false },
+          }
+        : { decl: '', use: '', vars: {} }
+  const data = await appsGql<Record<RolloutAction, AppRollout>>(
+    `mutation ($rolloutId: ID!${extra.decl}) { ${action}(rolloutId: $rolloutId${extra.use}) { ${ROLLOUT_FIELDS} } }`,
+    { rolloutId, ...extra.vars },
+    token,
+    fetchImpl,
+  )
+  return data[action]
+}
+
+/** Retry or skip one step of a rollout. */
+export async function controlRolloutStep(
+  action: 'retryRolloutStep' | 'skipRolloutStep',
+  stepId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppRollout> {
+  const data = await appsGql<Record<typeof action, AppRollout>>(
+    `mutation ($stepId: ID!) { ${action}(stepId: $stepId) { ${ROLLOUT_FIELDS} } }`,
+    { stepId },
+    token,
+    fetchImpl,
+  )
+  return data[action]
+}
+
+/** Own instances: rollouts skip a pinned one; another release is applied at once. */
+export async function pinInstance(
+  instanceId: string,
+  version: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppInstance> {
+  const data = await appsGql<{ pinInstance: AppInstance }>(
+    `mutation ($instanceId: ID!, $version: String!) { pinInstance(instanceId: $instanceId, version: $version) { id pinnedVersion } }`,
+    { instanceId, version },
+    token,
+    fetchImpl,
+  )
+  return data.pinInstance
+}
+
+export async function unpinInstance(
+  instanceId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppInstance> {
+  const data = await appsGql<{ unpinInstance: AppInstance }>(
+    `mutation ($instanceId: ID!) { unpinInstance(instanceId: $instanceId) { id pinnedVersion } }`,
+    { instanceId },
+    token,
+    fetchImpl,
+  )
+  return data.unpinInstance
+}
+
+/** No plan may target the release any more. */
+export async function withdrawRelease(
+  appId: string,
+  version: string,
+  reason: string | null,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppRelease> {
+  const data = await appsGql<{ withdrawRelease: AppRelease }>(
+    `mutation ($appId: ID!, $version: String!, $reason: String) { withdrawRelease(appId: $appId, version: $version, reason: $reason) { version withdrawnAt withdrawnBy withdrawnReason } }`,
+    { appId, version, reason },
+    token,
+    fetchImpl,
+  )
+  return data.withdrawRelease
+}
+
+/** A holder's own instance: its waiting update starts now, outside the notice and window. */
+export async function updateInstanceNow(
+  instanceId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<HolderUpdate> {
+  const data = await appsGql<{ updateInstanceNow: HolderUpdate }>(
+    `mutation ($instanceId: ID!) { updateInstanceNow(instanceId: $instanceId) { ${HOLDER_UPDATE_FIELDS} } }`,
+    { instanceId },
+    token,
+    fetchImpl,
+  )
+  return data.updateInstanceNow
+}
+
+// ---------------------------------------------------------------------------
+// Backups
+// ---------------------------------------------------------------------------
+
+const BACKUP_FIELDS = `id instanceId reason status version sizeBytes error requestedBy createdAt
+  finishedAt expiresAt rolloutStepId`
+const RESTORE_FIELDS = `id instanceId backupId purpose status thenVersion error held requestedBy
+  createdAt finishedAt`
+
+/** An instance's backups, newest first (metadata only). */
+export async function fetchInstanceBackups(
+  instanceId: string,
+  limit: number,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<InstanceBackup[]> {
+  const data = await appsGql<{ instanceBackups: InstanceBackup[] }>(
+    `query ($instanceId: ID!, $limit: Int) { instanceBackups(instanceId: $instanceId, limit: $limit) { ${BACKUP_FIELDS} } }`,
+    { instanceId, limit },
+    token,
+    fetchImpl,
+  )
+  return data.instanceBackups
+}
+
+/** An instance's restores, newest first. */
+export async function fetchInstanceRestores(
+  instanceId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<InstanceRestore[]> {
+  const data = await appsGql<{ instanceRestores: InstanceRestore[] }>(
+    `query ($instanceId: ID!) { instanceRestores(instanceId: $instanceId) { ${RESTORE_FIELDS} } }`,
+    { instanceId },
+    token,
+    fetchImpl,
+  )
+  return data.instanceRestores
+}
+
+export async function backUpInstance(
+  instanceId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<InstanceBackup> {
+  const data = await appsGql<{ backUpInstance: InstanceBackup }>(
+    `mutation ($instanceId: ID!) { backUpInstance(instanceId: $instanceId) { ${BACKUP_FIELDS} } }`,
+    { instanceId },
+    token,
+    fetchImpl,
+  )
+  return data.backUpInstance
+}
+
+/** Restores a backup into the instance; the server refuses unless `acceptDataLoss` is true. */
+export async function restoreInstanceBackup(
+  instanceId: string,
+  backupId: string,
+  acceptDataLoss: boolean,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<InstanceRestore> {
+  const data = await appsGql<{ restoreInstanceBackup: InstanceRestore }>(
+    `mutation ($instanceId: ID!, $backupId: ID!, $acceptDataLoss: Boolean!) { restoreInstanceBackup(instanceId: $instanceId, backupId: $backupId, acceptDataLoss: $acceptDataLoss) { ${RESTORE_FIELDS} } }`,
+    { instanceId, backupId, acceptDataLoss },
+    token,
+    fetchImpl,
+  )
+  return data.restoreInstanceBackup
+}
+
+// ---------------------------------------------------------------------------
+// Team plan
+// ---------------------------------------------------------------------------
+
+/** Turns the Team plan on (owner, org admins), following a release branch (default: production). */
+export async function enableTeamPlan(
+  appId: string,
+  followBranch: string | null,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppPlan> {
+  const data = await withPlanFields((fields) =>
+    appsGql<{ enableTeamPlan: AppPlan }>(
+      `mutation ($appId: ID!, $followBranch: String) { enableTeamPlan(appId: $appId, followBranch: $followBranch) { ${fields} } }`,
+      { appId, followBranch },
+      token,
+      fetchImpl,
+    ),
+  )
+  return data.enableTeamPlan
+}
+
+export async function disableTeamPlan(
+  appId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<AppPlan> {
+  const data = await withPlanFields((fields) =>
+    appsGql<{ disableTeamPlan: AppPlan }>(
+      `mutation ($appId: ID!) { disableTeamPlan(appId: $appId) { ${fields} } }`,
+      { appId },
+      token,
+      fetchImpl,
+    ),
+  )
+  return data.disableTeamPlan
+}
+
+// ---------------------------------------------------------------------------
+// Holder: settings and custom domain of an own instance
+// ---------------------------------------------------------------------------
+
+const HOLDER_SETTING_FIELDS = 'name kind value mountPath updatedAt'
+
+export async function fetchMyInstanceSettings(
+  instanceId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<HolderSettings> {
+  const data = await appsGql<{ myInstanceSettings: HolderSettings }>(
+    `query ($instanceId: ID!) { myInstanceSettings(instanceId: $instanceId) { settings { ${HOLDER_SETTING_FIELDS} } vetra { name secret value } publisherNames reservedNames reservedPrefixes } }`,
+    { instanceId },
+    token,
+    fetchImpl,
+  )
+  return data.myInstanceSettings
+}
+
+export async function setMyInstanceSetting(
+  input: SetHolderSettingInput,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<HolderSetting> {
+  const data = await appsGql<{ setMyInstanceSetting: HolderSetting }>(
+    `mutation ($input: SetHolderSettingInput!) { setMyInstanceSetting(input: $input) { ${HOLDER_SETTING_FIELDS} } }`,
+    { input },
+    token,
+    fetchImpl,
+  )
+  return data.setMyInstanceSetting
+}
+
+export async function deleteMyInstanceSetting(
+  instanceId: string,
+  name: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<boolean> {
+  const data = await appsGql<{ deleteMyInstanceSetting: boolean }>(
+    `mutation ($instanceId: ID!, $name: String!) { deleteMyInstanceSetting(instanceId: $instanceId, name: $name) }`,
+    { instanceId, name },
+    token,
+    fetchImpl,
+  )
+  return data.deleteMyInstanceSetting
+}
+
+export async function setMyInstanceCustomDomain(
+  instanceId: string,
+  domain: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<InstanceCustomDomain> {
+  const data = await appsGql<{ setMyInstanceCustomDomain: InstanceCustomDomain }>(
+    `mutation ($instanceId: ID!, $domain: String!) { setMyInstanceCustomDomain(instanceId: $instanceId, domain: $domain) { ${CUSTOM_DOMAIN_FIELDS} } }`,
+    { instanceId, domain },
+    token,
+    fetchImpl,
+  )
+  return data.setMyInstanceCustomDomain
+}
+
+export async function removeMyInstanceCustomDomain(
+  instanceId: string,
+  token: string | null,
+  fetchImpl?: FetchLike,
+): Promise<boolean> {
+  const data = await appsGql<{ removeMyInstanceCustomDomain: boolean }>(
+    `mutation ($instanceId: ID!) { removeMyInstanceCustomDomain(instanceId: $instanceId) }`,
+    { instanceId },
+    token,
+    fetchImpl,
+  )
+  return data.removeMyInstanceCustomDomain
 }

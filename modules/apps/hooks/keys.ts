@@ -20,6 +20,15 @@ export const appsKeys = {
   audit: (id: string, did: string | undefined) => ['apps', 'audit', id, did ?? null] as const,
   roles: (id: string, did: string | undefined) => ['apps', 'roles', id, did ?? null] as const,
   access: (id: string, did: string | undefined) => ['apps', 'access', id, did ?? null] as const,
+  rollouts: (id: string, did: string | undefined) => ['apps', 'rollouts', id, did ?? null] as const,
+  rolloutCheck: (id: string, version: string, planIds: string[], notice: number | null) =>
+    ['apps', 'rollout-check', id, version, planIds, notice] as const,
+  backups: (instanceId: string, did: string | undefined) =>
+    ['apps', 'backups', instanceId, did ?? null] as const,
+  restores: (instanceId: string, did: string | undefined) =>
+    ['apps', 'restores', instanceId, did ?? null] as const,
+  holderSettings: (instanceId: string, did: string | undefined) =>
+    ['apps', 'holder-settings', instanceId, did ?? null] as const,
   githubInfo: () => ['apps', 'github-info'] as const,
   installations: (did: string | undefined) => ['apps', 'installations', did ?? null] as const,
   repositories: (installationId: string, did: string | undefined) =>
