@@ -76,6 +76,12 @@ vi.mock('../components/app-environment', () => ({
 vi.mock('../components/app-audit', () => ({
   AppAudit: ({ appId }: { appId: string }) => <div>audit-content {appId}</div>,
 }))
+vi.mock('../components/app-rollouts', () => ({
+  AppRollouts: ({ appId }: { appId: string }) => <div>rollouts-content {appId}</div>,
+}))
+vi.mock('../components/team-plan-card', () => ({
+  TeamPlanCard: () => <div>team-card</div>,
+}))
 vi.mock('../components/app-plans', () => ({
   AppPlans: ({ appId }: { appId: string }) => <div>release-plans-content {appId}</div>,
 }))
@@ -196,6 +202,7 @@ describe('AppDetail tabs', () => {
       'Deployments',
       'Profile',
       'Releases',
+      'Rollouts',
       'Artifacts',
       'Templates',
       'Plans',
@@ -296,6 +303,7 @@ describe('AppDetail tabs', () => {
       'Deployments',
       'Profile',
       'Releases',
+      'Rollouts',
       'Plans',
       'Environment',
       'Audit log',
@@ -377,6 +385,7 @@ describe('AppDetail tabs', () => {
         'Overview',
         'Deployments',
         'Releases',
+        'Rollouts',
         'Plans',
         'Environment',
         'Audit log',

@@ -11,6 +11,8 @@ import {
 
 import { describeAppsError } from '../graphql'
 import { useAppPlans } from '../hooks/use-apps'
+import type { App } from '../types'
+import { TeamPlanCard } from './team-plan-card'
 import { TermInstances } from './term-instances'
 
 /**
@@ -18,17 +20,32 @@ import { TermInstances } from './term-instances'
  * manager): the plans Vetra runs instances for, each with its target, size and actions. New
  * plans are adopted from licensing terms by the publisher.
  */
-export function AppPlans({ appId, canRelease = true }: { appId: string; canRelease?: boolean }) {
+export function AppPlans({
+  appId,
+  canRelease = true,
+  app,
+  canAdminister = false,
+}: {
+  appId: string
+  canRelease?: boolean
+  /** With the app, the Team card shows above the plans. */
+  app?: Pick<App, 'id' | 'ownerOrgId' | 'productionBranch' | 'releaseBranches'>
+  canAdminister?: boolean
+}) {
   const plans = useAppPlans(appId)
-  const list = [...(plans.data ?? [])].sort((a, b) =>
-    a.status === b.status ? a.name.localeCompare(b.name) : a.status === 'active' ? -1 : 1,
-  )
+  // The Team plan has no licensing term; its card shows it.
+  const list = (plans.data ?? [])
+    .filter((p) => p.kind !== null)
+    .sort((a, b) =>
+      a.status === b.status ? a.name.localeCompare(b.name) : a.status === 'active' ? -1 : 1,
+    )
   return (
     <div className="space-y-6">
       <TabHeader
         title="Plans"
         description="The plans Vetra runs instances for: which release they run and on what size. The app's publisher adds plans from its licensing plans."
       />
+      {app && <TeamPlanCard app={app} canAdminister={canAdminister} />}
       {plans.isPending ? (
         <TabSkeleton label="Loading plans" />
       ) : plans.error ? (
@@ -48,7 +65,7 @@ export function AppPlans({ appId, canRelease = true }: { appId: string; canRelea
               <h3 className="font-semibold">{p.name}</h3>
               <TermInstances
                 appId={appId}
-                term={{ kind: p.kind, name: p.name, activeLicenses: 0 }}
+                term={{ kind: p.kind ?? '', name: p.name, activeLicenses: 0 }}
                 canRelease={canRelease}
               />
             </li>
