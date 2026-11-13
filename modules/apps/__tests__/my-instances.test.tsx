@@ -4,10 +4,15 @@ import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { AppsApiError } from '../graphql'
 import type { HolderInstance } from '../types'
 
+const updateNow = vi.fn()
+vi.mock('../components/holder-instance-panel', () => ({
+  HolderInstancePanel: () => <div>holder-panel</div>,
+}))
 let state: { data: HolderInstance[] | undefined; isPending: boolean; error: Error | null }
 
 vi.mock('../hooks/use-apps', () => ({
   useMyInstances: () => ({ ...state, refetch: vi.fn(), isRefetching: false }),
+  useUpdateInstanceNow: () => ({ mutate: updateNow, isPending: false, error: null }),
 }))
 vi.mock('../hooks/use-app-names', () => ({
   useAppIdentityOf: () => (appId: string) =>
