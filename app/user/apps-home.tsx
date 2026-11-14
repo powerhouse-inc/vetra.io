@@ -148,9 +148,15 @@ function StudioCard() {
         <Sparkles className="h-5 w-5" aria-hidden />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-medium">Vetra Studio</span>
+        <span className="flex items-center gap-2 font-medium">
+          Vetra Studio
+          <span className="bg-purple/15 text-purple rounded-full px-2 py-0.5 text-[11px] font-medium">
+            Early access
+          </span>
+        </span>
         <span className="text-muted-foreground block text-sm">
-          Design document models and products with an AI agent, then ship them as an app.
+          Design document models and products with an AI agent, then ship them as an app. Needs an
+          invite code.
         </span>
       </span>
       <span className="text-primary inline-flex items-center gap-1 text-sm font-medium">
@@ -169,7 +175,7 @@ export function AppsHome() {
         <PageHeader
           eyebrow="~/apps"
           title="Your apps"
-          description="Push to GitHub, Vetra deploys. Production follows your main branch and every pull request gets its own preview."
+          description="Connect a GitHub repository and publish releases. Plans and invite codes give your users their instances."
           actions={
             <>
               <Button asChild variant="ghost">
