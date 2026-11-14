@@ -195,6 +195,13 @@ describe('AppDetail tabs', () => {
     ])
   })
 
+  it('hides Deployments for a publish-only app', () => {
+    expect(visibleAppTabs({ isPublisher: true, hasDeployEnv: false })).not.toContain(
+      'deployments',
+    )
+    expect(visibleAppTabs({ isPublisher: true })).toContain('deployments')
+  })
+
   it('shows licensing tabs to the publisher, with readable labels', () => {
     render(<AppDetail appId="app-1" />)
     expect(tabNames()).toEqual([
