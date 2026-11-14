@@ -1,4 +1,12 @@
-import { ArrowRight, BookOpen, GitCommitHorizontal, Github, Plus, Rocket } from 'lucide-react'
+import {
+  ArrowRight,
+  BookOpen,
+  GitCommitHorizontal,
+  Github,
+  Plus,
+  Rocket,
+  Ticket,
+} from 'lucide-react'
 import Link from 'next/link'
 
 import { Button } from '@/modules/shared/components/ui/button'
@@ -11,13 +19,13 @@ const STEPS = [
   },
   {
     icon: GitCommitHorizontal,
-    title: 'Push',
-    body: 'A GitHub Action builds, publishes your packages and ships your front-end image.',
+    title: 'Publish',
+    body: 'A GitHub Action builds and signs every push. Merging the release PR publishes a release.',
   },
   {
-    icon: Rocket,
-    title: "It's live",
-    body: 'main deploys production. Every pull request gets its own preview environment.',
+    icon: Ticket,
+    title: 'Give it to your users',
+    body: 'Create plans and invite codes. Whoever redeems a code gets an instance of your app.',
   },
 ] as const
 
@@ -32,14 +40,14 @@ export function AppsEmptyState() {
       <div className="relative mx-auto max-w-3xl text-center">
         <span className="bg-primary/10 text-primary inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium">
           <Rocket className="h-3.5 w-3.5" aria-hidden />
-          Git push to deploy
+          No invite code needed
         </span>
         <h2 className="mt-4 text-2xl font-semibold tracking-tight sm:text-3xl">
-          Ship your first app in minutes
+          Publish your app in minutes
         </h2>
         <p className="text-muted-foreground mx-auto mt-3 max-w-xl">
-          An app links a GitHub repository to a production environment. Pushing code is the deploy
-          button.
+          Connect the GitHub repository of an app you already have. Vetra publishes its releases and
+          runs instances for your users.
         </p>
       </div>
 

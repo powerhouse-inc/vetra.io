@@ -650,7 +650,9 @@ export function AppDetail({ appId }: { appId: string }) {
             deploymentsLoaded={!deploymentsQuery.isPending}
             onAuthorize={authorize}
             onEditProfile={access.operate ? () => setTab('profile') : undefined}
+            onOpenTab={setTab}
             canOperate={access.operate}
+            canManageLicensing={showLicensing}
           />
         </TabsContent>
         <TabsContent value="deployments">
