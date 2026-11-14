@@ -9,32 +9,21 @@ import {
   Loader2,
   Lock,
   Rocket,
-  Server,
   ShieldCheck,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 
-import { useEnvironments, useViewer } from '@/modules/cloud/hooks/use-environment'
 import { canOfferCreateApp } from '@/modules/orgs/types'
 import { useActiveOrg } from '@/modules/orgs/hooks/use-orgs'
 import { PageHeader } from '@/modules/shared/components/page-header'
 import { Button } from '@/modules/shared/components/ui/button'
 import { Input } from '@/modules/shared/components/ui/input'
 import { Label } from '@/modules/shared/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/modules/shared/components/ui/select'
-import { cn } from '@/shared/lib/utils'
 
 import { describeCreateAppError, isAppsError } from '../graphql'
 import { useCreateApp } from '../hooks/use-apps'
-import { attachableEnvironments } from '../lib/split'
 import type { App, GithubRepo } from '../types'
 import { CopyButton } from './copy-button'
 import { ReconnectGithub } from './reconnect-github'
@@ -47,21 +36,17 @@ const STEPS = [
   { id: 'repo', label: 'Repository' },
   { id: 'configure', label: 'Configure' },
   { id: 'identity', label: 'Identity' },
-  { id: 'deploys', label: 'Deploys' },
+  { id: 'deploys', label: 'Publish' },
 ] as const
 
 /** sessionStorage key: the draft survives the round-trip through GitHub. */
 export const NEW_APP_DRAFT_KEY = 'vetra-apps:new-app-draft'
-
-type EnvMode = 'new' | 'existing'
 
 type Draft = {
   installationId: string | null
   repo: GithubRepo | null
   name: string
   productionBranch: string
-  envMode: EnvMode
-  existingEnvId: string
 }
 
 const EMPTY_DRAFT: Draft = {
@@ -69,8 +54,6 @@ const EMPTY_DRAFT: Draft = {
   repo: null,
   name: '',
   productionBranch: '',
-  envMode: 'new',
-  existingEnvId: '',
 }
 
 function readDraft(): Draft {
@@ -131,7 +114,7 @@ function RepoChip({ repo, onChange }: { repo: GithubRepo; onChange?: () => void 
   )
 }
 
-function ConfigureStep({
+export function ConfigureStep({
   draft,
   update,
   onBack,
@@ -142,30 +125,15 @@ function ConfigureStep({
   onBack: () => void
   onCreated: (app: App) => void
 }) {
-  const { viewer } = useViewer()
   const { orgId, org } = useActiveOrg()
-  const { environments, isPending: envsPending } = useEnvironments(
-    'MINE',
-    viewer?.address ?? null,
-    {
-      orgId,
-    },
-  )
-  // Only envs with no app link at all: createApp rejects any env still
-  // carrying an appId, including the kept production env of a deleted app.
-  const standalone = useMemo(() => attachableEnvironments(environments), [environments])
   const createApp = useCreateApp()
 
   const nameError = draft.name.trim() ? null : 'Give your app a name'
-  const branchError = draft.productionBranch.trim()
-    ? null
-    : 'Pick the branch that deploys production'
-  const envError =
-    draft.envMode === 'existing' && !draft.existingEnvId ? 'Choose an environment' : null
+  const branchError = draft.productionBranch.trim() ? null : 'Pick the branch releases are cut from'
   // An org context whose details have not loaded yet cannot create: the copy and role are unknown.
   const orgPending = !!orgId && !org
   const roleBlocked = !!org && !canOfferCreateApp(org.role)
-  const invalid = !!(nameError || branchError || envError || orgPending || roleBlocked)
+  const invalid = !!(nameError || branchError || orgPending || roleBlocked)
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -176,7 +144,6 @@ function ConfigureStep({
         installationId: draft.installationId,
         repositoryId: draft.repo.id,
         productionBranch: draft.productionBranch.trim(),
-        productionEnvironmentId: draft.envMode === 'existing' ? draft.existingEnvId : null,
         orgId,
       },
       {
@@ -192,7 +159,7 @@ function ConfigureStep({
   return (
     <StepCard
       title="Configure your app"
-      description="Production follows one branch. Pull requests get their own previews."
+      description="Releases are cut from this branch. Merge the setup pull request next, and every push publishes."
     >
       <form onSubmit={submit} className="space-y-6" noValidate>
         <RepoChip repo={draft.repo} onChange={onBack} />
@@ -252,85 +219,6 @@ function ConfigureStep({
             </div>
           </div>
         </div>
-
-        <fieldset className="space-y-3">
-          <legend className="mb-3 text-sm font-medium">Production environment</legend>
-          <div className="grid gap-3 sm:grid-cols-2">
-            {(
-              [
-                {
-                  mode: 'new' as const,
-                  icon: Rocket,
-                  title: 'Create a new environment',
-                  body: 'Fresh Connect + Switchboard on vetra.io. Recommended.',
-                },
-                {
-                  mode: 'existing' as const,
-                  icon: Server,
-                  title: 'Use an existing environment',
-                  body: standalone.length
-                    ? 'Attach one of your standalone environments.'
-                    : 'You have no standalone environment to attach.',
-                },
-              ] as const
-            ).map((opt) => {
-              const disabled = opt.mode === 'existing' && !envsPending && standalone.length === 0
-              const checked = draft.envMode === opt.mode
-              return (
-                <label
-                  key={opt.mode}
-                  className={cn(
-                    'border-border relative flex cursor-pointer gap-3 rounded-xl border p-4 transition-colors',
-                    checked
-                      ? 'border-primary bg-primary/5 ring-primary/20 ring-2'
-                      : 'hover:bg-accent/50',
-                    disabled && 'cursor-not-allowed opacity-50',
-                  )}
-                >
-                  <input
-                    type="radio"
-                    name="env-mode"
-                    value={opt.mode}
-                    checked={checked}
-                    disabled={disabled}
-                    onChange={() => update({ envMode: opt.mode })}
-                    className="sr-only"
-                  />
-                  <opt.icon
-                    className={cn(
-                      'mt-0.5 h-5 w-5 shrink-0',
-                      checked ? 'text-primary' : 'text-muted-foreground',
-                    )}
-                    aria-hidden
-                  />
-                  <span className="space-y-0.5">
-                    <span className="block text-sm font-medium">{opt.title}</span>
-                    <span className="text-muted-foreground block text-xs">{opt.body}</span>
-                  </span>
-                </label>
-              )
-            })}
-          </div>
-          {draft.envMode === 'existing' && (
-            <Select value={draft.existingEnvId} onValueChange={(v) => update({ existingEnvId: v })}>
-              <SelectTrigger className="w-full" aria-label="Existing environment">
-                <SelectValue placeholder={envsPending ? 'Loading…' : 'Choose an environment'} />
-              </SelectTrigger>
-              <SelectContent>
-                {standalone.map((env) => (
-                  <SelectItem key={env.id} value={env.id}>
-                    {env.state.label || env.name}
-                    {env.state.genericSubdomain && (
-                      <span className="text-muted-foreground font-mono text-xs">
-                        {env.state.genericSubdomain}
-                      </span>
-                    )}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-        </fieldset>
 
         <div className="border-border flex items-center justify-between gap-3 border-t pt-6">
           <Button type="button" variant="ghost" onClick={onBack}>
@@ -399,21 +287,20 @@ function IdentityStep({ app, onSkip }: { app: App; onSkip: () => void }) {
 function DeploysStep({ app }: { app: App }) {
   return (
     <StepCard
-      title="Set up deploys"
+      title="Set up publishing"
       description={
         <>
           Add the Vetra workflow to{' '}
-          <span className="text-foreground">{app.repository.fullName}</span>. Pushes to{' '}
-          <span className="text-foreground font-mono">{app.productionBranch}</span> deploy
-          production; pull requests get previews.
+          <span className="text-foreground">{app.repository.fullName}</span>. Every push publishes a
+          build; merging the release pull request publishes a release.
         </>
       }
     >
       <div className="space-y-6">
         {app.status === 'PENDING_IDENTITY' && (
           <p className="bg-warning/10 text-foreground rounded-lg px-4 py-3 text-sm">
-            Deploys start working once the app identity is authorized. You can do that from the app
-            page any time.
+            Publishing starts once the app identity is authorized. You can do that from the app page
+            any time.
           </p>
         )}
         <SetupDeploys app={app} />

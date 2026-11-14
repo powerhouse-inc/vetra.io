@@ -254,6 +254,7 @@ export function visibleAppTabs({
   access = LEGACY_ACCESS,
   releaseManagers = false,
   licensingPending = false,
+  hasDeployEnv = true,
 }: {
   isPublisher: boolean
   hasRepository?: boolean
@@ -262,12 +263,14 @@ export function visibleAppTabs({
   releaseManagers?: boolean
   /** The publisher check is still running: no Plans tab of its own yet. */
   licensingPending?: boolean
+  /** The app has a production env (old deploy path); publish-only apps do not. */
+  hasDeployEnv?: boolean
 }): AppTab[] {
   const releasePlans =
     releaseManagers && !isPublisher && !licensingPending && hasRepository && access.release
   return [
     'overview',
-    'deployments',
+    ...(hasDeployEnv ? (['deployments'] as const) : []),
     ...(access.operate ? (['profile'] as const) : []),
     ...(hasRepository ? (['releases'] as const) : []),
     ...(hasRepository && releaseManagers && access.release ? (['rollouts'] as const) : []),
@@ -374,6 +377,7 @@ export function AppDetail({ appId }: { appId: string }) {
     access,
     releaseManagers: resolved.access !== null && resolved.supported,
     licensingPending: publisher.isPending,
+    hasDeployEnv: app ? app.productionEnvironmentId !== null : true,
   })
   // While ownership or access is still being checked, a deep link to a tab not shown yet waits
   // on a skeleton instead of flashing Overview.
@@ -579,8 +583,8 @@ export function AppDetail({ appId }: { appId: string }) {
               ) : undefined
             }
           >
-            Vetra Deploy lost access to {repository ?? 'the repository'}. Deploys are paused and
-            previews were removed. Reinstall the GitHub App to resume.
+            Vetra lost access to {repository ?? 'the repository'}. Deploys are paused and previews
+            were removed. Reinstall the GitHub App to resume.
           </Banner>
         )}
       </div>
@@ -650,7 +654,9 @@ export function AppDetail({ appId }: { appId: string }) {
             deploymentsLoaded={!deploymentsQuery.isPending}
             onAuthorize={authorize}
             onEditProfile={access.operate ? () => setTab('profile') : undefined}
+            onOpenTab={setTab}
             canOperate={access.operate}
+            canManageLicensing={showLicensing}
           />
         </TabsContent>
         <TabsContent value="deployments">
