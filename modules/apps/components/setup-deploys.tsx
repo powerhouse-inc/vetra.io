@@ -14,20 +14,20 @@ import type { App } from '../types'
 import { CodeBlock } from './code-block'
 
 /**
- * "Set up deploys": the Vetra Deploy bot opens a PR adding the workflow, or the
- * user copies the same file. Used by the new-app flow, the App's getting-started
- * checklist and its settings.
+ * Set up publishing: Vetra opens a PR adding the workflow, or the user copies
+ * the same file. Used by the new-app flow, the App's getting-started checklist
+ * and its settings.
  */
 export function SetupDeploys({
   app,
   disabled,
 }: {
-  app: Pick<App, 'id' | 'productionBranch' | 'repository'>
+  app: Pick<App, 'id' | 'repository'>
   disabled?: boolean
 }) {
   const openPr = useOpenSetupPullRequest(app.id)
   const [prUrl, setPrUrl] = useState<string | null>(null)
-  const yaml = buildWorkflowYaml(app.id, { productionBranch: app.productionBranch })
+  const yaml = buildWorkflowYaml(app.id)
 
   const handleOpenPr = () => {
     openPr.mutate(undefined, {

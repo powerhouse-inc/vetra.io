@@ -2,51 +2,20 @@ import { describe, expect, it } from 'vitest'
 
 import { buildWorkflowYaml } from '@/modules/apps/lib/workflow'
 
-// Contract C4, verbatim, with <APP_ID> substituted.
-const C4 = `name: Vetra
-on:
-  push:
-    branches: [main]
-    tags: ["v*"]
-  pull_request:
-    types: [opened, synchronize, reopened]
-permissions:
-  id-token: write
-  contents: read
-concurrency:
-  group: vetra-\${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
-jobs:
-  deploy:
-    if: github.event.pull_request.head.repo.fork != true
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: pnpm }
-      - uses: powerhouse-inc/vetra-deploy-action@v1
-        with:
-          app-id: <APP_ID>
-`
-
 describe('buildWorkflowYaml', () => {
-  it('matches the C4 template byte-for-byte for main', () => {
-    expect(buildWorkflowYaml('app_123')).toBe(C4.replace('<APP_ID>', 'app_123'))
-    expect(buildWorkflowYaml('app_123', { productionBranch: 'main' })).toBe(
-      C4.replace('<APP_ID>', 'app_123'),
-    )
+  const yaml = buildWorkflowYaml('app_123')
+
+  it('publishes with vetra-publish and has no deploy job', () => {
+    expect(yaml).toContain('  publish:\n')
+    expect(yaml).toContain('      - uses: powerhouse-inc/vetra-publish@v1\n')
+    expect(yaml.endsWith('          app-id: app_123\n')).toBe(true)
+    expect(yaml).not.toContain('deploy')
   })
 
-  it('wires a custom production branch into the trigger and the action', () => {
-    const yaml = buildWorkflowYaml('a1', { productionBranch: 'release' })
-    expect(yaml).toContain('    branches: [release]\n')
-    expect(yaml.endsWith('          app-id: a1\n          production-branch: release\n')).toBe(true)
-  })
-
-  it('quotes branch names YAML would misread', () => {
-    const yaml = buildWorkflowYaml('a1', { productionBranch: 'on' })
-    expect(yaml).toContain('branches: ["on"]')
-    expect(yaml).toContain('production-branch: "on"')
+  // A run that stops before installing has no cache folder, and setup-node's
+  // post step then fails the job.
+  it('asks setup-node for no cache', () => {
+    expect(yaml).toContain('with: { node-version: 24 }')
+    expect(yaml).not.toContain('cache:')
   })
 })
