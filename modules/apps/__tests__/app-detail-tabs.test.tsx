@@ -196,9 +196,7 @@ describe('AppDetail tabs', () => {
   })
 
   it('hides Deployments for a publish-only app', () => {
-    expect(visibleAppTabs({ isPublisher: true, hasDeployEnv: false })).not.toContain(
-      'deployments',
-    )
+    expect(visibleAppTabs({ isPublisher: true, hasDeployEnv: false })).not.toContain('deployments')
     expect(visibleAppTabs({ isPublisher: true })).toContain('deployments')
   })
 
