@@ -38,7 +38,7 @@ describe('RepoPicker when the server has no GitHub App configured', () => {
     expect(screen.getByText(/github deployment is unavailable/i)).toBeTruthy()
     expect(screen.getByText(/not fully configured on this server/i)).toBeTruthy()
     // the dead control must be gone, not merely accompanied by a message
-    expect(screen.queryByText(/install vetra deploy/i)).toBeNull()
+    expect(screen.queryByText(/connect a github repository/i)).toBeNull()
   })
 
   it('still offers the install button when the app info loaded', () => {
@@ -52,7 +52,7 @@ describe('RepoPicker when the server has no GitHub App configured', () => {
     }
     render(<RepoPicker installationId={null} onInstallationChange={() => {}} onPick={() => {}} />)
 
-    const link = screen.getByText(/install vetra deploy/i).closest('a')
+    const link = screen.getByText(/connect a github repository/i).closest('a')
     expect(link?.getAttribute('href')).toBe(
       'https://github.com/apps/vetra-deploy/installations/new',
     )

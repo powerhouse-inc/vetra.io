@@ -208,7 +208,7 @@ export default function DeployGuidePage() {
                   body: (
                     <>
                       On <Link href="/user/apps/new" className="text-primary hover:underline">vetra.io</Link>,
-                      install the <strong>Vetra Deploy</strong> GitHub App, pick your repository and
+                      connect your GitHub repository (GitHub asks which repositories Vetra may see) and
                       choose the production branch. Vetra creates the production environment for
                       you, or attaches one you already have.
                     </>

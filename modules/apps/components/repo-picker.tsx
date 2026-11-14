@@ -44,17 +44,16 @@ export function ConnectGithub({
         <Github className="h-6 w-6" aria-hidden />
       </span>
       <div className="space-y-1.5">
-        <p className="text-lg font-semibold">Connect GitHub</p>
+        <p className="text-lg font-semibold">Connect your repository</p>
         <p className="text-muted-foreground mx-auto max-w-md text-sm">
-          Install the <span className="text-foreground font-medium">Vetra Deploy</span> GitHub App
-          on the account or organization that owns your repository. You choose which repositories it
-          can see.
+          GitHub asks which repositories Vetra may see. Vetra then adds the publish workflow and
+          opens your release pull requests there.
         </p>
       </div>
       <Button asChild size="lg" disabled={!installUrl}>
         <GithubFlowLink url={installUrl}>
           <Github className="h-4 w-4" />
-          Install Vetra Deploy
+          Connect a GitHub repository
         </GithubFlowLink>
       </Button>
       {authorizeUrl && (
@@ -146,7 +145,7 @@ function RepoList({
         </p>
       ) : visible.length === 0 ? (
         <p className="text-muted-foreground px-4 py-10 text-center text-sm">
-          {query ? `No repository matches “${query}”.` : 'Vetra Deploy cannot see any repository.'}
+          {query ? `No repository matches “${query}”.` : 'Vetra cannot see any repository yet.'}
         </p>
       ) : (
         <ul className="divide-border max-h-96 divide-y overflow-y-auto" aria-label="Repositories">

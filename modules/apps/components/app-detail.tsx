@@ -579,8 +579,8 @@ export function AppDetail({ appId }: { appId: string }) {
               ) : undefined
             }
           >
-            Vetra Deploy lost access to {repository ?? 'the repository'}. Deploys are paused and
-            previews were removed. Reinstall the GitHub App to resume.
+            Vetra lost access to {repository ?? 'the repository'}. Deploys are paused and previews
+            were removed. Reinstall the GitHub App to resume.
           </Banner>
         )}
       </div>

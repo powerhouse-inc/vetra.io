@@ -52,7 +52,7 @@ export function SetupDeploys({
           <p className="text-muted-foreground text-sm">
             Adds <code className="font-mono text-xs">{WORKFLOW_PATH}</code> to{' '}
             <span className="font-medium">{app.repository.fullName}</span>. Merge it and every push
-            deploys.
+            publishes.
           </p>
         </div>
         {prUrl ? (
