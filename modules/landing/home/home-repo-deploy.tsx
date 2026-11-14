@@ -4,14 +4,14 @@ const WORKFLOW = `on: push
 permissions:
   id-token: write
 jobs:
-  deploy:
+  publish:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: pnpm }
-      - uses: powerhouse-inc/vetra-deploy-action@v1
+        with: { node-version: 24 }
+      - uses: powerhouse-inc/vetra-publish@v1
         with:
           app-id: \${{ vars.VETRA_APP_ID }}`
 
@@ -30,7 +30,7 @@ export function HomeRepoDeploy() {
         </div>
         <div className="border-console-line-strong bg-console-surface min-w-0 flex-[1_1_520px] overflow-hidden rounded-2xl border">
           <p className="border-console-line font-console-mono text-console-faint border-b px-4 py-2.5 text-xs">
-            .github/workflows/deploy.yml
+            .github/workflows/vetra.yml
           </p>
           <pre className="font-console-mono m-0 overflow-x-auto p-4 text-[13px] leading-relaxed text-[#c5cdca]">
             {WORKFLOW}

@@ -14,12 +14,12 @@ describe('HomePage', () => {
     ).toBeTruthy()
   })
 
-  it('links to early access, redeem and the real deploy action', () => {
+  it('links to early access, redeem and the real publish action', () => {
     const { container } = render(<HomePage />)
     const hrefs = [...container.querySelectorAll('a')].map((a) => a.getAttribute('href'))
     expect(hrefs).toContain('/studio#access')
     expect(hrefs).toContain('/redeem')
-    expect(container.textContent).toContain('powerhouse-inc/vetra-deploy-action@v1')
+    expect(container.textContent).toContain('powerhouse-inc/vetra-publish@v1')
   })
 
   it('ships no placeholders and no open-cloud claim', () => {
