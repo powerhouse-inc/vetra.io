@@ -15,7 +15,7 @@ const STEPS = [
   {
     icon: Github,
     title: 'Connect a repo',
-    body: 'Install Vetra Deploy on GitHub and pick the repository of your package or app.',
+    body: 'Pick the repository of your package or app. Vetra opens a pull request adding the publish workflow.',
   },
   {
     icon: GitCommitHorizontal,

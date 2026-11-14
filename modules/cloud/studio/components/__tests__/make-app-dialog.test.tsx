@@ -130,7 +130,7 @@ describe('MakeAppDialog', () => {
   it('shows the connect flow and disables submit with no GitHub installation', () => {
     installs.data = []
     open()
-    expect(screen.getByText('Install Vetra Deploy')).toBeTruthy()
+    expect(screen.getByText('Connect a GitHub repository')).toBeTruthy()
     const submit = screen.getByRole('button', { name: 'Create app' }) as HTMLButtonElement
     expect(submit.disabled).toBe(true)
     fireEvent.click(submit)
@@ -164,7 +164,7 @@ describe('MakeAppDialog', () => {
     installs.error = new AppsApiError('NETWORK', 'boom')
     open()
     expect(screen.getByText(/Could not reach Vetra/)).toBeTruthy()
-    expect(screen.queryByText('Install Vetra Deploy')).toBeNull()
+    expect(screen.queryByText('Connect a GitHub repository')).toBeNull()
     expect((screen.getByRole('button', { name: 'Create app' }) as HTMLButtonElement).disabled).toBe(
       true,
     )
@@ -175,7 +175,7 @@ describe('MakeAppDialog', () => {
     appInfo.error = new AppsApiError('BAD_USER_INPUT', 'GitHub app missing')
     open()
     expect(screen.getByText(/GitHub app missing/)).toBeTruthy()
-    expect(screen.queryByText('Install Vetra Deploy')).toBeNull()
+    expect(screen.queryByText('Connect a GitHub repository')).toBeNull()
   })
 
   it('keeps the owner select and shows the error when a refetch fails', async () => {
