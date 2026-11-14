@@ -26,7 +26,9 @@ import {
   shortSha,
 } from '../lib/status'
 import { formatTimestamp, timeAgo } from '@/modules/shared/lib/time'
+import { usePublisherInviteCodes, usePublisherTerms } from '@/modules/publisher/hooks/use-publisher'
 import { useAppLogo, useAppName } from '../hooks/use-app-profile'
+import { useAppReleases } from '../hooks/use-apps'
 import type { App, AppDeployment, AppPreview } from '../types'
 import { AppLogo } from './profile/app-logo'
 import { AppProfileCard } from './profile/app-profile-card'
@@ -86,15 +88,23 @@ function ChecklistItem({
   )
 }
 
-/** Shown until the first deployment lands: what's left between "created" and "live". */
+/** Plans and invite codes the publisher has set up; null when the viewer cannot manage licensing. */
+export type LicensingProgress = { plans: boolean; inviteCodes: boolean } | null
+
+/** Shown until the app is set up: publish a release, then plans and invite codes give users instances. */
 export function GettingStarted({
   app,
-  hasDeployments,
+  published,
+  licensing,
   onAuthorize,
+  onOpenTab,
 }: {
   app: App
-  hasDeployments: boolean
+  /** A release or build was recorded (or the app deployed on the old path). */
+  published: boolean
+  licensing: LicensingProgress
   onAuthorize: () => void
+  onOpenTab?: (tab: 'plans' | 'invite-codes') => void
 }) {
   const name = useAppName(app.identityDid, app.name)
   const identityDone = app.status !== 'PENDING_IDENTITY'
@@ -103,7 +113,7 @@ export function GettingStarted({
       <div className="mb-6 space-y-1">
         <h2 className="text-lg font-semibold">Finish setting up {name}</h2>
         <p className="text-muted-foreground text-sm">
-          Three steps from here to a live production URL.
+          Publish a release, then give your users instances through plans and invite codes.
         </p>
       </div>
       <ol className="space-y-6">
@@ -114,9 +124,32 @@ export function GettingStarted({
             <ArrowRight className="h-4 w-4" />
           </Button>
         </ChecklistItem>
-        <ChecklistItem done={hasDeployments} title="Add the workflow and push">
+        <ChecklistItem done={published} title="Add the workflow and publish a release">
           <SetupDeploys app={app} />
         </ChecklistItem>
+        {licensing && (
+          <ChecklistItem done={licensing.plans} title="Create a plan">
+            <p className="text-muted-foreground text-sm">
+              A plan decides which release your users get and whether they share an instance or get
+              their own.
+            </p>
+            <Button size="sm" variant="outline" onClick={() => onOpenTab?.('plans')}>
+              Open Plans
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </ChecklistItem>
+        )}
+        {licensing && (
+          <ChecklistItem done={licensing.inviteCodes} title="Create invite codes">
+            <p className="text-muted-foreground text-sm">
+              Whoever redeems a code gets a licence of the plan and their instance.
+            </p>
+            <Button size="sm" variant="outline" onClick={() => onOpenTab?.('invite-codes')}>
+              Open Invite codes
+              <ArrowRight className="h-4 w-4" />
+            </Button>
+          </ChecklistItem>
+        )}
       </ol>
     </section>
   )
@@ -363,7 +396,9 @@ export function AppOverview({
   deploymentsLoaded,
   onAuthorize,
   onEditProfile,
+  onOpenTab,
   canOperate = true,
+  canManageLicensing = false,
 }: {
   app: App
   deployments: AppDeployment[]
@@ -371,24 +406,48 @@ export function AppOverview({
   onAuthorize: () => void
   /** Opens the Profile tab. */
   onEditProfile?: () => void
+  /** Opens a tab of the app page (the checklist's Plans and Invite codes steps). */
+  onOpenTab?: (tab: 'plans' | 'invite-codes') => void
   /** The setup checklist is for those who can act on it (owners and operators). */
   canOperate?: boolean
+  /** The viewer sees the licensing tabs: the checklist adds plans and invite codes. */
+  canManageLicensing?: boolean
 }) {
   const name = useAppName(app.identityDid, app.name)
   const production =
     deployments.find((d) => d.kind === 'PRODUCTION') ??
     (app.latestDeployment?.kind === 'PRODUCTION' ? app.latestDeployment : null)
   const hasDeployments = deployments.length > 0 || !!app.latestDeployment
+  const releases = useAppReleases(app.id, null, 1, canOperate)
+  const licensingAppId = canOperate && canManageLicensing ? app.id : null
+  const terms = usePublisherTerms(licensingAppId)
+  const inviteCodes = usePublisherInviteCodes(licensingAppId)
+  const published = hasDeployments || (releases.data?.length ?? 0) > 0
+  const licensing: LicensingProgress = licensingAppId
+    ? { plans: (terms.data?.length ?? 0) > 0, inviteCodes: (inviteCodes.data?.length ?? 0) > 0 }
+    : null
+  // Until every answer is in, the checklist stays hidden rather than flashing open.
+  const loaded =
+    deploymentsLoaded &&
+    !releases.isPending &&
+    (!licensingAppId || (!terms.isPending && !inviteCodes.isPending))
+  const setUp = published && (!licensing || (licensing.plans && licensing.inviteCodes))
   const showChecklist =
     canOperate &&
     app.status !== 'DISCONNECTED' &&
     // Expired identities get the page banner; the checklist is for first-time setup.
-    (identityState(app).kind === 'pending' || (deploymentsLoaded && !hasDeployments))
+    (identityState(app).kind === 'pending' || (loaded && !setUp))
 
   return (
     <div className="space-y-10">
       {showChecklist && (
-        <GettingStarted app={app} hasDeployments={hasDeployments} onAuthorize={onAuthorize} />
+        <GettingStarted
+          app={app}
+          published={published}
+          licensing={licensing}
+          onAuthorize={onAuthorize}
+          onOpenTab={onOpenTab}
+        />
       )}
       <ProductionCard app={app} deployment={production} />
       <AppProfileCard appDid={app.identityDid} appName={name} onEdit={onEditProfile} />
