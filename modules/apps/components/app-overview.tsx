@@ -449,10 +449,10 @@ export function AppOverview({
           onOpenTab={onOpenTab}
         />
       )}
-      <ProductionCard app={app} deployment={production} />
+      {app.productionEnvironmentId && <ProductionCard app={app} deployment={production} />}
       <AppProfileCard appDid={app.identityDid} appName={name} onEdit={onEditProfile} />
       <AppStatsCard appDid={app.identityDid} onEdit={onEditProfile} />
-      <PreviewsSection app={app} />
+      {app.productionEnvironmentId && <PreviewsSection app={app} />}
     </div>
   )
 }

@@ -349,7 +349,8 @@ export type App = {
   releaseBranches?: string[]
   /** Whether Vetra runs an instance per release branch; absent on older backends. */
   instancesEnabled?: boolean
-  productionEnvironmentId: string
+  /** Null: a publish-only app (no deploy environment). */
+  productionEnvironmentId: string | null
   previewsEnabled: boolean
   previewLimit: number
   previewTtlDays: number

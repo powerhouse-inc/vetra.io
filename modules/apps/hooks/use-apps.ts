@@ -378,16 +378,11 @@ export function useConnectGithubDeploy() {
 }
 
 export function useCreateApp() {
-  const qc = useQueryClient()
   const token = useTokenResolver()
   const cacheApp = useCacheApp()
   return useMutation({
     mutationFn: async (input: CreateAppInput) => createApp(input, await token()),
-    onSuccess: (app) => {
-      cacheApp(app)
-      // The new production env shows up on the env lists via its own query.
-      void qc.invalidateQueries({ queryKey: ['environments'] })
-    },
+    onSuccess: (app) => cacheApp(app),
   })
 }
 
